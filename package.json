@@ -1,0 +1,39 @@
+{
+  "name": "nhu-nguyet-spa",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": "^22.13.0 || ^24.3.0 || >=25.0.0",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "dotnet tool restore && dotnet ef database update --project backend/src/Infrastructure --startup-project backend/src/API",
+    "web": "npm run dev --workspace @spa/web",
+    "web:build": "npm run build --workspace @spa/web",
+    "web:test": "npm run test --workspace @spa/web",
+    "mobile": "npm run start --workspace @spa/mobile",
+    "mobile:android": "npm run android --workspace @spa/mobile",
+    "mobile:check": "npm run config:check --workspace @spa/mobile",
+    "mobile:export": "npm run export:android --workspace @spa/mobile",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "eslint": "^9.39.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "typescript-eslint": "^8.46.0",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "typescript": "~5.9.2"
+  }
+}

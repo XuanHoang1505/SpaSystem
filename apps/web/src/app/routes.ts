@@ -1,0 +1,37 @@
+export const routes = {
+  public: [
+    ['/', 'Trang chủ'],
+    ['/services', 'Dịch vụ'],
+    ['/services/:serviceId', 'Chi tiết dịch vụ'],
+    ['/packages', 'Gói dịch vụ'],
+    ['/packages/:packageId', 'Chi tiết gói dịch vụ'],
+    ['/login', 'Đăng nhập'],
+    ['/register', 'Đăng ký'],
+  ],
+  customer: [
+    ['/account', 'Tài khoản'],
+    ['/my-bookings', 'Lịch hẹn của tôi'],
+    ['/my-bookings/:bookingId', 'Chi tiết lịch hẹn'],
+    ['/my-treatment-plans', 'Liệu trình'],
+    ['/my-packages', 'Gói của tôi'],
+    ['/my-reviews', 'Đánh giá'],
+    ['/ai-assistant', 'Trợ lý AI'],
+  ],
+  staff: [
+    ['/staff', 'Tổng quan nhân viên'],
+    ['/staff/schedule', 'Lịch làm việc'],
+    ['/staff/bookings', 'Lịch hẹn được phân công'],
+    ['/staff/bookings/:bookingId', 'Chi tiết buổi chăm sóc'],
+  ],
+  owner: [
+    ['/owner', 'Tổng quan quản lý'],
+    ['/owner/services', 'Quản lý dịch vụ'],
+    ['/owner/packages', 'Quản lý gói dịch vụ'],
+    ['/owner/staff', 'Nhân viên'],
+    ['/owner/bookings', 'Lịch hẹn'],
+    ['/owner/promotions', 'Khuyến mãi'],
+    ['/owner/treatments', 'Liệu trình'],
+    ['/owner/payments', 'Thanh toán'],
+    ['/owner/reports', 'Báo cáo'],
+  ],
+} as const;

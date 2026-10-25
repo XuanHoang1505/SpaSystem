@@ -1,0 +1,8 @@
+node_modules
+**/bin
+**/obj
+**/dist
+**/.expo
+**/coverage
+package-lock.json
+backend/NhuNguyetSpa.sln

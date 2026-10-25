@@ -1,0 +1,24 @@
+:root {
+  --primary: #92596b;
+  --secondary: #dde6da;
+  --background: #faf7f2;
+  --surface: #fffdf9;
+  --text: #342e30;
+  --muted: #72666a;
+  --success: #386647;
+  --warning: #835c22;
+  --error: #a23846;
+  --border: #e5dadb;
+  --radius-sm: 12px;
+  --radius: 22px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --shadow: 0 12px 36px #623c4a0a;
+  --font-sm: 14px;
+  --font-base: 16px;
+  --font-lg: 22px;
+}

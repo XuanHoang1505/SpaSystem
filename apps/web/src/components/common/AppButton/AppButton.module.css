@@ -1,0 +1,17 @@
+.button {
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: white;
+  min-height: 44px;
+  padding: 10px 18px;
+  font: inherit;
+  cursor: pointer;
+}
+.button:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

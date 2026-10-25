@@ -1,0 +1,11 @@
+**/node_modules
+**/bin
+**/obj
+**/dist
+**/.expo
+**/coverage
+**/.env
+**/.env.*
+**/logs
+.git
+.vs

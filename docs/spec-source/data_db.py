@@ -1,0 +1,326 @@
+# -*- coding: utf-8 -*-
+"""Mô hình dữ liệu chuẩn hóa tiếng Anh (ADR-0001) từ mục 'Phân tích dữ liệu' của báo cáo DA.
+
+Bảng:  (nhóm, bảng, entity C#, tên bảng trong DA, mục đích, nguồn, sprint, [cột])
+Cột:   "tên|kiểu PostgreSQL|null Y/N|ràng buộc|mô tả|tên trong DA"
+       Nguồn của cột: 'DA' nếu có tên DA, 'ĐX' nếu tên DA để trống.
+"""
+DA = "DA"
+DX = "ĐX"
+
+AUDIT = [  # BaseAuditableEntity — có sẵn trong Domain/Common
+    "created_at_utc|timestamptz|N||Thời điểm tạo|NgayTao",
+    "updated_at_utc|timestamptz|Y||Thời điểm cập nhật gần nhất|NgayCapNhat",
+    "created_by|uuid|Y||Người tạo (từ BaseAuditableEntity)|",
+    "updated_by|uuid|Y||Người cập nhật (từ BaseAuditableEntity)|",
+]
+
+TABLES = [
+ ("AUTH","users","User","NguoiDung","Tài khoản dùng chung cho khách hàng, nhân viên, chủ spa",DA,"Sprint 1",[
+  "id|uuid|N|PK|Mã người dùng|MaNguoiDung",
+  "full_name|varchar(100)|N||Họ và tên|HoTen",
+  "email|citext|N|UQ|Email đăng nhập|Email",
+  "phone_number|varchar(15)|N|UQ|Số điện thoại|SDT",
+  "password_hash|varchar(255)|N||Mật khẩu đã băm (ASP.NET Core Identity)|MatKhauHash",
+  "role|varchar(30)|N|CHECK enum UserRole|Vai trò|VaiTro",
+  "avatar_url|varchar(500)|Y||Ảnh đại diện|AnhDaiDien",
+  "status|varchar(30)|N|CHECK enum UserStatus|Trạng thái tài khoản|TrangThai",
+  "date_of_birth|date|Y||Ngày sinh|NgaySinh",
+  "gender|varchar(30)|Y|CHECK enum Gender|Giới tính|GioiTinh",
+  *AUDIT]),
+ ("AUTH","owner_profiles","OwnerProfile","ChuSpa","Thông tin riêng của chủ spa (1-1 với users, dùng chung khóa chính)",DA,"Sprint 1",[
+  "id|uuid|N|PK, FK → users.id|Bằng users.id của chủ spa|MaNguoiDung",
+  "note|text|Y||Ghi chú|GhiChu"]),
+ ("AUTH","customers","Customer","KhachHang","Thông tin riêng của khách hàng (1-1 với users, dùng chung khóa chính)",DA,"Sprint 1",[
+  "id|uuid|N|PK, FK → users.id|Bằng users.id của khách hàng|MaNguoiDung",
+  "note|text|Y||Ghi chú|GhiChu"]),
+ ("STF","staff_members","StaffMember","NhanVien","Thông tin riêng của nhân viên (1-1 với users, dùng chung khóa chính)",DA,"Sprint 1",[
+  "id|uuid|N|PK, FK → users.id|Bằng users.id của nhân viên|MaNguoiDung",
+  "hire_date|date|N||Ngày bắt đầu làm việc|NgayVaoLam",
+  "specialty|varchar(255)|Y||Chuyên môn|ChuyenMon",
+  "resignation_date|date|Y|CHECK resignation_date >= hire_date|Ngày nghỉ việc|NgayNghiViec"]),
+ ("CAT","spa_services","SpaService","DichVu","Dịch vụ chăm sóc da lẻ",DA,"Sprint 1",[
+  "id|uuid|N|PK|Mã dịch vụ|Id",
+  "name|varchar(150)|N||Tên dịch vụ|TenDichVu",
+  "category|varchar(100)|N|IDX|Nhóm phân loại (dùng làm bộ lọc danh mục)|LoaiDichVu",
+  "description|text|Y||Mô tả|MoTa",
+  "duration_minutes|integer|N|CHECK > 0|Thời lượng (phút)|ThoiLuongPhut",
+  "price|numeric(12,0)|N|CHECK >= 0|Giá bán (VND)|Gia",
+  "image_url|varchar(500)|Y||Ảnh dịch vụ|HinhAnh",
+  "status|varchar(30)|N|CHECK enum CatalogStatus|Trạng thái kinh doanh|TrangThai",
+  *AUDIT]),
+ ("CAT","service_packages","ServicePackage","GoiDichVu","Gói dịch vụ nhiều buổi",DA,"Sprint 1",[
+  "id|uuid|N|PK|Mã gói|Id",
+  "name|varchar(150)|N||Tên gói|TenGoiDichVu",
+  "description|text|Y||Mô tả|MoTa",
+  "price|numeric(12,0)|N|CHECK >= 0|Giá bán (VND)|Gia",
+  "validity_days|integer|N|CHECK > 0|Thời hạn sử dụng (ngày)|ThoiHanNgay",
+  "status|varchar(30)|N|CHECK enum CatalogStatus|Trạng thái kinh doanh|TrangThai",
+  "sale_start_date|date|Y||Ngày bắt đầu bán|NgayBatDauBan",
+  "sale_end_date|date|Y|CHECK sale_end_date >= sale_start_date|Ngày kết thúc bán|NgayKetThucBan",
+  *AUDIT]),
+ ("CAT","service_package_items","ServicePackageItem","GoiDichVuChiTiet","Dịch vụ thành phần của gói: số buổi, thứ tự, khoảng cách",DA,"Sprint 1",[
+  "id|uuid|N|PK|Mã chi tiết gói|Id",
+  "spa_service_id|uuid|N|FK → spa_services.id|Dịch vụ thuộc gói|IdDichVu",
+  "service_package_id|uuid|N|FK → service_packages.id|Gói chứa chi tiết|IdGoiDichVu",
+  "session_count|integer|N|CHECK > 0|Số buổi của dịch vụ trong gói|SoBuoi",
+  "min_days_between_sessions|integer|N|CHECK >= 0|Khoảng cách tối thiểu giữa các buổi (ngày)|KhoangCachNgayToiThieu",
+  "sort_order|integer|N|CHECK > 0|Thứ tự thực hiện trong gói|ThuTu",
+  "note|text|Y||Ghi chú|GhiChu"]),
+ ("STF","staff_skills","StaffSkill","NhanVien_DichVu","Nhân viên thực hiện được dịch vụ nào (khóa chính ghép)",DA,"Sprint 1",[
+  "staff_member_id|uuid|N|PK, FK → staff_members.id|Nhân viên|IdNhanVien",
+  "spa_service_id|uuid|N|PK, FK → spa_services.id|Dịch vụ|IdDichVu"]),
+ ("STF","work_schedules","WorkSchedule","LichLamViec","Ca làm việc của nhân viên (giờ Việt Nam — ADR-0003)",DA,"Sprint 1",[
+  "id|uuid|N|PK|Mã ca|Id",
+  "staff_member_id|uuid|N|FK → staff_members.id|Nhân viên được phân công|IdNhanVien",
+  "date|date|N|IDX (staff_member_id, date)|Ngày làm việc|Ngay",
+  "start_time|time|N||Giờ bắt đầu ca|GioBatDau",
+  "end_time|time|N|CHECK end_time > start_time|Giờ kết thúc ca|GioKetThuc",
+  "status|varchar(30)|N|CHECK enum WorkScheduleStatus|Trạng thái ca|TrangThai"]),
+ ("PRM","promotions","Promotion","KhuyenMai","Chương trình khuyến mãi",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã chương trình|Id",
+  "code|varchar(50)|N|UQ|Mã khách nhập|MaCode",
+  "description|text|Y||Mô tả|MoTa",
+  "discount_type|varchar(30)|N|CHECK enum DiscountType|Hình thức giảm|LoaiGiamGia",
+  "discount_value|numeric(12,2)|N|CHECK > 0; <= 100 khi percentage|Giá trị giảm|GiaTri",
+  "min_order_amount|numeric(12,0)|N|CHECK >= 0|Giá trị đơn tối thiểu|GiaTriDonHangToiThieu",
+  "max_discount_amount|numeric(12,0)|Y|CHECK > 0|Số tiền giảm tối đa|GiaTriGiamToiDa",
+  "starts_at_utc|timestamptz|N||Thời điểm bắt đầu|NgayBatDau",
+  "ends_at_utc|timestamptz|N|CHECK ends_at_utc > starts_at_utc|Thời điểm kết thúc|NgayKetThuc",
+  "per_customer_limit|integer|Y|CHECK > 0|Số lần tối đa mỗi khách|GioiHanMoiKhach",
+  "usage_limit|integer|Y|CHECK > 0|Tổng số lượt tối đa|SoLuong",
+  "status|varchar(30)|N|CHECK enum PromotionStatus|Trạng thái|TrangThai"]),
+ ("ORD","carts","Cart","GioHang","Giỏ hàng (mỗi khách 1 giỏ)",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã giỏ|Id",
+  "customer_id|uuid|N|UQ, FK → customers.id|Khách sở hữu giỏ|IdKhachHang",
+  *AUDIT]),
+ ("ORD","cart_items","CartItem","ChiTietGioHang","Sản phẩm trong giỏ",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã dòng giỏ|Id",
+  "cart_id|uuid|N|FK → carts.id (CASCADE)|Giỏ chứa sản phẩm|IdGioHang",
+  "spa_service_id|uuid|Y|FK → spa_services.id|Dịch vụ được thêm|IdDichVu",
+  "service_package_id|uuid|Y|FK → service_packages.id; CHECK num_nonnulls(spa_service_id, service_package_id) = 1|Gói được thêm|IdGoiDichVu",
+  "unit_price|numeric(12,0)|N|CHECK >= 0|Giá tham khảo lúc thêm|DonGia",
+  "added_at_utc|timestamptz|N||Thời điểm thêm|NgayThem"]),
+ ("ORD","orders","Order","DonHang","Đơn hàng",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã định danh đơn|Id",
+  "code|varchar(50)|N|UQ|Mã đơn hiển thị|MaDonHang",
+  "customer_id|uuid|N|FK → customers.id|Khách tạo đơn|IdKhachHang",
+  "subtotal|numeric(12,0)|N|CHECK >= 0|Tổng tiền hàng trước giảm|TongTienHang",
+  "discount_total|numeric(12,0)|N|CHECK 0 <= discount_total <= subtotal|Tổng giảm giá|TongGiamGia",
+  "grand_total|numeric(12,0)|N|CHECK grand_total = subtotal - discount_total|Tổng thanh toán|TongThanhToan",
+  "status|varchar(30)|N|CHECK enum OrderStatus|Trạng thái đơn|TrangThai",
+  "note|text|Y||Ghi chú|GhiChu",
+  "payment_due_at_utc|timestamptz|N|CHECK > created_at_utc|Hết hạn thanh toán|HetHanThanhToanLuc",
+  *AUDIT]),
+ ("ORD","order_items","OrderItem","ChiTietDonHang","Sản phẩm trong đơn (lưu tên, giá lúc mua)",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã dòng đơn|Id",
+  "order_id|uuid|N|FK → orders.id|Đơn chứa dòng|IdDonHang",
+  "spa_service_id|uuid|Y|FK → spa_services.id|Dịch vụ được mua|IdDichVu",
+  "service_package_id|uuid|Y|FK → service_packages.id; CHECK num_nonnulls(spa_service_id, service_package_id) = 1|Gói được mua|IdGoiDichVu",
+  "product_name|varchar(150)|N||Tên sản phẩm lúc mua|TenSanPham",
+  "unit_price|numeric(12,0)|N|CHECK >= 0|Giá lúc mua|DonGia",
+  "discount_amount|numeric(12,0)|N|CHECK 0 <= discount_amount <= unit_price|Tiền giảm phân bổ|TienGiam",
+  "line_total|numeric(12,0)|N|CHECK line_total = unit_price - discount_amount|Thành tiền|ThanhTien",
+  "note|text|Y||Ghi chú|GhiChu"]),
+ ("ORD","payments","Payment","ThanhToan","Lần thanh toán qua cổng (một đơn có thể nhiều lần thử)",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã lần thanh toán|Id",
+  "order_id|uuid|N|FK → orders.id|Đơn được thanh toán|IdDonHang",
+  "provider|varchar(50)|N||Nhà cung cấp cổng|NhaCungCap",
+  "amount|numeric(12,0)|N|CHECK >= 0|Số tiền|SoTien",
+  "status|varchar(30)|N|CHECK enum PaymentStatus|Trạng thái|TrangThai",
+  "request_code|varchar(50)|N|UQ|Mã yêu cầu gửi cổng (dùng cho idempotency)|MaYeuCau",
+  "provider_transaction_id|varchar(100)|Y||Mã giao dịch do cổng cấp|MaGiaoDich",
+  "payment_url|varchar(1000)|Y||Đường dẫn thanh toán|PaymentUrl",
+  "expires_at_utc|timestamptz|N||Hết hạn lần thanh toán|ThoiGianHetHan",
+  "paid_at_utc|timestamptz|Y|IDX|Thời điểm thanh toán thành công|ThoiGianThanhToan",
+  *AUDIT]),
+ ("PRM","promotion_redemptions","PromotionRedemption","ApDungKhuyenMai","Khuyến mãi áp dụng cho đơn (1 đơn tối đa 1 mã)",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã lần áp dụng|Id",
+  "order_id|uuid|N|UQ, FK → orders.id|Đơn được áp dụng|IdDonHang",
+  "promotion_id|uuid|N|FK → promotions.id|Chương trình áp dụng|IdKhuyenMai",
+  "promotion_code|varchar(50)|N||Mã lưu lúc áp dụng|MaKhuyenMai",
+  "discount_amount|numeric(12,0)|N|CHECK >= 0|Số tiền giảm|SoTienGiam",
+  "redeemed_at_utc|timestamptz|N||Thời điểm ghi nhận|NgaySuDung"]),
+ ("TRT","service_entitlements","ServiceEntitlement","DichVuKhachHang","Quyền sử dụng một dịch vụ lẻ đã mua",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã quyền sử dụng|Id",
+  "customer_id|uuid|N|FK → customers.id|Khách sở hữu|IdKhachHang",
+  "order_item_id|uuid|N|UQ, FK → order_items.id|Dòng đơn phát sinh quyền|IdChiTietDonHang",
+  "expires_at_utc|timestamptz|Y||Hết hạn sử dụng (null = không giới hạn, Q-06)|NgayHetHan",
+  "status|varchar(30)|N|CHECK enum EntitlementStatus|Trạng thái|TrangThai"]),
+ ("TRT","customer_packages","CustomerPackage","GoiKhachHang","Gói dịch vụ khách đã mua",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã gói đã mua|Id",
+  "customer_id|uuid|N|FK → customers.id|Khách sở hữu|IdKhachHang",
+  "order_item_id|uuid|N|UQ, FK → order_items.id|Dòng đơn phát sinh gói|IdChiTietDonHang",
+  "package_name|varchar(150)|N||Tên gói lúc mua|TenGoi",
+  "purchased_at_utc|timestamptz|N||Thời điểm mua|NgayMua",
+  "activated_at_utc|timestamptz|Y||Thời điểm kích hoạt (Q-10)|NgayKichHoat",
+  "expires_at_utc|timestamptz|Y||Hết hạn sử dụng|NgayHetHan",
+  "total_sessions|integer|N|CHECK > 0|Tổng số buổi|TongSoBuoi",
+  "used_sessions|integer|N|CHECK 0 <= used_sessions <= total_sessions|Số buổi đã hoàn thành|SoBuoiDaDung",
+  "status|varchar(30)|N|CHECK enum CustomerPackageStatus|Trạng thái|TrangThai"]),
+ ("TRT","treatment_plans","TreatmentPlan","LieuTrinh","Liệu trình gắn với gói đã mua (1-1)",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã liệu trình|Id",
+  "customer_package_id|uuid|N|UQ, FK → customer_packages.id|Gói đã mua tương ứng|IdGoiKhachHang",
+  "primary_staff_member_id|uuid|Y|FK → staff_members.id|Nhân viên phụ trách|IdNhanVienPhuTrach",
+  "start_date|date|Y||Ngày bắt đầu|NgayBatDau",
+  "expected_end_date|date|Y||Ngày dự kiến kết thúc|NgayKetThucDuKien",
+  "actual_end_date|date|Y||Ngày kết thúc thực tế|NgayKetThucThucTe",
+  "goal|text|Y||Mục tiêu chăm sóc|MucTieu",
+  "status|varchar(30)|N|CHECK enum TreatmentPlanStatus|Trạng thái|TrangThai",
+  "note|text|Y||Ghi chú|GhiChu"]),
+ ("TRT","treatment_sessions","TreatmentSession","BuoiChamSoc","Các buổi trong liệu trình theo thứ tự",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã buổi|Id",
+  "treatment_plan_id|uuid|N|FK → treatment_plans.id|Liệu trình chứa buổi|IdLieuTrinh",
+  "spa_service_id|uuid|N|FK → spa_services.id|Dịch vụ thực hiện|IdDichVu",
+  "sequence_number|integer|N|CHECK > 0; UQ (treatment_plan_id, sequence_number)|Thứ tự buổi|ThuTu",
+  "service_name|varchar(150)|N||Tên dịch vụ lúc tạo buổi|TenDichVu",
+  "duration_minutes|integer|N|CHECK > 0|Thời lượng dự kiến (phút)|ThoiLuongPhut",
+  "status|varchar(30)|N|CHECK enum TreatmentSessionStatus|Trạng thái|TrangThai",
+  "note|text|Y||Ghi chú và kết quả chăm sóc|GhiChu",
+  "completed_at_utc|timestamptz|Y||Thời điểm hoàn thành|NgayHoanThanh"]),
+ ("BKG","appointments","Appointment","LichHen","Lịch hẹn — bảng trung tâm của thuật toán chống trùng lịch (ADR-0003)",DA,"Sprint 1",[
+  "id|uuid|N|PK|Mã lịch hẹn|Id",
+  "customer_id|uuid|N|FK → customers.id|Khách đặt lịch|IdKhachHang",
+  "staff_member_id|uuid|N|FK → staff_members.id|Nhân viên thực hiện|IdNhanVien",
+  "service_entitlement_id|uuid|Y|FK → service_entitlements.id|Quyền dịch vụ lẻ dùng để đặt|IdDichVuKhachHang",
+  "treatment_session_id|uuid|Y|FK → treatment_sessions.id|Buổi trong gói dùng để đặt|IdBuoiChamSoc",
+  "order_item_id|uuid|Y|FK → order_items.id|Dòng đơn của lịch giữ chỗ chờ thanh toán|IdChiTietDonHang",
+  "hold_expires_at_utc|timestamptz|Y||Hết hạn giữ chỗ|GiuChoDen",
+  "date|date|N|IDX (staff_member_id, date)|Ngày hẹn (giờ VN)|NgayHen",
+  "start_time|time|N||Giờ bắt đầu (giờ VN)|GioBatDau",
+  "end_time|time|N|CHECK end_time > start_time; EXCLUDE chống trùng nhân viên|Giờ kết thúc (giờ VN)|GioKetThuc",
+  "status|varchar(30)|N|CHECK enum AppointmentStatus|Trạng thái|TrangThai",
+  "cancelled_at_utc|timestamptz|Y||Thời điểm hủy|HuyLuc",
+  "cancellation_reason|text|Y||Lý do hủy|LyDoHuy",
+  "note|text|Y||Ghi chú, kết quả buổi dịch vụ lẻ|GhiChu",
+  "created_at_utc|timestamptz|N||Thời điểm tạo|NgayTao"]),
+ ("CARE","skin_profiles","SkinProfile","HoSoDa","Hồ sơ da lập theo từng lần chăm sóc",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã hồ sơ|Id",
+  "customer_id|uuid|N|FK → customers.id|Khách được đánh giá|IdKhachHang",
+  "assessed_by_staff_member_id|uuid|N|FK → staff_members.id|Nhân viên đánh giá|IdNhanVienDanhGia",
+  "appointment_id|uuid|N|UQ, FK → appointments.id|Lịch hẹn phát sinh hồ sơ|IdLichHen",
+  "assessed_at_utc|timestamptz|N||Thời điểm đánh giá|NgayDanhGia",
+  "skin_type|varchar(30)|N|CHECK enum SkinType|Loại da|LoaiDa",
+  "main_concerns|text|Y||Vấn đề da chính|VanDeChinh",
+  "current_products|text|Y||Sản phẩm đang dùng|SanPhamDangDung",
+  "care_goals|text|Y||Mục tiêu chăm sóc|MucTieuChamSoc",
+  "recommended_treatment|text|Y||Đề xuất chăm sóc|DeXuatDieuTri",
+  "note|text|Y||Ghi chú|GhiChu",
+  *AUDIT]),
+ ("CARE","customer_allergies","CustomerAllergy","DiUngKhachHang","Thông tin dị ứng của khách",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã thông tin dị ứng|Id",
+  "customer_id|uuid|N|FK → customers.id|Khách|IdKhachHang",
+  "allergen|varchar(255)|N||Tác nhân gây dị ứng|TacNhan",
+  "severity|varchar(30)|N|CHECK enum AllergySeverity|Mức độ|MucDo",
+  "note|text|Y||Biểu hiện|GhiChu",
+  "recorded_at_utc|timestamptz|N||Thời điểm ghi nhận|NgayGhiNhan"]),
+ ("REV","reviews","Review","DanhGia","Đánh giá dịch vụ hoặc gói",DA,"Sprint 2",[
+  "id|uuid|N|PK|Mã đánh giá|Id",
+  "customer_id|uuid|N|FK → customers.id|Khách gửi|IdKhachHang",
+  "spa_service_id|uuid|Y|FK → spa_services.id|Dịch vụ được đánh giá|IdDichVu",
+  "service_package_id|uuid|Y|FK → service_packages.id; CHECK num_nonnulls(spa_service_id, service_package_id) = 1|Gói được đánh giá|IdGoiDichVu",
+  "comment|text|Y||Nội dung nhận xét|NoiDungDanhGia",
+  "owner_reply|text|Y||Phản hồi của spa|PhanHoiTuSpa",
+  "replied_at_utc|timestamptz|Y||Thời điểm phản hồi|PhanHoiLuc",
+  "rating|integer|N|CHECK rating BETWEEN 1 AND 5|Số sao|SoSao",
+  "image_url|varchar(500)|Y||Ảnh đính kèm|HinhAnh",
+  "status|varchar(30)|N|CHECK enum ReviewStatus|Trạng thái hiển thị|TrangThai",
+  *AUDIT]),
+ ("AI","ai_chat_messages","AiChatMessage","LichSuTroChuyenAI","Lịch sử hỏi – đáp với trợ lý AI",DA,"Sprint 3",[
+  "id|uuid|N|PK|Mã lượt trao đổi|Id",
+  "customer_id|uuid|N|FK → customers.id|Khách hàng (Q-01)|IdKhachHang",
+  "question|text|N||Câu hỏi|CauHoi",
+  "answer|text|N||Câu trả lời|CauTraLoi",
+  "created_at_utc|timestamptz|N||Thời điểm ghi nhận|ThoiGian"]),
+ ("NTF","notifications","Notification","ThongBao","Thông báo gửi đến người dùng",DA,"Sprint 3",[
+  "id|uuid|N|PK|Mã thông báo|Id",
+  "user_id|uuid|N|FK → users.id|Người nhận|IdNguoiDung",
+  "title|varchar(200)|N||Tiêu đề|TieuDe",
+  "body|text|N||Nội dung|NoiDung",
+  "type|varchar(30)|N|CHECK enum NotificationType|Nhóm thông báo|Loai",
+  "read_at_utc|timestamptz|Y||Thời điểm đọc (null = chưa đọc)|DocLuc",
+  "created_at_utc|timestamptz|N||Thời điểm tạo|NgayTao"]),
+ # ----- Đề xuất bổ sung
+ ("AUTH","otp_codes","OtpCode","(MaOtp — đề xuất)","OTP đăng ký / quên mật khẩu (UC-SPA-01, 03)",DX,"Sprint 1",[
+  "id|uuid|N|PK|Mã|",
+  "email|citext|N|IDX|Email nhận OTP|",
+  "purpose|varchar(30)|N|CHECK enum OtpPurpose|Mục đích|",
+  "code_hash|varchar(255)|N||Hash của OTP (không lưu OTP thô)|",
+  "pending_registration|jsonb|Y||Thông tin đăng ký chờ xác thực (họ tên, SĐT, mật khẩu đã băm)|",
+  "failed_attempts|integer|N|CHECK >= 0|Số lần nhập sai (chặn sau 5)|",
+  "expires_at_utc|timestamptz|N||Hết hạn (5 phút)|",
+  "used_at_utc|timestamptz|Y||Thời điểm đã dùng|",
+  "created_at_utc|timestamptz|N||Thời điểm tạo|"]),
+ ("AUTH","refresh_tokens","RefreshToken","(RefreshToken — đề xuất)","Phiên đăng nhập JWT, refresh token xoay vòng",DX,"Sprint 1",[
+  "id|uuid|N|PK|Mã|",
+  "user_id|uuid|N|FK → users.id|Chủ phiên|",
+  "token_hash|varchar(255)|N|UQ|Hash của token|",
+  "expires_at_utc|timestamptz|N||Hết hạn|",
+  "revoked_at_utc|timestamptz|Y||Thu hồi khi đăng xuất, đổi mật khẩu, bị khóa|",
+  "created_at_utc|timestamptz|N||Thời điểm tạo|"]),
+ ("CAT","spa_profiles","SpaProfile","(ThongTinSpa — đề xuất)","Thông tin giới thiệu, liên hệ, giờ mở cửa (UC-SPA-08)",DX,"Sprint 1",[
+  "id|uuid|N|PK|Một dòng duy nhất|",
+  "name|varchar(150)|N||Tên spa|",
+  "introduction|text|Y||Giới thiệu|",
+  "address|varchar(255)|Y||Địa chỉ|",
+  "phone_number|varchar(15)|Y||Số điện thoại|",
+  "opening_hours|jsonb|Y||Giờ mở cửa theo thứ|",
+  "policies|jsonb|Y||Chính sách (giữ chỗ, đổi/hủy…)|"]),
+]
+
+# Enum: (bảng, cột, enum C#, [(giá trị DA, thành viên C#, giá trị lưu)], ghi chú)
+ENUMS = [
+ ("users","role","UserRole",[("KhachHang","Customer","customer"),("NhanVien","Staff","staff"),("ChuSpa","Owner","owner")],""),
+ ("users","status","UserStatus",[("HoatDong","Active","active"),("BiKhoa","Locked","locked"),("NgungHoatDong","Inactive","inactive")],"Locked: chủ spa khóa (UC-SPA-05); Inactive: nhân viên nghỉ việc"),
+ ("users","gender","Gender",[("Nam","Male","male"),("Nu","Female","female"),("Khac","Other","other")],""),
+ ("spa_services, service_packages","status","CatalogStatus",[("DangBan","OnSale","on_sale"),("NgungBan","Discontinued","discontinued")],""),
+ ("work_schedules","status","WorkScheduleStatus",[("HoatDong","Active","active"),("DaHuy","Cancelled","cancelled")],"Ca cancelled không dùng để tính giờ trống"),
+ ("promotions","discount_type","DiscountType",[("PhanTram","Percentage","percentage"),("SoTien","FixedAmount","fixed_amount")],""),
+ ("promotions","status","PromotionStatus",[("HoatDong","Active","active"),("NgungApDung","Stopped","stopped")],""),
+ ("orders","status","OrderStatus",[("ChoThanhToan","PendingPayment","pending_payment"),("DaThanhToan","Paid","paid"),("DaHuy","Cancelled","cancelled"),("HetHan","Expired","expired")],""),
+ ("payments","status","PaymentStatus",[("DangCho","Pending","pending"),("ThanhCong","Succeeded","succeeded"),("ThatBai","Failed","failed"),("HetHan","Expired","expired")],"Một đơn có nhiều lần thử, tối đa 1 succeeded"),
+ ("service_entitlements","status","EntitlementStatus",[("ChuaSuDung","Available","available"),("DaDatLich","Booked","booked"),("DaSuDung","Used","used"),("HetHan","Expired","expired")],""),
+ ("customer_packages","status","CustomerPackageStatus",[("DangSuDung","Active","active"),("HoanThanh","Completed","completed"),("HetHan","Expired","expired"),("DaHuy","Cancelled","cancelled")],""),
+ ("treatment_plans","status","TreatmentPlanStatus",[("ChuaBatDau","NotStarted","not_started"),("DangThucHien","InProgress","in_progress"),("HoanThanh","Completed","completed"),("TamDung","Paused","paused"),("DaHuy","Cancelled","cancelled")],""),
+ ("treatment_sessions","status","TreatmentSessionStatus",[("ChuaDat","NotBooked","not_booked"),("DaDatLich","Booked","booked"),("HoanThanh","Completed","completed"),("BoQua","Skipped","skipped")],""),
+ ("appointments","status","AppointmentStatus",[("GiuCho","Held","held"),("ChoXacNhan","PendingConfirmation","pending_confirmation"),("DaXacNhan","Confirmed","confirmed"),("HoanThanh","Completed","completed"),("DaHuy","Cancelled","cancelled"),("KhongDen","NoShow","no_show"),("HetHanGiuCho","HoldExpired","hold_expired")],"held/pending_confirmation/confirmed chiếm chỗ (ràng buộc EXCLUDE)"),
+ ("skin_profiles","skin_type","SkinType",[("Thuong","Normal","normal"),("Kho","Dry","dry"),("Dau","Oily","oily"),("HonHop","Combination","combination"),("NhayCam","Sensitive","sensitive")],""),
+ ("customer_allergies","severity","AllergySeverity",[("Nhe","Mild","mild"),("TrungBinh","Moderate","moderate"),("Nang","Severe","severe")],""),
+ ("reviews","status","ReviewStatus",[("HienThi","Visible","visible"),("An","Hidden","hidden")],""),
+ ("notifications","type","NotificationType",[("LichHen","Appointment","appointment"),("ThanhToan","Payment","payment"),("LieuTrinh","Treatment","treatment"),("KhuyenMai","Promotion","promotion"),("HeThong","System","system")],""),
+ ("otp_codes","purpose","OtpPurpose",[("(đề xuất)","Registration","registration"),("(đề xuất)","PasswordReset","password_reset")],""),
+]
+
+UC_TABLES = {
+ "UC-SPA-01":("users","customers, otp_codes"),"UC-SPA-02":("users","refresh_tokens"),"UC-SPA-03":("users","otp_codes, refresh_tokens"),
+ "UC-SPA-04":("users","customers, staff_members, owner_profiles"),"UC-SPA-05":("users","customers, staff_members, refresh_tokens"),
+ "UC-SPA-06":("spa_services","service_packages, service_package_items, service_entitlements, customer_packages"),"UC-SPA-07":("spa_services","service_packages, service_package_items, reviews"),
+ "UC-SPA-08":("spa_profiles",""),"UC-SPA-09":("spa_services","service_packages, service_package_items"),
+ "UC-SPA-10":("cart_items","carts, spa_services, service_packages"),
+ "UC-SPA-11":("payments","orders, order_items, promotions, promotion_redemptions, service_entitlements, customer_packages, treatment_plans, treatment_sessions, appointments, cart_items"),
+ "UC-SPA-12":("orders","order_items, payments, appointments"),"UC-SPA-13":("orders","order_items, payments, appointments"),
+ "UC-SPA-14":("promotions","promotion_redemptions"),
+ "UC-SPA-15":("appointments","work_schedules, staff_skills, spa_services, orders, order_items, service_entitlements, treatment_sessions, customer_packages, service_package_items, notifications"),
+ "UC-SPA-16":("appointments","work_schedules, service_entitlements, treatment_sessions"),"UC-SPA-17":("appointments","work_schedules, staff_skills, staff_members"),
+ "UC-SPA-18":("service_entitlements","customer_packages, order_items, orders"),"UC-SPA-19":("treatment_plans","treatment_sessions, customer_packages, appointments"),
+ "UC-SPA-20":("appointments","spa_services, staff_members, treatment_sessions"),"UC-SPA-21":("treatment_plans","treatment_sessions, customer_packages, skin_profiles, appointments"),
+ "UC-SPA-22":("staff_members","users, staff_skills, appointments"),"UC-SPA-23":("work_schedules","staff_members, appointments"),
+ "UC-SPA-24":("work_schedules",""),"UC-SPA-25":("appointments","customers, users, spa_services, customer_allergies"),
+ "UC-SPA-26":("appointments","skin_profiles, customers"),"UC-SPA-27":("skin_profiles","customer_allergies, appointments"),
+ "UC-SPA-28":("appointments","service_entitlements, treatment_sessions, customer_packages, treatment_plans, notifications"),
+ "UC-SPA-29":("reviews","spa_services, service_packages"),"UC-SPA-30":("reviews","service_entitlements, customer_packages, treatment_sessions"),"UC-SPA-31":("reviews",""),
+ "UC-SPA-32":("ai_chat_messages","spa_services, service_packages, appointments, customer_packages"),
+ "UC-SPA-33":("payments","orders, order_items"),"UC-SPA-34":("notifications",""),
+}
+
+PG_TO_CS = {"uuid":"Guid","timestamptz":"DateTime","date":"DateOnly","time":"TimeOnly","integer":"int","jsonb":"string (JSON)","citext":"string","text":"string","boolean":"bool"}
+def cs_type(pg, constraint):
+    import re
+    m = re.search(r"CHECK enum (\w+)", constraint)
+    if m: return m.group(1)
+    if pg.startswith("numeric"): return "decimal"
+    if pg.startswith("varchar"): return "string"
+    return PG_TO_CS.get(pg, pg)
+
+def pascal(snake):
+    return "".join(p.capitalize() for p in snake.split("_"))
