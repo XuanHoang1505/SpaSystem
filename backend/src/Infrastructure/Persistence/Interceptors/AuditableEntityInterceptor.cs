@@ -6,8 +6,17 @@ using NhuNguyetSpa.Domain.Common;
 namespace NhuNguyetSpa.Infrastructure.Persistence.Interceptors;
 
 /// <summary>Fills creation/update timestamps (UTC) and actor ids before every save.</summary>
-public sealed class AuditableEntityInterceptor(IDateTimeProvider clock, ICurrentUserService currentUser) : SaveChangesInterceptor
+public sealed class AuditableEntityInterceptor : SaveChangesInterceptor
 {
+    private readonly IDateTimeProvider _clock;
+    private readonly ICurrentUserService _currentUser;
+
+    public AuditableEntityInterceptor(IDateTimeProvider clock, ICurrentUserService currentUser)
+    {
+        _clock = clock;
+        _currentUser = currentUser;
+    }
+
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
         Apply(eventData.Context);
@@ -24,8 +33,8 @@ public sealed class AuditableEntityInterceptor(IDateTimeProvider clock, ICurrent
     private void Apply(DbContext? context)
     {
         if (context is null) return;
-        var now = clock.UtcNow;
-        var userId = currentUser.UserId;
+        var now = _clock.UtcNow;
+        var userId = _currentUser.UserId;
         foreach (var entry in context.ChangeTracker.Entries())
         {
             if (entry.State == EntityState.Added && entry.Entity is IHasCreatedAt created)
