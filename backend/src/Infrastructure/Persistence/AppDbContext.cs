@@ -6,8 +6,12 @@ using NhuNguyetSpa.Infrastructure.Persistence.Conversions;
 namespace NhuNguyetSpa.Infrastructure.Persistence;
 
 /// <summary>EF Core context for the schema in docs/domain/data-model.md (PostgreSQL, snake_case names).</summary>
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public sealed class AppDbContext : DbContext
 {
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
+
     public const int EnumMaxLength = 30;
 
     public DbSet<User> Users => Set<User>();

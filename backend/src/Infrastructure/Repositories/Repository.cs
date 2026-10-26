@@ -6,9 +6,11 @@ using NhuNguyetSpa.Infrastructure.Persistence;
 namespace NhuNguyetSpa.Infrastructure.Repositories;
 
 /// <summary>EF Core implementation of <see cref="IRepository{TEntity}"/>; feature repositories inherit from it.</summary>
-public class Repository<TEntity>(AppDbContext context) : IRepository<TEntity> where TEntity : BaseEntity
+public class Repository<TEntity> : IRepository<TEntity> where TEntity : BaseEntity
 {
-    protected AppDbContext Context { get; } = context;
+    public Repository(AppDbContext context) => Context = context;
+
+    protected AppDbContext Context { get; }
     protected DbSet<TEntity> Set => Context.Set<TEntity>();
 
     public Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
