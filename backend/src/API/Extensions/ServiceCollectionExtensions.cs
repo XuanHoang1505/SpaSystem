@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using NhuNguyetSpa.API.Responses;
+using NhuNguyetSpa.API.Serialization;
 using NhuNguyetSpa.API.Services;
 using NhuNguyetSpa.Application.Common.Interfaces;
 using NhuNguyetSpa.Application.Common.Models;
@@ -20,6 +21,7 @@ public static class ServiceCollectionExtensions
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             // Enums travel as snake_case strings, the same values stored in the database (docs/conventions/api.md).
             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
+            options.JsonSerializerOptions.Converters.Add(new HourMinuteTimeOnlyJsonConverter());
         });
         services.Configure<ApiBehaviorOptions>(options => options.InvalidModelStateResponseFactory = context =>
         {
