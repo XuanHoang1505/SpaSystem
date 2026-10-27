@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NhuNguyetSpa.API.Authorization;
 using NhuNguyetSpa.API.Responses;
 using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.Common.Options;
@@ -53,7 +54,11 @@ public static class AuthenticationExtensions
                         WriteErrorAsync(context.HttpContext, StatusCodes.Status403Forbidden, "forbidden", "Bạn không có quyền thực hiện thao tác này."),
                 };
             });
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            foreach (var (permission, roles) in Permissions.Roles)
+                options.AddPolicy(permission, policy => policy.RequireAuthenticatedUser().RequireRole(roles));
+        });
 
         services.AddRateLimiter(options =>
         {

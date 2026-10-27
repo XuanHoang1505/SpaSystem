@@ -19,5 +19,6 @@ internal sealed class ServicePackageConfiguration : IEntityTypeConfiguration<Ser
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.Name).HasMaxLength(150);
         builder.Property(x => x.Price).HasPrecision(12, 0);
+        builder.Property(x => x.ImageUrl).HasMaxLength(500);
     }
 }

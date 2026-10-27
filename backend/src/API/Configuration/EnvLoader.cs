@@ -34,6 +34,14 @@ public static class EnvLoader
             ["PORT"] = "Port",
         };
 
+    private static readonly IReadOnlyDictionary<string, string> CloudinaryKeyAliases =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["CLOUD_NAME"] = "CloudName",
+            ["API_KEY"] = "ApiKey",
+            ["API_SECRET"] = "ApiSecret",
+        };
+
     private static readonly IReadOnlyDictionary<string, string> NoAliases = new Dictionary<string, string>();
 
     public static void Load(WebApplicationBuilder builder)
@@ -86,6 +94,7 @@ public static class EnvLoader
         if (TryResolvePrefixedKey(envKey, "JWT_", "Jwt", JwtKeyAliases, out var jwtKey)) return jwtKey;
         if (TryResolvePrefixedKey(envKey, "MAIL_SETTINGS_", "MailSettings", MailKeyAliases, out var mailKey)) return mailKey;
         if (TryResolvePrefixedKey(envKey, "SEED_", "Seed", NoAliases, out var seedKey)) return seedKey;
+        if (TryResolvePrefixedKey(envKey, "CLOUDINARY_", "Cloudinary", CloudinaryKeyAliases, out var cloudinaryKey)) return cloudinaryKey;
         return null;
     }
 

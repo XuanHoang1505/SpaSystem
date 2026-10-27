@@ -8,12 +8,14 @@ using NhuNguyetSpa.Infrastructure.Authentication;
 using NhuNguyetSpa.Application.Interfaces.Notifications;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
+using NhuNguyetSpa.Application.Interfaces.Storage;
 using NhuNguyetSpa.Infrastructure.Common;
 using NhuNguyetSpa.Infrastructure.Notifications;
 using NhuNguyetSpa.Infrastructure.Persistence;
 using NhuNguyetSpa.Infrastructure.Persistence.Interceptors;
 using NhuNguyetSpa.Infrastructure.Persistence.Seeds;
 using NhuNguyetSpa.Infrastructure.Repositories;
+using NhuNguyetSpa.Infrastructure.Storage;
 
 namespace NhuNguyetSpa.Infrastructure;
 
@@ -43,6 +45,8 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
+        services.AddScoped<ISpaServiceRepository, SpaServiceRepository>();
+        services.AddScoped<IServicePackageRepository, ServicePackageRepository>();
 
         // Validated when first resolved (no ValidateOnStart): a missing JWT_KEY must not stop health checks or Swagger.
         services.AddOptions<JwtOptions>()
@@ -53,6 +57,13 @@ public static class DependencyInjection
         // Mail credentials are checked by SmtpEmailSender when sending (not at startup), like JWT_KEY.
         services.AddOptions<MailSettings>().Bind(configuration.GetSection(MailSettings.SectionName));
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
+        // Cloudinary credentials are checked by CloudinaryFileStorage on each image call, so the API starts without them.
+        services.AddOptions<CloudinaryOptions>().Bind(configuration.GetSection(CloudinaryOptions.SectionName));
+        services.AddSingleton<IFileStorage, CloudinaryFileStorage>();
+        services.AddOptions<ImageUploadOptions>()
+            .Bind(configuration.GetSection(ImageUploadOptions.SectionName))
+            .Validate(options => options.MaxBytes is > 0 and <= ImageUploadOptions.HardLimitBytes,
+                $"ImageUpload:MaxBytes must be between 1 and {ImageUploadOptions.HardLimitBytes}.");
         services.AddOptions<SeedOptions>().Bind(configuration.GetSection(SeedOptions.SectionName));
         services.AddScoped<DevelopmentSeeder>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();

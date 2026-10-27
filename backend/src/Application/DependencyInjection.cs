@@ -1,7 +1,9 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using NhuNguyetSpa.Application.Interfaces.Services.Auth;
+using NhuNguyetSpa.Application.Interfaces.Services.Catalog;
 using NhuNguyetSpa.Application.UseCases.Auth;
+using NhuNguyetSpa.Application.UseCases.Catalog;
 
 namespace NhuNguyetSpa.Application;
 
@@ -14,6 +16,12 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<CatalogViewer>();
+        services.AddScoped<ServiceCategoryResolver>();
+        services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
+        services.AddScoped<IPackageCatalogService, PackageCatalogService>();
+        services.AddScoped<ICatalogSearchService, CatalogSearchService>();
+        services.AddScoped<ICatalogImageService, CatalogImageService>();
         return services;
     }
 }
