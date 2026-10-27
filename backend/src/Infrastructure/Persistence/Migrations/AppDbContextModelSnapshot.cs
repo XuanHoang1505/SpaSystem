@@ -22,6 +22,8 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "btree_gist");
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "unaccent");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.AiChatMessage", b =>
@@ -1027,6 +1029,11 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("image_url");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -1112,11 +1119,16 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_service_package_items");
 
-                    b.HasIndex("ServicePackageId")
-                        .HasDatabaseName("ix_service_package_items_service_package_id");
-
                     b.HasIndex("SpaServiceId")
                         .HasDatabaseName("ix_service_package_items_spa_service_id");
+
+                    b.HasIndex("ServicePackageId", "SortOrder")
+                        .IsUnique()
+                        .HasDatabaseName("ux_service_package_items_service_package_id_sort_order");
+
+                    b.HasIndex("ServicePackageId", "SpaServiceId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_service_package_items_service_package_id_spa_service_id");
 
                     b.ToTable("service_package_items", null, t =>
                         {
