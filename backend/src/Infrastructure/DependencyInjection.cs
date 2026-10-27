@@ -9,6 +9,7 @@ using NhuNguyetSpa.Application.Interfaces.Notifications;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Storage;
+using NhuNguyetSpa.Application.UseCases.Staff;
 using NhuNguyetSpa.Infrastructure.Common;
 using NhuNguyetSpa.Infrastructure.Notifications;
 using NhuNguyetSpa.Infrastructure.Persistence;
@@ -47,6 +48,9 @@ public static class DependencyInjection
         services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
         services.AddScoped<ISpaServiceRepository, SpaServiceRepository>();
         services.AddScoped<IServicePackageRepository, ServicePackageRepository>();
+        services.AddScoped<IStaffMemberRepository, StaffMemberRepository>();
+        services.AddScoped<IWorkScheduleRepository, WorkScheduleRepository>();
+        services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 
         // Validated when first resolved (no ValidateOnStart): a missing JWT_KEY must not stop health checks or Swagger.
         services.AddOptions<JwtOptions>()
@@ -64,6 +68,15 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(ImageUploadOptions.SectionName))
             .Validate(options => options.MaxBytes is > 0 and <= ImageUploadOptions.HardLimitBytes,
                 $"ImageUpload:MaxBytes must be between 1 and {ImageUploadOptions.HardLimitBytes}.");
+        services.AddOptions<StaffOptions>()
+            .Bind(configuration.GetSection(StaffOptions.SectionName))
+            .Validate(options => options.TemporaryPasswordLength is >= TemporaryPasswordGenerator.MinLength and <= TemporaryPasswordGenerator.MaxLength,
+                $"Staff:TemporaryPasswordLength must be between {TemporaryPasswordGenerator.MinLength} and {TemporaryPasswordGenerator.MaxLength}.");
+        services.AddOptions<WorkScheduleOptions>()
+            .Bind(configuration.GetSection(WorkScheduleOptions.SectionName))
+            .Validate(options => options.MaxDaysAhead is >= 1 and <= 366 && options.MaxQueryRangeDays is >= 1 and <= 366 &&
+                                 options.MaxBatchShifts is >= 1 and <= 5000,
+                "WorkSchedule:MaxDaysAhead and MaxQueryRangeDays must be 1–366, MaxBatchShifts 1–5000.");
         services.AddOptions<SeedOptions>().Bind(configuration.GetSection(SeedOptions.SectionName));
         services.AddScoped<DevelopmentSeeder>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
