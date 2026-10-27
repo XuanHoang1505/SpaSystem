@@ -1,4 +1,5 @@
 using FluentValidation;
+using NhuNguyetSpa.API.Extensions;
 using NhuNguyetSpa.API.Responses;
 using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Domain.Exceptions;
@@ -39,6 +40,7 @@ public sealed class ExceptionHandlingMiddleware
                 TooManyRequestsException => (429, exception.Message, "rate_limited"),
                 ServiceUnavailableException => (503, exception.Message, "service_unavailable"),
                 UnauthorizedAccessException => (401, "Authentication is required.", "unauthorized"),
+                _ when PayloadTooLarge.Matches(exception) => (413, PayloadTooLarge.Message, PayloadTooLarge.Code),
                 _ => (500, "An unexpected error occurred. Please try again later.", "internal_error")
             };
             if (exception is DomainException { Code: { Length: > 0 } specificCode })
