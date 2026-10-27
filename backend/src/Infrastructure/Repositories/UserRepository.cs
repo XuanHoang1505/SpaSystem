@@ -24,4 +24,7 @@ public sealed class UserRepository : Repository<User>, IUserRepository
 
     public Task<bool> ExistsByPhoneAsync(string phoneNumber, CancellationToken cancellationToken) =>
         Set.AnyAsync(user => user.PhoneNumber == phoneNumber, cancellationToken);
+
+    public Task<bool> IsResignedStaffAsync(Guid userId, DateOnly today, CancellationToken cancellationToken) =>
+        Context.StaffMembers.AnyAsync(staff => staff.Id == userId && staff.ResignationDate <= today, cancellationToken);
 }

@@ -10,9 +10,13 @@ namespace NhuNguyetSpa.API.Authorization;
 public static class Permissions
 {
     public const string CatalogManage = "catalog.manage";
+    public const string StaffManage = "staff.manage";
+    public const string ScheduleManage = "schedule.manage";
 
     public static readonly IReadOnlyDictionary<string, string[]> Roles = new Dictionary<string, string[]>
     {
         [CatalogManage] = [SecurityRoles.Owner],
+        [StaffManage] = [SecurityRoles.Owner],
+        [ScheduleManage] = [SecurityRoles.Owner],
     };
 }

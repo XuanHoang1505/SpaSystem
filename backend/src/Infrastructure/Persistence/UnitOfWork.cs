@@ -34,7 +34,9 @@ public sealed class UnitOfWork : IUnitOfWork
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         await operation(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        // The operation may have had a side effect that cannot be undone (staff credentials mail, BR-STF-08), so a client
+        // disconnecting at this point must not roll the work back.
+        await transaction.CommitAsync(CancellationToken.None);
     }
 
     // Constraint names come from docs/domain/data-model.md; messages are shown to users, so keep them free of SQL details.
@@ -42,6 +44,8 @@ public sealed class UnitOfWork : IUnitOfWork
     {
         PostgresErrorCodes.ExclusionViolation when exception.ConstraintName == AppointmentConstraints.StaffNoOverlap =>
             new ConflictException("Khung giờ này vừa có người đặt, vui lòng chọn giờ khác.", "slot_unavailable"),
+        PostgresErrorCodes.ExclusionViolation when exception.ConstraintName == WorkScheduleConstraints.NoOverlap =>
+            new ConflictException("Ca làm bị chồng với một ca khác của nhân viên trong ngày.", "shift_conflict"),
         PostgresErrorCodes.UniqueViolation =>
             new ConflictException("Dữ liệu đã tồn tại.", "duplicate_value"),
         _ => null,

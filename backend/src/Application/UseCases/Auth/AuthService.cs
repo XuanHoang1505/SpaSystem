@@ -1,4 +1,5 @@
 using FluentValidation;
+using NhuNguyetSpa.Application.Common;
 using NhuNguyetSpa.Application.Common.Interfaces;
 using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Auth;
@@ -55,8 +56,11 @@ public sealed class AuthService : IAuthService
             throw AuthErrors.InvalidCredentials();
         if (user.Status != UserStatus.Active)
             throw AuthErrors.NotActive(user.Status);
+        var now = _clock.UtcNow;
+        if (await HasResignedAsync(user, now, cancellationToken))
+            throw AuthErrors.NotActive(UserStatus.Inactive);
 
-        var result = await IssueTokensAsync(user, _clock.UtcNow, cancellationToken);
+        var result = await IssueTokensAsync(user, now, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return OperationResult<AuthResultDto>.Success(result);
     }
@@ -81,6 +85,11 @@ public sealed class AuthService : IAuthService
         {
             await _refreshTokens.TryRevokeAsync(stored.Id, now, cancellationToken);
             throw AuthErrors.NotActive(stored.User.Status);
+        }
+        if (await HasResignedAsync(stored.User, now, cancellationToken))
+        {
+            await _refreshTokens.TryRevokeAsync(stored.Id, now, cancellationToken);
+            throw AuthErrors.NotActive(UserStatus.Inactive);
         }
 
         AuthResultDto? result = null;
@@ -116,4 +125,11 @@ public sealed class AuthService : IAuthService
         return new AuthResultDto(access.Token, access.ExpiresAtUtc, refresh.Token, refresh.ExpiresAtUtc,
             new AuthUserDto(user.Id, user.FullName, user.Email, user.Role));
     }
+
+    /// <summary>
+    /// BR-STF-05: a resignation recorded for a future date leaves the account active (no background job), so staff are
+    /// refused from that date (Vietnam calendar) even while <c>users.status</c> is still active.
+    /// </summary>
+    private async Task<bool> HasResignedAsync(User user, DateTime nowUtc, CancellationToken cancellationToken) =>
+        user.Role == UserRole.Staff && await _users.IsResignedStaffAsync(user.Id, SpaTime.Today(nowUtc), cancellationToken);
 }
