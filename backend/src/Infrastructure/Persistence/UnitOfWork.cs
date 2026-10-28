@@ -46,6 +46,10 @@ public sealed class UnitOfWork : IUnitOfWork
             new ConflictException("Khung giờ này vừa có người đặt, vui lòng chọn giờ khác.", "slot_unavailable"),
         PostgresErrorCodes.ExclusionViolation when exception.ConstraintName == WorkScheduleConstraints.NoOverlap =>
             new ConflictException("Ca làm bị chồng với một ca khác của nhân viên trong ngày.", "shift_conflict"),
+        PostgresErrorCodes.UniqueViolation when exception.ConstraintName is CartItemIndexes.UniqueService or CartItemIndexes.UniquePackage =>
+            new ConflictException("Sản phẩm này đã có trong giỏ hàng.", "cart_item_exists"),
+        PostgresErrorCodes.UniqueViolation when exception.ConstraintName == Configurations.PromotionConfiguration.UniqueCode =>
+            new ConflictException("Mã khuyến mãi đã tồn tại.", "promotion_code_exists"),
         PostgresErrorCodes.UniqueViolation =>
             new ConflictException("Dữ liệu đã tồn tại.", "duplicate_value"),
         _ => null,

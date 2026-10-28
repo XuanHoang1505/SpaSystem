@@ -23,6 +23,12 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(x => x.DiscountTotal).HasPrecision(12, 0);
         builder.Property(x => x.GrandTotal).HasPrecision(12, 0);
         builder.HasIndex(x => x.Code).IsUnique().HasDatabaseName("ux_orders_code");
+        // Idempotency-Key of POST /me/orders (BR-ORD-08) and the scan of OrderExpiryJob (BR-ORD-03).
+        builder.HasIndex(x => x.CustomerId);
+        builder.HasIndex(x => new { x.CustomerId, x.IdempotencyKey }).IsUnique()
+            .HasFilter("idempotency_key IS NOT NULL").HasDatabaseName("ux_orders_customer_id_idempotency_key");
+        builder.HasIndex(x => x.PaymentDueAtUtc)
+            .HasFilter("status = 'pending_payment'").HasDatabaseName("ix_orders_pending_payment_due");
         builder.HasOne(x => x.Customer).WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
     }
 }
