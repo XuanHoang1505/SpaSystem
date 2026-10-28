@@ -71,6 +71,12 @@ public sealed class ServicePackageRepository : Repository<ServicePackage>, IServ
                     .ToList()))
             .FirstOrDefaultAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<ServicePackage>> GetForFulfilmentAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+        await Set.AsNoTracking()
+            .Include(package => package.Items).ThenInclude(item => item.SpaService)
+            .Where(package => ids.Contains(package.Id))
+            .ToListAsync(cancellationToken);
+
     public Task<ServicePackage?> GetWithItemsAsync(Guid id, CancellationToken cancellationToken) =>
         Set.Include(package => package.Items).FirstOrDefaultAsync(package => package.Id == id, cancellationToken);
 

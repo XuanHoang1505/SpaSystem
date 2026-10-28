@@ -6,6 +6,9 @@ using NhuNguyetSpa.Application.Common.Options;
 using NhuNguyetSpa.Application.Interfaces.Authentication;
 using NhuNguyetSpa.Infrastructure.Authentication;
 using NhuNguyetSpa.Application.Interfaces.Notifications;
+using NhuNguyetSpa.Application.Interfaces.Payments;
+using NhuNguyetSpa.Infrastructure.BackgroundJobs;
+using NhuNguyetSpa.Infrastructure.Payments;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Storage;
@@ -51,6 +54,10 @@ public static class DependencyInjection
         services.AddScoped<IStaffMemberRepository, StaffMemberRepository>();
         services.AddScoped<IWorkScheduleRepository, WorkScheduleRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        services.AddScoped<IPromotionRepository, PromotionRepository>();
+        services.AddScoped<ICartRepository, CartRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
 
         // Validated when first resolved (no ValidateOnStart): a missing JWT_KEY must not stop health checks or Swagger.
         services.AddOptions<JwtOptions>()
@@ -77,6 +84,29 @@ public static class DependencyInjection
             .Validate(options => options.MaxDaysAhead is >= 1 and <= 366 && options.MaxQueryRangeDays is >= 1 and <= 366 &&
                                  options.MaxBatchShifts is >= 1 and <= 5000,
                 "WorkSchedule:MaxDaysAhead and MaxQueryRangeDays must be 1–366, MaxBatchShifts 1–5000.");
+        // VNPay keys are checked by VnpayPaymentGateway on each call, so the API starts without them (like Cloudinary).
+        services.AddOptions<VnpayOptions>().Bind(configuration.GetSection(VnpayOptions.SectionName));
+        services.AddSingleton<IPaymentGateway, VnpayPaymentGateway>();
+        services.AddOptions<CartOptions>()
+            .Bind(configuration.GetSection(CartOptions.SectionName))
+            .Validate(options => options.MaxItems is >= 1 and <= 100, "Cart:MaxItems must be 1–100.")
+            .ValidateOnStart();
+        services.AddOptions<OrderOptions>()
+            .Bind(configuration.GetSection(OrderOptions.SectionName))
+            .Validate(options => options.PaymentTimeoutMinutes is >= 1 and <= 1440, "Order:PaymentTimeoutMinutes must be 1–1440.")
+            .ValidateOnStart();
+        // Payment URLs are checked by the gateway on each call, so the API starts without them (like Cloudinary).
+        services.AddOptions<PaymentOptions>()
+            .Bind(configuration.GetSection(PaymentOptions.SectionName))
+            .Validate(options => options.MaxAttemptsPerOrder is >= 1 and <= 20, "Payment:MaxAttemptsPerOrder must be 1–20.")
+            .ValidateOnStart();
+        services.AddOptions<OrderExpiryOptions>()
+            .Bind(configuration.GetSection(OrderExpiryOptions.SectionName))
+            .Validate(options => options.IntervalSeconds is >= 5 and <= 3600 && options.GraceMinutes is >= 0 and <= 120 &&
+                                 options.BatchSize is >= 1 and <= 1000,
+                "OrderExpiry:IntervalSeconds must be 5–3600, GraceMinutes 0–120, BatchSize 1–1000.")
+            .ValidateOnStart();
+        services.AddHostedService<OrderExpiryJob>();
         services.AddOptions<SeedOptions>().Bind(configuration.GetSection(SeedOptions.SectionName));
         services.AddScoped<DevelopmentSeeder>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
