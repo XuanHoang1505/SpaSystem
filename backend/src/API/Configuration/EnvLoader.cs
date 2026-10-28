@@ -12,6 +12,9 @@ public static class EnvLoader
         {
             ["CONNECTION_STRING"] = "ConnectionStrings:Default",
             ["SWAGGER_ENABLED"] = "Swagger:Enabled",
+            ["PAYMENT_PUBLIC_API_BASE_URL"] = "Payment:PublicApiBaseUrl",
+            ["PAYMENT_WEB_RETURN_URL"] = "Payment:ClientReturnUrls:Web",
+            ["PAYMENT_MOBILE_RETURN_URL"] = "Payment:ClientReturnUrls:Mobile",
         };
 
     private static readonly IReadOnlyDictionary<string, string> JwtKeyAliases =
@@ -40,6 +43,13 @@ public static class EnvLoader
             ["CLOUD_NAME"] = "CloudName",
             ["API_KEY"] = "ApiKey",
             ["API_SECRET"] = "ApiSecret",
+        };
+
+    private static readonly IReadOnlyDictionary<string, string> VnpayKeyAliases =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["TMN_CODE"] = "TmnCode",
+            ["HASH_SECRET"] = "HashSecret",
         };
 
     private static readonly IReadOnlyDictionary<string, string> NoAliases = new Dictionary<string, string>();
@@ -95,6 +105,7 @@ public static class EnvLoader
         if (TryResolvePrefixedKey(envKey, "MAIL_SETTINGS_", "MailSettings", MailKeyAliases, out var mailKey)) return mailKey;
         if (TryResolvePrefixedKey(envKey, "SEED_", "Seed", NoAliases, out var seedKey)) return seedKey;
         if (TryResolvePrefixedKey(envKey, "CLOUDINARY_", "Cloudinary", CloudinaryKeyAliases, out var cloudinaryKey)) return cloudinaryKey;
+        if (TryResolvePrefixedKey(envKey, "VNPAY_", "Vnpay", VnpayKeyAliases, out var vnpayKey)) return vnpayKey;
         return null;
     }
 

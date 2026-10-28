@@ -12,11 +12,17 @@ public static class Permissions
     public const string CatalogManage = "catalog.manage";
     public const string StaffManage = "staff.manage";
     public const string ScheduleManage = "schedule.manage";
+    public const string PromotionManage = "promotion.manage";
+    public const string CartSelf = "cart.self";
+    public const string OrderSelf = "order.self";
 
     public static readonly IReadOnlyDictionary<string, string[]> Roles = new Dictionary<string, string[]>
     {
         [CatalogManage] = [SecurityRoles.Owner],
         [StaffManage] = [SecurityRoles.Owner],
         [ScheduleManage] = [SecurityRoles.Owner],
+        [PromotionManage] = [SecurityRoles.Owner],
+        [CartSelf] = [SecurityRoles.Customer],
+        [OrderSelf] = [SecurityRoles.Customer],
     };
 }
