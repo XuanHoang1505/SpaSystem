@@ -10,8 +10,15 @@ builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Confi
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApiFoundation(builder.Configuration);
+builder.Services.AddApiAuthentication();
 
 var app = builder.Build();
+if (args.Contains(SeedCommand.Argument))
+{
+    await SeedCommand.RunAsync(app);
+    return;
+}
+
 app.UseSerilogRequestLogging();
 app.UseApiExceptionHandling();
 app.UseApiStatusCodes();
@@ -27,6 +34,9 @@ if (!string.IsNullOrEmpty(app.Configuration["HTTPS_PORT"]) ||
     app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors(NhuNguyetSpa.API.Extensions.ServiceCollectionExtensions.CorsPolicy);
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.MapApiHealthChecks();
 app.Run();

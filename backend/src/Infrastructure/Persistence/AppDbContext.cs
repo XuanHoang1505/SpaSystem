@@ -6,9 +6,17 @@ using NhuNguyetSpa.Infrastructure.Persistence.Conversions;
 namespace NhuNguyetSpa.Infrastructure.Persistence;
 
 /// <summary>EF Core context for the schema in docs/domain/data-model.md (PostgreSQL, snake_case names).</summary>
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public sealed class AppDbContext : DbContext
 {
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
+
     public const int EnumMaxLength = 30;
+    public const string UnaccentFunctionName = "f_unaccent";
+
+    /// <summary>Maps to <c>public.f_unaccent(text)</c>; usable only inside LINQ queries.</summary>
+    public static string Unaccent(string value) => throw new NotSupportedException($"{nameof(Unaccent)} can only be used in LINQ to Entities queries.");
 
     public DbSet<User> Users => Set<User>();
     public DbSet<OwnerProfile> OwnerProfiles => Set<OwnerProfile>();
@@ -45,6 +53,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         // citext: case-insensitive email; btree_gist: uuid equality inside the appointments EXCLUDE constraint (ADR-0003).
         modelBuilder.HasPostgresExtension("citext");
         modelBuilder.HasPostgresExtension("btree_gist");
+        // unaccent + pg_trgm: accent-insensitive catalog search (BR-CAT-05). f_unaccent itself is created by SQL in the
+        // AddCatalogUnaccentSearch migration because unaccent() is not IMMUTABLE and cannot back an index directly.
+        modelBuilder.HasPostgresExtension("unaccent");
+        modelBuilder.HasPostgresExtension("pg_trgm");
+        modelBuilder.HasDbFunction(typeof(AppDbContext).GetMethod(nameof(Unaccent))!).HasName(UnaccentFunctionName).HasSchema("public");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 

@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using NhuNguyetSpa.API.Responses;
+using NhuNguyetSpa.API.Serialization;
 using NhuNguyetSpa.API.Services;
 using NhuNguyetSpa.Application.Common.Interfaces;
 using NhuNguyetSpa.Application.Common.Models;
@@ -20,9 +21,14 @@ public static class ServiceCollectionExtensions
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             // Enums travel as snake_case strings, the same values stored in the database (docs/conventions/api.md).
             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
+            options.JsonSerializerOptions.Converters.Add(new HourMinuteTimeOnlyJsonConverter());
         });
         services.Configure<ApiBehaviorOptions>(options => options.InvalidModelStateResponseFactory = context =>
         {
+            if (context.ModelState.Values.SelectMany(entry => entry.Errors).Any(error => PayloadTooLarge.Matches(error.Exception) || PayloadTooLarge.Matches(error.ErrorMessage)))
+                return new ObjectResult(new ApiResponse<object>(false, PayloadTooLarge.Message, null,
+                    [new ErrorDetail(PayloadTooLarge.Code, PayloadTooLarge.Message)], context.HttpContext.TraceIdentifier))
+                { StatusCode = StatusCodes.Status413PayloadTooLarge };
             var errors = context.ModelState.SelectMany(pair => pair.Value?.Errors.Select(_ =>
                 new ErrorDetail("validation_error", "The supplied value is invalid.", pair.Key)) ?? [] ).ToArray();
             return new BadRequestObjectResult(new ApiResponse<object>(false, "Validation failed.", null, errors, context.HttpContext.TraceIdentifier));

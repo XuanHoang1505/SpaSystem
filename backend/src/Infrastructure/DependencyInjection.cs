@@ -2,12 +2,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NhuNguyetSpa.Application.Common.Interfaces;
+using NhuNguyetSpa.Application.Common.Options;
+using NhuNguyetSpa.Application.Interfaces.Authentication;
+using NhuNguyetSpa.Infrastructure.Authentication;
+using NhuNguyetSpa.Application.Interfaces.Notifications;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
+using NhuNguyetSpa.Application.Interfaces.Storage;
+using NhuNguyetSpa.Application.UseCases.Staff;
 using NhuNguyetSpa.Infrastructure.Common;
+using NhuNguyetSpa.Infrastructure.Notifications;
 using NhuNguyetSpa.Infrastructure.Persistence;
 using NhuNguyetSpa.Infrastructure.Persistence.Interceptors;
+using NhuNguyetSpa.Infrastructure.Persistence.Seeds;
 using NhuNguyetSpa.Infrastructure.Repositories;
+using NhuNguyetSpa.Infrastructure.Storage;
 
 namespace NhuNguyetSpa.Infrastructure;
 
@@ -34,6 +43,44 @@ public static class DependencyInjection
         });
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
+        services.AddScoped<ISpaServiceRepository, SpaServiceRepository>();
+        services.AddScoped<IServicePackageRepository, ServicePackageRepository>();
+        services.AddScoped<IStaffMemberRepository, StaffMemberRepository>();
+        services.AddScoped<IWorkScheduleRepository, WorkScheduleRepository>();
+        services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+
+        // Validated when first resolved (no ValidateOnStart): a missing JWT_KEY must not stop health checks or Swagger.
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .Validate(options => options.SecretKey.Length >= JwtOptions.MinimumSecretKeyLength,
+                $"Jwt:SecretKey (JWT_KEY in .env) must be at least {JwtOptions.MinimumSecretKeyLength} characters.");
+        services.AddOptions<AccountOptions>().Bind(configuration.GetSection(AccountOptions.SectionName));
+        // Mail credentials are checked by SmtpEmailSender when sending (not at startup), like JWT_KEY.
+        services.AddOptions<MailSettings>().Bind(configuration.GetSection(MailSettings.SectionName));
+        services.AddSingleton<IEmailSender, SmtpEmailSender>();
+        // Cloudinary credentials are checked by CloudinaryFileStorage on each image call, so the API starts without them.
+        services.AddOptions<CloudinaryOptions>().Bind(configuration.GetSection(CloudinaryOptions.SectionName));
+        services.AddSingleton<IFileStorage, CloudinaryFileStorage>();
+        services.AddOptions<ImageUploadOptions>()
+            .Bind(configuration.GetSection(ImageUploadOptions.SectionName))
+            .Validate(options => options.MaxBytes is > 0 and <= ImageUploadOptions.HardLimitBytes,
+                $"ImageUpload:MaxBytes must be between 1 and {ImageUploadOptions.HardLimitBytes}.");
+        services.AddOptions<StaffOptions>()
+            .Bind(configuration.GetSection(StaffOptions.SectionName))
+            .Validate(options => options.TemporaryPasswordLength is >= TemporaryPasswordGenerator.MinLength and <= TemporaryPasswordGenerator.MaxLength,
+                $"Staff:TemporaryPasswordLength must be between {TemporaryPasswordGenerator.MinLength} and {TemporaryPasswordGenerator.MaxLength}.");
+        services.AddOptions<WorkScheduleOptions>()
+            .Bind(configuration.GetSection(WorkScheduleOptions.SectionName))
+            .Validate(options => options.MaxDaysAhead is >= 1 and <= 366 && options.MaxQueryRangeDays is >= 1 and <= 366 &&
+                                 options.MaxBatchShifts is >= 1 and <= 5000,
+                "WorkSchedule:MaxDaysAhead and MaxQueryRangeDays must be 1–366, MaxBatchShifts 1–5000.");
+        services.AddOptions<SeedOptions>().Bind(configuration.GetSection(SeedOptions.SectionName));
+        services.AddScoped<DevelopmentSeeder>();
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<ITokenService, JwtTokenService>();
 
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database", tags: [ReadinessTag]);
         return services;

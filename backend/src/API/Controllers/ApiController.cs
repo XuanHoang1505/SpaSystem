@@ -8,10 +8,10 @@ namespace NhuNguyetSpa.API.Controllers;
 [Route("api/v1/[controller]")]
 public abstract class ApiController : ControllerBase
 {
-    protected IActionResult HandleResult<T>(OperationResult<T> result)
+    protected IActionResult HandleResult<T>(OperationResult<T> result, int successStatusCode = StatusCodes.Status200OK)
     {
         var response = new ApiResponse<T>(result.IsSuccess, result.Message, result.Data, result.Errors, HttpContext.TraceIdentifier);
-        return result.IsSuccess ? Ok(response) : BadRequest(response);
+        return result.IsSuccess ? StatusCode(successStatusCode, response) : BadRequest(response);
     }
 
     protected IActionResult HandleResult(OperationResult result)

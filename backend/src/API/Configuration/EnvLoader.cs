@@ -3,13 +3,6 @@ using Microsoft.Extensions.Configuration.Memory;
 
 namespace NhuNguyetSpa.API.Configuration;
 
-/// <summary>
-/// Loads <c>backend/src/API/.env</c> and maps UPPER_SNAKE_CASE variables onto configuration keys, following
-/// FIN-Solution's EnvLoader: <c>CONNECTION_STRING</c> → <c>ConnectionStrings:Default</c>, <c>JWT_KEY</c> → <c>Jwt:SecretKey</c>,
-/// <c>MAIL_SETTINGS_HOST</c> → <c>MailSettings:Host</c>, …
-/// Precedence (lowest → highest): appsettings*.json, .env, real environment variables with the same UPPER name,
-/// standard ASP.NET configuration (<c>Section__Key</c> variables, command line, test overrides).
-/// </summary>
 public static class EnvLoader
 {
     public const string FileName = ".env";
@@ -40,6 +33,16 @@ public static class EnvLoader
             ["HOST"] = "Host",
             ["PORT"] = "Port",
         };
+
+    private static readonly IReadOnlyDictionary<string, string> CloudinaryKeyAliases =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["CLOUD_NAME"] = "CloudName",
+            ["API_KEY"] = "ApiKey",
+            ["API_SECRET"] = "ApiSecret",
+        };
+
+    private static readonly IReadOnlyDictionary<string, string> NoAliases = new Dictionary<string, string>();
 
     public static void Load(WebApplicationBuilder builder)
     {
@@ -90,6 +93,8 @@ public static class EnvLoader
         if (ExplicitKeyMap.TryGetValue(envKey, out var explicitKey)) return explicitKey;
         if (TryResolvePrefixedKey(envKey, "JWT_", "Jwt", JwtKeyAliases, out var jwtKey)) return jwtKey;
         if (TryResolvePrefixedKey(envKey, "MAIL_SETTINGS_", "MailSettings", MailKeyAliases, out var mailKey)) return mailKey;
+        if (TryResolvePrefixedKey(envKey, "SEED_", "Seed", NoAliases, out var seedKey)) return seedKey;
+        if (TryResolvePrefixedKey(envKey, "CLOUDINARY_", "Cloudinary", CloudinaryKeyAliases, out var cloudinaryKey)) return cloudinaryKey;
         return null;
     }
 

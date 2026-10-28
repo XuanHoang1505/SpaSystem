@@ -14,6 +14,7 @@
     "dev": "node scripts/dev.mjs",
     "db:up": "docker compose up -d db",
     "db:migrate": "dotnet tool restore && dotnet ef database update --project backend/src/Infrastructure --startup-project backend/src/API",
+    "db:seed": "dotnet run --project backend/src/API --launch-profile http -- --seed-dev",
     "web": "npm run dev --workspace @spa/web",
     "web:build": "npm run build --workspace @spa/web",
     "web:test": "npm run test --workspace @spa/web",

@@ -5,13 +5,17 @@ using Npgsql;
 
 namespace NhuNguyetSpa.Infrastructure.Persistence;
 
-public sealed class UnitOfWork(AppDbContext context) : IUnitOfWork
+public sealed class UnitOfWork : IUnitOfWork
 {
+    private readonly AppDbContext _context;
+
+    public UnitOfWork(AppDbContext context) => _context = context;
+
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            return await context.SaveChangesAsync(cancellationToken);
+            return await _context.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException exception) when (exception.InnerException is PostgresException postgres && Translate(postgres) is { } conflict)
         {
@@ -22,15 +26,17 @@ public sealed class UnitOfWork(AppDbContext context) : IUnitOfWork
     public async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> operation, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(operation);
-        if (context.Database.CurrentTransaction is not null)
+        if (_context.Database.CurrentTransaction is not null)
         {
             await operation(cancellationToken);
             return;
         }
 
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         await operation(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        // The operation may have had a side effect that cannot be undone (staff credentials mail, BR-STF-08), so a client
+        // disconnecting at this point must not roll the work back.
+        await transaction.CommitAsync(CancellationToken.None);
     }
 
     // Constraint names come from docs/domain/data-model.md; messages are shown to users, so keep them free of SQL details.
@@ -38,6 +44,8 @@ public sealed class UnitOfWork(AppDbContext context) : IUnitOfWork
     {
         PostgresErrorCodes.ExclusionViolation when exception.ConstraintName == AppointmentConstraints.StaffNoOverlap =>
             new ConflictException("Khung giờ này vừa có người đặt, vui lòng chọn giờ khác.", "slot_unavailable"),
+        PostgresErrorCodes.ExclusionViolation when exception.ConstraintName == WorkScheduleConstraints.NoOverlap =>
+            new ConflictException("Ca làm bị chồng với một ca khác của nhân viên trong ngày.", "shift_conflict"),
         PostgresErrorCodes.UniqueViolation =>
             new ConflictException("Dữ liệu đã tồn tại.", "duplicate_value"),
         _ => null,
