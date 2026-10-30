@@ -126,9 +126,6 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_appointments");
 
-                    b.HasIndex("CustomerId")
-                        .HasDatabaseName("ix_appointments_customer_id");
-
                     b.HasIndex("OrderItemId")
                         .HasDatabaseName("ix_appointments_order_item_id");
 
@@ -138,11 +135,16 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.HasIndex("TreatmentSessionId")
                         .HasDatabaseName("ix_appointments_treatment_session_id");
 
+                    b.HasIndex("CustomerId", "Date")
+                        .HasDatabaseName("ix_appointments_customer_id_date");
+
                     b.HasIndex("StaffMemberId", "Date")
                         .HasDatabaseName("ix_appointments_staff_member_id_date");
 
                     b.ToTable("appointments", null, t =>
                         {
+                            t.HasCheckConstraint("ck_appointments_source", "num_nonnulls(service_entitlement_id, treatment_session_id, order_item_id) >= 1");
+
                             t.HasCheckConstraint("ck_appointments_status", "status IN ('held', 'pending_confirmation', 'confirmed', 'completed', 'cancelled', 'no_show', 'hold_expired')");
 
                             t.HasCheckConstraint("ck_appointments_time_range", "end_time > start_time");

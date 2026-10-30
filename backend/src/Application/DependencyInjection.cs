@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using NhuNguyetSpa.Application.Interfaces.Services.Auth;
+using NhuNguyetSpa.Application.Interfaces.Services.Bookings;
 using NhuNguyetSpa.Application.Interfaces.Services.Catalog;
 using NhuNguyetSpa.Application.Interfaces.Services.Orders;
 using NhuNguyetSpa.Application.Interfaces.Services.Payments;
@@ -8,6 +9,7 @@ using NhuNguyetSpa.Application.Interfaces.Services.Promotions;
 using NhuNguyetSpa.Application.Interfaces.Services.Staff;
 using NhuNguyetSpa.Application.Interfaces.Services.WorkSchedules;
 using NhuNguyetSpa.Application.UseCases.Auth;
+using NhuNguyetSpa.Application.UseCases.Bookings;
 using NhuNguyetSpa.Application.UseCases.Catalog;
 using NhuNguyetSpa.Application.UseCases.Orders;
 using NhuNguyetSpa.Application.UseCases.Payments;
@@ -34,6 +36,8 @@ public static class DependencyInjection
         services.AddScoped<ICatalogImageService, CatalogImageService>();
         services.AddScoped<IStaffService, StaffService>();
         services.AddScoped<IWorkScheduleService, WorkScheduleService>();
+        services.AddScoped<IAvailabilityService, AvailabilityService>();
+        services.AddScoped<IAppointmentManagementService, AppointmentManagementService>();
         services.AddScoped<IPromotionService, PromotionService>();
         services.AddScoped<PromotionApplier>();
         services.AddScoped<ICartService, CartService>();

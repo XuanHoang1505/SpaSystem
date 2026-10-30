@@ -15,6 +15,7 @@ public static class Permissions
     public const string PromotionManage = "promotion.manage";
     public const string CartSelf = "cart.self";
     public const string OrderSelf = "order.self";
+    public const string AppointmentManage = "appointment.manage";
 
     public static readonly IReadOnlyDictionary<string, string[]> Roles = new Dictionary<string, string[]>
     {
@@ -24,5 +25,6 @@ public static class Permissions
         [PromotionManage] = [SecurityRoles.Owner],
         [CartSelf] = [SecurityRoles.Customer],
         [OrderSelf] = [SecurityRoles.Customer],
+        [AppointmentManage] = [SecurityRoles.Owner],
     };
 }

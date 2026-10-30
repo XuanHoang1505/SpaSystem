@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NhuNguyetSpa.Application.Common.Models;
+using NhuNguyetSpa.Application.DTOs.Bookings;
 using NhuNguyetSpa.Application.DTOs.Staff;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Domain.Entities;
@@ -105,4 +106,23 @@ public sealed class StaffMemberRepository : Repository<StaffMember>, IStaffMembe
         .ThenBy(staff => staff.Id)
         .Skip((criteria.PageNumber - 1) * criteria.PageSize)
         .Take(criteria.PageSize);
+
+    public async Task<IReadOnlyList<AvailabilityCandidate>> GetAvailabilityCandidatesAsync(
+        Guid spaServiceId, DateOnly date, Guid? staffMemberId, CancellationToken cancellationToken) =>
+        await Set.AsNoTracking()
+            .Where(staff => staff.Skills.Any(skill => skill.SpaServiceId == spaServiceId) &&
+                            staff.User.Status == UserStatus.Active &&
+                            staff.HireDate <= date &&
+                            (staff.ResignationDate == null || staff.ResignationDate > date) &&
+                            (staffMemberId == null || staff.Id == staffMemberId))
+            .OrderBy(staff => staff.User.FullName).ThenBy(staff => staff.Id)
+            .Select(staff => new AvailabilityCandidate(staff.Id, staff.User.FullName))
+            .ToListAsync(cancellationToken);
+
+    public Task<bool> HasSkillAsync(Guid staffMemberId, Guid spaServiceId, CancellationToken cancellationToken) =>
+        Context.StaffSkills.AnyAsync(skill => skill.StaffMemberId == staffMemberId && skill.SpaServiceId == spaServiceId, cancellationToken);
+
+    // NO KEY UPDATE serializes bookers without blocking the FOR KEY SHARE locks taken by foreign-key checks on appointments.
+    public Task LockForBookingAsync(Guid staffMemberId, CancellationToken cancellationToken) =>
+        Context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM staff_members WHERE id = {staffMemberId} FOR NO KEY UPDATE", cancellationToken);
 }

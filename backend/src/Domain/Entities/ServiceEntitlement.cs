@@ -12,4 +12,18 @@ public sealed class ServiceEntitlement : BaseEntity
     public OrderItem OrderItem { get; set; } = null!;
     public DateTime? ExpiresAtUtc { get; set; }
     public EntitlementStatus Status { get; set; }
+
+    /// <summary>A cancelled (or not-counted no-show) booking gives the entitlement back (BR-BKG-10).</summary>
+    public void Release()
+    {
+        if (Status == EntitlementStatus.Booked)
+            Status = EntitlementStatus.Available;
+    }
+
+    /// <summary>A no-show that counts as a visit (Q-07 switched on).</summary>
+    public void Consume()
+    {
+        if (Status == EntitlementStatus.Booked)
+            Status = EntitlementStatus.Used;
+    }
 }

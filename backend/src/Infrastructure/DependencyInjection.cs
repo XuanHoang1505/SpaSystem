@@ -84,6 +84,12 @@ public static class DependencyInjection
             .Validate(options => options.MaxDaysAhead is >= 1 and <= 366 && options.MaxQueryRangeDays is >= 1 and <= 366 &&
                                  options.MaxBatchShifts is >= 1 and <= 5000,
                 "WorkSchedule:MaxDaysAhead and MaxQueryRangeDays must be 1–366, MaxBatchShifts 1–5000.");
+        services.AddOptions<BookingOptions>()
+            .Bind(configuration.GetSection(BookingOptions.SectionName))
+            .Validate(options => options.SlotStepMinutes is >= 5 and <= 60 && 60 % options.SlotStepMinutes == 0 &&
+                                 options.MaxDaysAhead is >= 1 and <= 366 && options.MaxQueryRangeDays is >= 1 and <= 366,
+                "Booking:SlotStepMinutes must be 5–60 and divide 60; MaxDaysAhead and MaxQueryRangeDays must be 1–366.")
+            .ValidateOnStart();
         // VNPay keys are checked by VnpayPaymentGateway on each call, so the API starts without them (like Cloudinary).
         services.AddOptions<VnpayOptions>().Bind(configuration.GetSection(VnpayOptions.SectionName));
         services.AddSingleton<IPaymentGateway, VnpayPaymentGateway>();

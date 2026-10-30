@@ -16,4 +16,18 @@ public sealed class TreatmentSession : BaseEntity
     public TreatmentSessionStatus Status { get; set; }
     public string? Note { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
+
+    /// <summary>A cancelled (or not-counted no-show) booking frees the session (BR-BKG-10).</summary>
+    public void Release()
+    {
+        if (Status == TreatmentSessionStatus.Booked)
+            Status = TreatmentSessionStatus.NotBooked;
+    }
+
+    /// <summary>A no-show that counts (Q-07 switched on); package progress is not advanced.</summary>
+    public void Skip()
+    {
+        if (Status == TreatmentSessionStatus.Booked)
+            Status = TreatmentSessionStatus.Skipped;
+    }
 }
