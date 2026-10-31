@@ -68,6 +68,14 @@ public sealed class Appointment : BaseEntity, IHasCreatedAt
             Note = string.IsNullOrEmpty(Note) ? note : $"{Note}\n{note}";
     }
 
+    /// <summary>BR-BKG-06: a book-now hold paid successfully becomes confirmed with the entitlement the payment created.</summary>
+    public void ConfirmPaidHold(Guid serviceEntitlementId)
+    {
+        EnsureStatus(Status == AppointmentStatus.Held);
+        ServiceEntitlementId = serviceEntitlementId;
+        Status = AppointmentStatus.Confirmed;
+    }
+
     public void ExpireHold()
     {
         EnsureStatus(Status == AppointmentStatus.Held);
