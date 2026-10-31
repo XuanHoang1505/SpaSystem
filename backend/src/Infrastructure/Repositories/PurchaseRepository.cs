@@ -34,6 +34,16 @@ public sealed class PurchaseRepository : IPurchaseRepository
     public Task<TreatmentSession?> GetSessionForUpdateAsync(Guid sessionId, CancellationToken cancellationToken) =>
         _context.TreatmentSessions.FirstOrDefaultAsync(session => session.Id == sessionId, cancellationToken);
 
+    public async Task<(CustomerPackage Package, TreatmentPlan Plan)> GetPackageForUpdateAsync(Guid treatmentPlanId, CancellationToken cancellationToken)
+    {
+        // The row lock comes first, so the tracked package read after it carries the latest used_sessions.
+        var package = await _context.CustomerPackages
+            .FromSql($"SELECT p.* FROM customer_packages p JOIN treatment_plans t ON t.customer_package_id = p.id WHERE t.id = {treatmentPlanId} FOR UPDATE OF p")
+            .SingleAsync(cancellationToken);
+        var plan = await _context.TreatmentPlans.SingleAsync(item => item.Id == treatmentPlanId, cancellationToken);
+        return (package, plan);
+    }
+
     public async Task<IReadOnlyList<PurchasedServiceRow>> ListServicesAsync(Guid customerId, int max, CancellationToken cancellationToken) =>
         await ServiceRows(_context.ServiceEntitlements.Where(entitlement => entitlement.CustomerId == customerId)
                 .OrderByDescending(entitlement => entitlement.OrderItem.Order.CreatedAtUtc).ThenBy(entitlement => entitlement.Id)

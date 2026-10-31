@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Bookings;
+using NhuNguyetSpa.Application.DTOs.Care;
 using NhuNguyetSpa.Application.DTOs.Staff;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.UseCases.WorkSchedules;
@@ -81,15 +82,51 @@ public sealed class AppointmentRepository : Repository<Appointment>, IAppointmen
             new AppointmentServiceDto(row.Service.Id, row.Service.Name),
             row.Appointment.HoldExpiresAtUtc, row.Appointment.CancelledAtUtc, row.Appointment.CancellationReason, row.Appointment.Note,
             row.Appointment.CreatedAtUtc,
+            // BR-CARE-02: most severe first, then by allergen.
             Context.CustomerAllergies
                 .Where(allergy => allergy.CustomerId == row.Appointment.CustomerId)
-                .OrderBy(allergy => allergy.Allergen)
-                .Select(allergy => new CustomerAllergyDto(allergy.Allergen, allergy.Severity, allergy.Note))
+                .OrderBy(allergy => allergy.Severity == AllergySeverity.Severe ? 0 : allergy.Severity == AllergySeverity.Moderate ? 1 : 2)
+                .ThenBy(allergy => allergy.Allergen)
+                .Select(allergy => new CustomerAllergyDto(allergy.Id, allergy.Allergen, allergy.Severity, allergy.Note, allergy.RecordedAtUtc))
                 .ToList(),
             row.Appointment.TreatmentSession == null
                 ? null
-                : new TreatmentSessionRefDto(row.Appointment.TreatmentSession.Id, row.Appointment.TreatmentSession.SequenceNumber),
-            Context.SkinProfiles.Any(profile => profile.AppointmentId == row.Appointment.Id)))
+                : new TreatmentSessionRefDto(
+                    row.Appointment.TreatmentSession.Id, row.Appointment.TreatmentSession.SequenceNumber,
+                    row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.TotalSessions,
+                    row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackageId,
+                    row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.PackageName),
+            Context.SkinProfiles.Any(profile => profile.AppointmentId == row.Appointment.Id),
+            Context.SkinProfiles.Where(profile => profile.AppointmentId == row.Appointment.Id).Select(profile => (Guid?)profile.Id).FirstOrDefault()))
+        .FirstOrDefaultAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<AssignedAppointmentDto>> ListAssignedAsync(
+        Guid staffMemberId, DateOnly from, DateOnly to, AppointmentStatus? status, CancellationToken cancellationToken) =>
+        await Set.AsNoTracking()
+            .Where(appointment => appointment.StaffMemberId == staffMemberId && appointment.Date >= from && appointment.Date <= to &&
+                                  appointment.Status != AppointmentStatus.Held && appointment.Status != AppointmentStatus.HoldExpired &&
+                                  (status == null || appointment.Status == status))
+            .OrderBy(appointment => appointment.Date).ThenBy(appointment => appointment.StartTime).ThenBy(appointment => appointment.Id)
+            .WithService(Context)
+            .Select(row => new AssignedAppointmentDto(
+                row.Appointment.Id, row.Appointment.Date, row.Appointment.StartTime, row.Appointment.EndTime, row.Appointment.Status,
+                new AppointmentCustomerDto(row.Appointment.CustomerId, row.Appointment.Customer.User.FullName, row.Appointment.Customer.User.PhoneNumber),
+                new AppointmentServiceDto(row.Service.Id, row.Service.Name),
+                row.Appointment.TreatmentSession == null
+                    ? null
+                    : new TreatmentSessionRefDto(
+                        row.Appointment.TreatmentSession.Id, row.Appointment.TreatmentSession.SequenceNumber,
+                        row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.TotalSessions,
+                        row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackageId,
+                        row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.PackageName),
+                Context.CustomerAllergies.Any(allergy => allergy.CustomerId == row.Appointment.CustomerId),
+                Context.SkinProfiles.Any(profile => profile.AppointmentId == row.Appointment.Id)))
+            .ToListAsync(cancellationToken);
+
+    public Task<AppointmentCareInfo?> GetCareInfoAsync(Guid id, CancellationToken cancellationToken) => Set.AsNoTracking()
+        .Where(appointment => appointment.Id == id)
+        .Select(appointment => new AppointmentCareInfo(
+            appointment.Id, appointment.CustomerId, appointment.StaffMemberId, appointment.Status, appointment.Date, appointment.StartTime))
         .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<(Appointment Appointment, Guid SpaServiceId)?> GetForUpdateAsync(Guid id, CancellationToken cancellationToken)
@@ -111,6 +148,16 @@ public sealed class AppointmentRepository : Repository<Appointment>, IAppointmen
         .WithService(Context)
         .Select(row => (Guid?)row.Service.Id)
         .FirstOrDefaultAsync(cancellationToken);
+
+    public Task<bool> IsInCareAsync(Guid staffMemberId, Guid customerId, CancellationToken cancellationToken) =>
+        Set.AnyAsync(appointment => appointment.StaffMemberId == staffMemberId && appointment.CustomerId == customerId &&
+                                    (appointment.Status == AppointmentStatus.PendingConfirmation ||
+                                     appointment.Status == AppointmentStatus.Confirmed ||
+                                     appointment.Status == AppointmentStatus.Completed),
+            cancellationToken);
+
+    public Task<bool> HasSkinProfileAsync(Guid appointmentId, CancellationToken cancellationToken) =>
+        Context.SkinProfiles.AnyAsync(profile => profile.AppointmentId == appointmentId, cancellationToken);
 
     public async Task<IReadOnlyList<(TimeOnly Start, TimeOnly End)>> GetCustomerOccupyingOnAsync(
         Guid customerId, DateOnly date, DateTime nowUtc, Guid? excludeId, CancellationToken cancellationToken)
