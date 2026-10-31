@@ -1,5 +1,3 @@
-using FluentValidation;
-using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NhuNguyetSpa.API.Authorization;
@@ -16,7 +14,7 @@ namespace NhuNguyetSpa.API.Controllers;
 [Authorize(Policy = Permissions.OrderSelf)]
 public sealed class MyOrdersController : ApiController
 {
-    public const string IdempotencyHeader = "Idempotency-Key";
+    public const string IdempotencyHeader = IdempotencyKey.Header;
 
     private readonly IOrderService _orders;
     private readonly IPaymentService _payments;
@@ -50,20 +48,7 @@ public sealed class MyOrdersController : ApiController
     public async Task<IActionResult> Create(
         OrderRequest request, [FromHeader(Name = IdempotencyHeader)] string? idempotencyKey, CancellationToken cancellationToken)
     {
-        Guid? key = null;
-        if (!string.IsNullOrWhiteSpace(idempotencyKey))
-        {
-            if (!Guid.TryParse(idempotencyKey, out var parsed))
-            {
-                var failures = new List<ValidationFailure>
-                {
-                    new ValidationFailure(IdempotencyHeader, "Idempotency-Key phải là một UUID.") { ErrorCode = "validation_error" },
-                };
-                throw new ValidationException(failures);
-            }
-            key = parsed;
-        }
-
+        var key = IdempotencyKey.Parse(idempotencyKey);
         var result = await _orders.CreateAsync(request, key, cancellationToken);
         var order = result.Data!;
         Response.Headers.Location = Url.Action(nameof(Get), new { id = order.Order.Id });
