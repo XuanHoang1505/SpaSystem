@@ -13,9 +13,9 @@ builder.Services.AddApiFoundation(builder.Configuration);
 builder.Services.AddApiAuthentication();
 
 var app = builder.Build();
-if (args.Contains(SeedCommand.Argument))
+if (args.Contains(SeedCommand.Argument) || args.Contains(SeedCommand.DemoArgument))
 {
-    await SeedCommand.RunAsync(app);
+    await SeedCommand.RunAsync(app, withDemo: args.Contains(SeedCommand.DemoArgument));
     return;
 }
 

@@ -125,4 +125,11 @@ public sealed class StaffMemberRepository : Repository<StaffMember>, IStaffMembe
     // NO KEY UPDATE serializes bookers without blocking the FOR KEY SHARE locks taken by foreign-key checks on appointments.
     public Task LockForBookingAsync(Guid staffMemberId, CancellationToken cancellationToken) =>
         Context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM staff_members WHERE id = {staffMemberId} FOR NO KEY UPDATE", cancellationToken);
+
+    public Task LockManyForBookingAsync(IReadOnlyCollection<Guid> staffMemberIds, CancellationToken cancellationToken)
+    {
+        var ids = staffMemberIds.OrderBy(id => id).ToArray();
+        return Context.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT 1 FROM staff_members WHERE id = ANY({ids}) ORDER BY id FOR NO KEY UPDATE", cancellationToken);
+    }
 }

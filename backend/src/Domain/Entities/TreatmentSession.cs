@@ -17,6 +17,14 @@ public sealed class TreatmentSession : BaseEntity
     public string? Note { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
 
+    /// <summary>Booking a package session (UC-SPA-15 flow 2, WF-07).</summary>
+    public void Book()
+    {
+        if (Status != TreatmentSessionStatus.NotBooked)
+            throw new InvalidOperationException($"Treatment session in status {Status} cannot be booked.");
+        Status = TreatmentSessionStatus.Booked;
+    }
+
     /// <summary>A cancelled (or not-counted no-show) booking frees the session (BR-BKG-10).</summary>
     public void Release()
     {

@@ -41,4 +41,10 @@ public interface IStaffMemberRepository : IRepository<StaffMember>
     /// timetable run one after another: two concurrent EXCLUDE checks on appointments can otherwise deadlock.
     /// </summary>
     Task LockForBookingAsync(Guid staffMemberId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Locks several staff rows in ascending id order in one statement (<c>FOR NO KEY UPDATE</c>, inside a transaction), so two
+    /// "any staff" bookings over the same candidates wait for each other instead of deadlocking (BR-BKG-14).
+    /// </summary>
+    Task LockManyForBookingAsync(IReadOnlyCollection<Guid> staffMemberIds, CancellationToken cancellationToken);
 }

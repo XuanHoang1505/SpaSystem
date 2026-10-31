@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IStaffMemberRepository, StaffMemberRepository>();
         services.AddScoped<IWorkScheduleRepository, WorkScheduleRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        services.AddScoped<IPurchaseRepository, PurchaseRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
         services.AddScoped<ICartRepository, CartRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
@@ -86,9 +87,9 @@ public static class DependencyInjection
                 "WorkSchedule:MaxDaysAhead and MaxQueryRangeDays must be 1–366, MaxBatchShifts 1–5000.");
         services.AddOptions<BookingOptions>()
             .Bind(configuration.GetSection(BookingOptions.SectionName))
-            .Validate(options => options.SlotStepMinutes is >= 5 and <= 60 && 60 % options.SlotStepMinutes == 0 &&
-                                 options.MaxDaysAhead is >= 1 and <= 366 && options.MaxQueryRangeDays is >= 1 and <= 366,
-                "Booking:SlotStepMinutes must be 5–60 and divide 60; MaxDaysAhead and MaxQueryRangeDays must be 1–366.")
+            .Validate(BookingOptions.IsValid,
+                "Booking:SlotStepMinutes must be 5–60 and divide 60; MaxDaysAhead and MaxQueryRangeDays must be 1–366; " +
+                "AutoAssignStrategy must be least_busy.")
             .ValidateOnStart();
         // VNPay keys are checked by VnpayPaymentGateway on each call, so the API starts without them (like Cloudinary).
         services.AddOptions<VnpayOptions>().Bind(configuration.GetSection(VnpayOptions.SectionName));
@@ -106,6 +107,10 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(PaymentOptions.SectionName))
             .Validate(options => options.MaxAttemptsPerOrder is >= 1 and <= 20, "Payment:MaxAttemptsPerOrder must be 1–20.")
             .ValidateOnStart();
+        services.AddOptions<PurchasesOptions>()
+            .Bind(configuration.GetSection(PurchasesOptions.SectionName))
+            .Validate(options => options.MaxListItems is >= 1 and <= 1000, "Purchases:MaxListItems must be 1–1000.")
+            .ValidateOnStart();
         services.AddOptions<OrderExpiryOptions>()
             .Bind(configuration.GetSection(OrderExpiryOptions.SectionName))
             .Validate(options => options.IntervalSeconds is >= 5 and <= 3600 && options.GraceMinutes is >= 0 and <= 120 &&
@@ -115,6 +120,7 @@ public static class DependencyInjection
         services.AddHostedService<OrderExpiryJob>();
         services.AddOptions<SeedOptions>().Bind(configuration.GetSection(SeedOptions.SectionName));
         services.AddScoped<DevelopmentSeeder>();
+        services.AddScoped<DemoDataSeeder>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 

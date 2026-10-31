@@ -3,7 +3,7 @@ using NhuNguyetSpa.Domain.Exceptions;
 
 namespace NhuNguyetSpa.Application.UseCases.Bookings;
 
-/// <summary>Error codes of availability and UC-SPA-17 (docs/specs/bookings.md). <c>slot_unavailable</c> is also raised by the database constraint.</summary>
+/// <summary>Error codes of availability, UC-SPA-15 and UC-SPA-17 (docs/specs/bookings.md). <c>slot_unavailable</c> is also raised by the database constraint.</summary>
 public static class BookingErrors
 {
     public const string AppointmentNotFoundCode = "appointment_not_found";
@@ -17,6 +17,11 @@ public static class BookingErrors
     public const string AppointmentStatusInvalidCode = "appointment_status_invalid";
     public const string AppointmentInPastCode = "appointment_in_past";
     public const string NoShowTooEarlyCode = "no_show_too_early";
+    public const string SlotTooSoonCode = "slot_too_soon";
+    public const string SessionTooEarlyCode = "session_too_early";
+    public const string EntitlementNotEligibleCode = "entitlement_not_eligible";
+    public const string EntitlementNotFoundCode = "entitlement_not_found";
+    public const string TreatmentSessionNotFoundCode = "treatment_session_not_found";
 
     public static NotFoundException AppointmentNotFound() => new("Không tìm thấy lịch hẹn.", AppointmentNotFoundCode);
 
@@ -45,6 +50,20 @@ public static class BookingErrors
 
     public static BusinessRuleException NoShowTooEarly() =>
         new("Chỉ ghi nhận khách không đến sau giờ bắt đầu lịch hẹn.", NoShowTooEarlyCode);
+
+    /// <summary>BR-BKG-15: a book-now slot must not start while the hold is still waiting for payment.</summary>
+    public static BusinessRuleException SlotTooSoon() =>
+        new("Khung giờ quá gần, vui lòng chọn giờ bắt đầu sau khi hết thời gian giữ chỗ.", SlotTooSoonCode);
+
+    public static BusinessRuleException SessionTooEarly(DateOnly earliest) =>
+        new($"Buổi này chỉ đặt được từ ngày {earliest:dd/MM/yyyy}.", SessionTooEarlyCode);
+
+    /// <summary>The bought service or session cannot be booked; <paramref name="reason"/> is shown to the customer.</summary>
+    public static ConflictException EntitlementNotEligible(string reason) => new(reason, EntitlementNotEligibleCode);
+
+    public static NotFoundException EntitlementNotFound() => new("Không tìm thấy dịch vụ đã mua.", EntitlementNotFoundCode);
+
+    public static NotFoundException TreatmentSessionNotFound() => new("Không tìm thấy buổi chăm sóc.", TreatmentSessionNotFoundCode);
 
     private static string Label(AppointmentStatus status) => status switch
     {

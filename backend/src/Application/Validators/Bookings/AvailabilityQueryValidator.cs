@@ -12,7 +12,10 @@ public sealed class AvailabilityQueryValidator : AbstractValidator<AvailabilityQ
     public AvailabilityQueryValidator(IDateTimeProvider clock, IOptions<BookingOptions> options)
     {
         var maxDays = options.Value.MaxDaysAhead;
-        RuleFor(query => query.SpaServiceId).NotNull().WithMessage("Vui lòng chọn dịch vụ.");
+        RuleFor(query => query)
+            .Must(query => new[] { query.SpaServiceId, query.ServiceEntitlementId, query.TreatmentSessionId }.Count(id => id.HasValue) == 1)
+            .WithName("SpaServiceId")
+            .WithMessage("Vui lòng chọn đúng một dịch vụ, dịch vụ đã mua hoặc buổi trong gói.");
         RuleFor(query => query.Date)
             .Cascade(CascadeMode.Stop)
             .NotNull().WithMessage("Vui lòng chọn ngày.")

@@ -16,7 +16,7 @@ using NhuNguyetSpa.Domain.Exceptions;
 
 namespace NhuNguyetSpa.Application.UseCases.Payments;
 
-/// <summary>UC-SPA-11 payment attempts and gateway results (docs/specs/orders.md, BR-ORD-05, 06, 10; Q-19, Q-20).</summary>
+/// <summary>UC-SPA-11 payment attempts and gateway results (docs/specs/orders.md, BR-ORD-05, 06, 10; Q-19, Q-20; book-now holds Q-28).</summary>
 public sealed class PaymentService : IPaymentService
 {
     private readonly IOrderRepository _orders;
@@ -28,6 +28,8 @@ public sealed class PaymentService : IPaymentService
     private readonly IDateTimeProvider _clock;
     private readonly IOptions<PaymentOptions> _options;
     private readonly ILogger<PaymentService> _logger;
+    private readonly IAppointmentRepository _appointments;
+    private readonly IOptions<BookingOptions> _bookingOptions;
 
     public PaymentService(
         IOrderRepository orders,
@@ -38,7 +40,9 @@ public sealed class PaymentService : IPaymentService
         ICurrentUserService currentUser,
         IDateTimeProvider clock,
         IOptions<PaymentOptions> options,
-        ILogger<PaymentService> logger)
+        ILogger<PaymentService> logger,
+        IAppointmentRepository appointments,
+        IOptions<BookingOptions> bookingOptions)
     {
         _orders = orders;
         _payments = payments;
@@ -49,6 +53,8 @@ public sealed class PaymentService : IPaymentService
         _clock = clock;
         _options = options;
         _logger = logger;
+        _appointments = appointments;
+        _bookingOptions = bookingOptions;
     }
 
     public async Task<OperationResult<PaymentAttemptDto>> CreateAttemptAsync(Guid orderId, CreatePaymentRequest request, string clientIp,
@@ -123,6 +129,12 @@ public sealed class PaymentService : IPaymentService
             if (!callback.IsSuccess)
             {
                 payment.MarkFailed(callback.ProviderTransactionId);
+                // Q-28: by default a failed attempt keeps the book-now hold so the customer can pay again before it runs out.
+                if (_bookingOptions.Value.ReleaseHoldOnPaymentFailure)
+                {
+                    foreach (var hold in (await _appointments.GetHoldsForOrdersAsync([order.Id], token)).Where(hold => hold.Status == AppointmentStatus.Held))
+                        hold.ExpireHold();
+                }
             }
             else
             {
