@@ -142,4 +142,33 @@ public sealed class AppointmentRepository : Repository<Appointment>, IAppointmen
 
     public Task LockCustomerForBookingAsync(Guid customerId, CancellationToken cancellationToken) =>
         Context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM customers WHERE id = {customerId} FOR NO KEY UPDATE", cancellationToken);
+
+    public Task<MyAppointmentDto?> GetMineAsync(Guid id, Guid customerId, CancellationToken cancellationToken) => Set.AsNoTracking()
+        .Where(appointment => appointment.Id == id && appointment.CustomerId == customerId)
+        .WithService(Context)
+        .Select(row => new MyAppointmentDto(
+            row.Appointment.Id, row.Appointment.Date, row.Appointment.StartTime, row.Appointment.EndTime, row.Appointment.Status,
+            row.Appointment.HoldExpiresAtUtc, row.Appointment.CancelledAtUtc, row.Appointment.CancellationReason, row.Appointment.CreatedAtUtc,
+            new AppointmentServiceDto(row.Service.Id, row.Service.Name),
+            new AppointmentStaffDto(row.Appointment.StaffMemberId, row.Appointment.StaffMember.User.FullName),
+            row.Appointment.TreatmentSessionId != null
+                ? AppointmentBookingSource.Session
+                : row.Appointment.OrderItemId != null ? AppointmentBookingSource.BookNow : AppointmentBookingSource.Entitlement,
+            row.Appointment.ServiceEntitlementId,
+            row.Appointment.TreatmentSession == null
+                ? null
+                : new MyTreatmentSessionRefDto(
+                    row.Appointment.TreatmentSession.Id, row.Appointment.TreatmentSession.SequenceNumber,
+                    row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackageId,
+                    row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.PackageName),
+            row.Appointment.OrderItem == null
+                ? null
+                : new MyAppointmentOrderDto(row.Appointment.OrderItem.OrderId, row.Appointment.OrderItem.Order.Code, row.Appointment.OrderItem.Order.Status)))
+        .FirstOrDefaultAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Appointment>> GetHoldsForOrdersAsync(IReadOnlyCollection<Guid> orderIds, CancellationToken cancellationToken) =>
+        await Set
+            .Where(appointment => appointment.OrderItemId != null && orderIds.Contains(appointment.OrderItem!.OrderId) &&
+                                  (appointment.Status == AppointmentStatus.Held || appointment.Status == AppointmentStatus.HoldExpired))
+            .ToListAsync(cancellationToken);
 }

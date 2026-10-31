@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using NhuNguyetSpa.Application.DTOs.Bookings;
 using NhuNguyetSpa.Application.DTOs.Catalog;
 using NhuNguyetSpa.Application.DTOs.Orders;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
@@ -16,6 +17,7 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
     public Task<OrderDetailDto?> GetDetailAsync(Guid id, Guid customerId, CancellationToken cancellationToken)
     {
         var redemptions = Context.PromotionRedemptions;
+        var appointments = Context.Appointments;
         return Set.AsNoTracking()
             .Where(order => order.Id == id && order.CustomerId == customerId)
             .Select(order => new OrderDetailDto(
@@ -33,6 +35,12 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
                     .ToList(),
                 redemptions.Where(redemption => redemption.OrderId == order.Id)
                     .Select(redemption => new AppliedPromotionDto(redemption.PromotionCode, redemption.DiscountAmount))
+                    .FirstOrDefault(),
+                appointments.Where(appointment => appointment.OrderItem != null && appointment.OrderItem.OrderId == order.Id)
+                    .OrderByDescending(appointment => appointment.CreatedAtUtc)
+                    .Select(appointment => new OrderAppointmentDto(
+                        appointment.Id, appointment.Date, appointment.StartTime, appointment.EndTime, appointment.Status,
+                        new AppointmentStaffDto(appointment.StaffMemberId, appointment.StaffMember.User.FullName)))
                     .FirstOrDefault()))
             .FirstOrDefaultAsync(cancellationToken);
     }
