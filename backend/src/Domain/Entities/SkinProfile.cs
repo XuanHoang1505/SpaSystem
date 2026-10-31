@@ -19,4 +19,16 @@ public sealed class SkinProfile : BaseAuditableEntity
     public string? CareGoals { get; set; }
     public string? RecommendedTreatment { get; set; }
     public string? Note { get; set; }
+
+    /// <summary>Writes the assessment (UC-SPA-27); the assessor and time are set once when the profile is created.</summary>
+    public void Record(
+        SkinType skinType, string? mainConcerns, string? currentProducts, string? careGoals, string? recommendedTreatment, string? note)
+    {
+        SkinType = skinType;
+        MainConcerns = mainConcerns;
+        CurrentProducts = currentProducts;
+        CareGoals = careGoals;
+        RecommendedTreatment = recommendedTreatment;
+        Note = note;
+    }
 }

@@ -76,6 +76,15 @@ public sealed class Appointment : BaseEntity, IHasCreatedAt
         Status = AppointmentStatus.Confirmed;
     }
 
+    /// <summary>UC-SPA-28 (WF-01); the staff member's result is appended so earlier notes are kept.</summary>
+    public void Complete(string? note)
+    {
+        EnsureStatus(Status == AppointmentStatus.Confirmed);
+        Status = AppointmentStatus.Completed;
+        if (note is not null)
+            Note = string.IsNullOrEmpty(Note) ? note : $"{Note}\n{note}";
+    }
+
     public void ExpireHold()
     {
         EnsureStatus(Status == AppointmentStatus.Held);
