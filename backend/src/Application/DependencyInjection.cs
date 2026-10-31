@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using NhuNguyetSpa.Application.Interfaces.Services.Auth;
 using NhuNguyetSpa.Application.Interfaces.Services.Bookings;
+using NhuNguyetSpa.Application.Interfaces.Services.Care;
 using NhuNguyetSpa.Application.Interfaces.Services.Catalog;
 using NhuNguyetSpa.Application.Interfaces.Services.Orders;
 using NhuNguyetSpa.Application.Interfaces.Services.Payments;
@@ -11,6 +12,7 @@ using NhuNguyetSpa.Application.Interfaces.Services.Staff;
 using NhuNguyetSpa.Application.Interfaces.Services.WorkSchedules;
 using NhuNguyetSpa.Application.UseCases.Auth;
 using NhuNguyetSpa.Application.UseCases.Bookings;
+using NhuNguyetSpa.Application.UseCases.Care;
 using NhuNguyetSpa.Application.UseCases.Catalog;
 using NhuNguyetSpa.Application.UseCases.Orders;
 using NhuNguyetSpa.Application.UseCases.Payments;
@@ -51,6 +53,10 @@ public static class DependencyInjection
         services.AddScoped<IPurchaseService, PurchaseService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IOrderExpiryService, OrderExpiryService>();
+        services.AddScoped<IAppointmentCompletionService, AppointmentCompletionService>();
+        services.AddScoped<ISkinProfileService, SkinProfileService>();
+        services.AddScoped<ICustomerAllergyService, CustomerAllergyService>();
+        services.AddScoped<IAssignedAppointmentService, AssignedAppointmentService>();
         return services;
     }
 }

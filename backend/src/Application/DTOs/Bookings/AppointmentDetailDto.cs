@@ -19,4 +19,5 @@ public sealed record AppointmentDetailDto(
     DateTime CreatedAtUtc,
     IReadOnlyList<CustomerAllergyDto> Allergies,
     TreatmentSessionRefDto? TreatmentSession,
-    bool HasSkinProfile);
+    bool HasSkinProfile,
+    Guid? SkinProfileId);
