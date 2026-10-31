@@ -50,4 +50,13 @@ public interface IAppointmentRepository : IRepository<Appointment>
     /// customer's timetable run one after another: BR-BKG-04 has no database constraint to catch the race.
     /// </summary>
     Task LockCustomerForBookingAsync(Guid customerId, CancellationToken cancellationToken);
+
+    /// <summary>The customer's own appointment (UC-SPA-15/16); null when missing or someone else's.</summary>
+    Task<MyAppointmentDto?> GetMineAsync(Guid id, Guid customerId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Book-now appointments (tracked) whose order line belongs to one of <paramref name="orderIds"/>, held or hold-expired;
+    /// used when the order is paid, fails or expires (BR-BKG-06).
+    /// </summary>
+    Task<IReadOnlyList<Appointment>> GetHoldsForOrdersAsync(IReadOnlyCollection<Guid> orderIds, CancellationToken cancellationToken);
 }
