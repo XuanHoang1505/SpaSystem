@@ -8,17 +8,23 @@ using NhuNguyetSpa.Domain.Enums;
 
 namespace NhuNguyetSpa.Application.UseCases.Payments;
 
-/// <summary>BR-ORD-03: pending orders past due + grace become expired, with their pending payments. One batch per call.</summary>
+/// <summary>
+/// BR-ORD-03: pending orders past due + grace become expired, with their pending payments and book-now holds (BR-BKG-06). One batch
+/// per call.
+/// </summary>
 public sealed class OrderExpiryService : IOrderExpiryService
 {
     private readonly IOrderRepository _orders;
+    private readonly IAppointmentRepository _appointments;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDateTimeProvider _clock;
     private readonly IOptions<OrderExpiryOptions> _options;
 
-    public OrderExpiryService(IOrderRepository orders, IUnitOfWork unitOfWork, IDateTimeProvider clock, IOptions<OrderExpiryOptions> options)
+    public OrderExpiryService(IOrderRepository orders, IAppointmentRepository appointments, IUnitOfWork unitOfWork, IDateTimeProvider clock,
+        IOptions<OrderExpiryOptions> options)
     {
         _orders = orders;
+        _appointments = appointments;
         _unitOfWork = unitOfWork;
         _clock = clock;
         _options = options;
@@ -40,6 +46,10 @@ public sealed class OrderExpiryService : IOrderExpiryService
                 foreach (var payment in order.Payments.Where(payment => payment.Status == PaymentStatus.Pending))
                     payment.Expire();
             }
+            // BR-BKG-06 / A10: a book-now hold ends with its order.
+            var holds = await _appointments.GetHoldsForOrdersAsync(orders.Select(order => order.Id).ToList(), token);
+            foreach (var hold in holds.Where(hold => hold.Status == AppointmentStatus.Held))
+                hold.ExpireHold();
             await _unitOfWork.SaveChangesAsync(token);
             count = orders.Count;
         }, cancellationToken);

@@ -5,6 +5,7 @@ using NhuNguyetSpa.Application.Interfaces.Services.Bookings;
 using NhuNguyetSpa.Application.Interfaces.Services.Catalog;
 using NhuNguyetSpa.Application.Interfaces.Services.Orders;
 using NhuNguyetSpa.Application.Interfaces.Services.Payments;
+using NhuNguyetSpa.Application.Interfaces.Services.Purchases;
 using NhuNguyetSpa.Application.Interfaces.Services.Promotions;
 using NhuNguyetSpa.Application.Interfaces.Services.Staff;
 using NhuNguyetSpa.Application.Interfaces.Services.WorkSchedules;
@@ -14,6 +15,7 @@ using NhuNguyetSpa.Application.UseCases.Catalog;
 using NhuNguyetSpa.Application.UseCases.Orders;
 using NhuNguyetSpa.Application.UseCases.Payments;
 using NhuNguyetSpa.Application.UseCases.Promotions;
+using NhuNguyetSpa.Application.UseCases.Purchases;
 using NhuNguyetSpa.Application.UseCases.Staff;
 using NhuNguyetSpa.Application.UseCases.WorkSchedules;
 
@@ -42,7 +44,11 @@ public static class DependencyInjection
         services.AddScoped<PromotionApplier>();
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<EntitlementIssuer>();
+        services.AddScoped<BookingSlotReserver>();
+        services.AddScoped<OrderPlacement>();
         services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<ICustomerBookingService, CustomerBookingService>();
+        services.AddScoped<IPurchaseService, PurchaseService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IOrderExpiryService, OrderExpiryService>();
         return services;

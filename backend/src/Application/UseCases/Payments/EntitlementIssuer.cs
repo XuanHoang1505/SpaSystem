@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
@@ -7,7 +8,8 @@ namespace NhuNguyetSpa.Application.UseCases.Payments;
 /// <summary>
 /// BR-ORD-06: what a paid order gives the customer. Each service line → one <see cref="ServiceEntitlement"/>; each package line →
 /// <see cref="CustomerPackage"/> + <see cref="TreatmentPlan"/> + its <see cref="TreatmentSession"/>s in sort order. Runs inside
-/// the caller's transaction; unique <c>order_item_id</c> columns stop a second issue.
+/// the caller's transaction; unique <c>order_item_id</c> columns stop a second issue. A book-now hold on a service line is confirmed
+/// with the entitlement it gets (BR-BKG-06, Q-27).
 /// </summary>
 public sealed class EntitlementIssuer
 {
@@ -16,19 +18,25 @@ public sealed class EntitlementIssuer
     private readonly IRepository<TreatmentPlan> _plans;
     private readonly IServicePackageRepository _packages;
     private readonly ICartRepository _carts;
+    private readonly IAppointmentRepository _appointments;
+    private readonly ILogger<EntitlementIssuer> _logger;
 
     public EntitlementIssuer(
         IRepository<ServiceEntitlement> entitlements,
         IRepository<CustomerPackage> customerPackages,
         IRepository<TreatmentPlan> plans,
         IServicePackageRepository packages,
-        ICartRepository carts)
+        ICartRepository carts,
+        IAppointmentRepository appointments,
+        ILogger<EntitlementIssuer> logger)
     {
         _entitlements = entitlements;
         _customerPackages = customerPackages;
         _plans = plans;
         _packages = packages;
         _carts = carts;
+        _appointments = appointments;
+        _logger = logger;
     }
 
     public async Task IssueAsync(Order order, DateTime paidAtUtc, CancellationToken cancellationToken)
@@ -37,15 +45,30 @@ public sealed class EntitlementIssuer
         var serviceLines = order.Items.Where(item => item.SpaServiceId != null).ToList();
         var packageLines = order.Items.Where(item => item.ServicePackageId != null).ToList();
 
+        // Book now (UC-SPA-15): a service line may carry a held appointment.
+        var holds = serviceLines.Count > 0 ? await _appointments.GetHoldsForOrdersAsync([order.Id], cancellationToken) : [];
         foreach (var line in serviceLines)
         {
             // Q-06: single services have no expiry for now.
-            await _entitlements.AddAsync(new ServiceEntitlement
+            var entitlement = new ServiceEntitlement
             {
                 CustomerId = order.CustomerId,
                 OrderItemId = line.Id,
                 Status = EntitlementStatus.Available,
-            }, cancellationToken);
+            };
+            var hold = holds.FirstOrDefault(appointment => appointment.OrderItemId == line.Id);
+            if (hold?.Status == AppointmentStatus.Held)
+            {
+                // BR-BKG-06: still held (the EXCLUDE constraint kept the slot even past its hold time), so the visit is confirmed.
+                entitlement.Status = EntitlementStatus.Booked;
+                hold.ConfirmPaidHold(entitlement.Id);
+            }
+            else if (hold?.Status == AppointmentStatus.HoldExpired)
+            {
+                // Q-27: the slot may be someone else's now; the customer keeps the bought service and books again.
+                _logger.LogWarning("Order {OrderCode} paid after hold {AppointmentId} expired; entitlement left available.", order.Code, hold.Id);
+            }
+            await _entitlements.AddAsync(entitlement, cancellationToken);
         }
 
         if (packageLines.Count > 0)
