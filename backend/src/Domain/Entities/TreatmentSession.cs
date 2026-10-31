@@ -32,6 +32,16 @@ public sealed class TreatmentSession : BaseEntity
             Status = TreatmentSessionStatus.NotBooked;
     }
 
+    /// <summary>The visit was completed (UC-SPA-28, WF-07); <paramref name="note"/> is the care result.</summary>
+    public void Complete(string? note, DateTime nowUtc)
+    {
+        if (Status != TreatmentSessionStatus.Booked)
+            throw new InvalidOperationException($"Treatment session in status {Status} cannot be completed.");
+        Status = TreatmentSessionStatus.Completed;
+        Note = note;
+        CompletedAtUtc = nowUtc;
+    }
+
     /// <summary>A no-show that counts (Q-07 switched on); package progress is not advanced.</summary>
     public void Skip()
     {

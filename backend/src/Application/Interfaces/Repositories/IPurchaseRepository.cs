@@ -18,6 +18,13 @@ public interface IPurchaseRepository
 
     Task<TreatmentSession?> GetSessionForUpdateAsync(Guid sessionId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Locks the package row behind <paramref name="treatmentPlanId"/> (<c>FOR UPDATE</c>; inside a transaction, after the
+    /// appointment lock) and returns the package and plan tracked, so two sessions of one package completed at once each
+    /// count (UC-SPA-28, BR-TRT-03).
+    /// </summary>
+    Task<(CustomerPackage Package, TreatmentPlan Plan)> GetPackageForUpdateAsync(Guid treatmentPlanId, CancellationToken cancellationToken);
+
     /// <summary>Newest first, at most <paramref name="max"/>.</summary>
     Task<IReadOnlyList<PurchasedServiceRow>> ListServicesAsync(Guid customerId, int max, CancellationToken cancellationToken);
 

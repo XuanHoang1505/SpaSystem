@@ -1,7 +1,9 @@
 using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Bookings;
+using NhuNguyetSpa.Application.DTOs.Care;
 using NhuNguyetSpa.Application.DTOs.Staff;
 using NhuNguyetSpa.Domain.Entities;
+using NhuNguyetSpa.Domain.Enums;
 
 namespace NhuNguyetSpa.Application.Interfaces.Repositories;
 
@@ -23,12 +25,31 @@ public interface IAppointmentRepository : IRepository<Appointment>
     Task<AppointmentDetailDto?> GetDetailAsync(Guid id, CancellationToken cancellationToken);
 
     /// <summary>
+    /// UC-SPA-25: the staff member's appointments dated in [<paramref name="from"/>, <paramref name="to"/>], without held or
+    /// hold-expired ones (BR-STF-10), ordered by date, start time, id.
+    /// </summary>
+    Task<IReadOnlyList<AssignedAppointmentDto>> ListAssignedAsync(
+        Guid staffMemberId, DateOnly from, DateOnly to, AppointmentStatus? status, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Locks the appointment row (<c>FOR UPDATE</c>, so call inside a transaction) and returns it tracked with its entitlement
     /// and treatment session, plus its derived service id; null when it does not exist.
     /// </summary>
     Task<(Appointment Appointment, Guid SpaServiceId)?> GetForUpdateAsync(Guid id, CancellationToken cancellationToken);
 
     Task<Guid?> GetSpaServiceIdAsync(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>Owner, staff, status and time of the appointment for the care use cases; null when it does not exist.</summary>
+    Task<AppointmentCareInfo?> GetCareInfoAsync(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// BR-CARE-06: the staff member has (had) an appointment with the customer in <c>pending_confirmation</c>, <c>confirmed</c>
+    /// or <c>completed</c>.
+    /// </summary>
+    Task<bool> IsInCareAsync(Guid staffMemberId, Guid customerId, CancellationToken cancellationToken);
+
+    /// <summary>Whether the appointment already has its skin profile (UC-SPA-27, UC-SPA-28 Q-35).</summary>
+    Task<bool> HasSkinProfileAsync(Guid appointmentId, CancellationToken cancellationToken);
 
     /// <summary>Time ranges of the customer's occupying appointments on <paramref name="date"/>, except <paramref name="excludeId"/> (BR-BKG-04).</summary>
     Task<IReadOnlyList<(TimeOnly Start, TimeOnly End)>> GetCustomerOccupyingOnAsync(

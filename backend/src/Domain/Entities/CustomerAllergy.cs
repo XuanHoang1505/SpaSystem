@@ -12,4 +12,13 @@ public sealed class CustomerAllergy : BaseEntity
     public AllergySeverity Severity { get; set; }
     public string? Note { get; set; }
     public DateTime RecordedAtUtc { get; set; }
+
+    /// <summary>UC-SPA-27 A2: corrects the record; <see cref="RecordedAtUtc"/> moves to the time of the change (BR-CARE-06).</summary>
+    public void Change(string allergen, AllergySeverity severity, string? note, DateTime nowUtc)
+    {
+        Allergen = allergen;
+        Severity = severity;
+        Note = note;
+        RecordedAtUtc = nowUtc;
+    }
 }
