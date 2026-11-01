@@ -26,12 +26,15 @@ public sealed class BookingOptions
     /// <summary>Q-28: when true a failed payment frees the book-now hold at once instead of keeping it for a retry.</summary>
     public bool ReleaseHoldOnPaymentFailure { get; set; }
 
+    /// <summary>Q-04: a customer reschedules or cancels only up to this many hours before the visit (BR-BKG-07); 0 = until it starts.</summary>
+    public int CustomerChangeCutoffHours { get; set; } = 24;
+
     /// <summary>Start-up validation used by the options registration.</summary>
     public static bool IsValid(BookingOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
         return options.SlotStepMinutes is >= 5 and <= 60 && 60 % options.SlotStepMinutes == 0 &&
                options.MaxDaysAhead is >= 1 and <= 366 && options.MaxQueryRangeDays is >= 1 and <= 366 &&
-               options.AutoAssignStrategy == LeastBusy;
+               options.AutoAssignStrategy == LeastBusy && options.CustomerChangeCutoffHours is >= 0 and <= 168;
     }
 }

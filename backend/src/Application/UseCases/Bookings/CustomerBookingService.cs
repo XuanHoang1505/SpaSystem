@@ -31,6 +31,7 @@ public sealed class CustomerBookingService : ICustomerBookingService
     private readonly IOrderService _orderService;
     private readonly OrderPlacement _placement;
     private readonly BookingSlotReserver _reserver;
+    private readonly MyAppointmentReader _reader;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUser;
     private readonly IDateTimeProvider _clock;
@@ -47,6 +48,7 @@ public sealed class CustomerBookingService : ICustomerBookingService
         IOrderService orderService,
         OrderPlacement placement,
         BookingSlotReserver reserver,
+        MyAppointmentReader reader,
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUser,
         IDateTimeProvider clock,
@@ -62,6 +64,7 @@ public sealed class CustomerBookingService : ICustomerBookingService
         _orderService = orderService;
         _placement = placement;
         _reserver = reserver;
+        _reader = reader;
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
         _clock = clock;
@@ -185,11 +188,8 @@ public sealed class CustomerBookingService : ICustomerBookingService
         return await GetAsync(appointment.Id, cancellationToken);
     }
 
-    public async Task<OperationResult<MyAppointmentDto>> GetAsync(Guid id, CancellationToken cancellationToken)
-    {
-        var mine = await _appointments.GetMineAsync(id, CustomerId, cancellationToken) ?? throw BookingErrors.AppointmentNotFound();
-        return OperationResult<MyAppointmentDto>.Success(mine);
-    }
+    public async Task<OperationResult<MyAppointmentDto>> GetAsync(Guid id, CancellationToken cancellationToken) =>
+        OperationResult<MyAppointmentDto>.Success(await _reader.GetAsync(id, CustomerId, cancellationToken));
 
     private async Task<SessionBookingFacts> SessionFactsAsync(Guid sessionId, Guid customerId, CancellationToken cancellationToken) =>
         await _purchases.GetSessionFactsAsync(sessionId, customerId, cancellationToken) ?? throw BookingErrors.TreatmentSessionNotFound();

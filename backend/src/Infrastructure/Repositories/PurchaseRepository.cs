@@ -184,20 +184,26 @@ public sealed class PurchaseRepository : IPurchaseRepository
         var planIds = targets.Select(target => target.TreatmentPlanId).Distinct().ToList();
         var siblings = await _context.TreatmentSessions.AsNoTracking()
             .Where(session => planIds.Contains(session.TreatmentPlanId))
-            .Select(session => new { session.Id, session.TreatmentPlanId, session.SequenceNumber, session.Status })
+            .Select(session => new { session.Id, session.TreatmentPlanId, session.SequenceNumber, session.Status, session.SpaServiceId })
             .ToListAsync(cancellationToken);
         var previousIds = targets
             .Select(target => siblings.FirstOrDefault(session =>
                 session.TreatmentPlanId == target.TreatmentPlanId && session.SequenceNumber == target.SequenceNumber - 1)?.Id)
             .OfType<Guid>()
             .ToList();
+        var nextIds = targets
+            .Select(target => siblings.FirstOrDefault(session =>
+                session.TreatmentPlanId == target.TreatmentPlanId && session.SequenceNumber == target.SequenceNumber + 1)?.Id)
+            .OfType<Guid>()
+            .ToList();
+        var neighbourIds = previousIds.Concat(nextIds).ToList();
         var visits = await _context.Appointments.AsNoTracking()
-            .Where(appointment => appointment.TreatmentSessionId != null && previousIds.Contains(appointment.TreatmentSessionId.Value) &&
+            .Where(appointment => appointment.TreatmentSessionId != null && neighbourIds.Contains(appointment.TreatmentSessionId.Value) &&
                                   (appointment.Status == AppointmentStatus.PendingConfirmation ||
                                    appointment.Status == AppointmentStatus.Confirmed ||
                                    appointment.Status == AppointmentStatus.Completed ||
                                    appointment.Status == AppointmentStatus.NoShow))
-            .Select(appointment => new { SessionId = appointment.TreatmentSessionId!.Value, appointment.Date, appointment.EndTime })
+            .Select(appointment => new { SessionId = appointment.TreatmentSessionId!.Value, appointment.Date, appointment.StartTime, appointment.EndTime })
             .ToListAsync(cancellationToken);
         var packageIds = targets.Select(target => target.ServicePackageId).OfType<Guid>().Distinct().ToList();
         // Q-23 style: the gap is read from the package's current configuration.
@@ -216,6 +222,18 @@ public sealed class PurchaseRepository : IPurchaseRepository
                     .OrderByDescending(item => item.Date).ThenByDescending(item => item.EndTime)
                     .Select(item => new PreviousVisit(item.Date, item.EndTime))
                     .FirstOrDefault();
+            var following = siblings.FirstOrDefault(session =>
+                session.TreatmentPlanId == target.TreatmentPlanId && session.SequenceNumber == target.SequenceNumber + 1);
+            var nextGap = following is null
+                ? 0
+                : gaps.FirstOrDefault(gap => gap.ServicePackageId == target.ServicePackageId && gap.SpaServiceId == following.SpaServiceId)
+                    ?.MinDaysBetweenSessions ?? 0;
+            var nextVisit = following is null
+                ? null
+                : visits.Where(item => item.SessionId == following.Id)
+                    .OrderBy(item => item.Date).ThenBy(item => item.StartTime)
+                    .Select(item => new NextVisit(item.Date, item.StartTime, nextGap))
+                    .FirstOrDefault();
             var earlierDone = siblings
                 .Where(session => session.TreatmentPlanId == target.TreatmentPlanId && session.SequenceNumber < target.SequenceNumber)
                 .All(session => session.Status != TreatmentSessionStatus.NotBooked);
@@ -223,7 +241,7 @@ public sealed class PurchaseRepository : IPurchaseRepository
                 ?.MinDaysBetweenSessions ?? 0;
             var facts = new SessionBookingFacts(
                 target.Id, target.SpaServiceId, target.DurationMinutes, target.SequenceNumber, target.Status, target.PackageStatus,
-                target.PackageExpiresAtUtc, target.PlanStatus, earlierDone, visit, minDays);
+                target.PackageExpiresAtUtc, target.PlanStatus, earlierDone, visit, minDays, nextVisit);
             return (facts, target.ServiceName);
         });
     }

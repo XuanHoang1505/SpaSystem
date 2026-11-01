@@ -6,6 +6,7 @@ using NhuNguyetSpa.Application.DTOs.Purchases;
 using NhuNguyetSpa.Application.DTOs.Staff;
 using NhuNguyetSpa.Application.DTOs.Treatments;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
+using NhuNguyetSpa.Application.UseCases.Bookings;
 using NhuNguyetSpa.Application.UseCases.WorkSchedules;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
@@ -192,10 +193,62 @@ public sealed class AppointmentRepository : Repository<Appointment>, IAppointmen
     public Task LockCustomerForBookingAsync(Guid customerId, CancellationToken cancellationToken) =>
         Context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM customers WHERE id = {customerId} FOR NO KEY UPDATE", cancellationToken);
 
-    public Task<MyAppointmentDto?> GetMineAsync(Guid id, Guid customerId, CancellationToken cancellationToken) => Set.AsNoTracking()
+    public async Task<PagedResult<(MyAppointmentListItemDto Item, AppointmentChangeFacts Facts)>> SearchMineAsync(
+        Guid customerId, MyAppointmentSearchCriteria criteria, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(criteria);
+        var query = Set.AsNoTracking().Where(appointment => appointment.CustomerId == customerId).WithService(Context);
+        if (criteria.Scope is { } scope)
+        {
+            var statuses = MyAppointmentScopes.StatusesOf(scope).ToList();
+            query = query.Where(row => statuses.Contains(row.Appointment.Status));
+        }
+        if (criteria.Status is { } status)
+            query = query.Where(row => row.Appointment.Status == status);
+        if (criteria.FromDate is { } from)
+            query = query.Where(row => row.Appointment.Date >= from);
+        if (criteria.ToDate is { } to)
+            query = query.Where(row => row.Appointment.Date <= to);
+
+        var total = await query.CountAsync(cancellationToken);
+        var ordered = criteria.Scope == MyAppointmentScope.Upcoming
+            ? query.OrderBy(row => row.Appointment.Date).ThenBy(row => row.Appointment.StartTime).ThenBy(row => row.Appointment.Id)
+            : query.OrderByDescending(row => row.Appointment.Date).ThenByDescending(row => row.Appointment.StartTime).ThenBy(row => row.Appointment.Id);
+        var rows = await ordered
+            .Skip((criteria.PageNumber - 1) * criteria.PageSize)
+            .Take(criteria.PageSize)
+            .Select(row => new
+            {
+                Item = new MyAppointmentListItemDto(
+                    row.Appointment.Id, row.Appointment.Date, row.Appointment.StartTime, row.Appointment.EndTime, row.Appointment.Status,
+                    row.Appointment.HoldExpiresAtUtc,
+                    new AppointmentServiceDto(row.Service.Id, row.Service.Name),
+                    new AppointmentStaffDto(row.Appointment.StaffMemberId, row.Appointment.StaffMember.User.FullName),
+                    row.Appointment.TreatmentSessionId != null
+                        ? AppointmentBookingSource.Session
+                        : row.Appointment.OrderItemId != null ? AppointmentBookingSource.BookNow : AppointmentBookingSource.Entitlement,
+                    row.Appointment.TreatmentSession == null
+                        ? null
+                        : new MyTreatmentSessionRefDto(
+                            row.Appointment.TreatmentSession.Id, row.Appointment.TreatmentSession.SequenceNumber,
+                            row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackageId,
+                            row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.PackageName)),
+                Facts = new AppointmentChangeFacts(
+                    row.Appointment.Status, row.Appointment.Date, row.Appointment.StartTime,
+                    row.Appointment.TreatmentSession == null ? null : row.Appointment.TreatmentSession.TreatmentPlan.Status,
+                    row.Appointment.TreatmentSession == null ? null : row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.Status,
+                    row.Appointment.TreatmentSession == null ? null : row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.ExpiresAtUtc,
+                    row.Appointment.ServiceEntitlement == null ? null : row.Appointment.ServiceEntitlement.ExpiresAtUtc),
+            })
+            .ToListAsync(cancellationToken);
+        return new PagedResult<(MyAppointmentListItemDto Item, AppointmentChangeFacts Facts)>(
+            rows.Select(row => (row.Item, row.Facts)), criteria.PageNumber, criteria.PageSize, total);
+    }
+
+    public Task<MyAppointmentRow?> GetMineAsync(Guid id, Guid customerId, CancellationToken cancellationToken) => Set.AsNoTracking()
         .Where(appointment => appointment.Id == id && appointment.CustomerId == customerId)
         .WithService(Context)
-        .Select(row => new MyAppointmentDto(
+        .Select(row => new MyAppointmentRow(new MyAppointmentDto(
             row.Appointment.Id, row.Appointment.Date, row.Appointment.StartTime, row.Appointment.EndTime, row.Appointment.Status,
             row.Appointment.HoldExpiresAtUtc, row.Appointment.CancelledAtUtc, row.Appointment.CancellationReason, row.Appointment.CreatedAtUtc,
             new AppointmentServiceDto(row.Service.Id, row.Service.Name),
@@ -212,7 +265,13 @@ public sealed class AppointmentRepository : Repository<Appointment>, IAppointmen
                     row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.PackageName),
             row.Appointment.OrderItem == null
                 ? null
-                : new MyAppointmentOrderDto(row.Appointment.OrderItem.OrderId, row.Appointment.OrderItem.Order.Code, row.Appointment.OrderItem.Order.Status)))
+                : new MyAppointmentOrderDto(row.Appointment.OrderItem.OrderId, row.Appointment.OrderItem.Order.Code, row.Appointment.OrderItem.Order.Status)),
+            new AppointmentChangeFacts(
+                row.Appointment.Status, row.Appointment.Date, row.Appointment.StartTime,
+                row.Appointment.TreatmentSession == null ? null : row.Appointment.TreatmentSession.TreatmentPlan.Status,
+                row.Appointment.TreatmentSession == null ? null : row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.Status,
+                row.Appointment.TreatmentSession == null ? null : row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.ExpiresAtUtc,
+                row.Appointment.ServiceEntitlement == null ? null : row.Appointment.ServiceEntitlement.ExpiresAtUtc)))
         .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<IReadOnlyList<Appointment>> GetHoldsForOrdersAsync(IReadOnlyCollection<Guid> orderIds, CancellationToken cancellationToken) =>

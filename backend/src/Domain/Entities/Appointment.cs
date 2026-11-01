@@ -85,6 +85,13 @@ public sealed class Appointment : BaseEntity, IHasCreatedAt
             Note = string.IsNullOrEmpty(Note) ? note : $"{Note}\n{note}";
     }
 
+    /// <summary>BR-BKG-10: the entitlement or session this appointment was booked with becomes bookable again.</summary>
+    public void ReleaseBookedSource()
+    {
+        ServiceEntitlement?.Release();
+        TreatmentSession?.Release();
+    }
+
     public void ExpireHold()
     {
         EnsureStatus(Status == AppointmentStatus.Held);

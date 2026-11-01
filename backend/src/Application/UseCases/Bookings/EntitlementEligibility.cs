@@ -44,6 +44,34 @@ public static class EntitlementEligibility
             throw BookingErrors.EntitlementNotEligible("Ngày hẹn phải trước hạn sử dụng của gói.");
     }
 
+    /// <summary>BR-BKG-16: earliest date after the previous session's visit, latest date before the next session's visit.</summary>
+    public static SessionWindow RescheduleWindow(SessionBookingFacts facts, DateTime nowUtc)
+    {
+        ArgumentNullException.ThrowIfNull(facts);
+        var latest = facts.Next is { } next ? next.Date.AddDays(-next.MinDaysBetweenSessions) : (DateOnly?)null;
+        return new SessionWindow(ForSession(facts, nowUtc).EarliestDate, latest);
+    }
+
+    /// <summary>
+    /// UC-SPA-16 A1 for a package session (BR-BKG-16, Q-42): the session is already booked by the appointment being moved, so only the
+    /// package, the plan, the order with the previous and next sessions and the package expiry (Q-30) are checked.
+    /// </summary>
+    public static void EnsureSessionReschedule(SessionBookingFacts facts, DateOnly date, TimeOnly start, TimeOnly end, DateTime nowUtc)
+    {
+        ArgumentNullException.ThrowIfNull(facts);
+        if (PurchaseStatus.Effective(facts.PackageStatus, facts.PackageExpiresAtUtc, nowUtc) != CustomerPackageStatus.Active)
+            throw BookingErrors.EntitlementNotEligible("Gói đã hết hạn hoặc không còn sử dụng.");
+        if (facts.PlanStatus is TreatmentPlanStatus.Paused or TreatmentPlanStatus.Cancelled)
+            throw BookingErrors.EntitlementNotEligible("Liệu trình đang tạm dừng hoặc đã hủy.");
+        var window = RescheduleWindow(facts, nowUtc);
+        if (date < window.Earliest || (facts.Previous is { } previous && date == previous.Date && start < previous.EndTime))
+            throw BookingErrors.SessionTooEarly(date < window.Earliest ? window.Earliest : date);
+        if (window.Latest is { } latest && (date > latest || (date == facts.Next!.Date && end > facts.Next.StartTime)))
+            throw BookingErrors.SessionTooLate(date > latest ? latest : date);
+        if (facts.PackageExpiresAtUtc is { } expires && date.ToDateTime(start) >= SpaTime.ToLocal(expires))
+            throw BookingErrors.EntitlementNotEligible("Ngày hẹn phải trước hạn sử dụng của gói.");
+    }
+
     /// <summary>BR-BKG-15: a book-now visit may not start before its hold (still waiting for payment) runs out.</summary>
     public static void EnsureBookNowStart(DateOnly date, TimeOnly start, DateTime holdExpiresAtUtc)
     {

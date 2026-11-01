@@ -11,12 +11,14 @@ using NhuNguyetSpa.Application.Interfaces.Services.Bookings;
 using NhuNguyetSpa.Application.UseCases.Catalog;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
+using NhuNguyetSpa.Domain.Exceptions;
 
 namespace NhuNguyetSpa.Application.UseCases.Bookings;
 
 /// <summary>
 /// GET /availability, steps A1–A8 of the free-slot algorithm (docs/specs/bookings.md, BR-BKG-12). The owner sees every service and
-/// may pass an appointment to reschedule; a signed-in customer also loses slots that clash with their own appointments (BR-BKG-04).
+/// may pass an appointment to reschedule; a signed-in customer also loses slots that clash with their own appointments (BR-BKG-04) and
+/// may ask for slots to move one of their own appointments (UC-SPA-16, BR-BKG-18).
 /// </summary>
 public sealed class AvailabilityService : IAvailabilityService
 {
@@ -59,11 +61,32 @@ public sealed class AvailabilityService : IAvailabilityService
         var date = query.Date!.Value;
         var isOwner = HasRole(Roles.Owner);
         var customerId = HasRole(Roles.Customer) ? _currentUser.UserId : null;
-        var (service, duration, extraBlocked, startsBefore) = await ResolveSourceAsync(query, isOwner, customerId, cancellationToken);
+        var hasSource = query.SpaServiceId.HasValue || query.ServiceEntitlementId.HasValue || query.TreatmentSessionId.HasValue;
+        Guid? excludeId = null;
+        SpaService service;
+        int duration;
+        IReadOnlyList<(TimeOnly Start, TimeOnly End)>? extraBlocked;
+        TimeOnly? startsBefore;
+        if (customerId is { } me && query.AppointmentId is { } mine)
+        {
+            if (hasSource)
+                throw new BusinessRuleException("Khi đổi lịch chỉ gửi mã lịch hẹn, không gửi kèm dịch vụ.", "validation_error");
+            (service, duration, extraBlocked, startsBefore) = await ResolveMyAppointmentAsync(mine, me, date, cancellationToken);
+            excludeId = mine;
+        }
+        else
+        {
+            if (!hasSource)
+            {
+                // Only an appointment: the owner reschedules it with its own (derived) service; nobody else may.
+                var derived = isOwner ? await _appointments.GetSpaServiceIdAsync(query.AppointmentId!.Value, cancellationToken) : null;
+                query = new AvailabilityQuery(derived ?? throw BookingErrors.AppointmentNotFound(), date, query.StaffMemberId, query.AppointmentId);
+            }
+            (service, duration, extraBlocked, startsBefore) = await ResolveSourceAsync(query, isOwner, customerId, cancellationToken);
+        }
         if (extraBlocked is null)
             return OperationResult<AvailabilityDto>.Success(new AvailabilityDto(date, duration, []));
 
-        Guid? excludeId = null;
         if (isOwner && query.AppointmentId is { } appointmentId)
         {
             // Rescheduling: keep the appointment's own length and do not let it block itself (A12).
@@ -147,6 +170,35 @@ public sealed class AvailabilityService : IAvailabilityService
             ? [(TimeOnly.MinValue, previous.EndTime)]
             : [];
         return (sessionService, facts.DurationMinutes, blocked, startsBefore);
+    }
+
+    /// <summary>
+    /// BR-BKG-18: the customer's own appointment, searched with its derived service (discontinued allowed) and its own length. A package
+    /// session only gets slots between the previous and next sessions' visits and before the package expires (BR-BKG-16, Q-30).
+    /// </summary>
+    private async Task<(SpaService Service, int Duration, IReadOnlyList<(TimeOnly Start, TimeOnly End)>? ExtraBlocked, TimeOnly? StartsBefore)> ResolveMyAppointmentAsync(
+        Guid appointmentId, Guid customerId, DateOnly date, CancellationToken cancellationToken)
+    {
+        var mine = (await _appointments.GetMineAsync(appointmentId, customerId, cancellationToken) ?? throw BookingErrors.AppointmentNotFound()).Appointment;
+        var service = await _services.GetByIdAsync(mine.Service.Id, cancellationToken) ?? throw BookingErrors.AppointmentNotFound();
+        var duration = (int)(mine.EndTime - mine.StartTime).TotalMinutes;
+        if (mine.TreatmentSession is not { } session)
+            return (service, duration, [], null);
+
+        var facts = await _purchases.GetSessionFactsAsync(session.Id, customerId, cancellationToken) ?? throw BookingErrors.AppointmentNotFound();
+        var window = EntitlementEligibility.RescheduleWindow(facts, _clock.UtcNow);
+        DateTime? expiresLocal = facts.PackageExpiresAtUtc is { } expires ? SpaTime.ToLocal(expires) : null;
+        if (date < window.Earliest || date > window.Latest || (expiresLocal is { } last && date > DateOnly.FromDateTime(last)))
+            return (service, duration, null, null);
+        TimeOnly? startsBefore = expiresLocal is { } end && date == DateOnly.FromDateTime(end) ? TimeOnly.FromDateTime(end) : null;
+        if (startsBefore == TimeOnly.MinValue)
+            return (service, duration, null, null);
+        var blocked = new List<(TimeOnly Start, TimeOnly End)>();
+        if (facts.Previous is { } previous && previous.Date == date)
+            blocked.Add((TimeOnly.MinValue, previous.EndTime));
+        if (facts.Next is { } next && next.Date == date)
+            blocked.Add((next.StartTime, TimeOnly.MaxValue));
+        return (service, duration, blocked, startsBefore);
     }
 
     private bool HasRole(string role) => _currentUser.IsAuthenticated && _currentUser.Roles.Contains(role);
