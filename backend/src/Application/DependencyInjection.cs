@@ -49,9 +49,11 @@ public static class DependencyInjection
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<EntitlementIssuer>();
         services.AddScoped<BookingSlotReserver>();
+        services.AddScoped<MyAppointmentReader>();
         services.AddScoped<OrderPlacement>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<ICustomerBookingService, CustomerBookingService>();
+        services.AddScoped<IMyAppointmentService, MyAppointmentService>();
         services.AddScoped<IPurchaseService, PurchaseService>();
         services.AddScoped<IServiceHistoryService, ServiceHistoryService>();
         services.AddScoped<IMyTreatmentService, MyTreatmentService>();

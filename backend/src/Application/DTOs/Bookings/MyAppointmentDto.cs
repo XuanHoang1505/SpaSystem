@@ -21,7 +21,20 @@ public sealed record MyAppointmentDto(
     AppointmentBookingSource Source,
     Guid? ServiceEntitlementId,
     MyTreatmentSessionRefDto? TreatmentSession,
-    MyAppointmentOrderDto? Order);
+    MyAppointmentOrderDto? Order)
+{
+    /// <summary>UC-SPA-16: the customer may still move the appointment (BR-BKG-07, BR-BKG-16); the command checks again.</summary>
+    public bool CanReschedule { get; init; }
+
+    /// <summary>UC-SPA-16: the customer may still cancel the appointment (BR-BKG-07).</summary>
+    public bool CanCancel { get; init; }
+
+    /// <summary>Visit start minus <c>Booking:CustomerChangeCutoffHours</c>; null when the status never allows a change.</summary>
+    public DateTime? ChangeDeadlineAtUtc { get; init; }
+}
+
+/// <summary>A customer's appointment as read, with the facts its change flags are computed from.</summary>
+public sealed record MyAppointmentRow(MyAppointmentDto Appointment, AppointmentChangeFacts Facts);
 
 public sealed record MyTreatmentSessionRefDto(Guid Id, int SequenceNumber, Guid CustomerPackageId, string PackageName);
 

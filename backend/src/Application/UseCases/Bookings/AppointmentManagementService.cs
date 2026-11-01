@@ -175,7 +175,7 @@ public sealed class AppointmentManagementService : IAppointmentManagementService
         return await ChangeAsync(id, (appointment, _, _) =>
         {
             EnsureManageable(appointment);
-            Release(appointment);
+            appointment.ReleaseBookedSource();
             appointment.Cancel(request.Reason!.Trim(), _clock.UtcNow);
             return Task.CompletedTask;
         }, cancellationToken);
@@ -198,7 +198,7 @@ public sealed class AppointmentManagementService : IAppointmentManagementService
             }
             else
             {
-                Release(appointment);
+                appointment.ReleaseBookedSource();
             }
 
             appointment.MarkNoShow(string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim());
@@ -224,13 +224,6 @@ public sealed class AppointmentManagementService : IAppointmentManagementService
     {
         var shifts = await _shifts.GetActiveRangesAsync([staffMemberId], date, date, cancellationToken);
         return shifts.Any(shift => shift.StaffMemberId == staffMemberId && shift.Date == date && shift.Start <= start && end <= shift.End);
-    }
-
-    /// <summary>BR-BKG-10: the entitlement or session used to book becomes bookable again.</summary>
-    private static void Release(Appointment appointment)
-    {
-        appointment.ServiceEntitlement?.Release();
-        appointment.TreatmentSession?.Release();
     }
 
     private static void EnsureManageable(Appointment appointment)

@@ -79,8 +79,15 @@ public interface IAppointmentRepository : IRepository<Appointment>
     /// <summary>Null when the appointment is someone else's or neither completed nor no-show.</summary>
     Task<ServiceHistoryDetailDto?> GetHistoryDetailAsync(Guid customerId, Guid appointmentId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// UC-SPA-16: the customer's appointments in the scope's statuses (BR-BKG-17); upcoming by date and start time ascending, the
+    /// other scopes (and no scope) newest first. The service is derived (Q-25).
+    /// </summary>
+    Task<PagedResult<(MyAppointmentListItemDto Item, AppointmentChangeFacts Facts)>> SearchMineAsync(
+        Guid customerId, MyAppointmentSearchCriteria criteria, CancellationToken cancellationToken);
+
     /// <summary>The customer's own appointment (UC-SPA-15/16); null when missing or someone else's.</summary>
-    Task<MyAppointmentDto?> GetMineAsync(Guid id, Guid customerId, CancellationToken cancellationToken);
+    Task<MyAppointmentRow?> GetMineAsync(Guid id, Guid customerId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Book-now appointments (tracked) whose order line belongs to one of <paramref name="orderIds"/>, held or hold-expired;

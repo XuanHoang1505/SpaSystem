@@ -14,7 +14,8 @@ public sealed record ReservedSlot(Guid StaffMemberId, TimeOnly End);
 /// <summary>
 /// Step A9 for customer bookings (docs/specs/bookings.md, UC-SPA-15): re-checks A3–A7 for one slot inside the caller's transaction
 /// and picks the staff member when the customer chose "any staff" (BR-BKG-14). Lock order: staff rows by id, then the customer row,
-/// as in UC-SPA-17; the appointments EXCLUDE constraint still backs the staff check when the insert is saved.
+/// as in UC-SPA-17; the appointments EXCLUDE constraint still backs the staff check when the insert is saved. A customer reschedule
+/// (UC-SPA-16) passes the appointment being moved so it does not block itself (A12).
 /// </summary>
 public sealed class BookingSlotReserver
 {
@@ -33,7 +34,7 @@ public sealed class BookingSlotReserver
     }
 
     public async Task<ReservedSlot> ReserveAsync(Guid customerId, Guid spaServiceId, DateOnly date, TimeOnly start, int durationMinutes,
-        Guid? staffMemberId, CancellationToken cancellationToken)
+        Guid? staffMemberId, CancellationToken cancellationToken, Guid? excludeAppointmentId = null)
     {
         var end = start.Add(TimeSpan.FromMinutes(durationMinutes), out var wrappedDays);
         if (wrappedDays > 0)
@@ -63,7 +64,7 @@ public sealed class BookingSlotReserver
         foreach (var id in ids)
             await _appointments.ExpireHeldAsync(id, date, nowUtc, cancellationToken);
 
-        var busy = await _appointments.GetOccupyingForStaffOnAsync(ids, date, nowUtc, null, cancellationToken);
+        var busy = await _appointments.GetOccupyingForStaffOnAsync(ids, date, nowUtc, excludeAppointmentId, cancellationToken);
         var free = onShift
             .Where(candidate => !busy.Any(range =>
                 range.StaffMemberId == candidate.StaffMemberId && AppointmentOccupancy.Overlaps(range.Start, range.End, start, end)))
@@ -72,7 +73,7 @@ public sealed class BookingSlotReserver
         if (free.Count == 0)
             throw BookingErrors.SlotUnavailable();
 
-        var customerBusy = await _appointments.GetCustomerOccupyingOnAsync(customerId, date, nowUtc, null, cancellationToken);
+        var customerBusy = await _appointments.GetCustomerOccupyingOnAsync(customerId, date, nowUtc, excludeAppointmentId, cancellationToken);
         if (customerBusy.Any(range => AppointmentOccupancy.Overlaps(range.Start, range.End, start, end)))
             throw BookingErrors.CustomerBusy();
 

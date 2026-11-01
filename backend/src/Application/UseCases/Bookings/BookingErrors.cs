@@ -22,6 +22,8 @@ public static class BookingErrors
     public const string EntitlementNotEligibleCode = "entitlement_not_eligible";
     public const string EntitlementNotFoundCode = "entitlement_not_found";
     public const string TreatmentSessionNotFoundCode = "treatment_session_not_found";
+    public const string ChangeWindowPassedCode = "change_window_passed";
+    public const string SessionTooLateCode = "session_too_late";
 
     public static NotFoundException AppointmentNotFound() => new("Không tìm thấy lịch hẹn.", AppointmentNotFoundCode);
 
@@ -57,6 +59,15 @@ public static class BookingErrors
 
     public static BusinessRuleException SessionTooEarly(DateOnly earliest) =>
         new($"Buổi này chỉ đặt được từ ngày {earliest:dd/MM/yyyy}.", SessionTooEarlyCode);
+
+    /// <summary>BR-BKG-16 / Q-42: a rescheduled package session must stay before the next session's visit and its gap.</summary>
+    public static BusinessRuleException SessionTooLate(DateOnly latest) =>
+        new($"Buổi này phải diễn ra trước ngày {latest:dd/MM/yyyy} để giữ thứ tự với buổi sau.", SessionTooLateCode);
+
+    /// <summary>BR-BKG-07 / Q-04: too close to the visit for the customer to reschedule or cancel it.</summary>
+    public static BusinessRuleException ChangeWindowPassed(int hours) => new(hours == 0
+        ? "Lịch hẹn đã bắt đầu, không thể đổi hoặc hủy. Vui lòng liên hệ spa để được hỗ trợ."
+        : $"Chỉ được đổi hoặc hủy lịch trước giờ hẹn ít nhất {hours} giờ. Vui lòng liên hệ spa để được hỗ trợ.", ChangeWindowPassedCode);
 
     /// <summary>The bought service or session cannot be booked; <paramref name="reason"/> is shown to the customer.</summary>
     public static ConflictException EntitlementNotEligible(string reason) => new(reason, EntitlementNotEligibleCode);
