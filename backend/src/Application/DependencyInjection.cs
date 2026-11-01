@@ -9,6 +9,7 @@ using NhuNguyetSpa.Application.Interfaces.Services.Payments;
 using NhuNguyetSpa.Application.Interfaces.Services.Purchases;
 using NhuNguyetSpa.Application.Interfaces.Services.Promotions;
 using NhuNguyetSpa.Application.Interfaces.Services.Staff;
+using NhuNguyetSpa.Application.Interfaces.Services.Treatments;
 using NhuNguyetSpa.Application.Interfaces.Services.WorkSchedules;
 using NhuNguyetSpa.Application.UseCases.Auth;
 using NhuNguyetSpa.Application.UseCases.Bookings;
@@ -19,6 +20,7 @@ using NhuNguyetSpa.Application.UseCases.Payments;
 using NhuNguyetSpa.Application.UseCases.Promotions;
 using NhuNguyetSpa.Application.UseCases.Purchases;
 using NhuNguyetSpa.Application.UseCases.Staff;
+using NhuNguyetSpa.Application.UseCases.Treatments;
 using NhuNguyetSpa.Application.UseCases.WorkSchedules;
 
 namespace NhuNguyetSpa.Application;
@@ -51,6 +53,9 @@ public static class DependencyInjection
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<ICustomerBookingService, CustomerBookingService>();
         services.AddScoped<IPurchaseService, PurchaseService>();
+        services.AddScoped<IServiceHistoryService, ServiceHistoryService>();
+        services.AddScoped<IMyTreatmentService, MyTreatmentService>();
+        services.AddScoped<ITreatmentManagementService, TreatmentManagementService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IOrderExpiryService, OrderExpiryService>();
         services.AddScoped<IAppointmentCompletionService, AppointmentCompletionService>();

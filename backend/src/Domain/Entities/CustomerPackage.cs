@@ -34,4 +34,24 @@ public sealed class CustomerPackage : BaseEntity
         Status = CustomerPackageStatus.Completed;
         return true;
     }
+
+    /// <summary>BR-TRT-08: the plan was cancelled (no refund); an expired package can be cancelled too.</summary>
+    public void Cancel()
+    {
+        EnsureNotFinished();
+        Status = CustomerPackageStatus.Cancelled;
+    }
+
+    /// <summary>BR-TRT-08: the owner closed the plan with skipped sessions left; <see cref="UsedSessions"/> stays as counted.</summary>
+    public void Close()
+    {
+        EnsureNotFinished();
+        Status = CustomerPackageStatus.Completed;
+    }
+
+    private void EnsureNotFinished()
+    {
+        if (Status is CustomerPackageStatus.Cancelled or CustomerPackageStatus.Completed)
+            throw new InvalidOperationException($"Customer package in status {Status} cannot be changed.");
+    }
 }

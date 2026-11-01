@@ -1451,6 +1451,10 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(30)")
                         .HasColumnName("status");
 
+                    b.Property<string>("StatusReason")
+                        .HasColumnType("text")
+                        .HasColumnName("status_reason");
+
                     b.HasKey("Id")
                         .HasName("pk_treatment_plans");
 

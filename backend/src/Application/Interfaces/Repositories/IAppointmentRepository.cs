@@ -1,6 +1,7 @@
 using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Bookings;
 using NhuNguyetSpa.Application.DTOs.Care;
+using NhuNguyetSpa.Application.DTOs.Purchases;
 using NhuNguyetSpa.Application.DTOs.Staff;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
@@ -71,6 +72,12 @@ public interface IAppointmentRepository : IRepository<Appointment>
     /// customer's timetable run one after another: BR-BKG-04 has no database constraint to catch the race.
     /// </summary>
     Task LockCustomerForBookingAsync(Guid customerId, CancellationToken cancellationToken);
+
+    /// <summary>UC-SPA-20: the customer's completed and no-show visits only, newest first; the service is derived (Q-25).</summary>
+    Task<PagedResult<ServiceHistoryItemDto>> SearchHistoryAsync(Guid customerId, ServiceHistoryCriteria criteria, CancellationToken cancellationToken);
+
+    /// <summary>Null when the appointment is someone else's or neither completed nor no-show.</summary>
+    Task<ServiceHistoryDetailDto?> GetHistoryDetailAsync(Guid customerId, Guid appointmentId, CancellationToken cancellationToken);
 
     /// <summary>The customer's own appointment (UC-SPA-15/16); null when missing or someone else's.</summary>
     Task<MyAppointmentDto?> GetMineAsync(Guid id, Guid customerId, CancellationToken cancellationToken);

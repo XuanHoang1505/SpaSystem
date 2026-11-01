@@ -16,6 +16,10 @@ public interface IPurchaseRepository
     /// <summary>A fresh (never cached) read of what BR-BKG-05 needs for the session; null when missing or someone else's.</summary>
     Task<SessionBookingFacts?> GetSessionFactsAsync(Guid sessionId, Guid customerId, CancellationToken cancellationToken);
 
+    /// <summary>The same facts for several sessions at once (UC-SPA-19 per-session <c>canBook</c>); other customers' sessions are left out.</summary>
+    Task<IReadOnlyDictionary<Guid, SessionBookingFacts>> GetSessionFactsAsync(
+        IReadOnlyCollection<Guid> sessionIds, Guid customerId, CancellationToken cancellationToken);
+
     Task<TreatmentSession?> GetSessionForUpdateAsync(Guid sessionId, CancellationToken cancellationToken);
 
     /// <summary>

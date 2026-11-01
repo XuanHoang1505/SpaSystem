@@ -31,6 +31,10 @@ public sealed class PurchaseRepository : IPurchaseRepository
         return facts.TryGetValue(sessionId, out var found) ? found.Facts : null;
     }
 
+    public async Task<IReadOnlyDictionary<Guid, SessionBookingFacts>> GetSessionFactsAsync(
+        IReadOnlyCollection<Guid> sessionIds, Guid customerId, CancellationToken cancellationToken) =>
+        (await FactsAsync(sessionIds, customerId, cancellationToken)).ToDictionary(pair => pair.Key, pair => pair.Value.Facts);
+
     public Task<TreatmentSession?> GetSessionForUpdateAsync(Guid sessionId, CancellationToken cancellationToken) =>
         _context.TreatmentSessions.FirstOrDefaultAsync(session => session.Id == sessionId, cancellationToken);
 

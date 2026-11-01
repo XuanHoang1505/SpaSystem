@@ -55,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IWorkScheduleRepository, WorkScheduleRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddScoped<IPurchaseRepository, PurchaseRepository>();
+        services.AddScoped<ITreatmentRepository, TreatmentRepository>();
         services.AddScoped<ISkinProfileRepository, SkinProfileRepository>();
         services.AddScoped<ICustomerAllergyRepository, CustomerAllergyRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
@@ -116,6 +117,9 @@ public static class DependencyInjection
         services.AddOptions<CareOptions>()
             .Bind(configuration.GetSection(CareOptions.SectionName))
             .Validate(CareOptions.IsValid, "Care:SkinProfileEditWindowDays must be 0–365.")
+            .ValidateOnStart();
+        services.AddOptions<TreatmentsOptions>()
+            .Bind(configuration.GetSection(TreatmentsOptions.SectionName))
             .ValidateOnStart();
         services.AddOptions<OrderExpiryOptions>()
             .Bind(configuration.GetSection(OrderExpiryOptions.SectionName))
