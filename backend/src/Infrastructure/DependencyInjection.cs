@@ -10,6 +10,7 @@ using NhuNguyetSpa.Application.Interfaces.Payments;
 using NhuNguyetSpa.Infrastructure.BackgroundJobs;
 using NhuNguyetSpa.Infrastructure.Payments;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
+using NhuNguyetSpa.Application.Interfaces.Reports;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Storage;
 using NhuNguyetSpa.Application.UseCases.Staff;
@@ -18,6 +19,7 @@ using NhuNguyetSpa.Infrastructure.Notifications;
 using NhuNguyetSpa.Infrastructure.Persistence;
 using NhuNguyetSpa.Infrastructure.Persistence.Interceptors;
 using NhuNguyetSpa.Infrastructure.Persistence.Seeds;
+using NhuNguyetSpa.Infrastructure.Reports;
 using NhuNguyetSpa.Infrastructure.Repositories;
 using NhuNguyetSpa.Infrastructure.Storage;
 
@@ -62,6 +64,8 @@ public static class DependencyInjection
         services.AddScoped<ICartRepository, CartRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IRevenueReportRepository, RevenueReportRepository>();
+        services.AddSingleton<IRevenueReportExporter, ClosedXmlRevenueReportExporter>();
 
         // Validated when first resolved (no ValidateOnStart): a missing JWT_KEY must not stop health checks or Swagger.
         services.AddOptions<JwtOptions>()
@@ -107,6 +111,11 @@ public static class DependencyInjection
             .Validate(options => options.CancelBlockMinutesAfterPaymentStart >= 0 &&
                                  options.CancelBlockMinutesAfterPaymentStart <= options.PaymentTimeoutMinutes,
                 "Order:CancelBlockMinutesAfterPaymentStart must be 0–Order:PaymentTimeoutMinutes.")
+            .ValidateOnStart();
+        services.AddOptions<ReportsOptions>()
+            .Bind(configuration.GetSection(ReportsOptions.SectionName))
+            .Validate(options => options.MaxRangeYears is >= 1 and <= 20 && options.MaxTopProducts is >= 1 and <= 500,
+                "Reports:MaxRangeYears must be 1–20, MaxTopProducts 1–500.")
             .ValidateOnStart();
         // Payment URLs are checked by the gateway on each call, so the API starts without them (like Cloudinary).
         services.AddOptions<PaymentOptions>()
