@@ -7,4 +7,6 @@ public sealed class OrderOptions
 
     /// <summary>An order waits this long for payment: <c>payment_due_at_utc = created_at_utc + value</c> (1–1440).</summary>
     public int PaymentTimeoutMinutes { get; set; } = 15;
+
+    public int CancelBlockMinutesAfterPaymentStart { get; set; }
 }

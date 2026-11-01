@@ -51,7 +51,9 @@ public static class DependencyInjection
         services.AddScoped<BookingSlotReserver>();
         services.AddScoped<MyAppointmentReader>();
         services.AddScoped<OrderPlacement>();
+        services.AddScoped<OrderCancellation>();
         services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IOrderManagementService, OrderManagementService>();
         services.AddScoped<ICustomerBookingService, CustomerBookingService>();
         services.AddScoped<IMyAppointmentService, MyAppointmentService>();
         services.AddScoped<IPurchaseService, PurchaseService>();

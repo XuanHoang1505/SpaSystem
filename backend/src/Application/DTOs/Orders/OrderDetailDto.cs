@@ -6,6 +6,7 @@ namespace NhuNguyetSpa.Application.DTOs.Orders;
 /// <summary>
 /// <see cref="IsPayable"/>: still pending, before the due time, and below the attempt limit (a new payment can be started).
 /// <see cref="Appointment"/>: the slot held by a book-now order (UC-SPA-15).
+/// <see cref="CanCancel"/>: the customer may cancel now (BR-ORD-04, Q-44); cancellation fields are set once cancelled (UC-SPA-12).
 /// </summary>
 public sealed record OrderDetailDto(
     Guid Id,
@@ -20,7 +21,10 @@ public sealed record OrderDetailDto(
     IReadOnlyList<OrderItemDto> Items,
     IReadOnlyList<OrderPaymentDto> Payments,
     AppliedPromotionDto? Promotion,
-    OrderAppointmentDto? Appointment = null);
+    OrderAppointmentDto? Appointment = null,
+    bool CanCancel = false,
+    DateTime? CancelledAtUtc = null,
+    string? CancellationReason = null);
 
 public sealed record OrderItemDto(
     Guid Id, CatalogItemType Type, Guid ProductId, string ProductName, decimal UnitPrice, decimal DiscountAmount, decimal LineTotal);

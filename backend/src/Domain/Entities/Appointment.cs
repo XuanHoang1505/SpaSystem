@@ -92,6 +92,15 @@ public sealed class Appointment : BaseEntity, IHasCreatedAt
         TreatmentSession?.Release();
     }
 
+    /// <summary>BR-ORD-12: cancelling a book-now order frees its held slot at once; there is no entitlement yet to give back.</summary>
+    public void CancelHold(string reason, DateTime nowUtc)
+    {
+        EnsureStatus(Status == AppointmentStatus.Held);
+        Status = AppointmentStatus.Cancelled;
+        CancellationReason = reason;
+        CancelledAtUtc = nowUtc;
+    }
+
     public void ExpireHold()
     {
         EnsureStatus(Status == AppointmentStatus.Held);

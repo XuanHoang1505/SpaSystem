@@ -1,3 +1,4 @@
+using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Orders;
 using NhuNguyetSpa.Domain.Entities;
 
@@ -7,6 +8,18 @@ public interface IOrderRepository : IRepository<Order>
 {
     /// <summary>The customer's order, or null when missing or someone else's. <c>IsPayable</c> is left false for the service to fill.</summary>
     Task<OrderDetailDto?> GetDetailAsync(Guid id, Guid customerId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// A page of one customer's orders (<see cref="OrderSearchCriteria.CustomerId"/> required), newest first; the flags are left false
+    /// for the service to fill from the facts.
+    /// </summary>
+    Task<PagedResult<(MyOrderListItemDto Item, OrderActionFacts Facts)>> SearchMineAsync(OrderSearchCriteria criteria, CancellationToken cancellationToken);
+
+    /// <summary>The owner's list (BR-ORD-11): every customer, filtered, searched and sorted as the criteria say, ties by code.</summary>
+    Task<PagedResult<OrderListItemDto>> SearchAsync(OrderSearchCriteria criteria, CancellationToken cancellationToken);
+
+    /// <summary>Any customer's order for the owner, or null; <c>IsPayable</c> and <c>CanCancel</c> are left false for the service.</summary>
+    Task<OwnerOrderDetailDto?> GetOwnerDetailAsync(Guid id, CancellationToken cancellationToken);
 
     Task<Guid?> FindIdByIdempotencyKeyAsync(Guid customerId, Guid key, CancellationToken cancellationToken);
 

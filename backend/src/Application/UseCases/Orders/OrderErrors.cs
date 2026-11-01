@@ -2,7 +2,7 @@ using NhuNguyetSpa.Domain.Exceptions;
 
 namespace NhuNguyetSpa.Application.UseCases.Orders;
 
-/// <summary>Error codes of creating and reading orders, UC-SPA-11 (docs/specs/orders.md).</summary>
+/// <summary>Error codes of creating, reading and cancelling orders, UC-SPA-11, 12, 13 (docs/specs/orders.md).</summary>
 public static class OrderErrors
 {
     public const string CartEmptyCode = "cart_empty";
@@ -10,6 +10,8 @@ public static class OrderErrors
     public const string AmountTooSmallCode = "order_amount_too_small";
     public const string OrderNotFoundCode = "order_not_found";
     public const string OrderNotPayableCode = "order_not_payable";
+    public const string NotCancellableCode = "order_not_cancellable";
+    public const string PaymentInProgressCode = "order_payment_in_progress";
 
     public static BusinessRuleException CartEmpty()
     {
@@ -34,5 +36,15 @@ public static class OrderErrors
     public static ConflictException OrderNotPayable()
     {
         return new("Đơn hàng không còn chờ thanh toán hoặc đã quá hạn thanh toán.", OrderNotPayableCode);
+    }
+
+    public static ConflictException NotCancellable()
+    {
+        return new("Chỉ hủy được đơn hàng đang chờ thanh toán.", NotCancellableCode);
+    }
+
+    public static ConflictException PaymentInProgress(int minutes)
+    {
+        return new($"Bạn vừa mở thanh toán cho đơn hàng này. Vui lòng thử hủy lại sau {minutes} phút hoặc liên hệ spa.", PaymentInProgressCode);
     }
 }

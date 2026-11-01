@@ -15,6 +15,7 @@ public static class Permissions
     public const string PromotionManage = "promotion.manage";
     public const string CartSelf = "cart.self";
     public const string OrderSelf = "order.self";
+    public const string OrderManage = "order.manage";
     public const string AppointmentManage = "appointment.manage";
     public const string AppointmentSelf = "appointment.self";
     public const string PurchaseSelf = "purchase.self";
@@ -30,6 +31,7 @@ public static class Permissions
         [PromotionManage] = [SecurityRoles.Owner],
         [CartSelf] = [SecurityRoles.Customer],
         [OrderSelf] = [SecurityRoles.Customer],
+        [OrderManage] = [SecurityRoles.Owner],
         [AppointmentManage] = [SecurityRoles.Owner],
         [AppointmentSelf] = [SecurityRoles.Customer],
         [PurchaseSelf] = [SecurityRoles.Customer],
