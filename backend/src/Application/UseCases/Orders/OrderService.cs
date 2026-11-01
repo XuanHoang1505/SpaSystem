@@ -20,7 +20,9 @@ using NhuNguyetSpa.Domain.Exceptions;
 
 namespace NhuNguyetSpa.Application.UseCases.Orders;
 
-/// <summary>UC-SPA-11 preview and order creation (docs/specs/orders.md, BR-ORD-02, 03, 07–09).</summary>
+/// <summary>
+/// UC-SPA-11 preview and order creation (docs/specs/orders.md, BR-ORD-02, 03, 07–09); UC-SPA-12 list and cancel (BR-ORD-04, 11).
+/// </summary>
 public sealed class OrderService : IOrderService
 {
     private readonly IOrderRepository _orders;
@@ -29,8 +31,12 @@ public sealed class OrderService : IOrderService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUser;
     private readonly IDateTimeProvider _clock;
+    private readonly IOptions<OrderOptions> _orderOptions;
     private readonly IOptions<PaymentOptions> _paymentOptions;
     private readonly IValidator<OrderRequest> _validator;
+    private readonly OrderCancellation _cancellation;
+    private readonly IValidator<OrderListQuery> _listValidator;
+    private readonly IValidator<CancelOrderRequest> _cancelValidator;
 
     public OrderService(
         ICartRepository carts,
@@ -46,7 +52,10 @@ public sealed class OrderService : IOrderService
         IDateTimeProvider clock,
         IOptions<OrderOptions> orderOptions,
         IOptions<PaymentOptions> paymentOptions,
-        IValidator<OrderRequest> validator)
+        IValidator<OrderRequest> validator,
+        OrderCancellation cancellation,
+        IValidator<OrderListQuery> listValidator,
+        IValidator<CancelOrderRequest> cancelValidator)
     {
         _orders = orders;
         _promotionApplier = promotionApplier;
@@ -56,8 +65,12 @@ public sealed class OrderService : IOrderService
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
         _clock = clock;
+        _orderOptions = orderOptions;
         _paymentOptions = paymentOptions;
         _validator = validator;
+        _cancellation = cancellation;
+        _listValidator = listValidator;
+        _cancelValidator = cancelValidator;
     }
 
     private Guid CustomerId
@@ -119,23 +132,52 @@ public sealed class OrderService : IOrderService
     public async Task<OperationResult<OrderDetailDto>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         var order = await _orders.GetDetailAsync(id, CustomerId, cancellationToken) ?? throw OrderErrors.OrderNotFound();
-        var payable = order.Status == OrderStatus.PendingPayment && _clock.UtcNow < order.PaymentDueAtUtc &&
-                      order.Payments.Count < _paymentOptions.Value.MaxAttemptsPerOrder;
-        var detail = new OrderDetailDto(
-            order.Id,
-            order.Code,
-            order.Status,
-            order.Subtotal,
-            order.DiscountTotal,
-            order.GrandTotal,
-            order.PaymentDueAtUtc,
-            order.CreatedAtUtc,
-            payable,
-            order.Items,
-            order.Payments,
-            order.Promotion,
-            order.Appointment);
+        var facts = OrderActionFacts.From(order.Status, order.PaymentDueAtUtc, order.Payments);
+        var now = _clock.UtcNow;
+        var detail = order with
+        {
+            IsPayable = OrderActionPolicy.IsPayable(facts, now, _paymentOptions.Value.MaxAttemptsPerOrder),
+            CanCancel = OrderActionPolicy.CustomerCanCancel(facts, now, _orderOptions.Value.CancelBlockMinutesAfterPaymentStart),
+        };
         return OperationResult<OrderDetailDto>.Success(detail);
+    }
+
+    public async Task<OperationResult<PagedResult<MyOrderListItemDto>>> ListAsync(PagedQuery paging, OrderListQuery query,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(paging);
+        ArgumentNullException.ThrowIfNull(query);
+        await _listValidator.ValidateAndThrowAsync(query, cancellationToken);
+        OrderStatusText.TryParse(query.Status, out var status);
+        var criteria = new OrderSearchCriteria(
+            CustomerId,
+            status,
+            query.FromDate.HasValue ? SpaTime.StartOfDayUtc(query.FromDate.Value) : null,
+            query.ToDate.HasValue ? SpaTime.StartOfDayUtc(query.ToDate.Value.AddDays(1)) : null,
+            null,
+            OrderSortField.CreatedAtUtc,
+            SortDirection.Desc,
+            paging.PageNumber,
+            paging.PageSize);
+        var page = await _orders.SearchMineAsync(criteria, cancellationToken);
+        var now = _clock.UtcNow;
+        var maxAttempts = _paymentOptions.Value.MaxAttemptsPerOrder;
+        var blockMinutes = _orderOptions.Value.CancelBlockMinutesAfterPaymentStart;
+        var items = page.Items.Select(row => row.Item with
+        {
+            IsPayable = OrderActionPolicy.IsPayable(row.Facts, now, maxAttempts),
+            CanCancel = OrderActionPolicy.CustomerCanCancel(row.Facts, now, blockMinutes),
+        });
+        return OperationResult<PagedResult<MyOrderListItemDto>>.Success(
+            new PagedResult<MyOrderListItemDto>(items, page.PageNumber, page.PageSize, page.TotalCount));
+    }
+
+    public async Task<OperationResult<OrderDetailDto>> CancelAsync(Guid id, CancelOrderRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        await _cancelValidator.ValidateAndThrowAsync(request, cancellationToken);
+        await _cancellation.CancelAsync(id, CustomerId, request.Reason!, cancellationToken);
+        return await GetAsync(id, cancellationToken);
     }
 
     private async Task<OperationResult<CreatedOrder>> CreatedAsync(Guid id, bool created, CancellationToken cancellationToken)
