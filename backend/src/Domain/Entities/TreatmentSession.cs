@@ -42,6 +42,9 @@ public sealed class TreatmentSession : BaseEntity
         CompletedAtUtc = nowUtc;
     }
 
+    /// <summary>BR-TRT-09: who may change which session's note is decided in Application.</summary>
+    public void ChangeNote(string? note) => Note = note;
+
     /// <summary>A no-show that counts (Q-07 switched on); package progress is not advanced.</summary>
     public void Skip()
     {
