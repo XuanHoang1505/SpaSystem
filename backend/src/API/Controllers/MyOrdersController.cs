@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NhuNguyetSpa.API.Authorization;
 using NhuNguyetSpa.API.Responses;
+using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Orders;
 using NhuNguyetSpa.Application.DTOs.Payments;
 using NhuNguyetSpa.Application.Interfaces.Services.Orders;
@@ -9,7 +10,7 @@ using NhuNguyetSpa.Application.Interfaces.Services.Payments;
 
 namespace NhuNguyetSpa.API.Controllers;
 
-/// <summary>The signed-in customer's orders and payment attempts: UC-SPA-11, docs/specs/orders.md.</summary>
+/// <summary>The signed-in customer's orders and payment attempts: UC-SPA-11, 12, docs/specs/orders.md.</summary>
 [Route("api/v1/me/orders")]
 [Authorize(Policy = Permissions.OrderSelf)]
 public sealed class MyOrdersController : ApiController
@@ -56,6 +57,17 @@ public sealed class MyOrdersController : ApiController
             order.Created ? StatusCodes.Status201Created : StatusCodes.Status200OK);
     }
 
+    /// <summary>The customer's own orders, newest first (BR-ORD-11).</summary>
+    [HttpGet]
+    [ProducesResponseType<ApiResponse<PagedResult<MyOrderListItemDto>>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> List([FromQuery] PagedQuery paging, [FromQuery] OrderListQuery query, CancellationToken cancellationToken)
+    {
+        return HandleResult(await _orders.ListAsync(paging, query, cancellationToken));
+    }
+
     [HttpGet("{id:guid}")]
     [ProducesResponseType<ApiResponse<OrderDetailDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status401Unauthorized)]
@@ -64,6 +76,19 @@ public sealed class MyOrdersController : ApiController
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
         return HandleResult(await _orders.GetAsync(id, cancellationToken));
+    }
+
+    /// <summary>Cancels an unpaid order and its held appointment (BR-ORD-04, 12); the reason is required.</summary>
+    [HttpPost("{id:guid}/cancel")]
+    [ProducesResponseType<ApiResponse<OrderDetailDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Cancel(Guid id, CancelOrderRequest request, CancellationToken cancellationToken)
+    {
+        return HandleResult(await _orders.CancelAsync(id, request, cancellationToken));
     }
 
     /// <summary>A new payment attempt with a signed gateway URL (A2: a retry is a new attempt).</summary>
