@@ -421,6 +421,14 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("CancellationReason")
+                        .HasColumnType("text")
+                        .HasColumnName("cancellation_reason");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at_utc");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -487,6 +495,9 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_orders_code");
 
+                    b.HasIndex("CreatedAtUtc")
+                        .HasDatabaseName("ix_orders_created_at_utc");
+
                     b.HasIndex("CustomerId")
                         .HasDatabaseName("ix_orders_customer_id");
 
@@ -501,6 +512,8 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
 
                     b.ToTable("orders", null, t =>
                         {
+                            t.HasCheckConstraint("ck_orders_cancellation", "(status = 'cancelled') = (cancelled_at_utc IS NOT NULL)");
+
                             t.HasCheckConstraint("ck_orders_discount_total", "discount_total >= 0 AND discount_total <= subtotal");
 
                             t.HasCheckConstraint("ck_orders_grand_total", "grand_total = subtotal - discount_total");

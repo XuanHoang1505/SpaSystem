@@ -104,6 +104,9 @@ public static class DependencyInjection
         services.AddOptions<OrderOptions>()
             .Bind(configuration.GetSection(OrderOptions.SectionName))
             .Validate(options => options.PaymentTimeoutMinutes is >= 1 and <= 1440, "Order:PaymentTimeoutMinutes must be 1–1440.")
+            .Validate(options => options.CancelBlockMinutesAfterPaymentStart >= 0 &&
+                                 options.CancelBlockMinutesAfterPaymentStart <= options.PaymentTimeoutMinutes,
+                "Order:CancelBlockMinutesAfterPaymentStart must be 0–Order:PaymentTimeoutMinutes.")
             .ValidateOnStart();
         // Payment URLs are checked by the gateway on each call, so the API starts without them (like Cloudinary).
         services.AddOptions<PaymentOptions>()
