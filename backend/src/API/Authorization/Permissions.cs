@@ -22,6 +22,7 @@ public static class Permissions
     public const string ScheduleSelf = "schedule.self";
     public const string CareWrite = "care.write";
     public const string TreatmentManage = "treatment.manage";
+    public const string ReportView = "report.view";
 
     public static readonly IReadOnlyDictionary<string, string[]> Roles = new Dictionary<string, string[]>
     {
@@ -38,5 +39,6 @@ public static class Permissions
         [ScheduleSelf] = [SecurityRoles.Staff],
         [CareWrite] = [SecurityRoles.Staff],
         [TreatmentManage] = [SecurityRoles.Owner, SecurityRoles.Staff],
+        [ReportView] = [SecurityRoles.Owner],
     };
 }
