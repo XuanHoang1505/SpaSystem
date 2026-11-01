@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Bookings;
 using NhuNguyetSpa.Application.DTOs.Care;
+using NhuNguyetSpa.Application.DTOs.Purchases;
 using NhuNguyetSpa.Application.DTOs.Staff;
+using NhuNguyetSpa.Application.DTOs.Treatments;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.UseCases.WorkSchedules;
 using NhuNguyetSpa.Domain.Entities;
@@ -218,4 +220,92 @@ public sealed class AppointmentRepository : Repository<Appointment>, IAppointmen
             .Where(appointment => appointment.OrderItemId != null && orderIds.Contains(appointment.OrderItem!.OrderId) &&
                                   (appointment.Status == AppointmentStatus.Held || appointment.Status == AppointmentStatus.HoldExpired))
             .ToListAsync(cancellationToken);
+    public async Task<PagedResult<ServiceHistoryItemDto>> SearchHistoryAsync(
+        Guid customerId, ServiceHistoryCriteria criteria, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(criteria);
+        var query = HistoryRows(customerId);
+        if (criteria.FromDate is { } from)
+            query = query.Where(row => row.Appointment.Date >= from);
+        if (criteria.ToDate is { } to)
+            query = query.Where(row => row.Appointment.Date <= to);
+        if (criteria.SpaServiceId is { } spaServiceId)
+            query = query.Where(row => row.Service.Id == spaServiceId);
+        if (criteria.Status is { } status)
+            query = query.Where(row => row.Appointment.Status == status);
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderByDescending(row => row.Appointment.Date).ThenByDescending(row => row.Appointment.StartTime).ThenBy(row => row.Appointment.Id)
+            .Skip((criteria.PageNumber - 1) * criteria.PageSize)
+            .Take(criteria.PageSize)
+            .Select(row => new ServiceHistoryItemDto(
+                row.Appointment.Id, row.Appointment.Status, row.Appointment.Date, row.Appointment.StartTime, row.Appointment.EndTime,
+                row.Service.Id,
+                row.Appointment.TreatmentSessionId != null
+                    ? row.Appointment.TreatmentSession!.ServiceName
+                    : row.Appointment.ServiceEntitlementId != null
+                        ? row.Appointment.ServiceEntitlement!.OrderItem.ProductName
+                        : row.Appointment.OrderItem!.ProductName,
+                new StaffRefDto(row.Appointment.StaffMemberId, row.Appointment.StaffMember.User.FullName),
+                row.Appointment.TreatmentSessionId != null ? "package" : "service",
+                row.Appointment.TreatmentSessionId != null ? row.Appointment.TreatmentSession!.TreatmentPlanId : null,
+                row.Appointment.TreatmentSessionId != null ? row.Appointment.TreatmentSession!.TreatmentPlan.CustomerPackage.PackageName : null,
+                row.Appointment.TreatmentSessionId != null ? row.Appointment.TreatmentSession!.SequenceNumber : null))
+            .ToListAsync(cancellationToken);
+        return new PagedResult<ServiceHistoryItemDto>(items, criteria.PageNumber, criteria.PageSize, total);
+    }
+
+    public async Task<ServiceHistoryDetailDto?> GetHistoryDetailAsync(Guid customerId, Guid appointmentId, CancellationToken cancellationToken)
+    {
+        var row = await HistoryRows(customerId)
+            .Where(item => item.Appointment.Id == appointmentId)
+            .Select(item => new
+            {
+                Item = new ServiceHistoryItemDto(
+                    item.Appointment.Id, item.Appointment.Status, item.Appointment.Date, item.Appointment.StartTime, item.Appointment.EndTime,
+                    item.Service.Id,
+                    item.Appointment.TreatmentSessionId != null
+                        ? item.Appointment.TreatmentSession!.ServiceName
+                        : item.Appointment.ServiceEntitlementId != null
+                            ? item.Appointment.ServiceEntitlement!.OrderItem.ProductName
+                            : item.Appointment.OrderItem!.ProductName,
+                    new StaffRefDto(item.Appointment.StaffMemberId, item.Appointment.StaffMember.User.FullName),
+                    item.Appointment.TreatmentSessionId != null ? "package" : "service",
+                    item.Appointment.TreatmentSessionId != null ? item.Appointment.TreatmentSession!.TreatmentPlanId : null,
+                    item.Appointment.TreatmentSessionId != null ? item.Appointment.TreatmentSession!.TreatmentPlan.CustomerPackage.PackageName : null,
+                    item.Appointment.TreatmentSessionId != null ? item.Appointment.TreatmentSession!.SequenceNumber : null),
+                Duration = item.Appointment.TreatmentSessionId != null ? item.Appointment.TreatmentSession!.DurationMinutes : item.Service.DurationMinutes,
+                // UC-SPA-28 writes the result to the session note for a package visit and to the appointment note otherwise.
+                Result = item.Appointment.TreatmentSessionId != null ? item.Appointment.TreatmentSession!.Note : item.Appointment.Note,
+                CompletedAtUtc = item.Appointment.TreatmentSessionId != null ? item.Appointment.TreatmentSession!.CompletedAtUtc : null,
+                item.Appointment.ServiceEntitlementId,
+                item.Appointment.TreatmentSessionId,
+                OrderId = item.Appointment.TreatmentSessionId != null
+                    ? (Guid?)item.Appointment.TreatmentSession!.TreatmentPlan.CustomerPackage.OrderItem.OrderId
+                    : item.Appointment.ServiceEntitlementId != null
+                        ? item.Appointment.ServiceEntitlement!.OrderItem.OrderId
+                        : item.Appointment.OrderItem!.OrderId,
+                OrderCode = item.Appointment.TreatmentSessionId != null
+                    ? item.Appointment.TreatmentSession!.TreatmentPlan.CustomerPackage.OrderItem.Order.Code
+                    : item.Appointment.ServiceEntitlementId != null
+                        ? item.Appointment.ServiceEntitlement!.OrderItem.Order.Code
+                        : item.Appointment.OrderItem!.Order.Code,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (row is null)
+            return null;
+        var item = row.Item;
+        return new ServiceHistoryDetailDto(
+            item.AppointmentId, item.Status, item.Date, item.StartTime, item.EndTime, item.SpaServiceId, item.ServiceName, item.Staff, item.Source,
+            item.TreatmentPlanId, item.PackageName, item.SequenceNumber, row.Duration,
+            item.Status == AppointmentStatus.NoShow ? null : row.Result, row.CompletedAtUtc, row.ServiceEntitlementId, row.TreatmentSessionId,
+            row.OrderId is { } orderId && row.OrderCode is { } code ? new PurchaseOrderRefDto(orderId, code) : null);
+    }
+
+    /// <summary>BR-TRT-11, Q-40: only completed and no-show visits of the customer count as history.</summary>
+    private IQueryable<AppointmentWithService> HistoryRows(Guid customerId) => Set.AsNoTracking()
+        .Where(appointment => appointment.CustomerId == customerId &&
+                              (appointment.Status == AppointmentStatus.Completed || appointment.Status == AppointmentStatus.NoShow))
+        .WithService(Context);
 }
