@@ -16,6 +16,8 @@ public sealed class Order : BaseAuditableEntity
     public string? Note { get; set; }
     public DateTime PaymentDueAtUtc { get; set; }
     public Guid? IdempotencyKey { get; set; }
+    public DateTime? CancelledAtUtc { get; set; }
+    public string? CancellationReason { get; set; }
     public ICollection<OrderItem> Items { get; } = [];
     public ICollection<Payment> Payments { get; } = [];
 
@@ -35,6 +37,18 @@ public sealed class Order : BaseAuditableEntity
         if (Status != OrderStatus.PendingPayment)
             throw new InvalidOperationException($"Order {Code} cannot expire in status {Status}.");
         Status = OrderStatus.Expired;
+    }
+
+    /// <summary>BR-ORD-04: only an unpaid order is cancelled, also past its due time while OrderExpiryJob has not run yet.</summary>
+    public bool IsCancellable => Status == OrderStatus.PendingPayment;
+
+    public void Cancel(string reason, DateTime nowUtc)
+    {
+        if (!IsCancellable)
+            throw new InvalidOperationException($"Order {Code} cannot be cancelled in status {Status}.");
+        Status = OrderStatus.Cancelled;
+        CancelledAtUtc = nowUtc;
+        CancellationReason = reason;
     }
 
     public bool AcceptsPaymentAttempt(DateTime nowUtc) => Status == OrderStatus.PendingPayment && nowUtc < PaymentDueAtUtc;
