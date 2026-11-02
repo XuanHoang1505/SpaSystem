@@ -1,8 +1,5 @@
-using FluentValidation;
-using FluentValidation.Results;
-using Microsoft.Extensions.Options;
 using NhuNguyetSpa.Application.Common.Models;
-using NhuNguyetSpa.Application.Common.Options;
+using NhuNguyetSpa.Application.Common.Storage;
 using NhuNguyetSpa.Application.DTOs.Catalog;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
@@ -20,23 +17,21 @@ namespace NhuNguyetSpa.Application.UseCases.Catalog;
 /// </summary>
 public sealed class CatalogImageService : ICatalogImageService
 {
-    private const string FileField = "file";
-
     private readonly ISpaServiceRepository _services;
     private readonly IServicePackageRepository _packages;
     private readonly IFileStorage _storage;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IOptions<ImageUploadOptions> _options;
+    private readonly ImageUploadReader _reader;
 
     public CatalogImageService(
         ISpaServiceRepository services, IServicePackageRepository packages, IFileStorage storage, IUnitOfWork unitOfWork,
-        IOptions<ImageUploadOptions> options)
+        ImageUploadReader reader)
     {
         _services = services;
         _packages = packages;
         _storage = storage;
         _unitOfWork = unitOfWork;
-        _options = options;
+        _reader = reader;
     }
 
     public Task<OperationResult<ImageUrlDto>> UploadServiceImageAsync(Guid id, ImageUploadRequest file, CancellationToken cancellationToken) =>
@@ -60,14 +55,10 @@ public sealed class CatalogImageService : ICatalogImageService
     private async Task<OperationResult<ImageUrlDto>> UploadAsync<T>(ImageUploadRequest file, ImageTarget<T> target, CancellationToken cancellationToken)
         where T : BaseEntity
     {
-        ArgumentNullException.ThrowIfNull(file);
-        await using var content = await ReadValidatedAsync(file, cancellationToken);
-        var contentType = ImageFormatDetector.Detect(content.GetBuffer().AsSpan(0, (int)content.Length))
-            ?? throw Invalid("image_type_not_supported", "Chỉ hỗ trợ ảnh JPEG, PNG hoặc WebP.");
+        await using var image = await _reader.ReadAsync(file, cancellationToken);
         var entity = await target.Load(cancellationToken) ?? throw target.NotFound();
 
-        content.Position = 0;
-        var url = await _storage.UploadImageAsync(content, target.PublicId, contentType, cancellationToken);
+        var url = await _storage.UploadImageAsync(image.Content, target.PublicId, image.ContentType, cancellationToken);
         target.SetImage(entity, url);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return OperationResult<ImageUrlDto>.Success(new ImageUrlDto(url), "Đã cập nhật ảnh.");
@@ -82,41 +73,6 @@ public sealed class CatalogImageService : ICatalogImageService
         target.RemoveImage(entity);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
-
-    /// <summary>Copies at most MaxBytes + 1 bytes, so a stream longer than its declared length is still rejected.</summary>
-    private async Task<MemoryStream> ReadValidatedAsync(ImageUploadRequest file, CancellationToken cancellationToken)
-    {
-        if (file.Content is null || file.Length <= 0)
-            throw Invalid("image_required", "Vui lòng chọn ảnh để tải lên.");
-        var maxBytes = _options.Value.MaxBytes;
-        if (file.Length > maxBytes)
-            throw TooLarge(maxBytes);
-
-        var buffer = new MemoryStream();
-        var chunk = new byte[81920];
-        int read;
-        while ((read = await file.Content.ReadAsync(chunk, cancellationToken)) > 0)
-        {
-            if (buffer.Length + read > maxBytes)
-            {
-                await buffer.DisposeAsync();
-                throw TooLarge(maxBytes);
-            }
-            buffer.Write(chunk, 0, read);
-        }
-        if (buffer.Length == 0)
-        {
-            await buffer.DisposeAsync();
-            throw Invalid("image_required", "Vui lòng chọn ảnh để tải lên.");
-        }
-        return buffer;
-    }
-
-    private static ValidationException TooLarge(long maxBytes) =>
-        Invalid("image_too_large", $"Ảnh tối đa {maxBytes / (1024.0 * 1024):0.#} MB.");
-
-    private static ValidationException Invalid(string code, string message) =>
-        new([new ValidationFailure(FileField, message) { ErrorCode = code }]);
 
     private sealed record ImageTarget<T>(
         Func<CancellationToken, Task<T?>> Load,

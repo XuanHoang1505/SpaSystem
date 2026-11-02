@@ -1,3 +1,5 @@
+using NhuNguyetSpa.Application.Common.Models;
+using NhuNguyetSpa.Application.DTOs.Users;
 using NhuNguyetSpa.Domain.Entities;
 
 namespace NhuNguyetSpa.Application.Interfaces.Repositories;
@@ -19,4 +21,9 @@ public interface IUserRepository : IRepository<User>
 
     /// <summary>True when the user is a staff member whose resignation date is on or before <paramref name="today"/> (BR-STF-05).</summary>
     Task<bool> IsResignedStaffAsync(Guid userId, DateOnly today, CancellationToken cancellationToken);
+
+    /// <summary><c>GET /users</c>: search on name (case and accent insensitive), email or phone; newest first.</summary>
+    Task<PagedResult<UserListItemDto>> SearchAsync(UserSearchCriteria criteria, CancellationToken cancellationToken);
+
+    Task<UserDetailDto?> GetDetailAsync(Guid id, CancellationToken cancellationToken);
 }

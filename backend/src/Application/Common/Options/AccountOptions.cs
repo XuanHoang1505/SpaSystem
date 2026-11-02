@@ -10,4 +10,7 @@ public sealed class AccountOptions
     public int OtpResendCooldownSeconds { get; set; } = 60;
     public int PasswordResetTokenExpirationMinutes { get; set; } = 10;
     public int PasswordMinLength { get; set; } = 8;
+
+    /// <summary>Changing the password ends every session, the current one included (BR-AUTH-16, Q-51).</summary>
+    public bool RevokeSessionsOnPasswordChange { get; set; } = true;
 }

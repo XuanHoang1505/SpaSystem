@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using NhuNguyetSpa.Application.Common.Storage;
 using NhuNguyetSpa.Application.Interfaces.Services.Auth;
 using NhuNguyetSpa.Application.Interfaces.Services.Bookings;
 using NhuNguyetSpa.Application.Interfaces.Services.Care;
@@ -10,6 +11,7 @@ using NhuNguyetSpa.Application.Interfaces.Services.Purchases;
 using NhuNguyetSpa.Application.Interfaces.Services.Reports;
 using NhuNguyetSpa.Application.Interfaces.Services.Promotions;
 using NhuNguyetSpa.Application.Interfaces.Services.Staff;
+using NhuNguyetSpa.Application.Interfaces.Services.Users;
 using NhuNguyetSpa.Application.Interfaces.Services.Treatments;
 using NhuNguyetSpa.Application.Interfaces.Services.WorkSchedules;
 using NhuNguyetSpa.Application.UseCases.Auth;
@@ -22,6 +24,7 @@ using NhuNguyetSpa.Application.UseCases.Promotions;
 using NhuNguyetSpa.Application.UseCases.Purchases;
 using NhuNguyetSpa.Application.UseCases.Reports;
 using NhuNguyetSpa.Application.UseCases.Staff;
+using NhuNguyetSpa.Application.UseCases.Users;
 using NhuNguyetSpa.Application.UseCases.Treatments;
 using NhuNguyetSpa.Application.UseCases.WorkSchedules;
 
@@ -41,8 +44,12 @@ public static class DependencyInjection
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
         services.AddScoped<IPackageCatalogService, PackageCatalogService>();
         services.AddScoped<ICatalogSearchService, CatalogSearchService>();
+        services.AddScoped<ImageUploadReader>();
         services.AddScoped<ICatalogImageService, CatalogImageService>();
         services.AddScoped<IStaffService, StaffService>();
+        services.AddScoped<UserProfileEditor>();
+        services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<IUserAccountService, UserAccountService>();
         services.AddScoped<IWorkScheduleService, WorkScheduleService>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IAppointmentManagementService, AppointmentManagementService>();
