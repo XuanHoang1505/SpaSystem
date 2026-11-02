@@ -9,6 +9,8 @@ namespace NhuNguyetSpa.API.Authorization;
 /// </summary>
 public static class Permissions
 {
+    public const string AccountSelf = "account.self";
+    public const string AccountManage = "account.manage";
     public const string CatalogManage = "catalog.manage";
     public const string StaffManage = "staff.manage";
     public const string ScheduleManage = "schedule.manage";
@@ -26,6 +28,8 @@ public static class Permissions
 
     public static readonly IReadOnlyDictionary<string, string[]> Roles = new Dictionary<string, string[]>
     {
+        [AccountSelf] = [SecurityRoles.Customer, SecurityRoles.Staff, SecurityRoles.Owner],
+        [AccountManage] = [SecurityRoles.Owner],
         [CatalogManage] = [SecurityRoles.Owner],
         [StaffManage] = [SecurityRoles.Owner],
         [ScheduleManage] = [SecurityRoles.Owner],
