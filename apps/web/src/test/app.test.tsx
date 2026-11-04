@@ -4,7 +4,7 @@ import { vi, test, expect } from 'vitest';
 import { AppProviders } from '@app/providers';
 import { routeObjects } from '@app/router';
 import { routes } from '@app/routes';
-import { AppButton } from '@components/common/AppButton/AppButton';
+import { Button } from '@/components/ui/button';
 import { RouteGuard } from '@app/RouteGuard';
 vi.mock('@/hooks/useSystemStatus', () => ({
   useSystemStatus: () => ({ configurationError: undefined, isPending: false, isError: false }),
@@ -44,17 +44,18 @@ test.each(
   expect(screen.getByText(/Tính năng đang được phát triển/)).toBeInTheDocument();
 });
 
-test('AppButton calls click and respects disabled and loading', () => {
+test('Button calls click and respects disabled and loading', () => {
   const onClick = vi.fn();
-  const { rerender } = render(<AppButton onClick={onClick}>Tiếp tục</AppButton>);
+  const { rerender } = render(<Button onClick={onClick}>Tiếp tục</Button>);
   fireEvent.click(screen.getByRole('button'));
   expect(onClick).toHaveBeenCalledTimes(1);
   rerender(
-    <AppButton onClick={onClick} loading>
+    <Button onClick={onClick} loading>
       Tiếp tục
-    </AppButton>,
+    </Button>,
   );
-  expect(screen.getByRole('button')).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeDisabled();
+  expect(screen.getByRole('button')).toHaveAttribute('aria-busy', 'true');
   fireEvent.click(screen.getByRole('button'));
   expect(onClick).toHaveBeenCalledTimes(1);
 });
