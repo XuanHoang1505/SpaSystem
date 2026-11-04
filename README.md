@@ -9,7 +9,7 @@ SpaSystem/
 │   ├── src/         Domain, Application, Infrastructure, API
 │   └── tests/       Domain.Tests, Application.Tests, IntegrationTests
 ├── apps/
-│   ├── web/         React, Vite, TypeScript, CSS Modules
+│   ├── web/         React, Vite, TypeScript, Tailwind CSS + shadcn/ui
 │   └── mobile/      React Native, Expo Router, TypeScript
 ├── packages/
 │   ├── api-client/  Fetch client, SystemApi, query keys

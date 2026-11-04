@@ -1,35 +1,48 @@
-import { Link } from 'react-router-dom';
-import { AppButton } from '@components/common/AppButton/AppButton';
-import { useUIStore } from '@/stores/uiStore';
-export function Header({ withSidebar = false }: { withSidebar?: boolean }) {
-  const toggle = useUIStore((state) => state.toggleSidebar);
-  const open = useUIStore((state) => state.sidebarOpen);
+import { Link, NavLink } from 'react-router-dom';
+import { navigation } from '@/config/navigation';
+import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/shared/ThemeToggle/ThemeToggle';
+import { cn } from '@/lib/utils';
+import { Brand } from '../Brand/Brand';
+import { MobileNavigation } from '../MobileNavigation/MobileNavigation';
+
+const publicLinks = navigation.public.filter(({ path }) => path !== '/');
+
+export function Header() {
   return (
-    <header className="header">
-      <Link to="/" className="brand">
-        <span className="brand-mark" aria-hidden="true">
-          N
-        </span>
-        <span>
-          Như Nguyệt<small>SPA & CHĂM SÓC DA</small>
-        </span>
-      </Link>
-      <nav className="header-nav" aria-label="Điều hướng chính">
-        <Link to="/services">Dịch vụ</Link>
-        <Link to="/packages">Gói chăm sóc</Link>
-        <Link to="/account">Cá nhân</Link>
-      </nav>
-      {withSidebar && (
-        <AppButton
-          className="menu-toggle"
-          onClick={toggle}
-          aria-expanded={open}
-          aria-controls="workspace-nav"
-          aria-label="Mở hoặc đóng menu"
-        >
-          Menu
-        </AppButton>
-      )}
+    <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <Brand />
+        <nav aria-label="Điều hướng chính" className="hidden items-center gap-1 md:flex">
+          {publicLinks.map(({ path, title }) => (
+            <NavLink
+              key={path}
+              to={path}
+              className={({ isActive }) =>
+                cn(
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-foreground',
+                  isActive ? 'text-primary' : 'text-muted-foreground',
+                )
+              }
+            >
+              {title}
+            </NavLink>
+          ))}
+          <NavLink
+            to="/account"
+            className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            Cá nhân
+          </NavLink>
+        </nav>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Button asChild size="sm" className="hidden sm:inline-flex">
+            <Link to="/login">Đăng nhập</Link>
+          </Button>
+          <MobileNavigation />
+        </div>
+      </div>
     </header>
   );
 }

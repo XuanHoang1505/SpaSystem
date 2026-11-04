@@ -89,7 +89,8 @@ Before changing Expo dependency versions, run `npx expo install --check` from `a
 - `packages/api-client`: `ApiClient`, `ApiClientError`, `SystemApi`, URL validation, and the query keys plus retry/stale policy shared by both apps (staleTime 60s, at most 1 retry, no polling). An empty response returns `undefined`, so type 204 endpoints as `void`.
 - `packages/shared-config`: the strict TS base, ESLint and Prettier configs.
 - The packages export TypeScript **source**, which Vite, Metro and the test runners transform directly, so there is no package build step.
-- React components are **not** shared between web (DOM, CSS Modules) and mobile (React Native). Each platform organises code under `src/features/<feature>`.
+- Web UI is **Tailwind CSS v4 + shadcn/ui** (ADR-0005): colors only as tokens in `apps/web/src/styles/theme.css`, screens built from `components/ui` + `components/shared`, and every data table uses the shared `DataTable`. See `apps/web/CLAUDE.md`.
+- React components are **not** shared between web (DOM, Tailwind + shadcn) and mobile (React Native). Each platform organises code under `src/features/<feature>`.
 - TanStack Query owns server state, Zustand holds client/UI state only, and local React state covers the rest.
 - Mobile routing is Expo Router in `apps/mobile/app` with route groups `(public)`, `(customer)` (Tabs), `(staff)` and `(owner)`. Web has Public/Customer/Staff/Owner layouts. Role areas are unprotected public previews: `RouteGuard` is an abstraction kept for the future auth phase, not a security boundary.
 - Env: web uses `VITE_API_BASE_URL` (example `https://localhost:7001`) and mobile uses `EXPO_PUBLIC_API_BASE_URL` (example `http://10.0.2.2:5000`, the Android emulator's alias for host loopback). A missing or invalid URL shows a "Configuration Error" and makes no network call, with no fallback. These values are bundled publicly, so never put secrets in them. Web URLs in Docker are fixed at build time.

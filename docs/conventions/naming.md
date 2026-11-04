@@ -62,22 +62,23 @@ Tránh: tên trùng hậu tố gây khó đọc (`ServiceService`), viết tắt
 
 ## TypeScript / React
 
-| Loại              | Quy tắc                                                    | Ví dụ                                 |
-| ----------------- | ---------------------------------------------------------- | ------------------------------------- |
-| Thư mục tính năng | `kebab-case`                                               | `features/service-packages`           |
-| Component         | PascalCase; web: thư mục + file cùng tên; mobile: một file | `AppointmentCard/AppointmentCard.tsx` |
-| CSS Module        | `<Component>.module.css`, class camelCase                  | `styles.slotGrid`                     |
-| Hook              | `use<Việc>` camelCase, file cùng tên                       | `useAvailability.ts`                  |
-| Hàm, biến         | camelCase                                                  | `formatCurrency`                      |
-| Type, interface   | PascalCase, không tiền tố `I`                              | `AppointmentDto`                      |
-| Hằng số module    | `UPPER_SNAKE_CASE`                                         | `HOLD_WARNING_SECONDS`                |
-| Query keys        | `<feature>QueryKeys`                                       | `bookingQueryKeys.list(filters)`      |
-| Lớp API           | `<Feature>Api`                                             | `BookingsApi`                         |
-| Zod schema        | `<form>Schema`                                             | `bookNowSchema`                       |
-| Store Zustand     | `use<Tên>Store`, file `<tên>Store.ts`                      | `useUiStore`                          |
-| Test              | `<file>.test.ts(x)` cạnh file được test                    | `useAvailability.test.ts`             |
-| Route web         | `kebab-case`, khớp `docs/frontend.md`                      | `/my-bookings/:bookingId`             |
-| Route mobile      | File Expo Router `kebab-case`, tham số `[camelCase]`       | `bookings/[bookingId].tsx`            |
+| Loại              | Quy tắc                                                     | Ví dụ                                 |
+| ----------------- | ----------------------------------------------------------- | ------------------------------------- |
+| Thư mục tính năng | `kebab-case`                                                | `features/service-packages`           |
+| Component         | PascalCase; web: thư mục + file cùng tên; mobile: một file  | `AppointmentCard/AppointmentCard.tsx` |
+| Primitive shadcn  | web `components/ui/`: file `kebab-case` do CLI sinh         | `ui/dropdown-menu.tsx`                |
+| Map trạng thái    | `<entity>Status.ts`, xuất `{ label, tone }` cho StatusBadge | `appointmentStatus.ts`                |
+| Hook              | `use<Việc>` camelCase, file cùng tên                        | `useAvailability.ts`                  |
+| Hàm, biến         | camelCase                                                   | `formatCurrency`                      |
+| Type, interface   | PascalCase, không tiền tố `I`                               | `AppointmentDto`                      |
+| Hằng số module    | `UPPER_SNAKE_CASE`                                          | `HOLD_WARNING_SECONDS`                |
+| Query keys        | `<feature>QueryKeys`                                        | `bookingQueryKeys.list(filters)`      |
+| Lớp API           | `<Feature>Api`                                              | `BookingsApi`                         |
+| Zod schema        | `<form>Schema`                                              | `bookNowSchema`                       |
+| Store Zustand     | `use<Tên>Store`, file `<tên>Store.ts`                       | `useUiStore`                          |
+| Test              | `<file>.test.ts(x)` cạnh file được test                     | `useAvailability.test.ts`             |
+| Route web         | `kebab-case`, khớp `docs/frontend.md`                       | `/my-bookings/:bookingId`             |
+| Route mobile      | File Expo Router `kebab-case`, tham số `[camelCase]`        | `bookings/[bookingId].tsx`            |
 
 ## Khác
 
