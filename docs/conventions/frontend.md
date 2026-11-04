@@ -28,8 +28,25 @@ Mô tả hiện trạng foundation ở [../frontend.md](../frontend.md) và [../
 ## Web
 
 - Trang ở `pages/<area>/` chỉ ghép layout và component tính năng; logic ở `features/`.
-- Style bằng CSS Modules + biến trong `styles/variables.css` (màu kem, hồng nhạt). Không viết màu/khoảng cách cứng trong component. Nếu chuyển sang Tailwind (câu hỏi Q-09) phải có ADR.
-- Khả năng truy cập: dùng thẻ ngữ nghĩa, `label` gắn với input, focus nhìn thấy được, modal dùng `AppModal` (dialog gốc). Giao diện chạy được từ 320px.
+- **UI: Tailwind CSS v4 + shadcn/ui** ([ADR-0005](../decisions/ADR-0005-web-ui-tailwind-shadcn.md)). Màn hình chỉ ghép từ `components/ui` (primitive shadcn) và `components/shared`. Trước khi viết component mới, kiểm tra hai thư mục này. Thành phần không chứa nghiệp vụ mà hai feature cùng dùng thì đưa vào `shared/`, không copy.
+- **Màu chỉ định nghĩa ở `styles/theme.css`** (`:root` và `.dark`), ánh xạ sang Tailwind trong `styles/index.css`. Component dùng class token (`bg-primary`, `text-muted-foreground`, `bg-status-warning`…). Không dùng mã màu cứng (`text-[#…]`), `bg-white`, CSS Modules, hay `style` inline cho màu và khoảng cách. Phải chạy được ở cả chế độ sáng lẫn tối.
+
+| Nhu cầu                         | Dùng                                                                                      |
+| ------------------------------- | ----------------------------------------------------------------------------------------- |
+| Đầu trang (tiêu đề, mô tả, nút) | `PageHeader`                                                                              |
+| Bảng dữ liệu                    | `DataTable` + `useTableSearchParams` (`@/components/shared/DataTable`)                    |
+| Nhãn trạng thái                 | `StatusBadge` (`tone`: success, warning, info, danger, neutral)                           |
+| Trường form                     | `FormField` bọc `Input`/`Textarea`/`SelectTrigger`                                        |
+| Rỗng / lỗi / đang tải trang     | `EmptyState` / `ErrorState` / `PageLoader`; trong bảng: trạng thái có sẵn của `DataTable` |
+| Chi tiết, form ngắn, xác nhận   | `Sheet` (chi tiết), `Dialog` (tạo/sửa ngắn), `AlertDialog` (hủy, xóa)                     |
+| Thông báo sau thao tác          | `toast` của `sonner`                                                                      |
+| Tiền, ngày giờ                  | `lib/formatting/formatters.ts`                                                            |
+
+- **Bảng dữ liệu bắt buộc dùng `DataTable`**: không tự viết `<table>`, không gọi shadcn `Table` trực tiếp cho dữ liệu. Phân trang, sắp xếp, lọc chạy ở server và được giữ trên URL bằng `useTableSearchParams` (đổi bộ lọc thì về trang 1). `getRowId` lấy id từ dữ liệu. Thao tác cho từng dòng dùng `rowActions`. Xem chi tiết bằng `onRowClick` mở `Sheet`/`Dialog`; không mở route mới chỉ để chứa một form ngắn.
+- Enum trạng thái của mỗi feature được map một lần thành `{ label, tone }` rồi đưa vào `StatusBadge`.
+- Nút gửi mutation dùng `<Button loading={mutation.isPending}>`; validate bằng Zod và hiện lỗi qua `FormField`.
+- Thêm primitive bằng `npx shadcn@4.23.0 add <tên>` (chạy trong `apps/web`), rồi sửa các lỗi CLI hay gặp đã ghi trong ADR-0005. Chỉ dùng gói gộp `radix-ui` và icon `lucide-react`.
+- Khả năng truy cập: dùng thẻ ngữ nghĩa, `label` gắn với input (qua `FormField`), focus nhìn thấy được, nút chỉ có icon phải có `aria-label`. Giao diện chạy được từ 320px và không cuộn ngang cả trang.
 - Route mới khai báo trong `app/routes.ts` và cập nhật [../frontend.md](../frontend.md).
 
 ## Mobile

@@ -77,16 +77,19 @@ apps/web/src/
 ├── app/            Router, providers, queryClient, RouteGuard
 ├── pages/<area>/   public | customer | staff | owner — trang mỏng, chỉ ghép feature
 ├── features/<feature>/
-│   ├── components/<Name>/<Name>.tsx (+ <Name>.module.css)
+│   ├── components/<Name>/<Name>.tsx   Tailwind class + token, không CSS riêng
 │   ├── hooks/      useAppointments.ts, useBookNow.ts (TanStack Query)
 │   ├── schemas.ts  Zod schema cho form
 │   ├── index.ts    Chỉ export những gì trang cần
 │   └── README.md
-├── components/common|layout/   UI dùng chung, không biết nghiệp vụ
+├── components/ui/      Primitive shadcn (button, dialog, select…), sinh bằng shadcn CLI
+├── components/shared/  Thành phần dùng chung không biết nghiệp vụ: DataTable, PageHeader, StatusBadge, FormField…
+├── components/layout/  PublicLayout, WorkspaceLayout (Sidebar shadcn), Header, Footer
 ├── lib/api/        Tạo instance lớp API từ @spa/api-client với base URL môi trường
 ├── lib/errors|formatting|validation/
 ├── stores/         Zustand: chỉ state giao diện/phiên
-├── config/  styles/  locales/vi/  types/  test/
+├── styles/         theme.css (token màu sáng/tối) + index.css (Tailwind, @theme inline, font)
+├── config/  locales/vi/  types/  test/
 ```
 
 ## Frontend mobile

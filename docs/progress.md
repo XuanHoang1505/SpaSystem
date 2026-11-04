@@ -42,3 +42,7 @@ Ký hiệu: `—` chưa làm · `🟡` đang làm · `✅` xong · `n/a` không 
 | UC-SPA-32 | Trò chuyện với trợ lý AI tư vấn dịch vụ               | AiAssistant              | P1      | 3      | —   | —   | —      | —    |         |
 | UC-SPA-33 | Xem thống kê báo cáo doanh thu                        | Reports                  | P0      | 3      | —   | —   | —      | —    |         |
 | UC-SPA-34 | Xem thông báo                                         | Notifications            | P2      | 3      | —   | —   | —      | —    |         |
+
+## Nền tảng giao diện web
+
+**04/11/2026:** web chuyển sang Tailwind CSS v4 + shadcn/ui ([ADR-0005](decisions/ADR-0005-web-ui-tailwind-shadcn.md), Q-09 đã chốt). Đã có token sáng/tối trong `theme.css`, primitive shadcn trong `components/ui`, các thành phần dùng chung (`DataTable` + `useTableSearchParams`, `PageHeader`, `StatusBadge`, `FormField`, `EmptyState`, `ErrorState`, `PageLoader`, `ThemeToggle`), layout public và layout workspace dùng `Sidebar`, cùng helper định dạng tiền và ngày. Màn nghiệp vụ vẫn là placeholder; cột Web của các UC được cập nhật khi làm từng màn (`/implement-fe`).

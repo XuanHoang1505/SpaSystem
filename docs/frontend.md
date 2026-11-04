@@ -1,6 +1,6 @@
 # Web foundation
 
-React + Vite + TypeScript strict. `app/` chứa router/providers/query client; `components/common` chứa UI foundation; `components/layout` chứa bốn layout; `features` giữ chỗ cho nghiệp vụ; `pages` chứa trang chủ và placeholder; `stores` chỉ giữ UI/session abstraction; `lib/api` và `hooks` nối shared client với Query.
+React + Vite + TypeScript strict, UI bằng Tailwind CSS v4 + shadcn/ui ([ADR-0005](decisions/ADR-0005-web-ui-tailwind-shadcn.md)). `app/` chứa router/providers/query client; `components/ui` chứa primitive shadcn; `components/shared` chứa thành phần dùng chung (DataTable, PageHeader, StatusBadge, FormField, EmptyState, ErrorState, PageLoader, ThemeToggle, SystemStatus); `components/layout` chứa các layout; `features` giữ chỗ cho nghiệp vụ; `pages` chứa trang chủ và placeholder; `stores` chỉ giữ UI/session abstraction; `lib/api` và `hooks` nối shared client với Query.
 
 ## Routes
 
@@ -48,13 +48,22 @@ React + Vite + TypeScript strict. `app/` chứa router/providers/query client; `
 
 ## State, aliases và accessibility
 
-TanStack Query quản lý server state; Zustand quản lý sidebar/session abstraction, không persist token. React Hook Form + Zod dùng cho form preview email, không gửi request. API gọi qua `@spa/api-client`, chỉ ping và healthLive. SystemStatus hiển thị Loading, API Online, API Offline, Configuration Error; staleTime 60 giây và tối đa một retry, không polling.
+TanStack Query quản lý server state; Zustand chỉ giữ session abstraction, không persist token (trạng thái mở/thu gọn sidebar do `SidebarProvider` của shadcn giữ). React Hook Form + Zod dùng cho form preview email, không gửi request. API gọi qua `@spa/api-client`, chỉ ping và healthLive. SystemStatus hiển thị Loading, API Online, API Offline, Configuration Error; staleTime 60 giây và tối đa một retry, không polling.
 
-Aliases `@/*`, `@app/*`, `@components/*`, `@features/*`, `@lib/*` được khai báo trong TypeScript và Vite. Vitest dùng cùng Vite config. Common button dùng CSS Modules; styles nền/layout dùng global CSS và CSS variables. UI pastel/kem, không phụ thuộc ảnh hoặc font tải từ bên ngoài.
+Aliases `@/*`, `@app/*`, `@components/*`, `@features/*`, `@lib/*` được khai báo trong TypeScript và Vite. Vitest dùng cùng Vite config; `src/test/setup.ts` polyfill `matchMedia`, `ResizeObserver` và pointer capture cho Radix.
 
-PublicLayout có header/footer/mobile navigation; Customer/Staff/Owner có responsive sidebar. Preview vai trò chưa guard; RouteGuard từ chối session null và dành cho phase auth thật. Không sử dụng store như bằng chứng phân quyền phía backend.
+## Giao diện
 
-Semantic header/nav/main/footer, skip link, focus visible, label/input error association, button disabled/loading, native dialog focus/escape và responsive ở desktop/tablet/mobile. Có EmptyState, ErrorState, PageLoader, AppSpinner. Chuẩn bị `locales/vi`, chưa cài i18n.
+- **Token:** `src/styles/theme.css` (`:root` và `.dark`) gồm nhóm shadcn, `status-*`, `chart-*`, `sidebar-*`; `src/styles/index.css` import Tailwind và ánh xạ token bằng `@theme inline`. Tông pastel/kem, primary hồng mận `#92596b`, khớp mobile.
+- **Font** đóng gói bằng `@fontsource-variable` (DM Sans, Lora cho tiêu đề, JetBrains Mono), không tải từ ngoài.
+- **Dark mode:** `next-themes` gắn class `.dark` (sáng, tối, theo hệ thống), đổi bằng `ThemeToggle` trên header.
+- **Bảng:** `DataTable` (TanStack Table 8) có skeleton khi tải, lỗi kèm nút thử lại, rỗng, sắp xếp theo server (`aria-sort`), click dòng (chuột và Enter), menu thao tác từng dòng, phân trang khớp `PagedResponse`. `useTableSearchParams` giữ `page`, `pageSize`, `sortBy`, `sortDirection`, `search` và bộ lọc trên URL.
+- `AppProviders` gắn `ThemeProvider`, `QueryClientProvider`, `TooltipProvider` và `Toaster` (sonner).
+- Build tách chunk `react` và `vendor` (`vite.config.ts`).
+
+PublicLayout có header (menu di động bằng `Sheet`) và footer; Customer/Staff/Owner dùng `Sidebar` của shadcn (thu gọn thành icon trên desktop, thành drawer trên mobile), menu sinh từ `config/navigation.ts`. Preview vai trò chưa guard; RouteGuard từ chối session null và dành cho phase auth thật. Không sử dụng store như bằng chứng phân quyền phía backend.
+
+Semantic header/nav/main/footer, skip link, focus visible, label/input error association qua `FormField`, `Button` có `loading`, dialog/sheet của Radix (focus trap, Esc) và responsive từ 320px. Có EmptyState, ErrorState, PageLoader. Chuẩn bị `locales/vi`, chưa cài i18n.
 
 ## Chạy và kiểm tra
 
