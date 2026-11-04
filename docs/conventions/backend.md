@@ -6,7 +6,18 @@
 
 - `TreatWarningsAsErrors` đang bật (`Directory.Build.props`): mọi cảnh báo, kể cả nullable, phải được sửa chứ không tắt.
 - Namespace file-scoped (bắt buộc bởi `.editorconfig`), thụt lề 4 dấu cách, một kiểu public chính mỗi file.
-- Ưu tiên `sealed` cho lớp không thiết kế để kế thừa, `record` cho DTO/request bất biến, primary constructor cho DI.
+- Ưu tiên `sealed` cho lớp không thiết kế để kế thừa, `record` cho DTO/request bất biến.
+- **DI qua constructor thường + field `private readonly _camelCase`**, không dùng primary constructor để inject: dấu `_` phân biệt ngay dependency với biến cục bộ/tham số, và `readonly` chặn gán lại. Thứ tự trong class: hằng số và field `static` → field `private readonly` → constructor → thành viên public → private. Primary constructor chỉ dùng khi lớp không giữ dependency, ví dụ exception chuyển tham số cho lớp cha (`ConflictException(string message, string? code = null) : DomainException(message, code)`).
+
+  ```csharp
+  public sealed class AuthController : ApiController
+  {
+      private readonly IAuthService _authService;
+
+      public AuthController(IAuthService authService) => _authService = authService;
+  }
+  ```
+
 - Comment viết tiếng Anh, chỉ giải thích _tại sao_; không comment lại điều code đã nói rõ.
 
 ## Domain

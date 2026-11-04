@@ -1,11 +1,74 @@
 # Tài khoản & xác thực — đặc tả
 
 - **Nhóm:** `Auth`, `Users` · **Sprint:** 1 · **Nguồn:** DA §2.2.3 (UC Đăng nhập) / ĐX
-- **Entity:** `User` (bảng `users`), `RefreshToken` (bảng `refresh_tokens`), `OwnerProfile` (bảng `owner_profiles`) — xem [glossary](../domain/glossary.md), [data-model](../domain/data-model.md)
+- **Entity:** `User` (bảng `users`), `RefreshToken` (bảng `refresh_tokens`), `OwnerProfile` (bảng `owner_profiles`), `Customer` (bảng `customers`), `StaffMember` (bảng `staff_members`, chỉ đọc), `OtpCode` (bảng `otp_codes`) — xem [glossary](../domain/glossary.md), [data-model](../domain/data-model.md)
 - **Trạng thái triển khai:** xem [progress.md](../progress.md)
-- **Đã đặc tả:** UC-SPA-02 và seed tài khoản chủ spa (dev). UC-SPA-01, 03, 04, 05 viết sau.
+- **Đã đặc tả:** UC-SPA-02 và seed tài khoản chủ spa (dev) — **đã triển khai backend 25/10/2026** (kế hoạch: `docs/superpowers/plans/2026-10-25-uc-spa-02-login.md`). UC-SPA-01 và UC-SPA-03 — **đã triển khai backend 25/10/2026** (gửi mail thật qua Gmail SMTP; kế hoạch: `docs/superpowers/plans/2026-10-25-uc-spa-01-03-otp.md`). UC-SPA-04, 05 — **đã triển khai backend 01/11/2026** (thư mục backend `Users`; kế hoạch: `docs/superpowers/plans/2026-11-01-uc-spa-04-05-accounts.md`).
 
 ## Use case
+
+### UC-SPA-01 — Đăng ký tài khoản (OTP email)
+
+| Mục            | Nội dung                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------- |
+| Actor          | Khách (chưa có tài khoản)                                                                         |
+| Mô tả          | Khách nhập thông tin, nhận OTP qua email, nhập đúng OTP thì hệ thống mới tạo tài khoản khách hàng |
+| Tiền điều kiện | Email và số điện thoại chưa thuộc tài khoản nào                                                   |
+| Input          | Bước 1: `fullName`, `email`, `phoneNumber`, `password`, `confirmPassword`. Bước 2: `email`, `otp` |
+| Output         | Bước 1: email nhận OTP, thời điểm OTP hết hạn. Bước 2: id và email của tài khoản mới              |
+
+**Luồng chính**
+
+1. Khách gửi thông tin đăng ký (`POST /auth/register/request-otp`).
+2. Hệ thống kiểm tra dữ liệu (E3) và chuẩn hóa: bỏ khoảng trắng hai đầu mọi trường; email so sánh không phân biệt hoa thường.
+3. Hệ thống kiểm tra email và SĐT chưa có trong `users` (E1).
+4. Hệ thống kiểm tra lần gửi OTP đăng ký gần nhất cho email này đã quá 60 giây (E4).
+5. Hệ thống vô hiệu các OTP đăng ký còn hiệu lực của email này (đặt `expires_at_utc` = bây giờ), tạo OTP 6 chữ số mới, lưu vào `otp_codes`: `purpose = registration`, hash của OTP, `pending_registration` = `{ fullName, phoneNumber, passwordHash }` (mật khẩu đã băm, không lưu mật khẩu thô), hết hạn sau 5 phút.
+6. Hệ thống gửi mail OTP (E5), trả `202 { email, expiresAtUtc }`.
+7. Khách nhập OTP (`POST /auth/register/verify-otp`).
+8. Hệ thống lấy OTP đăng ký **mới nhất chưa dùng** của email và kiểm tra (E2).
+9. OTP đúng → trong một transaction: đánh dấu OTP đã dùng (`used_at_utc`), kiểm tra lại email/SĐT chưa bị người khác đăng ký trong lúc chờ (E1), tạo `users` (`role = customer`, `status = active`, dữ liệu lấy từ `pending_registration`) và `customers` (cùng id).
+10. Trả `201 { id, email }`. Client chuyển sang màn hình đăng nhập (không tự đăng nhập — theo DA).
+
+**Ngoại lệ**
+
+- E1. Email đã có tài khoản → `409 email_exists`; SĐT đã có → `409 phone_exists` (kiểm tra email trước). Áp dụng ở cả bước 3 và bước 9.
+- E2. OTP:
+  - Không có OTP đăng ký chưa dùng cho email, hoặc OTP sai → `400 otp_invalid`. OTP sai thì tăng `failed_attempts`.
+  - OTP mới nhất đã hết hạn → `400 otp_expired` (không tăng `failed_attempts`).
+  - `failed_attempts` đã đạt 5 → `400 otp_too_many_attempts`; OTP này bị khóa vĩnh viễn, khách phải yêu cầu gửi lại. Lần nhập sai thứ 5 trả luôn `otp_too_many_attempts`.
+- E3. Dữ liệu không hợp lệ → `400 validation_error` theo trường (quy tắc ở BR-AUTH-10).
+- E4. Yêu cầu gửi lại trong vòng 60 giây kể từ lần gửi thành công trước → `429 rate_limited`, thông điệp có số giây phải chờ.
+- E5. Gửi mail thất bại (thiếu cấu hình mail, SMTP lỗi, sai App Password) → xóa OTP vừa tạo, trả `503 email_send_failed` với thông điệp chung; chi tiết lỗi chỉ ghi log phía server. Lần gửi lỗi không tính vào thời gian chờ 60 giây.
+
+### UC-SPA-03 — Quên mật khẩu (OTP email)
+
+| Mục            | Nội dung                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------- |
+| Actor          | Khách hàng, Nhân viên, Chủ spa                                                                    |
+| Mô tả          | Người dùng quên mật khẩu nhận OTP qua email, xác thực OTP để lấy mã đặt lại, rồi đặt mật khẩu mới |
+| Tiền điều kiện | Tài khoản tồn tại và đang `active`                                                                |
+| Input          | Bước 1: `email`. Bước 2: `email`, `otp`. Bước 3: `resetToken`, `newPassword`, `confirmPassword`   |
+| Output         | Bước 1: thời điểm OTP hết hạn. Bước 2: `resetToken` + thời điểm hết hạn. Bước 3: không có (204)   |
+
+**Luồng chính**
+
+1. Người dùng gửi email (`POST /auth/forgot-password/request-otp`).
+2. Hệ thống tìm tài khoản theo email. Chỉ khi tài khoản tồn tại, đang `active` và lần gửi OTP đặt lại mật khẩu gần nhất đã quá 60 giây thì mới: vô hiệu OTP cũ, tạo OTP mới (`purpose = password_reset`, hết hạn 5 phút) và gửi mail (E5 như UC-SPA-01).
+3. Trong mọi trường hợp còn lại (email không tồn tại, tài khoản `locked`/`inactive`, gửi lại trong 60 giây) hệ thống **không gửi mail** nhưng vẫn trả đúng cùng phản hồi `202 { expiresAtUtc }` (BR-AUTH-05 mở rộng: không tiết lộ tài khoản có tồn tại).
+4. Người dùng nhập OTP (`POST /auth/forgot-password/verify-otp`). Hệ thống kiểm tra OTP như E2 của UC-SPA-01.
+5. OTP đúng → đánh dấu OTP đã dùng; nếu tài khoản không còn `active` → E2 bên dưới. Ngược lại phát `resetToken` sống 10 phút, trả `200 { resetToken, expiresAtUtc }`.
+6. Người dùng gửi mật khẩu mới (`POST /auth/forgot-password/reset`).
+7. Hệ thống kiểm tra `resetToken` (E1) và mật khẩu mới (E3), cập nhật `password_hash`, **thu hồi mọi refresh token còn hiệu lực** của người dùng, lưu trong một lần, trả `204`.
+
+**Ngoại lệ**
+
+- E1. `resetToken` sai chữ ký, hết hạn, đã dùng (mật khẩu đã đổi sau khi phát token) hoặc tài khoản không còn `active` → `400 invalid_reset_token`.
+- E2. OTP đúng nhưng tài khoản đã bị khóa/ngừng trong lúc chờ → `403 account_locked` / `account_inactive` (đã chứng minh sở hữu email nên được biết trạng thái).
+- E3. Mật khẩu mới không đạt BR-AUTH-10 hoặc không khớp `confirmPassword` → `400 validation_error`.
+- E4. Mọi lỗi OTP ở bước này (không có mã, sai, hết hạn, đã dùng, đã khóa sau 5 lần sai) đều trả `400 otp_invalid` cùng thông điệp, và khi không có mã vẫn chạy một lần kiểm tra hash giả — để bước xác thực cũng không tiết lộ email có tài khoản (BR-AUTH-05). Số lần sai vẫn được đếm và khóa mã sau 5 lần như UC-SPA-01.
+
+**Giới hạn đã biết:** gửi mail chạy đồng bộ trong request (chưa có hàng đợi nền — ngoài phạm vi), nên yêu cầu với email có tài khoản phản hồi chậm hơn vài trăm mili giây đến vài giây so với email không có tài khoản; lỗi gửi mail (`503`) cũng chỉ xảy ra với email có tài khoản. Chấp nhận cho đồ án; khắc phục khi thêm hàng đợi gửi mail.
 
 ### UC-SPA-02 — Đăng nhập
 
@@ -53,28 +116,117 @@ Không phải use case của DA; phục vụ phát triển vì chưa có màn h�
 - Đọc từ `.env`: `SEED_OWNER_EMAIL`, `SEED_OWNER_PASSWORD`, `SEED_OWNER_PHONE`, `SEED_OWNER_FULL_NAME`. Thiếu email hoặc mật khẩu → báo lỗi, không tạo gì.
 - Idempotent: đã có người dùng trùng email → giữ nguyên, báo "đã tồn tại". Chưa có → tạo `users` (role `owner`, status `active`) + `owner_profiles` trong một lần lưu.
 
+### UC-SPA-04 — Cập nhật thông tin tài khoản
+
+| Mục            | Nội dung                                                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Actor          | Khách hàng, Nhân viên, Chủ spa (đã đăng nhập)                                                                                              |
+| Mô tả          | Người dùng xem và sửa thông tin cá nhân của chính mình, đổi mật khẩu (A1), đổi hoặc xóa ảnh đại diện (A2)                                  |
+| Tiền điều kiện | Access token hợp lệ; tài khoản tồn tại                                                                                                     |
+| Input          | Sửa thông tin: `fullName`, `phoneNumber`, `dateOfBirth?`, `gender?`. A1: `currentPassword`, `newPassword`, `confirmPassword`. A2: file ảnh |
+| Output         | `MeDto` sau khi lưu; A1: 204; A2: `{ avatarUrl }`                                                                                          |
+
+**Luồng chính**
+
+1. Người dùng mở thông tin tài khoản (`GET /me`). Hệ thống lấy người dùng theo `sub` của access token, trả `MeDto { id, fullName, email, phoneNumber, role, status, avatarUrl, dateOfBirth, gender, createdAtUtc }`.
+2. Người dùng sửa và lưu (`PUT /me`, gửi đủ 4 trường — thay toàn bộ; `dateOfBirth`, `gender` gửi `null` để xóa).
+3. Hệ thống chuẩn hóa (bỏ khoảng trắng hai đầu), kiểm tra dữ liệu (E1) theo BR-AUTH-15.
+4. SĐT khác SĐT hiện tại → kiểm tra chưa thuộc tài khoản khác (E2).
+5. Hệ thống lưu `full_name`, `phone_number`, `date_of_birth`, `gender` (audit `updated_at_utc`/`updated_by` tự ghi), trả `200 MeDto`.
+
+Email, vai trò, trạng thái **không** sửa được ở đây (BR-AUTH-04; email là định danh đăng nhập, đổi email cần xác thực OTP — Q-50). Trường lạ trong body bị bỏ qua.
+
+**Luồng rẽ nhánh**
+
+- A1. **Đổi mật khẩu** (`PUT /me/password`): hệ thống kiểm tra dữ liệu (E1, mật khẩu mới theo BR-AUTH-10, khác mật khẩu hiện tại), kiểm tra `currentPassword` với `password_hash` (E3), băm và lưu mật khẩu mới, **thu hồi mọi refresh token còn hiệu lực** của người dùng trong cùng lần lưu (BR-AUTH-16, Q-51), trả `204`. Client đăng nhập lại; access token hiện tại vẫn dùng được tới khi hết hạn (≤ 15 phút).
+- A2. **Đổi ảnh đại diện** (`POST /me/avatar`, multipart trường `file`): kiểm tra như ảnh catalog (BR-CAT-08: ≤ `ImageUpload:MaxBytes` 5 MB, nhận diện JPEG/PNG/WebP theo nội dung file), tải lên `IFileStorage` với `publicId = avatars/{userId}` (ghi đè ảnh cũ), lưu `avatar_url` chỉ sau khi tải lên thành công, trả `200 { avatarUrl }`.
+- A3. **Xóa ảnh đại diện** (`DELETE /me/avatar`, ĐX): chưa có ảnh → `204` luôn; có ảnh → xóa trên storage rồi đặt `avatar_url = null`, `204`.
+
+**Ngoại lệ**
+
+- E1. Dữ liệu không hợp lệ → `400 validation_error` theo trường (BR-AUTH-15, BR-AUTH-10). Mật khẩu mới trùng mật khẩu hiện tại → `400 validation_error` trên `newPassword`, mã `password_unchanged`.
+- E2. SĐT đã thuộc tài khoản khác → `409 phone_exists` (cả khi hai request đồng thời: vi phạm unique của CSDL cũng dịch thành `409 phone_exists`).
+- E3. `currentPassword` sai → `400 current_password_incorrect` (không thu hồi phiên, không đổi gì). Lỗi này đếm vào giới hạn tần suất `auth` (BR-AUTH-17).
+- E4. Ảnh: thiếu file `400 image_required`, quá dung lượng `400 image_too_large`, sai định dạng `400 image_type_not_supported`, storage lỗi/chưa cấu hình `503 image_storage_unavailable` (giữ ảnh cũ).
+- E5. Người dùng của token không còn tồn tại → `404 user_not_found`. Tài khoản `locked`/`inactive` mà access token còn hạn vẫn gọi được (Q-52) — sau tối đa 15 phút không làm mới phiên được nữa.
+
+### UC-SPA-05 — Quản lý tài khoản người dùng
+
+| Mục            | Nội dung                                                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Actor          | Chủ spa                                                                                                                                          |
+| Mô tả          | Chủ spa tìm, xem chi tiết, sửa thông tin cá nhân (A1) và khóa/mở khóa (A2) tài khoản khách hàng, nhân viên, chủ spa                              |
+| Tiền điều kiện | Đăng nhập với vai trò `owner`                                                                                                                    |
+| Input          | Danh sách: `search?`, `role?`, `status?`, phân trang. A1: `fullName`, `phoneNumber`, `dateOfBirth?`, `gender?`. A2: `status` = `active`/`locked` |
+| Output         | `PagedResult<UserListItemDto>`; `UserDetailDto`; A2: 204                                                                                         |
+
+**Luồng chính**
+
+1. Chủ spa mở danh sách (`GET /users`). Hệ thống lọc:
+   - `search` (≤ 100 ký tự, bỏ khoảng trắng hai đầu): khớp một phần họ tên **không phân biệt hoa thường và dấu** (`f_unaccent`), hoặc email (không phân biệt hoa thường), hoặc SĐT (chuỗi con).
+   - `role` ∈ `customer`/`staff`/`owner`, `status` ∈ `active`/`locked`/`inactive` (sai giá trị → `400 validation_error`).
+   - Sắp theo `createdAtUtc` giảm dần rồi `id`; phân trang `PagedQuery` (mặc định 1/10, tối đa 100).
+   - Mỗi dòng: `{ id, fullName, email, phoneNumber, role, status, avatarUrl, createdAtUtc }`.
+2. Chủ spa chọn một tài khoản (`GET /users/{id}`). Hệ thống trả `UserDetailDto` = các trường danh sách + `dateOfBirth`, `gender`, `updatedAtUtc` và `staff: { hireDate, resignationDate } | null` (chỉ khi `role = staff`, để chủ spa thấy vì sao tài khoản `inactive`).
+
+**Luồng rẽ nhánh**
+
+- A1. **Sửa** (`PUT /users/{id}`): cùng trường, cùng chuẩn hóa và quy tắc như `PUT /me` (BR-AUTH-15, E1, E2); sửa được mọi vai trò và mọi trạng thái, kể cả chính mình. Không sửa email, vai trò, mật khẩu (chủ spa không đặt mật khẩu hộ — người dùng dùng quên mật khẩu). Trả `200 UserDetailDto`. Thông tin riêng của nhân viên (ngày vào làm, chuyên môn, kỹ năng) vẫn sửa ở `/staff/{id}` (UC-SPA-22).
+- A2. **Khóa / mở khóa** (`PATCH /users/{id}/status`, `{ status }`):
+  1. `status` chỉ nhận `active` hoặc `locked` (khác → `400 validation_error`).
+  2. Tài khoản là chính người gọi và `status = locked` → `409 cannot_lock_self` (BR-AUTH-05).
+  3. Tài khoản đang `inactive` (nhân viên đã nghỉ việc) → `409 account_inactive` — không khóa/mở được, trạng thái này do UC-SPA-22 quản lý.
+  4. Trạng thái đã đúng như yêu cầu → `204`, không đổi gì (idempotent).
+  5. `active → locked`: đổi trạng thái và **thu hồi mọi refresh token còn hiệu lực** trong cùng lần lưu (BR-AUTH-18). `locked → active`: chỉ đổi trạng thái. Trả `204`.
+
+**Ngoại lệ**
+
+- E1. Dữ liệu sửa/lọc không hợp lệ → `400 validation_error` theo trường; SĐT trùng → `409 phone_exists`.
+- E2. Không có tài khoản `id` → `404 user_not_found`.
+- E3. Không đăng nhập → `401 unauthorized`; vai trò khác `owner` → `403 forbidden`.
+
+Khóa tài khoản **không** tự hủy lịch hẹn, đơn hàng hay ca làm của người đó (Q-54); chủ spa tự xử lý ở các màn hình tương ứng.
+
 ## Business rules
 
-| Mã         | Quy tắc                                                                                                                                                                                       | Enforce ở đâu                    | Nguồn                    |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------ |
-| BR-AUTH-01 | Access token JWT ký HMAC-SHA256 bằng `JWT_KEY` (≥ 32 ký tự), sống 15 phút; claims: `sub` = user id, `role` = `customer`/`staff`/`owner`, `name` = họ tên, `jti`                               | Infrastructure `JwtTokenService` | Quyết định của bạn       |
-| BR-AUTH-02 | Refresh token: 64 byte ngẫu nhiên (base64url), sống 7 ngày; CSDL chỉ lưu SHA-256 hex của token, không lưu token thô                                                                           | Infrastructure, `refresh_tokens` | Quyết định của bạn       |
-| BR-AUTH-03 | Chỉ `status = active` được đăng nhập và làm mới phiên                                                                                                                                         | Application `AuthService`        | DA (UC Đăng nhập E2)     |
-| BR-AUTH-04 | Xoay vòng: mỗi lần làm mới thu hồi token cũ (`revoked_at_utc`) và phát token mới trong cùng một lần lưu; gửi lại token đã thu hồi → thu hồi mọi token của người dùng                          | Application `AuthService`        | ĐX                       |
-| BR-AUTH-05 | Không tiết lộ tài khoản có tồn tại: sai email/SĐT và sai mật khẩu trả cùng mã, cùng thông điệp; khi không thấy tài khoản vẫn chạy một lần kiểm tra hash giả để thời gian phản hồi tương đương | Application `AuthService`        | ĐX                       |
-| BR-AUTH-06 | Thời hạn token, issuer, audience đọc từ cấu hình `Jwt:*` (`appsettings.json` + `.env`), không viết cứng                                                                                       | `JwtOptions`                     | open-questions (quy ước) |
+| Mã         | Quy tắc                                                                                                                                                                                                                                                                                                                                                                                   | Enforce ở đâu                                                  | Nguồn                    |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------ |
+| BR-AUTH-01 | Access token JWT ký HMAC-SHA256 bằng `JWT_KEY` (≥ 32 ký tự), sống 15 phút; claims: `sub` = user id, `role` = `customer`/`staff`/`owner`, `name` = họ tên, `jti`                                                                                                                                                                                                                           | Infrastructure `JwtTokenService`                               | Quyết định của bạn       |
+| BR-AUTH-02 | Refresh token: 64 byte ngẫu nhiên (base64url), sống 7 ngày; CSDL chỉ lưu SHA-256 hex của token, không lưu token thô                                                                                                                                                                                                                                                                       | Infrastructure, `refresh_tokens`                               | Quyết định của bạn       |
+| BR-AUTH-03 | Chỉ `status = active` được đăng nhập và làm mới phiên                                                                                                                                                                                                                                                                                                                                     | Application `AuthService`                                      | DA (UC Đăng nhập E2)     |
+| BR-AUTH-04 | Xoay vòng: mỗi lần làm mới thu hồi token cũ (`revoked_at_utc`) và phát token mới trong cùng một lần lưu; gửi lại token đã thu hồi → thu hồi mọi token của người dùng                                                                                                                                                                                                                      | Application `AuthService`                                      | ĐX                       |
+| BR-AUTH-05 | Không tiết lộ tài khoản có tồn tại: sai email/SĐT và sai mật khẩu trả cùng mã, cùng thông điệp; khi không thấy tài khoản vẫn chạy một lần kiểm tra hash giả để thời gian phản hồi tương đương                                                                                                                                                                                             | Application `AuthService`                                      | ĐX                       |
+| BR-AUTH-06 | Thời hạn token, issuer, audience đọc từ cấu hình `Jwt:*` (`appsettings.json` + `.env`), không viết cứng                                                                                                                                                                                                                                                                                   | `JwtOptions`                                                   | open-questions (quy ước) |
+| BR-AUTH-07 | OTP: 6 chữ số sinh bằng bộ sinh số ngẫu nhiên mật mã, hết hạn 5 phút, dùng 1 lần, CSDL chỉ lưu hash (PasswordHasher, có salt); tối đa 5 lần nhập sai; gửi lại sau 60 giây; mỗi email chỉ có 1 OTP còn hiệu lực cho mỗi mục đích (kiểm tra thời gian chờ, vô hiệu mã cũ và tạo mã mới chạy trong một transaction có khóa theo email + mục đích, nên hai yêu cầu đồng thời chỉ phát một mã) | Application `AccountService`, `otp_codes`                      | DA (OTP) + ĐX (tham số)  |
+| BR-AUTH-08 | Đánh dấu OTP đã dùng và tăng số lần sai là thao tác nguyên tử ở CSDL (điều kiện `used_at_utc IS NULL`, `failed_attempts < 5`): hai request song song cùng OTP đúng chỉ một request thành công                                                                                                                                                                                             | Infrastructure `OtpCodeRepository`                             | ĐX                       |
+| BR-AUTH-09 | `resetToken`: JWT ký bằng `JWT_KEY`, audience riêng `NhuNguyetSpa.PasswordReset` (không dùng làm access token được), sống 10 phút, chứa `sub` và dấu vân tay của `password_hash` hiện tại; đổi mật khẩu xong dấu vân tay đổi nên token tự hết dùng được (dùng 1 lần, không cần bảng mới)                                                                                                  | Infrastructure `JwtTokenService`                               | ĐX                       |
+| BR-AUTH-10 | Mật khẩu (đăng ký, đặt lại): 8–128 ký tự, có ít nhất 1 chữ cái và 1 chữ số, khớp `confirmPassword`. Họ tên 1–100 ký tự. Email đúng định dạng, ≤ 255 ký tự. SĐT dạng `0` + 9 chữ số (lưu nguyên dạng này để đăng nhập bằng SĐT khớp)                                                                                                                                                       | Application validators                                         | open-questions Q-12      |
+| BR-AUTH-11 | Đặt lại mật khẩu thành công → thu hồi mọi refresh token còn hiệu lực của người dùng                                                                                                                                                                                                                                                                                                       | Application `AccountService`                                   | DA (UC-SPA-03)           |
+| BR-AUTH-12 | Mail OTP bằng tiếng Việt, có bản HTML và bản text: tên spa, mã OTP, thời hạn 5 phút, lời nhắc không chia sẻ mã và bỏ qua nếu không phải mình yêu cầu. Tiêu đề: "Mã xác thực đăng ký tài khoản – Spa Như Nguyệt" / "Mã đặt lại mật khẩu – Spa Như Nguyệt"                                                                                                                                  | Application (nội dung), Infrastructure `SmtpEmailSender` (gửi) | ĐX                       |
+| BR-AUTH-13 | App Password và nội dung OTP không bao giờ ghi vào log; log gửi mail chỉ ghi địa chỉ nhận đã che (`n***@gmail.com`) và loại lỗi                                                                                                                                                                                                                                                           | Infrastructure                                                 | Ràng buộc của bạn        |
+
+| BR-AUTH-14 | `/me*` chỉ thao tác trên người dùng của `sub` trong access token, không nhận id từ client; người dùng không tự đổi email, vai trò, trạng thái. Chủ spa sửa người khác qua `/users/{id}` nhưng cũng không đổi email, vai trò, mật khẩu | Application `ProfileService`, `UserAccountService` | DA (BR-AUTH-04 của DA) |
+| BR-AUTH-15 | Thông tin cá nhân: họ tên 1–100 ký tự; SĐT `0` + 9 chữ số (như BR-AUTH-10), unique; `dateOfBirth` tùy chọn, không sau hôm nay (giờ VN) và không trước 01/01/1900; `gender` tùy chọn ∈ `male`/`female`/`other` | Application validators (dùng chung cho `/me` và `/users/{id}`), unique CSDL | DA + ĐX (Q-53) |
+| BR-AUTH-16 | Đổi mật khẩu: phải nhập đúng mật khẩu hiện tại; mật khẩu mới theo BR-AUTH-10 và khác mật khẩu hiện tại; đổi xong thu hồi mọi refresh token còn hiệu lực (`Account:RevokeSessionsOnPasswordChange`, mặc định `true`) | Application `ProfileService` | ĐX (Q-51) |
+| BR-AUTH-17 | `PUT /me/password` dùng chung giới hạn tần suất `auth` (10 yêu cầu/phút/IP) để chống dò mật khẩu hiện tại bằng access token bị lộ | API | ĐX |
+| BR-AUTH-18 | Khóa/mở khóa: chỉ `active ↔ locked`; không khóa chính mình; `inactive` không đổi được qua UC này; khóa thu hồi mọi refresh token; lặp lại cùng trạng thái là thao tác rỗng | Application `UserAccountService` | DA + ĐX (BR-AUTH-05 của DA, WF-10) |
+| BR-AUTH-19 | Ảnh đại diện dùng chung kiểm tra ảnh và cổng `IFileStorage` với catalog (BR-CAT-08, 09), `publicId = avatars/{userId}`; URL trong CSDL chỉ đổi sau khi storage thành công | Application `ProfileService` (dùng chung bộ đọc ảnh với `CatalogImageService`) | ĐX |
 
 Khóa tài khoản tạm sau nhiều lần sai mật khẩu (đề xuất trước đây) **không làm** lần này: bảng `users` không có cột đếm số lần sai. Giới hạn tần suất theo IP (E7) thay thế tạm.
 
 ## Dữ liệu
 
-| Bảng             | Cột dùng                                                                            | Ràng buộc đặc biệt                           |
-| ---------------- | ----------------------------------------------------------------------------------- | -------------------------------------------- |
-| `users`          | `id`, `email`, `phone_number`, `password_hash`, `role`, `status`, `full_name`       | `email` citext unique, `phone_number` unique |
-| `refresh_tokens` | `id`, `user_id`, `token_hash`, `expires_at_utc`, `revoked_at_utc`, `created_at_utc` | `token_hash` unique                          |
-| `owner_profiles` | `id` (= `users.id`)                                                                 | Dùng khi seed                                |
+| Bảng             | Cột dùng                                                                                                                            | Ràng buộc đặc biệt                                          |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `users`          | `id`, `email`, `phone_number`, `password_hash`, `role`, `status`, `full_name`                                                       | `email` citext unique, `phone_number` unique                |
+| `refresh_tokens` | `id`, `user_id`, `token_hash`, `expires_at_utc`, `revoked_at_utc`, `created_at_utc`                                                 | `token_hash` unique                                         |
+| `owner_profiles` | `id` (= `users.id`)                                                                                                                 | Dùng khi seed                                               |
+| `customers`      | `id` (= `users.id`)                                                                                                                 | Tạo khi đăng ký thành công                                  |
+| `otp_codes`      | `id`, `email`, `purpose`, `code_hash`, `pending_registration`, `failed_attempts`, `expires_at_utc`, `used_at_utc`, `created_at_utc` | `purpose` ∈ `registration`, `password_reset`; index `email` |
 
-Không cần migration mới.
+UC-SPA-04/05 dùng thêm: `users.avatar_url`, `date_of_birth`, `gender`, `created_at_utc`, `updated_at_utc`, `updated_by`; `staff_members.hire_date`, `resignation_date` (chỉ đọc, cho `UserDetailDto.staff`); `refresh_tokens` (thu hồi khi đổi mật khẩu/khóa). **Không đổi schema, không migration.** `customers.note`, `owner_profiles.note` không đưa vào API lần này (DA không có trên màn hình SCR-W22/W40).
+
+Không cần migration mới (bảng `otp_codes` đã có đủ cột). OTP hết hạn/đã dùng không bị xóa tự động lần này (dọn dẹp định kỳ thuộc phần background job, ngoài phạm vi).
 
 ## API
 
@@ -86,6 +238,32 @@ Tiền tố `/api/v1`. Phản hồi bọc envelope `{ success, message, data, er
 | POST   | `/auth/refresh` | Ẩn danh               | `{ refreshToken }`    | 200 như `/auth/login`                                                                                                       | 400, 401 `invalid_refresh_token`, 403, 429                                                                     |
 | POST   | `/auth/logout`  | Đã đăng nhập (Bearer) | `{ refreshToken }`    | 204 (kể cả token đã thu hồi hoặc không thuộc người gọi — không tiết lộ)                                                     | 401 `unauthorized` khi thiếu/sai access token                                                                  |
 
+| POST | `/auth/register/request-otp` | Ẩn danh | `{ fullName, email, phoneNumber, password, confirmPassword }` | 202 `{ email, expiresAtUtc }` | 400 `validation_error`, 409 `email_exists`/`phone_exists`, 429 `rate_limited`, 503 `email_send_failed` |
+| POST | `/auth/register/verify-otp` | Ẩn danh | `{ email, otp }` | 201 `{ id, email }` | 400 `validation_error`/`otp_invalid`/`otp_expired`/`otp_too_many_attempts`, 409, 429 |
+| POST | `/auth/forgot-password/request-otp` | Ẩn danh | `{ email }` | 202 `{ expiresAtUtc }` (luôn như nhau) | 400 `validation_error`, 429 (giới hạn IP), 503 `email_send_failed` |
+| POST | `/auth/forgot-password/verify-otp` | Ẩn danh | `{ email, otp }` | 200 `{ resetToken, expiresAtUtc }` | 400 mã OTP, 403 `account_locked`/`account_inactive`, 429 |
+| POST | `/auth/forgot-password/reset` | Ẩn danh | `{ resetToken, newPassword, confirmPassword }` | 204 | 400 `validation_error`/`invalid_reset_token`, 429 |
+
+**UC-SPA-04 / 05** (quyền `account.self` = customer, staff, owner; `account.manage` = owner — sheet 21):
+
+| Method | Đường dẫn            | Quyền            | Request                                             | Response                           | Lỗi                                                                                                               |
+| ------ | -------------------- | ---------------- | --------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| GET    | `/me`                | `account.self`   | —                                                   | 200 `MeDto`                        | 401, 403, 404 `user_not_found`                                                                                    |
+| PUT    | `/me`                | `account.self`   | `{ fullName, phoneNumber, dateOfBirth, gender }`    | 200 `MeDto`                        | 400 `validation_error`, 401, 403, 404, 409 `phone_exists`                                                         |
+| PUT    | `/me/password`       | `account.self`   | `{ currentPassword, newPassword, confirmPassword }` | 204                                | 400 `validation_error`/`current_password_incorrect`, 401, 403, 404, 429 `rate_limited`                            |
+| POST   | `/me/avatar`         | `account.self`   | multipart `file` (≤ 5 MB, JPEG/PNG/WebP)            | 200 `{ avatarUrl }`                | 400 `image_required`/`image_too_large`/`image_type_not_supported`, 401, 403, 404, 503 `image_storage_unavailable` |
+| DELETE | `/me/avatar`         | `account.self`   | —                                                   | 204                                | 401, 403, 404, 503                                                                                                |
+| GET    | `/users`             | `account.manage` | `?search&role&status&pageNumber&pageSize`           | 200 `PagedResult<UserListItemDto>` | 400, 401, 403                                                                                                     |
+| GET    | `/users/{id}`        | `account.manage` | —                                                   | 200 `UserDetailDto`                | 401, 403, 404 `user_not_found`                                                                                    |
+| PUT    | `/users/{id}`        | `account.manage` | `{ fullName, phoneNumber, dateOfBirth, gender }`    | 200 `UserDetailDto`                | 400, 401, 403, 404, 409 `phone_exists`                                                                            |
+| PATCH  | `/users/{id}/status` | `account.manage` | `{ status: "active" \| "locked" }`                  | 204                                | 400, 401, 403, 404, 409 `cannot_lock_self`/`account_inactive`                                                     |
+
+- `dateOfBirth` dạng `yyyy-MM-dd`; `gender`, `role`, `status` là chuỗi snake_case của enum.
+- `DELETE /me/avatar` là dòng API mới (ĐX), thêm vào **cuối** `data_api.py`. Các dòng SPA-API cũ của `/me`, `/users` giữ nguyên mã, chỉ sửa cột request/lỗi cho khớp spec (`currentPassword`/`confirmPassword`, mã lỗi snake_case).
+- Controller mới: `MeController` (`/me`), `UsersController` (`/users`).
+
+- 5 endpoint mới dùng chung giới hạn `auth` với `/auth/login` và `/auth/refresh`: 10 yêu cầu/phút/IP tính chung cho cả 7 endpoint.
+- `otp` trong request: chuỗi đúng 6 chữ số, sai định dạng → `400 validation_error` (không tính lần sai).
 - Mọi endpoint có `[Authorize]` khi thiếu hoặc sai access token trả `401` dạng envelope, mã `unauthorized`; sai vai trò trả `403`, mã `forbidden`.
 - Refresh token trả trong body cho cả web và mobile. Cookie HttpOnly cho web để lại khi tích hợp giao diện web.
 
@@ -100,24 +278,77 @@ Tiền tố `/api/v1`. Phản hồi bọc envelope `{ success, message, data, er
 | `JWT_REFRESH_TOKEN_EXPIRATION`                                                        | `Jwt:RefreshTokenExpirationDays`   | `7`                           |
 | `SEED_OWNER_EMAIL`, `SEED_OWNER_PASSWORD`, `SEED_OWNER_PHONE`, `SEED_OWNER_FULL_NAME` | `Seed:OwnerEmail`, …               | — (chỉ dev)                   |
 
-Thiếu `JWT_KEY` không chặn API khởi động (health check, Swagger vẫn chạy); lỗi cấu hình chỉ xảy ra khi gọi đăng nhập hoặc gửi Bearer token.
+| `MAIL_SETTINGS_MAIL` | `MailSettings:Mail` | — (bắt buộc khi gửi OTP; địa chỉ Gmail gửi đi) |
+| `MAIL_SETTINGS_DISPLAY_NAME` | `MailSettings:DisplayName` | `Spa Như Nguyệt` |
+| `MAIL_SETTINGS_PASSWORD` | `MailSettings:Password` | — (bắt buộc; Gmail App Password, chỉ ở `.env`) |
+| `MAIL_SETTINGS_HOST` | `MailSettings:Host` | `smtp.gmail.com` |
+| `MAIL_SETTINGS_PORT` | `MailSettings:Port` | `587` (STARTTLS) |
+| — (`appsettings.json`) | `Account:OtpExpirationMinutes`, `Account:OtpMaxFailedAttempts`, `Account:OtpResendCooldownSeconds`, `Account:PasswordResetTokenExpirationMinutes`, `Account:PasswordMinLength` | `5`, `5`, `60`, `10`, `8` |
+
+| — (`appsettings.json`) | `Account:RevokeSessionsOnPasswordChange` | `true` (Q-51) |
+| — (dùng lại) | `ImageUpload:MaxBytes`, `CLOUDINARY_*` | 5 MB; thiếu khóa Cloudinary chỉ làm `/me/avatar` trả 503 |
+
+UC-SPA-04/05 không thêm biến `.env` mới.
+
+Thiếu `JWT_KEY` không chặn API khởi động (health check, Swagger vẫn chạy); lỗi cấu hình chỉ xảy ra khi gọi đăng nhập hoặc gửi Bearer token. Tương tự, thiếu `MAIL_SETTINGS_MAIL`/`MAIL_SETTINGS_PASSWORD` không chặn khởi động: chỉ endpoint gửi OTP trả `503 email_send_failed` và log lỗi cấu hình. Gửi mail chờ tối đa 30 giây rồi coi là lỗi.
 
 ## Kiểm thử bắt buộc
 
-| Mã       | Tình huống                                              | Kết quả mong đợi                                                                 |
-| -------- | ------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| AUTH-T01 | Đăng nhập đúng bằng email (khác hoa thường) và bằng SĐT | 200, access token có `sub`, `role`, hết hạn sau 15 phút; 1 dòng `refresh_tokens` |
-| AUTH-T02 | Sai mật khẩu / email không tồn tại                      | Cùng `401 invalid_credentials`, cùng thông điệp                                  |
-| AUTH-T03 | Tài khoản `locked` / `inactive`, mật khẩu đúng          | `403 account_locked` / `account_inactive`                                        |
-| AUTH-T04 | Làm mới phiên với token hợp lệ                          | Token cũ có `revoked_at_utc`, token mới khác token cũ                            |
-| AUTH-T05 | Gửi lại refresh token đã dùng                           | 401; mọi token còn hiệu lực của người dùng bị thu hồi                            |
-| AUTH-T06 | Refresh token hết hạn                                   | `401 invalid_refresh_token`                                                      |
-| AUTH-T07 | Đăng xuất rồi làm mới bằng token vừa đăng xuất          | 204, sau đó 401                                                                  |
-| AUTH-T08 | Gọi `/auth/logout` không có Bearer                      | 401 envelope, mã `unauthorized`                                                  |
-| AUTH-T09 | 11 lần gọi `/auth/login` trong 1 phút từ cùng IP        | Lần thứ 11 trả `429 rate_limited`                                                |
-| AUTH-T10 | Seed chạy 2 lần                                         | Lần 1 tạo chủ spa đăng nhập được; lần 2 không tạo thêm                           |
+| Mã       | Tình huống                                                                                                                       | Kết quả mong đợi                                                                                                                            |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| AUTH-T01 | Đăng nhập đúng bằng email (khác hoa thường) và bằng SĐT                                                                          | 200, access token có `sub`, `role`, hết hạn sau 15 phút; 1 dòng `refresh_tokens`                                                            |
+| AUTH-T02 | Sai mật khẩu / email không tồn tại                                                                                               | Cùng `401 invalid_credentials`, cùng thông điệp                                                                                             |
+| AUTH-T03 | Tài khoản `locked` / `inactive`, mật khẩu đúng                                                                                   | `403 account_locked` / `account_inactive`                                                                                                   |
+| AUTH-T04 | Làm mới phiên với token hợp lệ                                                                                                   | Token cũ có `revoked_at_utc`, token mới khác token cũ                                                                                       |
+| AUTH-T05 | Gửi lại refresh token đã dùng                                                                                                    | 401; mọi token còn hiệu lực của người dùng bị thu hồi                                                                                       |
+| AUTH-T06 | Refresh token hết hạn                                                                                                            | `401 invalid_refresh_token`                                                                                                                 |
+| AUTH-T07 | Đăng xuất rồi làm mới bằng token vừa đăng xuất                                                                                   | 204, sau đó 401                                                                                                                             |
+| AUTH-T08 | Gọi `/auth/logout` không có Bearer                                                                                               | 401 envelope, mã `unauthorized`                                                                                                             |
+| AUTH-T09 | 11 lần gọi `/auth/login` trong 1 phút từ cùng IP                                                                                 | Lần thứ 11 trả `429 rate_limited`                                                                                                           |
+| AUTH-T10 | Seed chạy 2 lần                                                                                                                  | Lần 1 tạo chủ spa đăng nhập được; lần 2 không tạo thêm                                                                                      |
+| AUTH-T11 | Đăng ký: request-otp rồi verify-otp với OTP trong mail giả                                                                       | 202 rồi 201; có `users` (customer, active) + `customers`; đăng nhập được bằng email và SĐT; `otp_codes` không chứa OTP thô hay mật khẩu thô |
+| AUTH-T12 | Đăng ký trùng email / trùng SĐT                                                                                                  | `409 email_exists` / `phone_exists`, không gửi mail                                                                                         |
+| AUTH-T13 | Verify-otp trước khi đăng ký xong: chưa có tài khoản nào được tạo sau request-otp                                                | `users` không có email đó cho tới khi OTP đúng                                                                                              |
+| AUTH-T14 | OTP sai 5 lần rồi nhập OTP đúng                                                                                                  | Lần 1–4 `otp_invalid`, lần 5 và lần đúng sau đó `otp_too_many_attempts`; không tạo tài khoản                                                |
+| AUTH-T15 | OTP hết hạn (đồng hồ giả +5 phút 1 giây)                                                                                         | `400 otp_expired`                                                                                                                           |
+| AUTH-T16 | Gửi lại OTP trong 60 giây / sau 60 giây                                                                                          | `429 rate_limited` / 202 và OTP cũ không còn dùng được (`otp_invalid`)                                                                      |
+| AUTH-T17 | Gửi mail lỗi                                                                                                                     | `503 email_send_failed`; không còn OTP hiệu lực; gửi lại ngay không bị 429                                                                  |
+| AUTH-T18 | Hai verify-otp song song cùng OTP đúng                                                                                           | Đúng 1 request 201, request kia 400/409; chỉ 1 tài khoản                                                                                    |
+| AUTH-T19 | Quên mật khẩu với email có / không có tài khoản / tài khoản locked                                                               | Cả ba: cùng `202`, cùng body; chỉ email có tài khoản active nhận mail                                                                       |
+| AUTH-T20 | Quên mật khẩu đủ 3 bước                                                                                                          | 204; đăng nhập bằng mật khẩu mới được, mật khẩu cũ `401`; refresh token cũ `401`                                                            |
+| AUTH-T21 | Dùng lại `resetToken` sau khi đã đặt lại / token hết hạn / access token đưa vào làm resetToken                                   | `400 invalid_reset_token`                                                                                                                   |
+| AUTH-T22 | Mật khẩu yếu (`abcdefgh`, `12345678`, 7 ký tự) hoặc không khớp xác nhận                                                          | `400 validation_error` theo trường                                                                                                          |
+| AUTH-T23 | Thiếu `MAIL_SETTINGS_PASSWORD`                                                                                                   | API khởi động, `/health/live` 200; request-otp `503 email_send_failed`; phản hồi không chứa chi tiết cấu hình                               |
+| AUTH-T24 | Mail thật (thủ công, sau khi code xong)                                                                                          | Gửi request-otp tới địa chỉ bạn cung cấp; mail đến hộp thư với tiêu đề, OTP, nội dung đúng BR-AUTH-12                                       |
+| AUTH-T25 | `GET /me` với từng vai trò (customer, staff, owner)                                                                              | 200, đúng người của token; không có `passwordHash`                                                                                          |
+| AUTH-T26 | `PUT /me` hợp lệ (có khoảng trắng hai đầu, đổi SĐT, xóa `gender` bằng null)                                                      | 200, dữ liệu đã chuẩn hóa; đăng nhập được bằng SĐT mới, SĐT cũ `401`; `updated_at_utc` có giá trị                                           |
+| AUTH-T27 | `PUT /me` gửi kèm `email`, `role`, `status`                                                                                      | 200, ba trường đó không đổi                                                                                                                 |
+| AUTH-T28 | `PUT /me` SĐT của người khác / SĐT của chính mình                                                                                | `409 phone_exists` / 200                                                                                                                    |
+| AUTH-T29 | `PUT /me` dữ liệu sai: họ tên rỗng, 101 ký tự, SĐT `12345`, ngày sinh mai (giờ VN), `1899-12-31`, `gender = x`                   | `400 validation_error` đúng trường                                                                                                          |
+| AUTH-T30 | Đổi mật khẩu đúng                                                                                                                | 204; mật khẩu mới đăng nhập được, cũ `401`; mọi refresh token trước đó `401`                                                                |
+| AUTH-T31 | Đổi mật khẩu: sai mật khẩu hiện tại / mật khẩu mới yếu / không khớp / trùng mật khẩu cũ                                          | `400 current_password_incorrect` (refresh token vẫn dùng được) / `400 validation_error` (mã `password_unchanged` cho trường hợp cuối)       |
+| AUTH-T32 | Đổi ảnh đại diện hợp lệ rồi xóa ảnh (`FakeFileStorage`)                                                                          | 200 `{ avatarUrl }`, `GET /me` trả URL đó, publicId `avatars/{userId}`; DELETE 204 rồi `avatarUrl = null`; DELETE lần 2 vẫn 204             |
+| AUTH-T33 | Ảnh: thiếu file / > 5 MB / file text đổi đuôi `.png` / storage lỗi                                                               | 400 `image_required` / `image_too_large` / `image_type_not_supported` / 503 và `avatar_url` giữ nguyên                                      |
+| AUTH-T34 | `/me*` không Bearer                                                                                                              | 401 envelope `unauthorized`                                                                                                                 |
+| AUTH-T35 | `GET /users` lọc `search` không dấu (`nguyen` khớp "Nguyễn"), theo email, theo một phần SĐT, `role`, `status`, phân trang        | Đúng tập kết quả, sắp `createdAtUtc` giảm dần; `role = x` → 400                                                                             |
+| AUTH-T36 | `GET /users/{id}` của nhân viên đã nghỉ / khách hàng / id không có                                                               | 200 có `staff.resignationDate` / 200 `staff = null` / `404 user_not_found`                                                                  |
+| AUTH-T37 | Chủ spa `PUT /users/{id}` hợp lệ, SĐT trùng                                                                                      | 200 `UserDetailDto` / `409 phone_exists`                                                                                                    |
+| AUTH-T38 | Khóa khách hàng đang có refresh token rồi mở khóa                                                                                | 204; refresh cũ `401`/`403`, đăng nhập `403 account_locked`; mở khóa 204 → đăng nhập 200                                                    |
+| AUTH-T39 | Chủ spa tự khóa mình / khóa nhân viên `inactive` / khóa tài khoản đã `locked` / `status = inactive`                              | `409 cannot_lock_self` / `409 account_inactive` / 204 không đổi gì / `400 validation_error`                                                 |
+| AUTH-T40 | `/users*` với token customer, staff; không token                                                                                 | 403 `forbidden`; 401 `unauthorized`                                                                                                         |
+| AUTH-T41 | Unit test `ProfileService`, `UserAccountService` (NSubstitute, đồng hồ giả): chuẩn hóa, so sánh SĐT, thu hồi phiên, quy tắc khóa | Pass                                                                                                                                        |
+| AUTH-T42 | Hồi quy                                                                                                                          | Toàn bộ test hiện có (kể cả `CatalogImage*`, `Staff*`, `PersistenceModelTests`) vẫn pass sau khi tách bộ đọc ảnh dùng chung                 |
 
 ## Câu hỏi còn mở
 
 - Web lưu refresh token ở cookie HttpOnly hay trong bộ nhớ — chốt khi làm giao diện web (frontend.md đang ghi cookie HttpOnly).
 - Có khóa tài khoản tạm sau N lần sai mật khẩu không — cần thêm cột vào `users` (sửa `data_db.py`) nếu có.
+- Q-12 (mới): độ mạnh mật khẩu — mặc định 8–128 ký tự, có chữ và số (`Account:PasswordMinLength`). Mật khẩu của tài khoản seed hiện có không bị kiểm tra lại.
+- Q-50 (mới): người dùng có tự đổi email không? Mặc định **không** (email là định danh đăng nhập; đổi cần OTP tới email mới — để sau). Chủ spa cũng không đổi email hộ.
+- Q-51 (mới): đổi mật khẩu có thu hồi các phiên đăng nhập khác không? Mặc định **thu hồi mọi refresh token**, kể cả phiên đang dùng (client đăng nhập lại); `Account:RevokeSessionsOnPasswordChange` = `true`, đặt `false` để giữ phiên.
+- Q-52 (mới): access token của tài khoản vừa bị khóa còn hạn (≤ 15 phút) có bị chặn ngay không? Mặc định **không** kiểm tra CSDL mỗi request; tài khoản bị khóa mất quyền khi access token hết hạn vì không làm mới được. Nếu cần chặn ngay thì thêm kiểm tra trạng thái trong `OnTokenValidated` (tốn 1 truy vấn/request).
+- Q-53 (mới): biên ngày sinh, giới tính? Mặc định ngày sinh tùy chọn, từ 01/01/1900 đến hôm nay (giờ VN), không đặt tuổi tối thiểu; giới tính tùy chọn `male`/`female`/`other`.
+- Q-54 (mới): khóa tài khoản có hủy lịch hẹn/đơn chưa thanh toán/ca làm không? Mặc định **không**, chỉ chặn đăng nhập và làm mới phiên.
+- Q-55 (mới): chủ spa có khóa được tài khoản chủ spa khác không? Mặc định **có** — DA chỉ cấm tự khóa mình. Tài khoản `inactive` không khóa/mở được qua UC-SPA-05.
+- Q-56 (mới): thêm `DELETE /me/avatar` (DA chỉ có đổi ảnh). Mặc định **có**, cùng cách xóa ảnh catalog.
+- Quên mật khẩu: DA E1 ghi "email không tồn tại → thông báo"; đặc tả này chọn trả phản hồi chung để chống dò tài khoản. Nếu GVHD yêu cầu đúng DA thì đổi bước 3 thành `404 account_not_found`.

@@ -213,9 +213,10 @@ Chưa có: seed, service/use case nghiệp vụ, JWT, login, token storage/refre
 Copy-Item backend/src/API/.env.example backend/src/API/.env   # một lần; .env không commit
 npm run db:up        # PostgreSQL 17 trong Docker (cổng 5432)
 npm run db:migrate   # áp migration
+npm run db:seed      # tạo tài khoản chủ spa từ SEED_* trong .env (chỉ Development, chạy lại không tạo trùng)
 ```
 
-Cấu hình backend đọc từ `backend/src/API/.env` qua `API/Configuration/EnvLoader.cs` (cùng mẫu với FIN-Solution). Khóa viết `UPPER_SNAKE_CASE` và được ánh xạ sang cấu hình .NET: `CONNECTION_STRING` → `ConnectionStrings:Default`, `JWT_*` → `Jwt:*`, `MAIL_SETTINGS_*` → `MailSettings:*`, `SWAGGER_ENABLED` → `Swagger:Enabled`. Thứ tự ưu tiên: `appsettings*.json` < `.env` < biến môi trường thật cùng tên < biến dạng `Section__Key` và tham số dòng lệnh. Secret chỉ đặt trong `.env` hoặc biến môi trường, không đặt trong `appsettings*.json`. `dotnet ef` cũng đọc `CONNECTION_STRING` từ file này. Docker Compose truyền `CONNECTION_STRING` cho container; các biến của Compose (`POSTGRES_PASSWORD`, `VITE_API_BASE_URL`) có mẫu ở `.env.example` tại thư mục gốc.
+Cấu hình backend đọc từ `backend/src/API/.env` qua `API/Configuration/EnvLoader.cs` (cùng mẫu với FIN-Solution). Khóa viết `UPPER_SNAKE_CASE` và được ánh xạ sang cấu hình .NET: `CONNECTION_STRING` → `ConnectionStrings:Default`, `JWT_*` → `Jwt:*`, `MAIL_SETTINGS_*` → `MailSettings:*`, `SWAGGER_ENABLED` → `Swagger:Enabled`, `SEED_*` → `Seed:*`. Đăng nhập cần `JWT_KEY` (≥ 32 ký tự; cách sinh ghi trong `.env.example`). Thứ tự ưu tiên: `appsettings*.json` < `.env` < biến môi trường thật cùng tên < biến dạng `Section__Key` và tham số dòng lệnh. Secret chỉ đặt trong `.env` hoặc biến môi trường, không đặt trong `appsettings*.json`. `dotnet ef` cũng đọc `CONNECTION_STRING` từ file này. Docker Compose truyền `CONNECTION_STRING` cho container; các biến của Compose (`POSTGRES_PASSWORD`, `VITE_API_BASE_URL`) có mẫu ở `.env.example` tại thư mục gốc.
 
 Cần .NET 9 SDK (theo `global.json`) và Docker Desktop đang chạy. `dotnet-ef` là tool cục bộ của repo (`.config/dotnet-tools.json`).
 
