@@ -25,6 +25,8 @@ public static class Permissions
     public const string CareWrite = "care.write";
     public const string TreatmentManage = "treatment.manage";
     public const string ReportView = "report.view";
+    /// <summary>Saved assistant history; guests chat anonymously without it (Q-01), staff and owners not at all (Q-60).</summary>
+    public const string AiChat = "ai.chat";
 
     public static readonly IReadOnlyDictionary<string, string[]> Roles = new Dictionary<string, string[]>
     {
@@ -44,5 +46,6 @@ public static class Permissions
         [CareWrite] = [SecurityRoles.Staff],
         [TreatmentManage] = [SecurityRoles.Owner, SecurityRoles.Staff],
         [ReportView] = [SecurityRoles.Owner],
+        [AiChat] = [SecurityRoles.Customer],
     };
 }
