@@ -15,6 +15,7 @@ public static class EnvLoader
             ["PAYMENT_PUBLIC_API_BASE_URL"] = "Payment:PublicApiBaseUrl",
             ["PAYMENT_WEB_RETURN_URL"] = "Payment:ClientReturnUrls:Web",
             ["PAYMENT_MOBILE_RETURN_URL"] = "Payment:ClientReturnUrls:Mobile",
+            ["GEMINI_API_KEY"] = "Ai:ApiKey",
         };
 
     private static readonly IReadOnlyDictionary<string, string> JwtKeyAliases =

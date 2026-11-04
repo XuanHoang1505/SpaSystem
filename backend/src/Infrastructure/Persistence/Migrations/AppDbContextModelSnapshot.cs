@@ -53,8 +53,9 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_ai_chat_messages");
 
-                    b.HasIndex("CustomerId")
-                        .HasDatabaseName("ix_ai_chat_messages_customer_id");
+                    b.HasIndex("CustomerId", "CreatedAtUtc")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_ai_chat_messages_customer_id_created_at_utc");
 
                     b.ToTable("ai_chat_messages", (string)null);
                 });

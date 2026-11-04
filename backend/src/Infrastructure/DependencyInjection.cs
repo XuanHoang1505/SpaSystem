@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NhuNguyetSpa.Application.Common.Interfaces;
+using NhuNguyetSpa.Application.Interfaces.Ai;
+using NhuNguyetSpa.Infrastructure.Ai;
 using NhuNguyetSpa.Application.Common.Options;
 using NhuNguyetSpa.Application.Interfaces.Authentication;
 using NhuNguyetSpa.Infrastructure.Authentication;
@@ -49,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IAiChatMessageRepository, AiChatMessageRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
         services.AddScoped<ISpaServiceRepository, SpaServiceRepository>();
@@ -117,6 +121,34 @@ public static class DependencyInjection
             .Validate(options => options.MaxRangeYears is >= 1 and <= 20 && options.MaxTopProducts is >= 1 and <= 500,
                 "Reports:MaxRangeYears must be 1–20, MaxTopProducts 1–500.")
             .ValidateOnStart();
+        services.AddOptions<AiOptions>()
+            .Bind(configuration.GetSection(AiOptions.SectionName))
+            .Validate(options => options.TimeoutSeconds is >= 5 and <= 120 && options.MaxToolRounds is >= 1 and <= 10 &&
+                                 options.MaxQuestionLength is >= 100 and <= 4000 && options.HistoryTurnsInContext is >= 0 and <= 20 &&
+                                 options.SearchResultLimit is >= 1 and <= 20 && options.MaxSuggestions is >= 0 and <= 10 &&
+                                 options.MaxBookingProposals is >= 0 and <= 10,
+                "Ai: TimeoutSeconds 5–120, MaxToolRounds 1–10, MaxQuestionLength 100–4000, HistoryTurnsInContext 0–20, " +
+                "SearchResultLimit 1–20, MaxSuggestions 0–10, MaxBookingProposals 0–10.")
+            .Validate(options => options.History.MaxLimit is >= 1 and <= 200 && options.History.DefaultLimit >= 1 &&
+                                 options.History.DefaultLimit <= options.History.MaxLimit,
+                "Ai:History: MaxLimit 1–200, DefaultLimit 1–MaxLimit.")
+            .Validate(options => options.RateLimit.PermitLimit >= 1 && options.RateLimit.WindowSeconds >= 1 && options.RateLimit.DailyLimit >= 1,
+                "Ai:RateLimit: PermitLimit, WindowSeconds and DailyLimit must be at least 1.")
+            .ValidateOnStart();
+        // The key is checked on each call, so the API starts without GEMINI_API_KEY (like Cloudinary and VNPay).
+        services.AddOptions<AiProviderOptions>()
+            .Bind(configuration.GetSection(AiProviderOptions.SectionName))
+            .Validate(options => options.Provider == AiProviderOptions.GeminiProvider, "Ai:Provider supports only 'gemini'.")
+            .Validate(options => options.MaxOutputTokens is >= 256 and <= 8192, "Ai:MaxOutputTokens must be 256–8192.")
+            .Validate(options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out _) && !string.IsNullOrWhiteSpace(options.Model),
+                "Ai:BaseUrl must be an absolute URL and Ai:Model is required.")
+            .ValidateOnStart();
+        services.AddHttpClient<IAiChatModel, GeminiAiChatModel>((provider, client) =>
+        {
+            var ai = provider.GetRequiredService<IOptions<AiProviderOptions>>().Value;
+            client.BaseAddress = new Uri(ai.BaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(provider.GetRequiredService<IOptions<AiOptions>>().Value.TimeoutSeconds + 5);
+        });
         // Payment URLs are checked by the gateway on each call, so the API starts without them (like Cloudinary).
         services.AddOptions<PaymentOptions>()
             .Bind(configuration.GetSection(PaymentOptions.SectionName))

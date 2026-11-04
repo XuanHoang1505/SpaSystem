@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using NhuNguyetSpa.Application.Common.Storage;
+using NhuNguyetSpa.Application.Interfaces.Services.AiAssistant;
 using NhuNguyetSpa.Application.Interfaces.Services.Auth;
 using NhuNguyetSpa.Application.Interfaces.Services.Bookings;
 using NhuNguyetSpa.Application.Interfaces.Services.Care;
@@ -14,6 +15,7 @@ using NhuNguyetSpa.Application.Interfaces.Services.Staff;
 using NhuNguyetSpa.Application.Interfaces.Services.Users;
 using NhuNguyetSpa.Application.Interfaces.Services.Treatments;
 using NhuNguyetSpa.Application.Interfaces.Services.WorkSchedules;
+using NhuNguyetSpa.Application.UseCases.AiAssistant;
 using NhuNguyetSpa.Application.UseCases.Auth;
 using NhuNguyetSpa.Application.UseCases.Bookings;
 using NhuNguyetSpa.Application.UseCases.Care;
@@ -76,6 +78,8 @@ public static class DependencyInjection
         services.AddScoped<ISkinProfileService, SkinProfileService>();
         services.AddScoped<ICustomerAllergyService, CustomerAllergyService>();
         services.AddScoped<IAssignedAppointmentService, AssignedAppointmentService>();
+        services.AddScoped<AiToolExecutor>();
+        services.AddScoped<IAiAssistantService, AiAssistantService>();
         return services;
     }
 }

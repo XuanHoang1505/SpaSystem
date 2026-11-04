@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
+using NhuNguyetSpa.API.Filters;
 using NhuNguyetSpa.API.Responses;
 using NhuNguyetSpa.API.Serialization;
 using NhuNguyetSpa.API.Services;
@@ -35,6 +36,8 @@ public static class ServiceCollectionExtensions
         });
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, HttpCurrentUserService>();
+        services.AddSingleton<AiChatRateLimiter>();
+        services.AddScoped<AiChatRateLimitFilter>();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options => options.SwaggerDoc("v1", new OpenApiInfo { Title = "Nhu Nguyet Spa API", Version = "v1" }));
         var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
