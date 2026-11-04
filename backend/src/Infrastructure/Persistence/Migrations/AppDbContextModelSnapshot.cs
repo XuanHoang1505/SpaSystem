@@ -53,8 +53,9 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_ai_chat_messages");
 
-                    b.HasIndex("CustomerId")
-                        .HasDatabaseName("ix_ai_chat_messages_customer_id");
+                    b.HasIndex("CustomerId", "CreatedAtUtc")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_ai_chat_messages_customer_id_created_at_utc");
 
                     b.ToTable("ai_chat_messages", (string)null);
                 });
@@ -126,9 +127,6 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_appointments");
 
-                    b.HasIndex("CustomerId")
-                        .HasDatabaseName("ix_appointments_customer_id");
-
                     b.HasIndex("OrderItemId")
                         .HasDatabaseName("ix_appointments_order_item_id");
 
@@ -138,11 +136,16 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.HasIndex("TreatmentSessionId")
                         .HasDatabaseName("ix_appointments_treatment_session_id");
 
+                    b.HasIndex("CustomerId", "Date")
+                        .HasDatabaseName("ix_appointments_customer_id_date");
+
                     b.HasIndex("StaffMemberId", "Date")
                         .HasDatabaseName("ix_appointments_staff_member_id_date");
 
                     b.ToTable("appointments", null, t =>
                         {
+                            t.HasCheckConstraint("ck_appointments_source", "num_nonnulls(service_entitlement_id, treatment_session_id, order_item_id) >= 1");
+
                             t.HasCheckConstraint("ck_appointments_status", "status IN ('held', 'pending_confirmation', 'confirmed', 'completed', 'cancelled', 'no_show', 'hold_expired')");
 
                             t.HasCheckConstraint("ck_appointments_time_range", "end_time > start_time");
@@ -223,6 +226,16 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("SpaServiceId")
                         .HasDatabaseName("ix_cart_items_spa_service_id");
+
+                    b.HasIndex("CartId", "ServicePackageId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_cart_items_cart_id_service_package_id")
+                        .HasFilter("service_package_id IS NOT NULL");
+
+                    b.HasIndex("CartId", "SpaServiceId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_cart_items_cart_id_spa_service_id")
+                        .HasFilter("spa_service_id IS NOT NULL");
 
                     b.ToTable("cart_items", null, t =>
                         {
@@ -409,6 +422,14 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("CancellationReason")
+                        .HasColumnType("text")
+                        .HasColumnName("cancellation_reason");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at_utc");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -436,6 +457,10 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasPrecision(12)
                         .HasColumnType("numeric(12,0)")
                         .HasColumnName("grand_total");
+
+                    b.Property<Guid?>("IdempotencyKey")
+                        .HasColumnType("uuid")
+                        .HasColumnName("idempotency_key");
 
                     b.Property<string>("Note")
                         .HasColumnType("text")
@@ -471,11 +496,25 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_orders_code");
 
+                    b.HasIndex("CreatedAtUtc")
+                        .HasDatabaseName("ix_orders_created_at_utc");
+
                     b.HasIndex("CustomerId")
                         .HasDatabaseName("ix_orders_customer_id");
 
+                    b.HasIndex("PaymentDueAtUtc")
+                        .HasDatabaseName("ix_orders_pending_payment_due")
+                        .HasFilter("status = 'pending_payment'");
+
+                    b.HasIndex("CustomerId", "IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_orders_customer_id_idempotency_key")
+                        .HasFilter("idempotency_key IS NOT NULL");
+
                     b.ToTable("orders", null, t =>
                         {
+                            t.HasCheckConstraint("ck_orders_cancellation", "(status = 'cancelled') = (cancelled_at_utc IS NOT NULL)");
+
                             t.HasCheckConstraint("ck_orders_discount_total", "discount_total >= 0 AND discount_total <= subtotal");
 
                             t.HasCheckConstraint("ck_orders_grand_total", "grand_total = subtotal - discount_total");
@@ -784,6 +823,8 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
 
                     b.ToTable("promotions", null, t =>
                         {
+                            t.HasCheckConstraint("ck_promotions_code_upper", "code = upper(code)");
+
                             t.HasCheckConstraint("ck_promotions_discount_type", "discount_type IN ('percentage', 'fixed_amount')");
 
                             t.HasCheckConstraint("ck_promotions_discount_value", "discount_value > 0 AND (discount_type <> 'percentage' OR discount_value <= 100)");
@@ -1423,6 +1464,10 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("status");
+
+                    b.Property<string>("StatusReason")
+                        .HasColumnType("text")
+                        .HasColumnName("status_reason");
 
                     b.HasKey("Id")
                         .HasName("pk_treatment_plans");

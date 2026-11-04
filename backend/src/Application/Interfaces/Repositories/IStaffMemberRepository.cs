@@ -1,4 +1,5 @@
 using NhuNguyetSpa.Application.Common.Models;
+using NhuNguyetSpa.Application.DTOs.Bookings;
 using NhuNguyetSpa.Application.DTOs.Staff;
 using NhuNguyetSpa.Domain.Entities;
 
@@ -25,4 +26,25 @@ public interface IStaffMemberRepository : IRepository<StaffMember>
 
     /// <summary>Cancels (tracked) every active shift dated on or after <paramref name="fromDate"/>; saved with the unit of work.</summary>
     Task CancelActiveShiftsFromAsync(Guid id, DateOnly fromDate, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Step A3: staff with the service skill, an active account, hired on or before <paramref name="date"/> and still working
+    /// that day; only <paramref name="staffMemberId"/> when given. Ordered by name.
+    /// </summary>
+    Task<IReadOnlyList<AvailabilityCandidate>> GetAvailabilityCandidatesAsync(
+        Guid spaServiceId, DateOnly date, Guid? staffMemberId, CancellationToken cancellationToken);
+
+    Task<bool> HasSkillAsync(Guid staffMemberId, Guid spaServiceId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Locks the staff member row (<c>FOR NO KEY UPDATE</c>; call inside a transaction) so writes into one staff member's
+    /// timetable run one after another: two concurrent EXCLUDE checks on appointments can otherwise deadlock.
+    /// </summary>
+    Task LockForBookingAsync(Guid staffMemberId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Locks several staff rows in ascending id order in one statement (<c>FOR NO KEY UPDATE</c>, inside a transaction), so two
+    /// "any staff" bookings over the same candidates wait for each other instead of deadlocking (BR-BKG-14).
+    /// </summary>
+    Task LockManyForBookingAsync(IReadOnlyCollection<Guid> staffMemberIds, CancellationToken cancellationToken);
 }

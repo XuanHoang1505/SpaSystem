@@ -12,6 +12,9 @@ public interface IServicePackageRepository : IRepository<ServicePackage>
     /// <summary>Null when missing, or when <paramref name="publicOn"/> is set and the package is not on sale that day.</summary>
     Task<PackageDetailDto?> GetDetailAsync(Guid id, DateOnly? publicOn, CancellationToken cancellationToken);
 
+    /// <summary>Untracked packages with items and their services, as they are now (entitlements of a paid order, Q-23).</summary>
+    Task<IReadOnlyList<ServicePackage>> GetForFulfilmentAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
+
     /// <summary>Tracked package with its items, for editing.</summary>
     Task<ServicePackage?> GetWithItemsAsync(Guid id, CancellationToken cancellationToken);
 

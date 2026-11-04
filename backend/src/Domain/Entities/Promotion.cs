@@ -17,4 +17,7 @@ public sealed class Promotion : BaseEntity
     public int? PerCustomerLimit { get; set; }
     public int? UsageLimit { get; set; }
     public PromotionStatus Status { get; set; }
+
+    /// <summary>Promotions are never deleted, only stopped and reopened (UC-SPA-14 A2).</summary>
+    public void ChangeStatus(PromotionStatus status) => Status = status;
 }

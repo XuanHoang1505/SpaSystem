@@ -10,4 +10,7 @@ public sealed class SeedOptions
     public string? OwnerPassword { get; set; }
     public string? OwnerPhone { get; set; }
     public string OwnerFullName { get; set; } = "Chủ spa";
+
+    /// <summary>Password of the demo staff and customer accounts (<c>--seed-demo</c>); falls back to <see cref="OwnerPassword"/>.</summary>
+    public string? DemoPassword { get; set; }
 }

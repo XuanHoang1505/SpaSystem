@@ -1,12 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NhuNguyetSpa.Application.Common.Interfaces;
+using NhuNguyetSpa.Application.Interfaces.Ai;
+using NhuNguyetSpa.Infrastructure.Ai;
 using NhuNguyetSpa.Application.Common.Options;
 using NhuNguyetSpa.Application.Interfaces.Authentication;
 using NhuNguyetSpa.Infrastructure.Authentication;
 using NhuNguyetSpa.Application.Interfaces.Notifications;
+using NhuNguyetSpa.Application.Interfaces.Payments;
+using NhuNguyetSpa.Infrastructure.BackgroundJobs;
+using NhuNguyetSpa.Infrastructure.Payments;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
+using NhuNguyetSpa.Application.Interfaces.Reports;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Storage;
 using NhuNguyetSpa.Application.UseCases.Staff;
@@ -15,6 +22,7 @@ using NhuNguyetSpa.Infrastructure.Notifications;
 using NhuNguyetSpa.Infrastructure.Persistence;
 using NhuNguyetSpa.Infrastructure.Persistence.Interceptors;
 using NhuNguyetSpa.Infrastructure.Persistence.Seeds;
+using NhuNguyetSpa.Infrastructure.Reports;
 using NhuNguyetSpa.Infrastructure.Repositories;
 using NhuNguyetSpa.Infrastructure.Storage;
 
@@ -44,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IAiChatMessageRepository, AiChatMessageRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
         services.AddScoped<ISpaServiceRepository, SpaServiceRepository>();
@@ -51,6 +60,16 @@ public static class DependencyInjection
         services.AddScoped<IStaffMemberRepository, StaffMemberRepository>();
         services.AddScoped<IWorkScheduleRepository, WorkScheduleRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        services.AddScoped<IPurchaseRepository, PurchaseRepository>();
+        services.AddScoped<ITreatmentRepository, TreatmentRepository>();
+        services.AddScoped<ISkinProfileRepository, SkinProfileRepository>();
+        services.AddScoped<ICustomerAllergyRepository, CustomerAllergyRepository>();
+        services.AddScoped<IPromotionRepository, PromotionRepository>();
+        services.AddScoped<ICartRepository, CartRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IRevenueReportRepository, RevenueReportRepository>();
+        services.AddSingleton<IRevenueReportExporter, ClosedXmlRevenueReportExporter>();
 
         // Validated when first resolved (no ValidateOnStart): a missing JWT_KEY must not stop health checks or Swagger.
         services.AddOptions<JwtOptions>()
@@ -77,8 +96,85 @@ public static class DependencyInjection
             .Validate(options => options.MaxDaysAhead is >= 1 and <= 366 && options.MaxQueryRangeDays is >= 1 and <= 366 &&
                                  options.MaxBatchShifts is >= 1 and <= 5000,
                 "WorkSchedule:MaxDaysAhead and MaxQueryRangeDays must be 1–366, MaxBatchShifts 1–5000.");
+        services.AddOptions<BookingOptions>()
+            .Bind(configuration.GetSection(BookingOptions.SectionName))
+            .Validate(BookingOptions.IsValid,
+                "Booking:SlotStepMinutes must be 5–60 and divide 60; MaxDaysAhead and MaxQueryRangeDays must be 1–366; " +
+                "AutoAssignStrategy must be least_busy.")
+            .ValidateOnStart();
+        // VNPay keys are checked by VnpayPaymentGateway on each call, so the API starts without them (like Cloudinary).
+        services.AddOptions<VnpayOptions>().Bind(configuration.GetSection(VnpayOptions.SectionName));
+        services.AddSingleton<IPaymentGateway, VnpayPaymentGateway>();
+        services.AddOptions<CartOptions>()
+            .Bind(configuration.GetSection(CartOptions.SectionName))
+            .Validate(options => options.MaxItems is >= 1 and <= 100, "Cart:MaxItems must be 1–100.")
+            .ValidateOnStart();
+        services.AddOptions<OrderOptions>()
+            .Bind(configuration.GetSection(OrderOptions.SectionName))
+            .Validate(options => options.PaymentTimeoutMinutes is >= 1 and <= 1440, "Order:PaymentTimeoutMinutes must be 1–1440.")
+            .Validate(options => options.CancelBlockMinutesAfterPaymentStart >= 0 &&
+                                 options.CancelBlockMinutesAfterPaymentStart <= options.PaymentTimeoutMinutes,
+                "Order:CancelBlockMinutesAfterPaymentStart must be 0–Order:PaymentTimeoutMinutes.")
+            .ValidateOnStart();
+        services.AddOptions<ReportsOptions>()
+            .Bind(configuration.GetSection(ReportsOptions.SectionName))
+            .Validate(options => options.MaxRangeYears is >= 1 and <= 20 && options.MaxTopProducts is >= 1 and <= 500,
+                "Reports:MaxRangeYears must be 1–20, MaxTopProducts 1–500.")
+            .ValidateOnStart();
+        services.AddOptions<AiOptions>()
+            .Bind(configuration.GetSection(AiOptions.SectionName))
+            .Validate(options => options.TimeoutSeconds is >= 5 and <= 120 && options.MaxToolRounds is >= 1 and <= 10 &&
+                                 options.MaxQuestionLength is >= 100 and <= 4000 && options.HistoryTurnsInContext is >= 0 and <= 20 &&
+                                 options.SearchResultLimit is >= 1 and <= 20 && options.MaxSuggestions is >= 0 and <= 10 &&
+                                 options.MaxBookingProposals is >= 0 and <= 10,
+                "Ai: TimeoutSeconds 5–120, MaxToolRounds 1–10, MaxQuestionLength 100–4000, HistoryTurnsInContext 0–20, " +
+                "SearchResultLimit 1–20, MaxSuggestions 0–10, MaxBookingProposals 0–10.")
+            .Validate(options => options.History.MaxLimit is >= 1 and <= 200 && options.History.DefaultLimit >= 1 &&
+                                 options.History.DefaultLimit <= options.History.MaxLimit,
+                "Ai:History: MaxLimit 1–200, DefaultLimit 1–MaxLimit.")
+            .Validate(options => options.RateLimit.PermitLimit >= 1 && options.RateLimit.WindowSeconds >= 1 && options.RateLimit.DailyLimit >= 1,
+                "Ai:RateLimit: PermitLimit, WindowSeconds and DailyLimit must be at least 1.")
+            .ValidateOnStart();
+        // The key is checked on each call, so the API starts without GEMINI_API_KEY (like Cloudinary and VNPay).
+        services.AddOptions<AiProviderOptions>()
+            .Bind(configuration.GetSection(AiProviderOptions.SectionName))
+            .Validate(options => options.Provider == AiProviderOptions.GeminiProvider, "Ai:Provider supports only 'gemini'.")
+            .Validate(options => options.MaxOutputTokens is >= 256 and <= 8192, "Ai:MaxOutputTokens must be 256–8192.")
+            .Validate(options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out _) && !string.IsNullOrWhiteSpace(options.Model),
+                "Ai:BaseUrl must be an absolute URL and Ai:Model is required.")
+            .ValidateOnStart();
+        services.AddHttpClient<IAiChatModel, GeminiAiChatModel>((provider, client) =>
+        {
+            var ai = provider.GetRequiredService<IOptions<AiProviderOptions>>().Value;
+            client.BaseAddress = new Uri(ai.BaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(provider.GetRequiredService<IOptions<AiOptions>>().Value.TimeoutSeconds + 5);
+        });
+        // Payment URLs are checked by the gateway on each call, so the API starts without them (like Cloudinary).
+        services.AddOptions<PaymentOptions>()
+            .Bind(configuration.GetSection(PaymentOptions.SectionName))
+            .Validate(options => options.MaxAttemptsPerOrder is >= 1 and <= 20, "Payment:MaxAttemptsPerOrder must be 1–20.")
+            .ValidateOnStart();
+        services.AddOptions<PurchasesOptions>()
+            .Bind(configuration.GetSection(PurchasesOptions.SectionName))
+            .Validate(options => options.MaxListItems is >= 1 and <= 1000, "Purchases:MaxListItems must be 1–1000.")
+            .ValidateOnStart();
+        services.AddOptions<CareOptions>()
+            .Bind(configuration.GetSection(CareOptions.SectionName))
+            .Validate(CareOptions.IsValid, "Care:SkinProfileEditWindowDays must be 0–365.")
+            .ValidateOnStart();
+        services.AddOptions<TreatmentsOptions>()
+            .Bind(configuration.GetSection(TreatmentsOptions.SectionName))
+            .ValidateOnStart();
+        services.AddOptions<OrderExpiryOptions>()
+            .Bind(configuration.GetSection(OrderExpiryOptions.SectionName))
+            .Validate(options => options.IntervalSeconds is >= 5 and <= 3600 && options.GraceMinutes is >= 0 and <= 120 &&
+                                 options.BatchSize is >= 1 and <= 1000,
+                "OrderExpiry:IntervalSeconds must be 5–3600, GraceMinutes 0–120, BatchSize 1–1000.")
+            .ValidateOnStart();
+        services.AddHostedService<OrderExpiryJob>();
         services.AddOptions<SeedOptions>().Bind(configuration.GetSection(SeedOptions.SectionName));
         services.AddScoped<DevelopmentSeeder>();
+        services.AddScoped<DemoDataSeeder>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 

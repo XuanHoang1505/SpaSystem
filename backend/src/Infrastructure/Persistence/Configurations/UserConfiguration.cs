@@ -6,6 +6,8 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Configurations;
 
 internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 {
+    public const string UniquePhoneNumber = "ux_users_phone_number";
+
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("users", table =>
@@ -22,6 +24,6 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.PasswordHash).HasMaxLength(255);
         builder.Property(x => x.AvatarUrl).HasMaxLength(500);
         builder.HasIndex(x => x.Email).IsUnique().HasDatabaseName("ux_users_email");
-        builder.HasIndex(x => x.PhoneNumber).IsUnique().HasDatabaseName("ux_users_phone_number");
+        builder.HasIndex(x => x.PhoneNumber).IsUnique().HasDatabaseName(UniquePhoneNumber);
     }
 }

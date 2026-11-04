@@ -15,6 +15,41 @@ public sealed class Order : BaseAuditableEntity
     public OrderStatus Status { get; set; }
     public string? Note { get; set; }
     public DateTime PaymentDueAtUtc { get; set; }
+    public Guid? IdempotencyKey { get; set; }
+    public DateTime? CancelledAtUtc { get; set; }
+    public string? CancellationReason { get; set; }
     public ICollection<OrderItem> Items { get; } = [];
     public ICollection<Payment> Payments { get; } = [];
+
+    /// <summary>
+    /// A valid successful payment result: from pending, or from expired when the result arrived after OrderExpiryJob
+    /// (VNPay only accepts money before the due time, so the customer paid in time; Q-20).
+    /// </summary>
+    public void MarkPaid()
+    {
+        if (Status is not (OrderStatus.PendingPayment or OrderStatus.Expired))
+            throw new InvalidOperationException($"Order {Code} cannot be paid in status {Status}.");
+        Status = OrderStatus.Paid;
+    }
+
+    public void Expire()
+    {
+        if (Status != OrderStatus.PendingPayment)
+            throw new InvalidOperationException($"Order {Code} cannot expire in status {Status}.");
+        Status = OrderStatus.Expired;
+    }
+
+    /// <summary>BR-ORD-04: only an unpaid order is cancelled, also past its due time while OrderExpiryJob has not run yet.</summary>
+    public bool IsCancellable => Status == OrderStatus.PendingPayment;
+
+    public void Cancel(string reason, DateTime nowUtc)
+    {
+        if (!IsCancellable)
+            throw new InvalidOperationException($"Order {Code} cannot be cancelled in status {Status}.");
+        Status = OrderStatus.Cancelled;
+        CancelledAtUtc = nowUtc;
+        CancellationReason = reason;
+    }
+
+    public bool AcceptsPaymentAttempt(DateTime nowUtc) => Status == OrderStatus.PendingPayment && nowUtc < PaymentDueAtUtc;
 }

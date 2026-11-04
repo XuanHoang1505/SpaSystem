@@ -16,4 +16,39 @@ public sealed class TreatmentSession : BaseEntity
     public TreatmentSessionStatus Status { get; set; }
     public string? Note { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
+
+    /// <summary>Booking a package session (UC-SPA-15 flow 2, WF-07).</summary>
+    public void Book()
+    {
+        if (Status != TreatmentSessionStatus.NotBooked)
+            throw new InvalidOperationException($"Treatment session in status {Status} cannot be booked.");
+        Status = TreatmentSessionStatus.Booked;
+    }
+
+    /// <summary>A cancelled (or not-counted no-show) booking frees the session (BR-BKG-10).</summary>
+    public void Release()
+    {
+        if (Status == TreatmentSessionStatus.Booked)
+            Status = TreatmentSessionStatus.NotBooked;
+    }
+
+    /// <summary>The visit was completed (UC-SPA-28, WF-07); <paramref name="note"/> is the care result.</summary>
+    public void Complete(string? note, DateTime nowUtc)
+    {
+        if (Status != TreatmentSessionStatus.Booked)
+            throw new InvalidOperationException($"Treatment session in status {Status} cannot be completed.");
+        Status = TreatmentSessionStatus.Completed;
+        Note = note;
+        CompletedAtUtc = nowUtc;
+    }
+
+    /// <summary>BR-TRT-09: who may change which session's note is decided in Application.</summary>
+    public void ChangeNote(string? note) => Note = note;
+
+    /// <summary>A no-show that counts (Q-07 switched on); package progress is not advanced.</summary>
+    public void Skip()
+    {
+        if (Status == TreatmentSessionStatus.Booked)
+            Status = TreatmentSessionStatus.Skipped;
+    }
 }

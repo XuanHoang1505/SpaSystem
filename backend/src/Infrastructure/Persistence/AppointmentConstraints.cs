@@ -5,6 +5,9 @@ public static class AppointmentConstraints
 {
     public const string StaffNoOverlap = "ex_appointments_staff_no_overlap";
 
+    /// <summary>CHECK: an appointment's service is derived from at least one of its references (BR-BKG-13).</summary>
+    public const string SourceRequired = "ck_appointments_source";
+
     /// <summary>Statuses that occupy a staff member's time slot.</summary>
     public const string OccupyingStatuses = "'held', 'pending_confirmation', 'confirmed'";
 

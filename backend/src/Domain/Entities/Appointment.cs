@@ -25,4 +25,91 @@ public sealed class Appointment : BaseEntity, IHasCreatedAt
     public string? CancellationReason { get; set; }
     public string? Note { get; set; }
     public DateTime CreatedAtUtc { get; set; }
+
+    /// <summary>The owner may reschedule, reassign or cancel only these (BR-BKG-09); held slots belong to the payment flow.</summary>
+    public bool CanBeManaged => Status is AppointmentStatus.PendingConfirmation or AppointmentStatus.Confirmed;
+
+    public void Confirm()
+    {
+        EnsureStatus(Status == AppointmentStatus.PendingConfirmation);
+        Status = AppointmentStatus.Confirmed;
+    }
+
+    public void Reschedule(DateOnly date, TimeOnly start, TimeOnly end)
+    {
+        EnsureStatus(CanBeManaged);
+        if (end <= start)
+            throw new ArgumentException("End time must be after start time.", nameof(end));
+        Date = date;
+        StartTime = start;
+        EndTime = end;
+    }
+
+    public void AssignStaff(Guid staffMemberId)
+    {
+        EnsureStatus(CanBeManaged);
+        StaffMemberId = staffMemberId;
+    }
+
+    public void Cancel(string reason, DateTime nowUtc)
+    {
+        EnsureStatus(CanBeManaged);
+        Status = AppointmentStatus.Cancelled;
+        CancellationReason = reason;
+        CancelledAtUtc = nowUtc;
+    }
+
+    /// <summary>BR-BKG-08; the owner's remark is appended so the note written at booking is kept.</summary>
+    public void MarkNoShow(string? note)
+    {
+        EnsureStatus(Status == AppointmentStatus.Confirmed);
+        Status = AppointmentStatus.NoShow;
+        if (note is not null)
+            Note = string.IsNullOrEmpty(Note) ? note : $"{Note}\n{note}";
+    }
+
+    /// <summary>BR-BKG-06: a book-now hold paid successfully becomes confirmed with the entitlement the payment created.</summary>
+    public void ConfirmPaidHold(Guid serviceEntitlementId)
+    {
+        EnsureStatus(Status == AppointmentStatus.Held);
+        ServiceEntitlementId = serviceEntitlementId;
+        Status = AppointmentStatus.Confirmed;
+    }
+
+    /// <summary>UC-SPA-28 (WF-01); the staff member's result is appended so earlier notes are kept.</summary>
+    public void Complete(string? note)
+    {
+        EnsureStatus(Status == AppointmentStatus.Confirmed);
+        Status = AppointmentStatus.Completed;
+        if (note is not null)
+            Note = string.IsNullOrEmpty(Note) ? note : $"{Note}\n{note}";
+    }
+
+    /// <summary>BR-BKG-10: the entitlement or session this appointment was booked with becomes bookable again.</summary>
+    public void ReleaseBookedSource()
+    {
+        ServiceEntitlement?.Release();
+        TreatmentSession?.Release();
+    }
+
+    /// <summary>BR-ORD-12: cancelling a book-now order frees its held slot at once; there is no entitlement yet to give back.</summary>
+    public void CancelHold(string reason, DateTime nowUtc)
+    {
+        EnsureStatus(Status == AppointmentStatus.Held);
+        Status = AppointmentStatus.Cancelled;
+        CancellationReason = reason;
+        CancelledAtUtc = nowUtc;
+    }
+
+    public void ExpireHold()
+    {
+        EnsureStatus(Status == AppointmentStatus.Held);
+        Status = AppointmentStatus.HoldExpired;
+    }
+
+    private void EnsureStatus(bool allowed)
+    {
+        if (!allowed)
+            throw new InvalidOperationException($"Appointment in status {Status} cannot make this transition.");
+    }
 }

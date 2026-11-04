@@ -6,6 +6,8 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Configurations;
 
 internal sealed class PromotionConfiguration : IEntityTypeConfiguration<Promotion>
 {
+    public const string UniqueCode = "ux_promotions_code";
+
     public void Configure(EntityTypeBuilder<Promotion> builder)
     {
         builder.ToTable("promotions", table =>
@@ -18,6 +20,8 @@ internal sealed class PromotionConfiguration : IEntityTypeConfiguration<Promotio
             table.HasCheckConstraint("ck_promotions_per_customer_limit_positive", "per_customer_limit > 0");
             table.HasCheckConstraint("ck_promotions_usage_limit_positive", "usage_limit > 0");
             table.HasCheckConstraint("ck_promotions_status", "status IN ('active', 'stopped')");
+            // Codes are stored upper-case so the unique index is case-insensitive (BR-PRM-04).
+            table.HasCheckConstraint("ck_promotions_code_upper", "code = upper(code)");
         });
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();
@@ -25,6 +29,6 @@ internal sealed class PromotionConfiguration : IEntityTypeConfiguration<Promotio
         builder.Property(x => x.DiscountValue).HasPrecision(12, 2);
         builder.Property(x => x.MinOrderAmount).HasPrecision(12, 0);
         builder.Property(x => x.MaxDiscountAmount).HasPrecision(12, 0);
-        builder.HasIndex(x => x.Code).IsUnique().HasDatabaseName("ux_promotions_code");
+        builder.HasIndex(x => x.Code).IsUnique().HasDatabaseName(UniqueCode);
     }
 }
