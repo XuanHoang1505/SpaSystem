@@ -7,7 +7,7 @@
 | Mới vào dự án              | [../README.md](../README.md) → [architecture.md](architecture.md) → [conventions/project-structure.md](conventions/project-structure.md) → [domain/glossary.md](domain/glossary.md) |
 | Làm một use case           | [specs/](specs/README.md) của nhóm đó → [glossary](domain/glossary.md) → [conventions/workflow.md](conventions/workflow.md)                                                         |
 | Viết backend               | [conventions/backend.md](conventions/backend.md), [conventions/database.md](conventions/database.md), [conventions/api.md](conventions/api.md)                                      |
-| Viết web / mobile          | [conventions/frontend.md](conventions/frontend.md), [frontend.md](frontend.md), [mobile.md](mobile.md)                                                                              |
+| Viết web / mobile          | [conventions/frontend.md](conventions/frontend.md), [frontend.md](frontend.md), [mobile.md](mobile.md), [design/](design/stitch.md) (DESIGN.md, Stitch)                             |
 | Viết test                  | [conventions/testing.md](conventions/testing.md)                                                                                                                                    |
 | Gặp điểm nghiệp vụ chưa rõ | [decisions/open-questions.md](decisions/open-questions.md)                                                                                                                          |
 | Xem tiến độ                | [progress.md](progress.md)                                                                                                                                                          |
@@ -20,6 +20,7 @@ docs/
 ├── architecture.md           Kiến trúc foundation (tầng, phụ thuộc)
 ├── development.md            Lệnh build/test, cách kiểm tra
 ├── frontend.md / mobile.md   Hiện trạng route và UI foundation
+├── design/                   DESIGN.md (design brief theo theme.css) + stitch.md (project Stitch)
 ├── validation.md             Kết quả kiểm chứng foundation
 ├── progress.md               Trạng thái triển khai từng use case
 ├── conventions/              Quy ước bắt buộc khi viết code

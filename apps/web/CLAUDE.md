@@ -2,7 +2,7 @@
 
 Rules for work under `apps/web/`. They extend the root CLAUDE.md. UI stack and tokens: ADR-0005.
 
-- Read first: `docs/conventions/frontend.md`, `docs/conventions/naming.md`, `docs/frontend.md` (current routes) and `docs/domain/glossary.md`. For a use case's screens, use the `/implement-fe` skill.
+- Read first: `docs/conventions/frontend.md`, `docs/conventions/naming.md`, `docs/frontend.md` (current routes) and `docs/domain/glossary.md`. For a use case's screens, use the `/implement-fe` skill. Design brief: `docs/design/DESIGN.md`; Stitch mockups (layout reference only): `docs/design/stitch.md`.
 - Feature code goes in `src/features/<feature>/` (kebab-case, names from the glossary) with `components/`, `hooks/`, `schemas.ts` and `index.ts`. Pages in `src/pages/<area>/` only compose features.
 - API calls flow `@spa/api-client` (`<Feature>Api`, `<feature>QueryKeys`) → `src/lib/api/` → `features/<feature>/hooks` → components. Components never call `fetch`.
 - Handle API errors by `ApiClientError.errors[].code`, not by message text. Every data view renders loading, error, empty and data states.
