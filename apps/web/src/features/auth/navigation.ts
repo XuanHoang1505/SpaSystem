@@ -6,6 +6,12 @@ const homePaths = { customer: '/account', staff: '/staff', owner: '/owner' } as 
 /** Where each role lands after login (UC-SPA-02 bước 6). */
 export const homePathFor = (role: UserRole) => homePaths[role];
 
+export const roleLabels: Record<UserRole, string> = {
+  customer: 'Khách hàng',
+  staff: 'Nhân viên',
+  owner: 'Chủ spa',
+};
+
 const authPages = new Set(['/login', '/register', '/forgot-password']);
 
 const matches = (pattern: string, pathname: string) =>

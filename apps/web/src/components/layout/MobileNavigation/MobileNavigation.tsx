@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { MenuIcon } from 'lucide-react';
 import { navigation } from '@/config/navigation';
+import { MobileAccountActions } from '@/features/auth/components/AccountMenu';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -48,11 +49,7 @@ export function MobileNavigation() {
               </NavLink>
             ),
           )}
-          <Button asChild className="mt-4">
-            <Link to="/login" onClick={close}>
-              Đăng nhập
-            </Link>
-          </Button>
+          <MobileAccountActions onNavigate={close} />
         </nav>
       </SheetContent>
     </Sheet>

@@ -31,13 +31,22 @@ const signIn = (role: UserRole) =>
     user: { id: 'u', fullName: 'Lan', email: 'lan@spa.vn', role },
   });
 
-beforeEach(() => useAuthStore.setState({ status: 'anonymous', accessToken: null, user: null }));
+beforeEach(() =>
+  useAuthStore.setState({ status: 'anonymous', accessToken: null, user: null, endReason: null }),
+);
 
 test('anonymous visitors are sent to login with a redirect back', async () => {
   const router = renderAt('/owner?tab=1');
   expect(await screen.findByText('Login form')).toBeInTheDocument();
   expect(router.state.location.pathname).toBe('/login');
   expect(router.state.location.search).toBe('?redirect=%2Fowner%3Ftab%3D1');
+});
+
+test('after a deliberate logout the guard goes home, not to login', async () => {
+  useAuthStore.setState({ status: 'anonymous', endReason: 'logout' });
+  const router = renderAt('/owner');
+  expect(await screen.findByText('at /')).toBeInTheDocument();
+  expect(router.state.location.search).toBe('');
 });
 
 test('a wrong role goes to /forbidden', async () => {

@@ -1,6 +1,6 @@
-import { Link, NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { navigation } from '@/config/navigation';
-import { Button } from '@/components/ui/button';
+import { AccountMenu } from '@/features/auth/components/AccountMenu';
 import { cn } from '@/lib/utils';
 import { Brand } from '../Brand/Brand';
 import { MobileNavigation } from '../MobileNavigation/MobileNavigation';
@@ -35,9 +35,7 @@ export function Header() {
           </NavLink>
         </nav>
         <div className="flex items-center gap-1">
-          <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link to="/login">Đăng nhập</Link>
-          </Button>
+          <AccountMenu />
           <MobileNavigation />
         </div>
       </div>

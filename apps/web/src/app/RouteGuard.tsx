@@ -9,8 +9,11 @@ import { canAccessRole, useAuthStore } from '@/stores/authStore';
 export function RouteGuard({ role, children }: PropsWithChildren<{ role: UserRole }>) {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
+  const endReason = useAuthStore((state) => state.endReason);
   const location = useLocation();
   if (status === 'restoring') return <PageLoader label="Đang kiểm tra phiên đăng nhập…" />;
-  if (status === 'anonymous') return <Navigate to={loginPathFor(location)} replace />;
+  // A deliberate logout leaves for home; an expired or missing session asks to log in and come back.
+  if (status === 'anonymous')
+    return <Navigate to={endReason === 'logout' ? '/' : loginPathFor(location)} replace />;
   return canAccessRole(user, role) ? children : <Navigate to="/forbidden" replace />;
 }

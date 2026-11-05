@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import type { UserRole } from '@spa/shared-types';
@@ -131,7 +131,11 @@ test('prefills the login handed over by register or reset, and links to both', a
     'href',
     '/forgot-password',
   );
-  expect(screen.getByRole('link', { name: 'Đăng ký' })).toHaveAttribute('href', '/register');
+  // The header has its own Đăng ký link; this is the one in the form card.
+  expect(within(screen.getByRole('main')).getByRole('link', { name: 'Đăng ký' })).toHaveAttribute(
+    'href',
+    '/register',
+  );
 });
 
 test('without an API URL the form is disabled and nothing is sent', async () => {
