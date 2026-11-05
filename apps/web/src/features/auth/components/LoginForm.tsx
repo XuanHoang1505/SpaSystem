@@ -86,14 +86,6 @@ export function LoginForm() {
           />
         </FormField>
         <div className="grid gap-1.5">
-          <div className="flex justify-end">
-            <Link
-              to="/forgot-password"
-              className="text-xs font-medium text-primary hover:underline"
-            >
-              Quên mật khẩu?
-            </Link>
-          </div>
           <FormField label="Mật khẩu" error={errors.password?.message} required>
             <PasswordInput
               autoComplete="current-password"
@@ -102,6 +94,14 @@ export function LoginForm() {
               {...form.register('password')}
             />
           </FormField>
+          <div className="flex justify-end">
+            <Link
+              to="/forgot-password"
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
         </div>
         <Button type="submit" className="w-full" loading={busy} disabled={!configured}>
           Đăng nhập

@@ -453,7 +453,7 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 - **Trường:**
   - "Email hoặc số điện thoại" (`login`, `autoComplete="username"`, bắt buộc, ≤ 255 ký tự sau khi bỏ khoảng trắng).
   - "Mật khẩu" (`password`, `autoComplete="current-password"`, bắt buộc, ≤ 128 ký tự). Có nút hiện/ẩn mật khẩu (`aria-label` "Hiện mật khẩu"/"Ẩn mật khẩu", `aria-pressed`).
-- **Liên kết:** "Quên mật khẩu?" → `/forgot-password`. "Chưa có tài khoản? Đăng ký" → `/register`.
+- **Liên kết:** "Quên mật khẩu?" → `/forgot-password`, căn phải ngay dưới ô mật khẩu. "Chưa có tài khoản? Đăng ký" → `/register`.
 - **Điền sẵn:** từ `location.state.login`, do màn đăng ký hoặc đặt lại mật khẩu truyền sang. Không đưa email lên URL.
 - **Hành động "Đăng nhập":** `useLogin` → `AuthApi.login`. Thành công thì lưu phiên, `queryClient.clear()` và điều hướng tới đâu tùy `redirect`:
   - Có `redirect` hợp lệ thì đi tới đó. Hợp lệ là bắt đầu bằng `/`, không bắt đầu bằng `//`, và thuộc khu vực của vai trò hoặc là route công khai.

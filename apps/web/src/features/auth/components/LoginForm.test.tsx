@@ -138,6 +138,16 @@ test('prefills the login handed over by register or reset, and links to both', a
   );
 });
 
+test('the forgot-password link sits right below the password field', async () => {
+  mockApi();
+  renderApp('/login');
+  const password = await screen.findByLabelText(/^Mật khẩu/);
+  const forgot = screen.getByRole('link', { name: 'Quên mật khẩu?' });
+  const submit = screen.getByRole('button', { name: 'Đăng nhập' });
+  expect(password.compareDocumentPosition(forgot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(forgot.compareDocumentPosition(submit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
 test('without an API URL the form is disabled and nothing is sent', async () => {
   const fetcher = mockApi();
   vi.stubEnv('VITE_API_BASE_URL', '');
