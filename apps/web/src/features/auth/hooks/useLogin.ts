@@ -1,19 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { AuthResult, LoginRequest } from '@spa/shared-types';
-import { getAuthApi } from '@/lib/api/session';
+import type { LoginRequest } from '@spa/shared-types';
 import { useAuthStore } from '@/stores/authStore';
+import { callAuth } from './callAuth';
 
 /** UC-SPA-02: on success the session is stored and cached data of any previous user is dropped. */
 export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (values: LoginRequest): Promise<AuthResult> => {
-      const { api, error } = getAuthApi();
-      if (!api) throw new Error(error);
-      const response = await api.login(values);
-      if (!response.data) throw new Error('Empty login response.');
-      return response.data;
-    },
+    mutationFn: (values: LoginRequest) => callAuth((api) => api.login(values)),
     onSuccess: (result) => {
       queryClient.clear();
       useAuthStore.getState().setSession(result);

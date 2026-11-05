@@ -7,6 +7,7 @@ import { StaffLayout } from '@components/layout/StaffLayout/StaffLayout';
 import { OwnerLayout } from '@components/layout/OwnerLayout/OwnerLayout';
 import { HomePage } from '@/pages/public/HomePage';
 import { LoginPage } from '@/pages/public/LoginPage';
+import { RegisterPage } from '@/pages/public/RegisterPage';
 import { GuestOnly } from './GuestOnly';
 import { RouteGuard } from './RouteGuard';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
@@ -14,7 +15,10 @@ import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 
 const guestOnlyPaths = new Set<string>(['/login', '/register', '/forgot-password']);
-const guestPages: Record<string, ReactElement> = { '/login': <LoginPage /> };
+const guestPages: Record<string, ReactElement> = {
+  '/login': <LoginPage />,
+  '/register': <RegisterPage />,
+};
 
 export const routeObjects: RouteObject[] = [
   {
