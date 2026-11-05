@@ -1,8 +1,9 @@
 import type { PropsWithChildren } from 'react';
 import { Navigate } from 'react-router-dom';
-import { canAccessRole, useAuthStore, type SessionRole } from '@/stores/authStore';
+import type { UserRole } from '@spa/shared-types';
+import { canAccessRole, useAuthStore } from '@/stores/authStore';
 // Reserved for real authentication. Preview placeholder routes are deliberately unguarded.
-export function RouteGuard({ role, children }: PropsWithChildren<{ role: SessionRole }>) {
-  const session = useAuthStore((state) => state.session);
-  return canAccessRole(session, role) ? children : <Navigate to="/forbidden" replace />;
+export function RouteGuard({ role, children }: PropsWithChildren<{ role: UserRole }>) {
+  const user = useAuthStore((state) => state.user);
+  return canAccessRole(user, role) ? children : <Navigate to="/forbidden" replace />;
 }
