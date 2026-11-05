@@ -109,12 +109,26 @@ public sealed class AuthEndpointsTests : IAsyncLifetime
         var next = RefreshTokenFrom(rotatedBody);
         next.Should().NotBe(original);
 
+        // Past the 30-second grace window of BR-AUTH-22, so the reuse counts as a theft (BR-AUTH-04).
+        _factory.Clock.Offset = TimeSpan.FromSeconds(31);
         var (reused, reusedBody) = await Refresh(original);
         reused.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         Code(reusedBody).Should().Be("invalid_refresh_token");
 
         (await Refresh(next)).Response.StatusCode.Should().Be(HttpStatusCode.Unauthorized, "reusing a revoked token ends every session");
-        (await RefreshTokensOf(user.Id)).Should().OnlyContain(token => token.RevokedAtUtc != null);
+        (await RefreshTokensOf(user.Id)).Should().ContainSingle("BR-AUTH-23 deletes the active tokens, only the rotated one stays marked")
+            .Which.RevokedAtUtc.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ReuseWithinGraceWindowDoesNotEndTheNewSession()
+    {
+        var user = await _factory.CreateUserAsync(Password);
+        var original = RefreshTokenFrom((await Login(user.Email, Password)).Body);
+        var next = RefreshTokenFrom((await Refresh(original)).Body);
+
+        (await Refresh(original)).Response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        (await Refresh(next)).Response.StatusCode.Should().Be(HttpStatusCode.OK, "BR-AUTH-22: within 30 seconds it is a concurrent refresh");
     }
 
     [Fact]

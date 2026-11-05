@@ -40,7 +40,12 @@ public sealed class AccountEndpointsTests : IAsyncLifetime
 
         var (request, requestBody) = await RequestRegistration(email, phone);
         request.StatusCode.Should().Be(HttpStatusCode.Accepted);
-        requestBody.RootElement.GetProperty("data").GetProperty("email").GetString().Should().Be(email);
+        var sent = requestBody.RootElement.GetProperty("data");
+        sent.GetProperty("email").GetString().Should().Be(email);
+        // BR-AUTH-25: resend allowed 60 seconds after the stored creation time (stamped on save, a few ms after the expiry was
+        // computed), and the code itself lives 5 minutes.
+        (sent.GetProperty("expiresAtUtc").GetDateTime() - sent.GetProperty("resendAvailableAtUtc").GetDateTime())
+            .Should().BeCloseTo(TimeSpan.FromMinutes(4), TimeSpan.FromSeconds(1));
         (await UserExists(email)).Should().BeFalse("AUTH-T13: no account before the OTP is verified");
 
         var otp = _factory.Mail.LastOtpFor(email);
@@ -212,6 +217,8 @@ public sealed class AccountEndpointsTests : IAsyncLifetime
             var (response, body) = await Post("/api/v1/auth/forgot-password/request-otp", new { email });
             var data = body.RootElement.GetProperty("data");
             responses.Add((response.StatusCode, data.GetProperty("expiresAtUtc").GetDateTime().ToString("yyyy-MM-ddTHH:mm")));
+            (data.GetProperty("resendAvailableAtUtc").GetDateTime() - DateTime.UtcNow).Should()
+                .BeCloseTo(TimeSpan.FromSeconds(60), TimeSpan.FromSeconds(5), "BR-AUTH-25: the same answer for every email");
             data.GetProperty("email").GetString().Should().Be(email);
             body.RootElement.GetProperty("message").ValueKind.Should().Be(JsonValueKind.Null);
         }

@@ -3,7 +3,7 @@
 - **Nhóm:** `Auth`, `Users` · **Sprint:** 1 · **Nguồn:** DA §2.2.3 (UC Đăng nhập) / ĐX
 - **Entity:** `User` (bảng `users`), `RefreshToken` (bảng `refresh_tokens`), `OwnerProfile` (bảng `owner_profiles`), `Customer` (bảng `customers`), `StaffMember` (bảng `staff_members`, chỉ đọc), `OtpCode` (bảng `otp_codes`) — xem [glossary](../domain/glossary.md), [data-model](../domain/data-model.md)
 - **Trạng thái triển khai:** xem [progress.md](../progress.md)
-- **Đã đặc tả:** UC-SPA-02 và seed tài khoản chủ spa (dev) — **đã triển khai backend 25/10/2026** (kế hoạch: `docs/superpowers/plans/2026-10-25-uc-spa-02-login.md`). UC-SPA-01 và UC-SPA-03 — **đã triển khai backend 25/10/2026** (gửi mail thật qua Gmail SMTP; kế hoạch: `docs/superpowers/plans/2026-10-25-uc-spa-01-03-otp.md`). UC-SPA-04, 05 — **đã triển khai backend 01/11/2026** (thư mục backend `Users`; kế hoạch: `docs/superpowers/plans/2026-11-01-uc-spa-04-05-accounts.md`).
+- **Đã đặc tả:** UC-SPA-02 và seed tài khoản chủ spa (dev) — **đã triển khai backend 25/10/2026** (kế hoạch: `docs/superpowers/plans/2026-10-25-uc-spa-02-login.md`). UC-SPA-01 và UC-SPA-03 — **đã triển khai backend 25/10/2026** (gửi mail thật qua Gmail SMTP; kế hoạch: `docs/superpowers/plans/2026-10-25-uc-spa-01-03-otp.md`). BE-1 (phiên web bằng cookie, `resendAvailableAtUtc`) — **đã triển khai backend 05/11/2026**. UC-SPA-04, 05 — **đã triển khai backend 01/11/2026** (thư mục backend `Users`; kế hoạch: `docs/superpowers/plans/2026-11-01-uc-spa-04-05-accounts.md`).
 
 ## Use case
 
@@ -116,6 +116,30 @@ Không phải use case của DA; phục vụ phát triển vì chưa có màn h�
 - Đọc từ `.env`: `SEED_OWNER_EMAIL`, `SEED_OWNER_PASSWORD`, `SEED_OWNER_PHONE`, `SEED_OWNER_FULL_NAME`. Thiếu email hoặc mật khẩu → báo lỗi, không tạo gì.
 - Idempotent: đã có người dùng trùng email → giữ nguyên, báo "đã tồn tại". Chưa có → tạo `users` (role `owner`, status `active`) + `owner_profiles` trong một lần lưu.
 
+### UC-SPA-02 bổ sung — Phiên web bằng cookie HttpOnly (BE-1)
+
+Bổ sung cho UC-SPA-02 (A2, A3) và UC-SPA-01/03 để giao diện web dùng được (mục "Giao diện (web)"). Quy ước `docs/conventions/frontend.md` và `data_api.py` đều ghi refresh token của web nằm trong cookie HttpOnly. Mobile giữ nguyên cách gửi token trong body.
+
+**Luồng chính**
+
+1. Client web gửi mọi request tới `/auth/*` kèm header `X-Auth-Transport: cookie` (so sánh không phân biệt hoa thường) và để trình duyệt gửi kèm cookie (`credentials: 'include'`). Đây là **chế độ cookie**.
+2. `/auth/login` hoặc `/auth/refresh` thành công ở chế độ cookie: hệ thống ghi refresh token vào cookie (BR-AUTH-20) và trả body như cũ, nhưng `refreshToken = null`, `refreshTokenExpiresAtUtc = null`.
+3. `/auth/refresh` ở chế độ cookie lấy token từ cookie; `refreshToken` trong body (nếu có) bị bỏ qua. Xoay vòng như A2 của UC-SPA-02.
+4. `/auth/logout` ở chế độ cookie lấy token từ cookie. Bearer **không bắt buộc**, vì giữ được cookie đã là bằng chứng sở hữu phiên (Q-69). Token còn hiệu lực thì bị thu hồi (BR-AUTH-23). Luôn xóa cookie và trả `204`.
+5. Không có header `X-Auth-Transport: cookie` thì chạy **đúng như trước** (token trong body, `/auth/logout` cần Bearer). Cookie gửi kèm request lúc đó bị bỏ qua (BR-AUTH-21).
+6. `OtpSent` của `register/request-otp` và `forgot-password/request-otp` có thêm `resendAvailableAtUtc` (BR-AUTH-25).
+
+**Luồng rẽ nhánh**
+
+- A1. **Làm mới đồng thời** (nhiều tab cùng tải lại trang, dùng chung một cookie): token vừa bị xoay vòng mà được gửi lại trong vòng `Jwt:RefreshReuseGraceSeconds` (mặc định 30 giây) thì trả `401 invalid_refresh_token` **nhưng không thu hồi hàng loạt** (BR-AUTH-22). Lúc đó trình duyệt đã nhận cookie mới từ response thắng cuộc, nên client thử lại một lần là thành công.
+
+**Ngoại lệ**
+
+- E1. Chế độ cookie, `/auth/refresh` không có cookie → `401 invalid_refresh_token` (không phải `400`), để client coi là chưa đăng nhập.
+- E2. Chế độ cookie, `/auth/refresh` thất bại (`401`/`403`) → response có thêm lệnh xóa cookie, để trình duyệt không gửi lại token đã chết.
+- E3. Origin không có trong `Cors:AllowedOrigins` → preflight không có `Access-Control-Allow-Origin`, trình duyệt chặn. Backend không trả lỗi riêng.
+- E4. Token đã bị thu hồi **chủ động** (đăng xuất, đổi hoặc đặt lại mật khẩu, khóa tài khoản, nhân viên nghỉ việc) được gửi lại → `401 invalid_refresh_token` và **không** thu hồi các phiên tạo sau đó (BR-AUTH-23). Ví dụ: đổi mật khẩu trên máy B rồi đăng nhập lại, sau đó mở trình duyệt cũ trên máy A; máy A phải đăng nhập lại, còn phiên mới trên máy B vẫn giữ.
+
 ### UC-SPA-04 — Cập nhật thông tin tài khoản
 
 | Mục            | Nội dung                                                                                                                                   |
@@ -211,6 +235,13 @@ Khóa tài khoản **không** tự hủy lịch hẹn, đơn hàng hay ca làm c
 | BR-AUTH-17 | `PUT /me/password` dùng chung giới hạn tần suất `auth` (10 yêu cầu/phút/IP) để chống dò mật khẩu hiện tại bằng access token bị lộ | API | ĐX |
 | BR-AUTH-18 | Khóa/mở khóa: chỉ `active ↔ locked`; không khóa chính mình; `inactive` không đổi được qua UC này; khóa thu hồi mọi refresh token; lặp lại cùng trạng thái là thao tác rỗng | Application `UserAccountService` | DA + ĐX (BR-AUTH-05 của DA, WF-10) |
 | BR-AUTH-19 | Ảnh đại diện dùng chung kiểm tra ảnh và cổng `IFileStorage` với catalog (BR-CAT-08, 09), `publicId = avatars/{userId}`; URL trong CSDL chỉ đổi sau khi storage thành công | Application `ProfileService` (dùng chung bộ đọc ảnh với `CatalogImageService`) | ĐX |
+| BR-AUTH-20 | Cookie refresh token: tên `AuthCookie:Name` (mặc định `spa_refresh_token`), `HttpOnly`, `SameSite=Strict`, `Path=/api/v1/auth`, `Expires` = hạn refresh token, `Secure` theo `AuthCookie:Secure` (mặc định `true`, Development `false`). Ở chế độ cookie, token không bao giờ nằm trong body | API (`RefreshTokenCookie`) | ĐX (conventions/frontend.md, data_api) |
+| BR-AUTH-21 | Chỉ khi có header `X-Auth-Transport: cookie` thì backend mới ghi và đọc cookie. Đây là lớp chống CSRF: header tùy chỉnh buộc trình duyệt gửi preflight CORS, origin lạ bị chặn, cộng thêm `SameSite=Strict` | API | ĐX |
+| BR-AUTH-22 | Cửa sổ ân hạn: token đã bị **xoay vòng** được gửi lại trong `Jwt:RefreshReuseGraceSeconds` (mặc định 30) kể từ `revoked_at_utc` thì trả `401 invalid_refresh_token`, không thu hồi hàng loạt; quá cửa sổ thì áp BR-AUTH-04 | Application `AuthService` | ĐX (Q-66) |
+| BR-AUTH-23 | **Thu hồi chủ động** (đăng xuất, đổi hoặc đặt lại mật khẩu, khóa tài khoản, nhân viên nghỉ việc, và thu hồi hàng loạt khi phát hiện tái sử dụng) **xóa** dòng `refresh_tokens`. Chỉ xoay vòng mới đánh dấu `revoked_at_utc`. Nhờ đó chỉ token bị xoay vòng mà dùng lại mới là dấu hiệu bị đánh cắp | Infrastructure `RefreshTokenRepository` | ĐX (Q-67) |
+| BR-AUTH-24 | `/auth/refresh` dùng giới hạn tần suất riêng `auth-refresh`: 30 yêu cầu/phút/IP. Các endpoint còn lại giữ giới hạn `auth` 10 yêu cầu/phút/IP | API | ĐX (Q-68) |
+| BR-AUTH-25 | `OtpSent.resendAvailableAtUtc`: đăng ký = thời điểm tạo OTP vừa gửi + `Account:OtpResendCooldownSeconds`; quên mật khẩu luôn = bây giờ + cooldown cho mọi email (BR-AUTH-05) | Application `AccountService` | ĐX |
+| BR-AUTH-26 | CORS cho phép credentials (`AllowCredentials`) chỉ với origin liệt kê trong `Cors:AllowedOrigins`, không bao giờ dùng wildcard | API | ĐX |
 
 Khóa tài khoản tạm sau nhiều lần sai mật khẩu (đề xuất trước đây) **không làm** lần này: bảng `users` không có cột đếm số lần sai. Giới hạn tần suất theo IP (E7) thay thế tạm.
 
@@ -263,6 +294,17 @@ Tiền tố `/api/v1`. Phản hồi bọc envelope `{ success, message, data, er
 - Controller mới: `MeController` (`/me`), `UsersController` (`/users`).
 
 - 5 endpoint mới dùng chung giới hạn `auth` với `/auth/login` và `/auth/refresh`: 10 yêu cầu/phút/IP tính chung cho cả 7 endpoint.
+
+**BE-1, phiên web bằng cookie** (chỉ khi có header `X-Auth-Transport: cookie`; không có header thì như bảng trên):
+
+| Method | Đường dẫn       | Vai trò             | Request               | Response                                                                                          | Lỗi                                                                                    |
+| ------ | --------------- | ------------------- | --------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| POST   | `/auth/login`   | Ẩn danh             | `{ login, password }` | 200 như cũ, `refreshToken`/`refreshTokenExpiresAtUtc` = `null`; `Set-Cookie: spa_refresh_token=…` | Như cũ                                                                                 |
+| POST   | `/auth/refresh` | Ẩn danh             | Không body; cookie    | 200 như `/auth/login` ở chế độ cookie                                                             | 401 `invalid_refresh_token` (kể cả thiếu cookie), 403: kèm xóa cookie; 429: giữ cookie |
+| POST   | `/auth/logout`  | Ẩn danh hoặc Bearer | Không body; cookie    | 204, xóa cookie                                                                                   | —                                                                                      |
+
+- `register/request-otp`, `forgot-password/request-otp` trả `202 { email, expiresAtUtc, resendAvailableAtUtc }`. Đây là trường thêm vào, client cũ không bị ảnh hưởng.
+- Giới hạn tần suất: `/auth/refresh` thuộc `auth-refresh` (30/phút/IP). Sáu endpoint `/auth/*` còn lại cùng `PUT /me/password` dùng chung `auth` (10/phút/IP).
 - `otp` trong request: chuỗi đúng 6 chữ số, sai định dạng → `400 validation_error` (không tính lần sai).
 - Mọi endpoint có `[Authorize]` khi thiếu hoặc sai access token trả `401` dạng envelope, mã `unauthorized`; sai vai trò trả `403`, mã `forbidden`.
 - Refresh token trả trong body cho cả web và mobile. Cookie HttpOnly cho web để lại khi tích hợp giao diện web.
@@ -289,6 +331,16 @@ Tiền tố `/api/v1`. Phản hồi bọc envelope `{ success, message, data, er
 | — (dùng lại) | `ImageUpload:MaxBytes`, `CLOUDINARY_*` | 5 MB; thiếu khóa Cloudinary chỉ làm `/me/avatar` trả 503 |
 
 UC-SPA-04/05 không thêm biến `.env` mới.
+
+**BE-1** (không có secret, không thêm biến `.env`):
+
+| Khóa cấu hình                  | Mặc định (`appsettings.json`)                                           |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| `AuthCookie:Name`              | `spa_refresh_token`                                                     |
+| `AuthCookie:Secure`            | `true`; `appsettings.Development.json`: `false` (HTTP trên LAN khi dev) |
+| `Jwt:RefreshReuseGraceSeconds` | `30` (Q-66)                                                             |
+
+Docker Compose chạy Production qua HTTP. Nếu truy cập bằng IP LAN thay vì `localhost` thì đặt `AuthCookie__Secure=false` trong compose (Q-70).
 
 Thiếu `JWT_KEY` không chặn API khởi động (health check, Swagger vẫn chạy); lỗi cấu hình chỉ xảy ra khi gọi đăng nhập hoặc gửi Bearer token. Tương tự, thiếu `MAIL_SETTINGS_MAIL`/`MAIL_SETTINGS_PASSWORD` không chặn khởi động: chỉ endpoint gửi OTP trả `503 email_send_failed` và log lỗi cấu hình. Gửi mail chờ tối đa 30 giây rồi coi là lỗi.
 
@@ -338,6 +390,19 @@ Thiếu `JWT_KEY` không chặn API khởi động (health check, Swagger vẫn 
 | AUTH-T40 | `/users*` với token customer, staff; không token                                                                                 | 403 `forbidden`; 401 `unauthorized`                                                                                                         |
 | AUTH-T41 | Unit test `ProfileService`, `UserAccountService` (NSubstitute, đồng hồ giả): chuẩn hóa, so sánh SĐT, thu hồi phiên, quy tắc khóa | Pass                                                                                                                                        |
 | AUTH-T42 | Hồi quy                                                                                                                          | Toàn bộ test hiện có (kể cả `CatalogImage*`, `Staff*`, `PersistenceModelTests`) vẫn pass sau khi tách bộ đọc ảnh dùng chung                 |
+| AUTH-T43 | Login có header `X-Auth-Transport: cookie`                                                                                       | 200; `Set-Cookie` đúng tên, `HttpOnly`, `SameSite=Strict`, `Path=/api/v1/auth`, `Expires` ≈ +7 ngày; body `refreshToken = null`             |
+| AUTH-T44 | Login, refresh, logout **không** có header (mobile)                                                                              | Như trước: token trong body, không có `Set-Cookie`, logout thiếu Bearer → 401 (hồi quy AUTH-T01..T08)                                       |
+| AUTH-T45 | Refresh chế độ cookie, chỉ có cookie                                                                                             | 200; `Set-Cookie` mới khác cũ; token cũ có `revoked_at_utc`                                                                                 |
+| AUTH-T46 | Refresh chế độ cookie: thiếu cookie / cookie rác / tài khoản bị khóa                                                             | `401 invalid_refresh_token` / 401 + xóa cookie / `403 account_locked` + xóa cookie                                                          |
+| AUTH-T47 | Gửi cookie nhưng không có header, body rỗng                                                                                      | Cookie bị bỏ qua → `400 validation_error` như cũ                                                                                            |
+| AUTH-T48 | Logout chế độ cookie không có Bearer                                                                                             | 204, xóa cookie, dòng token bị xóa; refresh sau đó → 401                                                                                    |
+| AUTH-T49 | Gửi lại token đã xoay vòng sau 10 giây / sau 31 giây (đồng hồ giả)                                                               | 10 giây: 401, phiên mới vẫn dùng được; 31 giây: 401 và mọi phiên bị thu hồi (BR-AUTH-04)                                                    |
+| AUTH-T50 | Đổi mật khẩu / đặt lại mật khẩu / khóa rồi mở khóa; đăng nhập lại; rồi refresh bằng token cũ                                     | Token cũ 401; phiên đăng nhập sau đó **vẫn dùng được**; dòng token cũ đã bị xóa                                                             |
+| AUTH-T51 | 31 lần `/auth/refresh` trong 1 phút từ cùng IP; xen kẽ login                                                                     | Lần 31 → `429 rate_limited`; login đếm riêng theo `auth` (AUTH-T09 vẫn đúng)                                                                |
+| AUTH-T52 | Preflight `OPTIONS /api/v1/auth/refresh` từ origin được phép / không được phép, có header tùy chỉnh                              | Được phép: `Access-Control-Allow-Origin` = origin, `Access-Control-Allow-Credentials: true`; không được phép: không có hai header này       |
+| AUTH-T53 | `resendAvailableAtUtc`: đăng ký; quên mật khẩu với email có / không có tài khoản / đang chờ 60 giây                              | Đăng ký = thời điểm tạo + 60 giây; quên mật khẩu = now + 60 giây, giống nhau ở cả ba trường hợp                                             |
+| AUTH-T54 | Unit test `AuthService` (cửa sổ ân hạn), `AccountService` (`resendAvailableAtUtc`), cookie helper ở API                          | Pass                                                                                                                                        |
+| AUTH-T55 | Hồi quy                                                                                                                          | Toàn bộ test hiện có vẫn pass (test nào kiểm `revoked_at_utc` sau thu hồi chủ động thì sửa theo BR-AUTH-23); `PersistenceModelTests` pass   |
 
 ## Giao diện (web)
 
@@ -363,6 +428,7 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
   - Thành công thì `status = authenticated`.
   - Lỗi `401`/`403` thì `status = anonymous`, không toast.
   - Mất mạng hoặc `429` cũng `anonymous` (người dùng đăng nhập lại được).
+  - Gặp `401` lần đầu thì thử lại **một lần** sau khoảng 300 ms, phòng trường hợp tab khác vừa xoay vòng cookie (BR-AUTH-22).
   - Trong lúc `restoring`, `RouteGuard` và header hiện `PageLoader` / skeleton nút tài khoản, không chuyển hướng sớm.
   - Lưu ý: mỗi lần tải lại trang tốn một lượt trong giới hạn `auth` 10 yêu cầu/phút/IP.
 - **Gọi API có xác thực:** `src/lib/api/` tạo một `ApiClient` dùng chung với `credentials: 'include'`.
@@ -489,7 +555,7 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 
 ### Thay đổi backend cần làm trước (task BE-1, tách khỏi task FE)
 
-Hai quyết định đã chốt (cookie HttpOnly, đếm ngược gửi lại OTP) cần backend đổi hợp đồng. Task FE chỉ bắt đầu sau khi BE-1 xong. Đề xuất cho BE-1, sẽ chốt khi đặc tả BE-1:
+Đặc tả chính thức ở "UC-SPA-02 bổ sung — Phiên web bằng cookie HttpOnly (BE-1)", cùng BR-AUTH-20..26 và AUTH-T43..T55. Phần dưới là tóm tắt. Task FE chỉ bắt đầu sau khi BE-1 xong.
 
 1. **Refresh token qua cookie HttpOnly cho web** (theo `docs/conventions/frontend.md`):
    - **Bật chế độ cookie:** request có header `X-Auth-Transport: cookie` thì `/auth/login`, `/auth/refresh` ghi refresh token vào cookie và trả `refreshToken: null`, `refreshTokenExpiresAtUtc: null` trong body. Không có header thì giữ nguyên hành vi hiện tại, cho mobile.
@@ -545,4 +611,9 @@ Hai quyết định đã chốt (cookie HttpOnly, đếm ngược gửi lại OT
 - Q-54 (mới): khóa tài khoản có hủy lịch hẹn/đơn chưa thanh toán/ca làm không? Mặc định **không**, chỉ chặn đăng nhập và làm mới phiên.
 - Q-55 (mới): chủ spa có khóa được tài khoản chủ spa khác không? Mặc định **có** — DA chỉ cấm tự khóa mình. Tài khoản `inactive` không khóa/mở được qua UC-SPA-05.
 - Q-56 (mới): thêm `DELETE /me/avatar` (DA chỉ có đổi ảnh). Mặc định **có**, cùng cách xóa ảnh catalog.
+- Q-66 (mới): nhiều tab cùng làm mới phiên bằng một cookie? Mặc định có cửa sổ ân hạn **30 giây** (`Jwt:RefreshReuseGraceSeconds`): token vừa bị xoay vòng mà gửi lại trong cửa sổ thì chỉ trả 401, không coi là bị đánh cắp.
+- Q-67 (mới): làm sao phân biệt "token bị đánh cắp" với "token đã bị thu hồi chủ động"? Mặc định **xóa dòng** khi thu hồi chủ động, chỉ xoay vòng mới đánh dấu `revoked_at_utc`. Không đổi schema. Phương án khác: thêm cột `revoked_reason` (sửa `data_db.py`, migration), giữ được lịch sử nhưng tốn công hơn.
+- Q-68 (mới): giới hạn tần suất cho `/auth/refresh`? Mặc định tách riêng 30/phút/IP, vì web gọi refresh mỗi lần tải lại trang.
+- Q-69 (mới): ở chế độ cookie, đăng xuất có cần Bearer không? Mặc định **không**: cookie là bằng chứng sở hữu, và đăng xuất vẫn chạy được khi access token đã hết hạn. Chế độ body (mobile) vẫn cần Bearer.
+- Q-70 (mới): cookie `Secure` khi chạy HTTP? Mặc định `true`, Development `false`. Trình duyệt chấp nhận cookie `Secure` trên `http://localhost` nhưng không chấp nhận trên IP LAN.
 - Quên mật khẩu: DA E1 ghi "email không tồn tại → thông báo"; đặc tả này chọn trả phản hồi chung để chống dò tài khoản. Nếu GVHD yêu cầu đúng DA thì đổi bước 3 thành `404 account_not_found`.

@@ -82,7 +82,7 @@ public sealed class ProfileService : IProfileService
         user.ChangePasswordHash(_passwordHasher.Hash(request.NewPassword));
         // Every session ends, the current one included: the client signs in again (BR-AUTH-16, Q-51).
         if (_options.Value.RevokeSessionsOnPasswordChange)
-            await _refreshTokens.RevokeAllActiveAsync(user.Id, _clock.UtcNow, cancellationToken);
+            await _refreshTokens.DeleteAllActiveAsync(user.Id, _clock.UtcNow, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 

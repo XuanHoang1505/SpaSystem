@@ -131,7 +131,7 @@ public sealed class ProfileServiceTests
         (await FluentActions.Awaiting(() => Sut().ChangePasswordAsync(new ChangePasswordRequest("sai123456", "matkhau456", "matkhau456"), CancellationToken.None))
             .Should().ThrowAsync<BusinessRuleException>()).Which.Code.Should().Be("current_password_incorrect");
         _user.PasswordHash.Should().Be("old-hash");
-        await _refreshTokens.DidNotReceive().RevokeAllActiveAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _refreshTokens.DidNotReceive().DeleteAllActiveAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -143,7 +143,7 @@ public sealed class ProfileServiceTests
         await Sut().ChangePasswordAsync(new ChangePasswordRequest("matkhau123", "matkhau456", "matkhau456"), CancellationToken.None);
 
         _user.PasswordHash.Should().Be("hash:matkhau456");
-        await _refreshTokens.Received(1).RevokeAllActiveAsync(_user.Id, Now, Arg.Any<CancellationToken>());
+        await _refreshTokens.Received(1).DeleteAllActiveAsync(_user.Id, Now, Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -155,7 +155,7 @@ public sealed class ProfileServiceTests
 
         await Sut().ChangePasswordAsync(new ChangePasswordRequest("matkhau123", "matkhau456", "matkhau456"), CancellationToken.None);
 
-        await _refreshTokens.DidNotReceive().RevokeAllActiveAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _refreshTokens.DidNotReceive().DeleteAllActiveAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

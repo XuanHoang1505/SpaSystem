@@ -63,7 +63,7 @@ public sealed class AccountServiceTests
 
         var result = await _service.RequestRegistrationOtpAsync(Register, CancellationToken.None);
 
-        result.Data.Should().Be(new OtpSentDto(Email, Now.AddMinutes(5)));
+        result.Data.Should().Be(new OtpSentDto(Email, Now.AddMinutes(5), Now.AddSeconds(60)));
         await _otps.Received(1).ExpireActiveAsync(Email, OtpPurpose.Registration, Now, Arg.Any<CancellationToken>());
         stored!.Email.Should().Be(Email);
         stored.Purpose.Should().Be(OtpPurpose.Registration);
@@ -301,6 +301,8 @@ public sealed class AccountServiceTests
         var forUnknown = await _service.RequestPasswordResetOtpAsync(new ForgotPasswordRequest("nobody@gmail.com"), CancellationToken.None);
 
         forKnown.Data!.ExpiresAtUtc.Should().Be(forUnknown.Data!.ExpiresAtUtc).And.Be(Now.AddMinutes(5));
+        // BR-AUTH-25: the resend time is the same for every email, so it does not reveal an account either.
+        forKnown.Data.ResendAvailableAtUtc.Should().Be(forUnknown.Data.ResendAvailableAtUtc).And.Be(Now.AddSeconds(60));
         _sent.Should().ContainSingle().Which.Subject.Should().Contain("đặt lại mật khẩu");
     }
 
@@ -327,6 +329,7 @@ public sealed class AccountServiceTests
         var result = await _service.RequestPasswordResetOtpAsync(new ForgotPasswordRequest(user.Email), CancellationToken.None);
 
         result.Data!.ExpiresAtUtc.Should().Be(Now.AddMinutes(5));
+        result.Data.ResendAvailableAtUtc.Should().Be(Now.AddSeconds(60));
         _sent.Should().BeEmpty();
     }
 
@@ -363,7 +366,7 @@ public sealed class AccountServiceTests
         await _service.ResetPasswordAsync(new ResetPasswordRequest("reset-token", "matkhaumoi9", "matkhaumoi9"), CancellationToken.None);
 
         user.PasswordHash.Should().Be("hashed:matkhaumoi9");
-        await _refreshTokens.Received(1).RevokeAllActiveAsync(user.Id, Now, Arg.Any<CancellationToken>());
+        await _refreshTokens.Received(1).DeleteAllActiveAsync(user.Id, Now, Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

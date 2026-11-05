@@ -11,5 +11,5 @@ public interface IAuthService
     Task<OperationResult<AuthResultDto>> RefreshAsync(RefreshTokenRequest request, CancellationToken cancellationToken);
 
     /// <summary>Revokes the token only if it belongs to <paramref name="currentUserId"/>; never reveals whether it existed.</summary>
-    Task LogoutAsync(RefreshTokenRequest request, Guid currentUserId, CancellationToken cancellationToken);
+    Task LogoutAsync(RefreshTokenRequest request, Guid? currentUserId, CancellationToken cancellationToken);
 }

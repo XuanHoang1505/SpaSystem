@@ -53,6 +53,12 @@ def expect_error(status, code=None):
     return lines
 
 
+
+def cookie_mode(item):
+    """Web session in an HttpOnly cookie (docs/specs/auth.md, BE-1): Postman keeps the cookie in its jar."""
+    item["request"]["header"].append({"key": "X-Auth-Transport", "value": "cookie"})
+    return item
+
 SAVE_TOKENS = [
     "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
     "const body = pm.response.json();",
@@ -221,6 +227,29 @@ collection = {
                 req("Đăng xuất", "POST", "/api/v1/auth/logout", {"refreshToken": "{{refreshToken}}"}, auth=True,
                     tests=["pm.test('HTTP 204', () => pm.response.to.have.status(204));"],
                     desc="Cần Bearer `{{accessToken}}`. Sau khi đăng xuất, refresh token này không dùng được nữa."),
+            ],
+        },
+        {
+            "name": "Phiên web bằng cookie (BE-1)",
+            "description": "Cách web giữ phiên: header `X-Auth-Transport: cookie`, refresh token nằm trong cookie HttpOnly `spa_refresh_token` (Postman tự lưu trong cookie jar), body trả `refreshToken: null`. Không có header thì chạy như thư mục Auth (mobile). Gửi lại token vừa xoay vòng trong 30 giây chỉ trả 401, không đăng xuất mọi phiên (BR-AUTH-22).",
+            "item": [
+                cookie_mode(req("Đăng nhập (cookie)", "POST", "/api/v1/auth/login",
+                    {"login": "{{loginEmail}}", "password": "{{loginPassword}}"}, tests=[
+                        "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                        "const body = pm.response.json();",
+                        "pm.test('Refresh token không nằm trong body', () => pm.expect(body.data.refreshToken).to.eql(null));",
+                        "pm.test('Có cookie spa_refresh_token', () => pm.expect(pm.cookies.has('spa_refresh_token')).to.eql(true));",
+                        "pm.environment.set('accessToken', body.data.accessToken);"],
+                    desc="Lưu `accessToken`; refresh token chỉ có trong cookie.")),
+                cookie_mode(req("Làm mới phiên (cookie)", "POST", "/api/v1/auth/refresh", tests=[
+                        "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                        "const body = pm.response.json();",
+                        "pm.test('Refresh token không nằm trong body', () => pm.expect(body.data.refreshToken).to.eql(null));",
+                        "pm.environment.set('accessToken', body.data.accessToken);"],
+                    desc="Không có body; token lấy từ cookie, cookie mới thay cookie cũ. Không có cookie → 401 `invalid_refresh_token`.")),
+                cookie_mode(req("Đăng xuất (cookie)", "POST", "/api/v1/auth/logout", tests=[
+                        "pm.test('HTTP 204', () => pm.response.to.have.status(204));"],
+                    desc="Không cần Bearer (Q-69). Thu hồi token trong cookie và xóa cookie.")),
             ],
         },
         {

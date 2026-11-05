@@ -385,6 +385,126 @@
       ]
     },
     {
+      "name": "Phiên web bằng cookie (BE-1)",
+      "description": "Cách web giữ phiên: header `X-Auth-Transport: cookie`, refresh token nằm trong cookie HttpOnly `spa_refresh_token` (Postman tự lưu trong cookie jar), body trả `refreshToken: null`. Không có header thì chạy như thư mục Auth (mobile). Gửi lại token vừa xoay vòng trong 30 giây chỉ trả 401, không đăng xuất mọi phiên (BR-AUTH-22).",
+      "item": [
+        {
+          "name": "Đăng nhập (cookie)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Auth-Transport",
+                "value": "cookie"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Lưu `accessToken`; refresh token chỉ có trong cookie.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Refresh token không nằm trong body', () => pm.expect(body.data.refreshToken).to.eql(null));",
+                  "pm.test('Có cookie spa_refresh_token', () => pm.expect(pm.cookies.has('spa_refresh_token')).to.eql(true));",
+                  "pm.environment.set('accessToken', body.data.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Làm mới phiên (cookie)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Auth-Transport",
+                "value": "cookie"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "refresh"]
+            },
+            "description": "Không có body; token lấy từ cookie, cookie mới thay cookie cũ. Không có cookie → 401 `invalid_refresh_token`.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Refresh token không nằm trong body', () => pm.expect(body.data.refreshToken).to.eql(null));",
+                  "pm.environment.set('accessToken', body.data.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đăng xuất (cookie)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Auth-Transport",
+                "value": "cookie"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "Không cần Bearer (Q-69). Thu hồi token trong cookie và xóa cookie.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Đăng ký (UC-SPA-01)",
       "description": "Gửi mail OTP thật qua Gmail. Điền `registerEmail` (hộp thư bạn đọc được) và `registerPassword` (8–128 ký tự, có chữ và số). `registerPhone` để trống thì tự sinh số ngẫu nhiên. Chạy bước 1, mở mail, dán mã 6 số vào biến `otp`, chạy bước 2. Gửi lại mã phải cách nhau 60 giây.",
       "item": [

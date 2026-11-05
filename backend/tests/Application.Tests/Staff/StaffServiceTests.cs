@@ -242,7 +242,7 @@ public sealed class StaffServiceTests
         staff.ResignationDate.Should().Be(Today);
         staff.User.Status.Should().Be(UserStatus.Inactive);
         await _staff.Received(1).CancelActiveShiftsFromAsync(staff.Id, Today, Arg.Any<CancellationToken>());
-        await _refreshTokens.Received(1).RevokeAllActiveAsync(staff.Id, StaffTestDoubles.Now, Arg.Any<CancellationToken>());
+        await _refreshTokens.Received(1).DeleteAllActiveAsync(staff.Id, StaffTestDoubles.Now, Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).ExecuteInTransactionAsync(Arg.Any<Func<CancellationToken, Task>>(), Arg.Any<CancellationToken>());
         result.Data!.AppointmentsToReassign.Should().Equal(reassign);
         result.Data.Staff.Id.Should().Be(staff.Id);
@@ -258,7 +258,7 @@ public sealed class StaffServiceTests
         staff.ResignationDate.Should().Be(Today.AddDays(1));
         staff.User.Status.Should().Be(UserStatus.Active);
         await _staff.Received(1).CancelActiveShiftsFromAsync(staff.Id, Today.AddDays(1), Arg.Any<CancellationToken>());
-        await _refreshTokens.DidNotReceive().RevokeAllActiveAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _refreshTokens.DidNotReceive().DeleteAllActiveAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

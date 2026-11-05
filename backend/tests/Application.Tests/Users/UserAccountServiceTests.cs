@@ -131,7 +131,7 @@ public sealed class UserAccountServiceTests
         await _sut.ChangeStatusAsync(_customer.Id, new ChangeUserStatusRequest(UserStatus.Locked), CancellationToken.None);
 
         _customer.Status.Should().Be(UserStatus.Locked);
-        await _refreshTokens.Received(1).RevokeAllActiveAsync(_customer.Id, Now, Arg.Any<CancellationToken>());
+        await _refreshTokens.Received(1).DeleteAllActiveAsync(_customer.Id, Now, Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -142,7 +142,7 @@ public sealed class UserAccountServiceTests
 
         await _sut.ChangeStatusAsync(_customer.Id, new ChangeUserStatusRequest(UserStatus.Locked), CancellationToken.None);
 
-        await _refreshTokens.DidNotReceive().RevokeAllActiveAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _refreshTokens.DidNotReceive().DeleteAllActiveAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -154,7 +154,7 @@ public sealed class UserAccountServiceTests
         await _sut.ChangeStatusAsync(_customer.Id, new ChangeUserStatusRequest(UserStatus.Active), CancellationToken.None);
 
         _customer.Status.Should().Be(UserStatus.Active);
-        await _refreshTokens.DidNotReceive().RevokeAllActiveAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _refreshTokens.DidNotReceive().DeleteAllActiveAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

@@ -1,5 +1,7 @@
 using FluentAssertions;
+using Microsoft.Extensions.Options;
 using NhuNguyetSpa.Application.Common.Interfaces;
+using NhuNguyetSpa.Application.Common.Options;
 using NhuNguyetSpa.Application.DTOs.Auth;
 using NhuNguyetSpa.Application.Interfaces.Authentication;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
@@ -39,6 +41,7 @@ public sealed class AuthServiceTests
         _unitOfWork.ExecuteInTransactionAsync(Arg.Any<Func<CancellationToken, Task>>(), Arg.Any<CancellationToken>())
             .Returns(call => call.Arg<Func<CancellationToken, Task>>()(CancellationToken.None));
         _service = new AuthService(_users, _refreshTokens, _hasher, _tokens, _unitOfWork, clock,
+            Options.Create(new JwtOptions { RefreshReuseGraceSeconds = 30 }),
             new LoginRequestValidator(), new RefreshTokenRequestValidator());
     }
 
@@ -124,8 +127,25 @@ public sealed class AuthServiceTests
         var exception = await Capture(() => _service.RefreshAsync(new RefreshTokenRequest("old"), CancellationToken.None));
 
         exception.Should().BeOfType<UnauthorizedException>().Which.Code.Should().Be("invalid_refresh_token");
-        await _refreshTokens.Received(1).RevokeAllActiveAsync(_owner.Id, Now, Arg.Any<CancellationToken>());
+        await _refreshTokens.Received(1).DeleteAllActiveAsync(_owner.Id, Now, Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        await _refreshTokens.DidNotReceiveWithAnyArgs().AddAsync(default!, default);
+    }
+
+    [Theory]
+    [InlineData(10)]
+    [InlineData(30)]
+    public async Task RefreshWithTokenRotatedWithinGraceFailsWithoutEndingOtherSessions(int secondsAgo)
+    {
+        // BR-AUTH-22: two tabs refreshing with the same cookie; the loser must not log the user out everywhere.
+        var stored = StoredToken("old");
+        stored.RevokedAtUtc = Now.AddSeconds(-secondsAgo);
+
+        var exception = await Capture(() => _service.RefreshAsync(new RefreshTokenRequest("old"), CancellationToken.None));
+
+        exception.Should().BeOfType<UnauthorizedException>().Which.Code.Should().Be("invalid_refresh_token");
+        await _refreshTokens.DidNotReceiveWithAnyArgs().DeleteAllActiveAsync(default, default, default);
+        await _unitOfWork.DidNotReceiveWithAnyArgs().SaveChangesAsync(default);
         await _refreshTokens.DidNotReceiveWithAnyArgs().AddAsync(default!, default);
     }
 
@@ -157,7 +177,8 @@ public sealed class AuthServiceTests
         var exception = await Capture(() => _service.RefreshAsync(new RefreshTokenRequest("old"), CancellationToken.None));
 
         exception.Should().BeOfType<ForbiddenException>().Which.Code.Should().Be("account_locked");
-        await _refreshTokens.Received(1).TryRevokeAsync(stored.Id, Now, Arg.Any<CancellationToken>());
+        await _refreshTokens.Received(1).DeleteAsync(stored.Id, Arg.Any<CancellationToken>());
+        await _refreshTokens.DidNotReceiveWithAnyArgs().TryRevokeAsync(default, default, default);
         _tokens.DidNotReceiveWithAnyArgs().CreateAccessToken(default!, default);
     }
 
@@ -183,8 +204,31 @@ public sealed class AuthServiceTests
         await _service.LogoutAsync(new RefreshTokenRequest("other"), _owner.Id, CancellationToken.None);
         await _service.LogoutAsync(new RefreshTokenRequest("unknown"), _owner.Id, CancellationToken.None);
 
-        await _refreshTokens.Received(1).TryRevokeAsync(own.Id, Now, Arg.Any<CancellationToken>());
-        await _refreshTokens.DidNotReceive().TryRevokeAsync(otherUsers.Id, Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _refreshTokens.Received(1).DeleteAsync(own.Id, Arg.Any<CancellationToken>());
+        await _refreshTokens.DidNotReceive().DeleteAsync(otherUsers.Id, Arg.Any<CancellationToken>());
+        await _refreshTokens.DidNotReceiveWithAnyArgs().TryRevokeAsync(default, default, default);
+    }
+
+    [Fact]
+    public async Task LogoutWithoutCallerDeletesTheTokenItWasGiven()
+    {
+        // Cookie mode (Q-69): holding the HttpOnly cookie is the proof of ownership, no bearer token needed.
+        var stored = StoredToken("cookie", userId: Guid.NewGuid());
+
+        await _service.LogoutAsync(new RefreshTokenRequest("cookie"), null, CancellationToken.None);
+
+        await _refreshTokens.Received(1).DeleteAsync(stored.Id, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task LogoutIgnoresRotatedToken()
+    {
+        var stored = StoredToken("rotated");
+        stored.RevokedAtUtc = Now.AddMinutes(-1);
+
+        await _service.LogoutAsync(new RefreshTokenRequest("rotated"), null, CancellationToken.None);
+
+        await _refreshTokens.DidNotReceiveWithAnyArgs().DeleteAsync(default, default);
     }
 
     [Fact]
@@ -233,7 +277,7 @@ public sealed class AuthServiceTests
         var exception = await Capture(() => _service.RefreshAsync(new RefreshTokenRequest("old"), CancellationToken.None));
 
         exception.Should().BeOfType<ForbiddenException>().Which.Code.Should().Be("account_inactive");
-        await _refreshTokens.Received(1).TryRevokeAsync(stored.Id, Now, Arg.Any<CancellationToken>());
+        await _refreshTokens.Received(1).DeleteAsync(stored.Id, Arg.Any<CancellationToken>());
         _tokens.DidNotReceiveWithAnyArgs().CreateAccessToken(default!, default);
     }
 

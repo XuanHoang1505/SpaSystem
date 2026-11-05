@@ -13,4 +13,10 @@ public sealed class JwtOptions
     public string Audience { get; set; } = "NhuNguyetSpa.Clients";
     public int AccessTokenExpirationMinutes { get; set; } = 15;
     public int RefreshTokenExpirationDays { get; set; } = 7;
+
+    /// <summary>
+    /// BR-AUTH-22 (Q-66): a rotated token sent again within this many seconds is a concurrent refresh (two tabs sharing
+    /// one cookie), answered with 401 but not treated as theft.
+    /// </summary>
+    public int RefreshReuseGraceSeconds { get; set; } = 30;
 }
