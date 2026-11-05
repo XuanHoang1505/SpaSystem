@@ -1,7 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import { navigation } from '@/config/navigation';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/shared/ThemeToggle/ThemeToggle';
 import { cn } from '@/lib/utils';
 import { Brand } from '../Brand/Brand';
 import { MobileNavigation } from '../MobileNavigation/MobileNavigation';
@@ -36,7 +35,6 @@ export function Header() {
           </NavLink>
         </nav>
         <div className="flex items-center gap-1">
-          <ThemeToggle />
           <Button asChild size="sm" className="hidden sm:inline-flex">
             <Link to="/login">Đăng nhập</Link>
           </Button>

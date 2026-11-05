@@ -1,9 +1,11 @@
 import { Outlet } from 'react-router-dom';
+import { useThemeScope } from '@/stores/themeScopeStore';
 import { Header } from '../Header/Header';
 import { Footer } from '../Footer/Footer';
 import { SkipLink } from '../SkipLink/SkipLink';
 
 export function PublicLayout() {
+  useThemeScope('light-only');
   return (
     <div className="flex min-h-svh flex-col">
       <SkipLink />
