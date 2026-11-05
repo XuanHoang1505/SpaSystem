@@ -109,7 +109,7 @@ Spa Như Nguyệt is a calm Vietnamese skincare and relaxation spa. The interfac
 - **Secondary sage `#dde6da`**: secondary buttons and neutral badges.
 - **Border `#e5dadb`**: 1px hairlines on cards, tables, inputs.
 - **Status badges** are soft pills: success, warning, info, danger, neutral, each a light background with a darker text of the same hue (see front matter). Never invent other badge colors.
-- Dark mode exists (background `#1a1517`, card `#231d1f`, primary `#d49aab`); design in light mode unless asked.
+- Dark mode exists (background `#1a1517`, card `#231d1f`, primary `#d49aab`) **only in the staff and owner workspaces**, switched by a theme toggle in their top bar. Public pages and the customer workspace are always light, with no theme toggle. Design in light mode unless asked.
 
 ## Typography
 
@@ -120,7 +120,7 @@ Spa Như Nguyệt is a calm Vietnamese skincare and relaxation spa. The interfac
 
 ## Layout
 
-- **Public pages**: sticky top header (brand mark "N" in a plum circle + "Như Nguyệt / SPA & CHĂM SÓC DA", nav links, theme toggle, "Đăng nhập" button), content max-width 1280px, simple footer.
+- **Public pages**: sticky top header (brand mark "N" in a plum circle + "Như Nguyệt / SPA & CHĂM SÓC DA", nav links, "Đăng ký" link and "Đăng nhập" button; **no theme toggle**, public pages are always light), content max-width 1280px, simple footer.
 - **Customer / staff / owner areas**: shadcn **Sidebar** on the left (collapsible to icons; brand at top, grouped nav with lucide icons, footer note), a 64px top bar with sidebar trigger and the workspace name, then the page. Every page starts with a **page header**: eyebrow, Lora title, short description, actions on the right.
 - Mobile first: works at 320px; sidebar becomes a drawer; tables scroll inside their card, never the page.
 

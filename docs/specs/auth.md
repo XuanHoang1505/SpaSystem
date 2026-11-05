@@ -374,6 +374,7 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 - **Đã đăng nhập mà mở `/login`, `/register`, `/forgot-password`** → chuyển về trang chủ theo vai trò.
 - **Trang chủ theo vai trò:** `customer` → `/account`, `staff` → `/staff`, `owner` → `/owner`.
 - **Header công khai:**
+  - Không có nút đổi theme (xem mục "Theme" bên dưới).
   - Chưa đăng nhập: giữ nút "Đăng nhập" như hiện tại, thêm link "Đăng ký".
   - Đã đăng nhập: thay bằng `DropdownMenu` (avatar chữ cái đầu từ `fullName`, `aria-label` "Tài khoản của bạn") gồm họ tên + email, "Không gian của tôi" (trang chủ theo vai trò) và "Đăng xuất".
   - `MobileNavigation` hiển thị tương tự.
@@ -382,6 +383,7 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 ### SCR-W07 — Đăng nhập
 
 - **Route:** `/login` · Vai trò: khách vãng lai · Layout: Public · Mẫu: trang nội dung (form trong Card).
+- **Mẫu Stitch:** `9696885610900739659/e1b0b5d870b642d09287e737becb0f2a` (chỉ tham chiếu bố cục; bỏ nút theme và footer Stitch tự thêm).
 - **Trường:**
   - "Email hoặc số điện thoại" (`login`, `autoComplete="username"`, bắt buộc, ≤ 255 ký tự sau khi bỏ khoảng trắng).
   - "Mật khẩu" (`password`, `autoComplete="current-password"`, bắt buộc, ≤ 128 ký tự). Có nút hiện/ẩn mật khẩu (`aria-label` "Hiện mật khẩu"/"Ẩn mật khẩu", `aria-pressed`).
@@ -404,6 +406,8 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 ### SCR-W08 — Đăng ký (2 bước)
 
 - **Route:** `/register` · Vai trò: khách vãng lai · Layout: Public · Mẫu: quy trình 2 bước trong một Card, có dòng "Bước 1/2 · Thông tin tài khoản" / "Bước 2/2 · Xác thực email".
+- **Mẫu Stitch:** `9696885610900739659/a644d9630ffb42cfa8e22a3b386ea540` (bước 1). Bước 2 dựng theo khung ô OTP + đếm ngược của mẫu SCR-W09.
+- **Chỉ báo bước:** dòng chữ "Bước x/y · …" kèm thanh tiến độ chia đoạn (mỗi bước một đoạn; đoạn đã qua và đang làm dùng `bg-primary`, đoạn còn lại `bg-muted`). Dùng chung cho SCR-W08 và SCR-W09, đặt ở `features/auth/components`.
 - **Bước 1, trường** (theo BR-AUTH-10, Zod kiểm tra trước, server vẫn là nguồn chuẩn):
   - "Họ và tên" (1–100 ký tự sau khi bỏ khoảng trắng, `autoComplete="name"`).
   - "Email" (đúng mẫu `^[^\s@]+@[^\s@]+\.[^\s@]+$`, ≤ 255).
@@ -439,6 +443,7 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 ### SCR-W09 — Quên mật khẩu (3 bước)
 
 - **Route:** `/forgot-password` (route mới) · Vai trò: khách vãng lai · Layout: Public · Mẫu: quy trình 3 bước trong một Card ("Bước x/3").
+- **Mẫu Stitch:** `9696885610900739659/e16ef7014ab24c13b6de08d1e3172a30` (bước 2). Bước 1 và 3 dựng theo cùng khung Card; trường mật khẩu như mẫu SCR-W08.
 - **Bước 1, "Email":**
   - Trường email, kiểm tra như bước 1 của đăng ký.
   - "Gửi mã" → `useRequestPasswordResetOtp`. Kết quả `202` luôn sang bước 2, kèm câu trung lập: "Nếu **{email}** thuộc một tài khoản đang hoạt động, chúng tôi đã gửi mã gồm 6 chữ số tới email này." Câu này không tiết lộ tài khoản có tồn tại hay không (BR-AUTH-05).
@@ -476,7 +481,11 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
   - Thiếu hoặc sai `VITE_API_BASE_URL` thì hiện `Alert` "Configuration Error" và tắt nút gửi, không gọi mạng.
 - **320px:** Card rộng toàn màn với gutter 16px. Nút chính rộng 100%. Link phụ xuống dòng, không cuộn ngang.
 - **Focus:** đổi bước thì focus vào tiêu đề bước mới (`tabIndex={-1}`). Lỗi server có `field` thì focus vào trường lỗi đầu tiên. `Alert` dùng `role="alert"`. Dòng đếm ngược không đọc mỗi giây: `aria-live="polite"` chỉ thông báo khi mã hết hạn.
-- **Dark mode:** chỉ dùng token, kiểm tra ở cả hai theme.
+- **Theme (đã chốt 05/11/2026):** trang công khai, kể cả ba màn này, **luôn dùng theme sáng**. Khu vực khách hàng (Customer, có sidebar) cũng **luôn sáng**. Nút đổi theme (`ThemeToggle`) và dark mode chỉ có ở khu vực **Staff và Owner**.
+  - Task FE: bỏ `ThemeToggle` khỏi `Header` công khai và `MobileNavigation`; `WorkspaceLayout` chỉ hiện `ThemeToggle` cho Staff/Owner.
+  - `PublicLayout` và `CustomerLayout` ép theme sáng (`forcedTheme="light"` của `next-themes`), để người dùng chọn tối ở khu vực Staff/Owner rồi chuyển sang trang công khai hoặc khu vực khách hàng thì trang vẫn sáng.
+  - Cập nhật `docs/frontend.md`, `apps/web/CLAUDE.md` và `docs/design/DESIGN.md` theo quy tắc này.
+  - Màn vẫn chỉ dùng token.
 
 ### Thay đổi backend cần làm trước (task BE-1, tách khỏi task FE)
 
@@ -502,27 +511,27 @@ Hai quyết định đã chốt (cookie HttpOnly, đếm ngược gửi lại OT
 
 ### Kiểm thử giao diện
 
-| Mã          | Tình huống                                                                                                                 | Kết quả mong đợi                                                                                                           |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| AUTH-UI-T01 | `AuthApi`: mỗi hàm gọi đúng method, path, body; `logout`/`resetPassword` nhận 204 trả `undefined`                          | Pass với `fetch` giả                                                                                                       |
-| AUTH-UI-T02 | Đăng nhập thành công với từng vai trò; có `redirect` hợp lệ / `redirect=//evil.com` / `redirect` sang khu vực vai trò khác | Lưu phiên, điều hướng tới `redirect` hoặc trang chủ theo vai trò                                                           |
-| AUTH-UI-T03 | Đăng nhập `invalid_credentials`, `account_locked`, `account_inactive`, `rate_limited`, mất mạng                            | `Alert` đúng message; `invalid_credentials` xóa ô mật khẩu và focus vào đó                                                 |
-| AUTH-UI-T04 | Form trống / quá dài, mật khẩu yếu, xác nhận không khớp, SĐT sai mẫu, OTP 5 chữ số                                         | Lỗi Zod dưới trường, không gọi API                                                                                         |
-| AUTH-UI-T05 | Server trả `validation_error` có `field: "PhoneNumber"`                                                                    | Lỗi hiện dưới ô Số điện thoại                                                                                              |
-| AUTH-UI-T06 | Đăng ký đủ 2 bước                                                                                                          | Bước 2 hiện email và đếm ngược từ `expiresAtUtc`; `201` → toast và về `/login` với ô đăng nhập điền sẵn email              |
-| AUTH-UI-T07 | Đăng ký: `email_exists`/`phone_exists` ở bước 1 và ở bước 2                                                                | Về bước 1, lỗi dưới đúng trường                                                                                            |
-| AUTH-UI-T08 | OTP `otp_invalid`, `otp_expired`, `otp_too_many_attempts`; gửi lại mã thành công / `rate_limited` / `email_send_failed`    | Hành vi đúng bảng; `otp_too_many_attempts` khóa nút xác nhận tới khi gửi lại thành công                                    |
-| AUTH-UI-T09 | Quên mật khẩu đủ 3 bước                                                                                                    | Câu trung lập ở bước 2; `204` → toast, xóa phiên nếu có, về `/login` điền sẵn email                                        |
-| AUTH-UI-T10 | Quên mật khẩu: `account_locked` ở bước 2, `invalid_reset_token` ở bước 3                                                   | `Alert` và ẩn nút / về bước 1 giữ email                                                                                    |
-| AUTH-UI-T11 | Request có xác thực nhận `401`: refresh thành công / refresh `invalid_refresh_token`; hai request `401` cùng lúc           | Gửi lại request với token mới / xóa phiên và về `/login?redirect=…`; chỉ một lần gọi `/auth/refresh`                       |
-| AUTH-UI-T12 | Đăng xuất (API 204 và API lỗi)                                                                                             | Cả hai: xóa phiên, `queryClient.clear()`, về `/`, toast                                                                    |
-| AUTH-UI-T13 | `RouteGuard`: không phiên vào `/owner` / customer vào `/owner` / đã đăng nhập vào `/login`                                 | `/login?redirect=/owner` / `/forbidden` / trang chủ theo vai trò                                                           |
-| AUTH-UI-T14 | Header và sidebar theo trạng thái phiên                                                                                    | Chưa đăng nhập: nút "Đăng nhập", link "Đăng ký"; đã đăng nhập: menu tài khoản, nút "Đăng xuất" có `aria-label`             |
-| AUTH-UI-T15 | Thiếu `VITE_API_BASE_URL`                                                                                                  | `Alert` Configuration Error, nút gửi bị tắt, không có request mạng                                                         |
-| AUTH-UI-T16 | Thủ công: 320px / tablet / desktop, dark mode, chỉ dùng bàn phím, mail OTP thật, tải lại trang khi đã đăng nhập            | Không cuộn ngang; focus đúng khi đổi bước; tải lại trang vẫn giữ phiên; đủ luồng với backend thật                          |
-| AUTH-UI-T17 | Khôi phục phiên khi mở app: `/auth/refresh` 200 / 401 / mất mạng; vào `/owner` trong lúc đang khôi phục                    | `authenticated` / `anonymous` không toast / `anonymous`; `RouteGuard` hiện `PageLoader`, không chuyển hướng sớm            |
-| AUTH-UI-T18 | Nút "Gửi lại mã" với `resendAvailableAtUtc` = now + 60 giây (đồng hồ giả)                                                  | `disabled`, hiện "Gửi lại mã sau 60 giây" rồi giảm dần; tới 0 thì bật lại; gửi lại thành công thì đếm lại từ đầu           |
-| AUTH-UI-T19 | `ApiClient` của web                                                                                                        | Mọi request có `credentials: 'include'` và header `X-Auth-Transport: cookie`; `refresh`/`logout` không gửi body chứa token |
+| Mã          | Tình huống                                                                                                                                                    | Kết quả mong đợi                                                                                                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AUTH-UI-T01 | `AuthApi`: mỗi hàm gọi đúng method, path, body; `logout`/`resetPassword` nhận 204 trả `undefined`                                                             | Pass với `fetch` giả                                                                                                                                                                  |
+| AUTH-UI-T02 | Đăng nhập thành công với từng vai trò; có `redirect` hợp lệ / `redirect=//evil.com` / `redirect` sang khu vực vai trò khác                                    | Lưu phiên, điều hướng tới `redirect` hoặc trang chủ theo vai trò                                                                                                                      |
+| AUTH-UI-T03 | Đăng nhập `invalid_credentials`, `account_locked`, `account_inactive`, `rate_limited`, mất mạng                                                               | `Alert` đúng message; `invalid_credentials` xóa ô mật khẩu và focus vào đó                                                                                                            |
+| AUTH-UI-T04 | Form trống / quá dài, mật khẩu yếu, xác nhận không khớp, SĐT sai mẫu, OTP 5 chữ số                                                                            | Lỗi Zod dưới trường, không gọi API                                                                                                                                                    |
+| AUTH-UI-T05 | Server trả `validation_error` có `field: "PhoneNumber"`                                                                                                       | Lỗi hiện dưới ô Số điện thoại                                                                                                                                                         |
+| AUTH-UI-T06 | Đăng ký đủ 2 bước                                                                                                                                             | Bước 2 hiện email và đếm ngược từ `expiresAtUtc`; `201` → toast và về `/login` với ô đăng nhập điền sẵn email                                                                         |
+| AUTH-UI-T07 | Đăng ký: `email_exists`/`phone_exists` ở bước 1 và ở bước 2                                                                                                   | Về bước 1, lỗi dưới đúng trường                                                                                                                                                       |
+| AUTH-UI-T08 | OTP `otp_invalid`, `otp_expired`, `otp_too_many_attempts`; gửi lại mã thành công / `rate_limited` / `email_send_failed`                                       | Hành vi đúng bảng; `otp_too_many_attempts` khóa nút xác nhận tới khi gửi lại thành công                                                                                               |
+| AUTH-UI-T09 | Quên mật khẩu đủ 3 bước                                                                                                                                       | Câu trung lập ở bước 2; `204` → toast, xóa phiên nếu có, về `/login` điền sẵn email                                                                                                   |
+| AUTH-UI-T10 | Quên mật khẩu: `account_locked` ở bước 2, `invalid_reset_token` ở bước 3                                                                                      | `Alert` và ẩn nút / về bước 1 giữ email                                                                                                                                               |
+| AUTH-UI-T11 | Request có xác thực nhận `401`: refresh thành công / refresh `invalid_refresh_token`; hai request `401` cùng lúc                                              | Gửi lại request với token mới / xóa phiên và về `/login?redirect=…`; chỉ một lần gọi `/auth/refresh`                                                                                  |
+| AUTH-UI-T12 | Đăng xuất (API 204 và API lỗi)                                                                                                                                | Cả hai: xóa phiên, `queryClient.clear()`, về `/`, toast                                                                                                                               |
+| AUTH-UI-T13 | `RouteGuard`: không phiên vào `/owner` / customer vào `/owner` / đã đăng nhập vào `/login`                                                                    | `/login?redirect=/owner` / `/forbidden` / trang chủ theo vai trò                                                                                                                      |
+| AUTH-UI-T14 | Header và sidebar theo trạng thái phiên                                                                                                                       | Chưa đăng nhập: nút "Đăng nhập", link "Đăng ký"; đã đăng nhập: menu tài khoản, nút "Đăng xuất" có `aria-label`                                                                        |
+| AUTH-UI-T15 | Thiếu `VITE_API_BASE_URL`                                                                                                                                     | `Alert` Configuration Error, nút gửi bị tắt, không có request mạng                                                                                                                    |
+| AUTH-UI-T16 | Thủ công: 320px / tablet / desktop, chọn theme tối ở `/owner` rồi mở `/login` và `/account`, chỉ dùng bàn phím, mail OTP thật, tải lại trang khi đã đăng nhập | Không cuộn ngang; `/login`, `/account` vẫn sáng, không có nút theme; `/owner`, `/staff` có nút theme; focus đúng khi đổi bước; tải lại trang vẫn giữ phiên; đủ luồng với backend thật |
+| AUTH-UI-T17 | Khôi phục phiên khi mở app: `/auth/refresh` 200 / 401 / mất mạng; vào `/owner` trong lúc đang khôi phục                                                       | `authenticated` / `anonymous` không toast / `anonymous`; `RouteGuard` hiện `PageLoader`, không chuyển hướng sớm                                                                       |
+| AUTH-UI-T18 | Nút "Gửi lại mã" với `resendAvailableAtUtc` = now + 60 giây (đồng hồ giả)                                                                                     | `disabled`, hiện "Gửi lại mã sau 60 giây" rồi giảm dần; tới 0 thì bật lại; gửi lại thành công thì đếm lại từ đầu                                                                      |
+| AUTH-UI-T19 | `ApiClient` của web                                                                                                                                           | Mọi request có `credentials: 'include'` và header `X-Auth-Transport: cookie`; `refresh`/`logout` không gửi body chứa token                                                            |
 
 ## Câu hỏi còn mở
 
