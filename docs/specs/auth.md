@@ -339,9 +339,194 @@ Thiếu `JWT_KEY` không chặn API khởi động (health check, Swagger vẫn 
 | AUTH-T41 | Unit test `ProfileService`, `UserAccountService` (NSubstitute, đồng hồ giả): chuẩn hóa, so sánh SĐT, thu hồi phiên, quy tắc khóa | Pass                                                                                                                                        |
 | AUTH-T42 | Hồi quy                                                                                                                          | Toàn bộ test hiện có (kể cả `CatalogImage*`, `Staff*`, `PersistenceModelTests`) vẫn pass sau khi tách bộ đọc ảnh dùng chung                 |
 
+## Giao diện (web)
+
+Phạm vi: UC-SPA-01, 02, 03 trên web (`apps/web`). Mobile (SCR-M06..M08) làm sau. UC-SPA-04/05 không thuộc lần này.
+
+Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts`, `index.ts`). Trang ở `src/pages/public/` chỉ ghép feature. Cả ba màn dùng `PublicLayout`, mẫu **trang nội dung**: một `Card` ở giữa (`max-w-md`), tiêu đề `font-heading`. Các bước của đăng ký và quên mật khẩu đổi **trong cùng một route** bằng state cục bộ (`useState`), không mở route con cho từng bước.
+
+### Hợp đồng dùng chung
+
+- `packages/shared-types`: `UserRole` (`'customer' | 'staff' | 'owner'`), `AuthUser`, `AuthResult`, `LoginRequest`, `RefreshTokenRequest`, `RegisterRequest`, `VerifyOtpRequest`, `OtpSent` (`{ email, expiresAtUtc, resendAvailableAtUtc }`, sau task backend BE-1), `RegisteredUser` (`{ id, email }`), `ForgotPasswordRequest`, `PasswordResetToken` (`{ resetToken, expiresAtUtc }`), `ResetPasswordRequest`. Trong `AuthResult`, `refreshToken` và `refreshTokenExpiresAtUtc` có kiểu `string | null` (web dùng cookie nên nhận `null`). Tên trường khớp DTO (camelCase).
+- `packages/api-client/src/auth.ts`: `AuthApi` gồm `login`, `refresh`, `logout`, `requestRegistrationOtp`, `verifyRegistrationOtp`, `requestPasswordResetOtp`, `verifyPasswordResetOtp`, `resetPassword` (hai hàm `logout`, `resetPassword` trả `void` vì backend trả 204). `refresh` và `logout` nhận `refreshToken` tùy chọn: web không gửi, vì token nằm trong cookie. `ApiClient` thêm tùy chọn `credentials` (mặc định để trống; web đặt `'include'` để trình duyệt gửi và nhận cookie). Hằng `authErrorCodes` liệt kê các mã lỗi ở bảng dưới. Không có query key: cả ba màn chỉ có mutation.
+- Lỗi validation từ server: `errors[]` có `field` dạng PascalCase (`FullName`, `PhoneNumber`, `ConfirmPassword`…) và `message` tiếng Việt. Còn `code` là mã mặc định của FluentValidation, không ổn định, nên FE **chỉ dùng `field` + `message`**: đổi `field` sang camelCase rồi `setError` vào đúng trường. Lỗi không có `field` khớp thì hiện ở `Alert` đầu form.
+- Lỗi nghiệp vụ: chọn hành vi theo `errors[0].code`. Nội dung hiển thị là `message` của server (đã là tiếng Việt). Riêng mất kết nối (`status = 0`) và lỗi 500 dùng câu cố định của FE.
+
+### Phiên đăng nhập (UC-SPA-02 A2, A3, dùng chung)
+
+- **Lưu phiên (đã chốt: cookie HttpOnly, cần task backend BE-1):**
+  - Refresh token nằm trong cookie HttpOnly do backend đặt; JavaScript không đọc được.
+  - Access token và `user` nằm trong bộ nhớ: `stores/authStore.ts` (Zustand, **không persist**) giữ `{ status, user, accessToken, accessTokenExpiresAtUtc }`, với `status` ∈ `restoring` / `authenticated` / `anonymous`.
+  - Thay kiểu `AuthSession { userId, roles[] }` hiện tại bằng `{ user: AuthUser, … }`; `canAccessRole` so với `user.role`.
+  - Không ghi token vào `localStorage`/`sessionStorage`.
+- **Khôi phục phiên khi mở hoặc tải lại trang:** `AppProviders` gọi `POST /auth/refresh` một lần, không có body, kèm cookie.
+  - Thành công thì `status = authenticated`.
+  - Lỗi `401`/`403` thì `status = anonymous`, không toast.
+  - Mất mạng hoặc `429` cũng `anonymous` (người dùng đăng nhập lại được).
+  - Trong lúc `restoring`, `RouteGuard` và header hiện `PageLoader` / skeleton nút tài khoản, không chuyển hướng sớm.
+  - Lưu ý: mỗi lần tải lại trang tốn một lượt trong giới hạn `auth` 10 yêu cầu/phút/IP.
+- **Gọi API có xác thực:** `src/lib/api/` tạo một `ApiClient` dùng chung với `credentials: 'include'`.
+  - Tùy chọn `headers` gắn `Authorization: Bearer <accessToken>` khi có phiên. Mọi request của web gửi thêm header `X-Auth-Transport: cookie`.
+  - Tùy chọn `fetch` bọc thêm: gặp `401` ở endpoint **không phải** `/auth/*` thì gọi `/auth/refresh` một lần (nhiều request đồng thời chỉ gọi một lần refresh), cập nhật access token rồi gửi lại request.
+  - Refresh thất bại (`invalid_refresh_token`, `account_locked`, `account_inactive`, `429`) thì xóa phiên, `queryClient.clear()`, toast "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại." và chuyển `/login?redirect=<đường dẫn hiện tại>`.
+- **Đăng xuất:** gọi `POST /auth/logout` (Bearer + cookie, không có body); backend thu hồi token và xóa cookie. Thành công hay lỗi đều xóa phiên, `queryClient.clear()`, toast "Đã đăng xuất.", về `/`.
+- **Bảo vệ route:** bật `RouteGuard` cho ba layout Customer/Staff/Owner. Đang `restoring` thì hiện `PageLoader`. `anonymous` → `/login?redirect=<path>`. Sai vai trò → `/forbidden`. `RouteGuard` chỉ phục vụ trải nghiệm; quyền thật do backend kiểm tra.
+- **Đã đăng nhập mà mở `/login`, `/register`, `/forgot-password`** → chuyển về trang chủ theo vai trò.
+- **Trang chủ theo vai trò:** `customer` → `/account`, `staff` → `/staff`, `owner` → `/owner`.
+- **Header công khai:**
+  - Chưa đăng nhập: giữ nút "Đăng nhập" như hiện tại, thêm link "Đăng ký".
+  - Đã đăng nhập: thay bằng `DropdownMenu` (avatar chữ cái đầu từ `fullName`, `aria-label` "Tài khoản của bạn") gồm họ tên + email, "Không gian của tôi" (trang chủ theo vai trò) và "Đăng xuất".
+  - `MobileNavigation` hiển thị tương tự.
+- **Sidebar workspace:** `SidebarFooter` thay dòng "Bản nền tảng · Chưa có xác thực" bằng họ tên, nhãn vai trò ("Khách hàng"/"Nhân viên"/"Chủ spa") và nút "Đăng xuất". Khi sidebar thu gọn chỉ còn icon `LogOutIcon` kèm `aria-label`.
+
+### SCR-W07 — Đăng nhập
+
+- **Route:** `/login` · Vai trò: khách vãng lai · Layout: Public · Mẫu: trang nội dung (form trong Card).
+- **Trường:**
+  - "Email hoặc số điện thoại" (`login`, `autoComplete="username"`, bắt buộc, ≤ 255 ký tự sau khi bỏ khoảng trắng).
+  - "Mật khẩu" (`password`, `autoComplete="current-password"`, bắt buộc, ≤ 128 ký tự). Có nút hiện/ẩn mật khẩu (`aria-label` "Hiện mật khẩu"/"Ẩn mật khẩu", `aria-pressed`).
+- **Liên kết:** "Quên mật khẩu?" → `/forgot-password`. "Chưa có tài khoản? Đăng ký" → `/register`.
+- **Điền sẵn:** từ `location.state.login`, do màn đăng ký hoặc đặt lại mật khẩu truyền sang. Không đưa email lên URL.
+- **Hành động "Đăng nhập":** `useLogin` → `AuthApi.login`. Thành công thì lưu phiên, `queryClient.clear()` và điều hướng tới đâu tùy `redirect`:
+  - Có `redirect` hợp lệ thì đi tới đó. Hợp lệ là bắt đầu bằng `/`, không bắt đầu bằng `//`, và thuộc khu vực của vai trò hoặc là route công khai.
+  - Không có hoặc không hợp lệ thì về trang chủ theo vai trò (UC-SPA-02 A1 ở mức route).
+- **Mã lỗi:**
+
+| Mã / tình huống                      | Hành vi UI                                                                            |
+| ------------------------------------ | ------------------------------------------------------------------------------------- |
+| `validation_error`                   | Lỗi dưới trường (`Login`, `Password`)                                                 |
+| `invalid_credentials`                | `Alert` destructive đầu form với message server; xóa ô mật khẩu, focus vào ô mật khẩu |
+| `account_locked`, `account_inactive` | `Alert` destructive với message server; giữ dữ liệu đã nhập                           |
+| `rate_limited` (429)                 | `Alert` với message server; nút vẫn bật (giới hạn IP không trả thời gian chờ)         |
+| `status = 0`                         | `Alert` "Không kết nối được máy chủ. Vui lòng kiểm tra mạng và thử lại."              |
+| Khác / 500                           | toast "Đã có lỗi xảy ra, vui lòng thử lại."                                           |
+
+### SCR-W08 — Đăng ký (2 bước)
+
+- **Route:** `/register` · Vai trò: khách vãng lai · Layout: Public · Mẫu: quy trình 2 bước trong một Card, có dòng "Bước 1/2 · Thông tin tài khoản" / "Bước 2/2 · Xác thực email".
+- **Bước 1, trường** (theo BR-AUTH-10, Zod kiểm tra trước, server vẫn là nguồn chuẩn):
+  - "Họ và tên" (1–100 ký tự sau khi bỏ khoảng trắng, `autoComplete="name"`).
+  - "Email" (đúng mẫu `^[^\s@]+@[^\s@]+\.[^\s@]+$`, ≤ 255).
+  - "Số điện thoại" (`^0\d{9}$`, `inputMode="tel"`, gợi ý "10 chữ số, bắt đầu bằng 0").
+  - "Mật khẩu" (8–128 ký tự, có chữ cái và chữ số, gợi ý "Từ 8 ký tự, gồm chữ cái và chữ số", `autoComplete="new-password"`).
+  - "Xác nhận mật khẩu" (phải khớp).
+  - Có nút hiện/ẩn cho hai ô mật khẩu.
+- **Bước 1, hành động "Gửi mã xác thực":** `useRequestRegistrationOtp`. Kết quả `202` thì sang bước 2 và giữ dữ liệu bước 1 trong state của component (để gửi lại mã), kèm `expiresAtUtc`.
+- **Bước 2, nội dung:** "Chúng tôi đã gửi mã gồm 6 chữ số tới **{email}**". Thời hạn mã: "Mã hết hạn sau mm:ss", tính từ `expiresAtUtc` của server, cập nhật mỗi giây. Hết giờ thì hiện "Mã đã hết hạn. Vui lòng gửi lại mã."
+- **Bước 2, trường:** "Mã OTP" (`Input`, `inputMode="numeric"`, `autoComplete="one-time-code"`, `maxLength=6`, chỉ nhận số, Zod `^\d{6}$`).
+- **Bước 2, hành động:**
+  - "Xác nhận" → `useVerifyRegistrationOtp`. Kết quả `201` thì toast "Đăng ký thành công. Vui lòng đăng nhập." và chuyển `/login` với `state.login = email`. Không tự đăng nhập, theo DA bước 10.
+  - "Gửi lại mã" (nút `link`) → gọi lại request-otp với dữ liệu bước 1. Thành công thì toast "Đã gửi lại mã xác thực.", cập nhật `expiresAtUtc` + `resendAvailableAtUtc` và xóa ô OTP.
+    - **Đếm ngược gửi lại (đã chốt):** nút bị `disabled` và hiện "Gửi lại mã sau {s} giây" cho tới `resendAvailableAtUtc` của server. FE không tự viết cứng 60 giây.
+    - Hết giờ chờ thì nút bật lại, nhãn "Gửi lại mã".
+    - Nếu vẫn nhận `429` (lệch đồng hồ, hoặc giới hạn IP) thì hiện `Alert` với message server; nút vẫn bật.
+  - "Sửa thông tin" → quay lại bước 1, giữ dữ liệu.
+    - Bấm lại "Gửi mã xác thực" trước `resendAvailableAtUtc` thì nút bước 1 cũng `disabled` kèm cùng dòng đếm ngược, vì backend sẽ trả `429`.
+- **Mã lỗi:**
+
+| Mã / tình huống                                     | Bước | Hành vi UI                                                                                                             |
+| --------------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------- |
+| `validation_error`                                  | 1, 2 | Lỗi dưới trường theo `field`                                                                                           |
+| `email_exists`                                      | 1, 2 | Về bước 1 (nếu đang ở bước 2), lỗi dưới ô Email và link "Đăng nhập" / "Quên mật khẩu?"                                 |
+| `phone_exists`                                      | 1, 2 | Về bước 1 (nếu đang ở bước 2), lỗi dưới ô Số điện thoại                                                                |
+| `rate_limited` (gửi lại < 60 giây hoặc giới hạn IP) | 1, 2 | `Alert` với message server (đã có số giây phải chờ); thường không gặp vì nút đã `disabled` theo `resendAvailableAtUtc` |
+| `email_send_failed` (503)                           | 1, 2 | `Alert` "…không gửi được email…" (message server) kèm nút "Thử lại"                                                    |
+| `otp_invalid`                                       | 2    | Lỗi dưới ô OTP, xóa ô và focus lại                                                                                     |
+| `otp_expired`                                       | 2    | Lỗi dưới ô OTP, làm nổi nút "Gửi lại mã"                                                                               |
+| `otp_too_many_attempts`                             | 2    | Lỗi dưới ô OTP, khóa nút "Xác nhận" tới khi gửi lại mã thành công                                                      |
+| `status = 0`, 500                                   | 1, 2 | Như SCR-W07                                                                                                            |
+
+### SCR-W09 — Quên mật khẩu (3 bước)
+
+- **Route:** `/forgot-password` (route mới) · Vai trò: khách vãng lai · Layout: Public · Mẫu: quy trình 3 bước trong một Card ("Bước x/3").
+- **Bước 1, "Email":**
+  - Trường email, kiểm tra như bước 1 của đăng ký.
+  - "Gửi mã" → `useRequestPasswordResetOtp`. Kết quả `202` luôn sang bước 2, kèm câu trung lập: "Nếu **{email}** thuộc một tài khoản đang hoạt động, chúng tôi đã gửi mã gồm 6 chữ số tới email này." Câu này không tiết lộ tài khoản có tồn tại hay không (BR-AUTH-05).
+- **Bước 2, "Mã OTP":**
+  - Ô OTP và thời hạn mã như SCR-W08 bước 2.
+  - "Xác nhận mã" → `useVerifyPasswordResetOtp`. Kết quả `200` thì giữ `resetToken` + `expiresAtUtc` trong state của component (chỉ trong bộ nhớ) rồi sang bước 3.
+  - "Gửi lại mã" gọi lại bước 1. Mọi lần đều `202`, toast "Nếu email có tài khoản, mã mới đã được gửi." Nút có đếm ngược và `disabled` theo `resendAvailableAtUtc` như SCR-W08. Backend trả cùng giá trị cho mọi email (BR-AUTH-05).
+  - "Đổi email" quay về bước 1.
+- **Bước 3, "Mật khẩu mới":**
+  - Hai trường "Mật khẩu mới" và "Xác nhận mật khẩu" (BR-AUTH-10, có nút hiện/ẩn).
+  - Câu nhắc: "Hoàn tất trước {HH:mm}", lấy từ `expiresAtUtc` của `resetToken`, giờ địa phương.
+  - "Đặt lại mật khẩu" → `useResetPassword`. Kết quả `204`:
+    - Toast "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới."
+    - Nếu tab đang có phiên thì xóa phiên, vì backend đã thu hồi mọi refresh token (BR-AUTH-11).
+    - Chuyển `/login` với `state.login = email`.
+- **Mã lỗi:**
+
+| Mã / tình huống                      | Bước    | Hành vi UI                                                                                       |
+| ------------------------------------ | ------- | ------------------------------------------------------------------------------------------------ |
+| `validation_error`                   | 1, 2, 3 | Lỗi dưới trường theo `field` (`Email`, `Otp`, `NewPassword`, `ConfirmPassword`)                  |
+| `rate_limited` (giới hạn IP)         | 1, 2, 3 | `Alert` với message server                                                                       |
+| `email_send_failed` (503)            | 1       | `Alert` với message server kèm "Thử lại"                                                         |
+| `otp_invalid`                        | 2       | Lỗi dưới ô OTP (mọi lỗi OTP ở bước này đều là mã này, E4), xóa ô và focus lại                    |
+| `account_locked`, `account_inactive` | 2       | `Alert` với message server, ẩn nút "Xác nhận mã"; còn link "Về đăng nhập"                        |
+| `invalid_reset_token`                | 3       | Xóa `resetToken`, về bước 1 (giữ email), `Alert` với message server ("…vui lòng làm lại từ đầu") |
+| `status = 0`, 500                    | 1, 2, 3 | Như SCR-W07                                                                                      |
+
+### Trạng thái, responsive, a11y (cả ba màn)
+
+- **Trạng thái:** đây là màn form, không có dữ liệu để tải. Bốn trạng thái là:
+  - Sẵn sàng.
+  - Đang gửi: `<Button loading>`, các trường `disabled`.
+  - Lỗi: lỗi dưới trường hoặc `Alert`.
+  - Thành công: sang bước kế tiếp hoặc điều hướng.
+  - Thiếu hoặc sai `VITE_API_BASE_URL` thì hiện `Alert` "Configuration Error" và tắt nút gửi, không gọi mạng.
+- **320px:** Card rộng toàn màn với gutter 16px. Nút chính rộng 100%. Link phụ xuống dòng, không cuộn ngang.
+- **Focus:** đổi bước thì focus vào tiêu đề bước mới (`tabIndex={-1}`). Lỗi server có `field` thì focus vào trường lỗi đầu tiên. `Alert` dùng `role="alert"`. Dòng đếm ngược không đọc mỗi giây: `aria-live="polite"` chỉ thông báo khi mã hết hạn.
+- **Dark mode:** chỉ dùng token, kiểm tra ở cả hai theme.
+
+### Thay đổi backend cần làm trước (task BE-1, tách khỏi task FE)
+
+Hai quyết định đã chốt (cookie HttpOnly, đếm ngược gửi lại OTP) cần backend đổi hợp đồng. Task FE chỉ bắt đầu sau khi BE-1 xong. Đề xuất cho BE-1, sẽ chốt khi đặc tả BE-1:
+
+1. **Refresh token qua cookie HttpOnly cho web** (theo `docs/conventions/frontend.md`):
+   - **Bật chế độ cookie:** request có header `X-Auth-Transport: cookie` thì `/auth/login`, `/auth/refresh` ghi refresh token vào cookie và trả `refreshToken: null`, `refreshTokenExpiresAtUtc: null` trong body. Không có header thì giữ nguyên hành vi hiện tại, cho mobile.
+   - **Thuộc tính cookie:** tên `spa_refresh_token`, `HttpOnly`, `SameSite=Strict`, `Path=/api/v1/auth`, `Expires` = hạn refresh token. `Secure` bật theo cấu hình: tắt được cho HTTP trên LAN khi dev, bắt buộc bật ở Production.
+   - `/auth/refresh` và `/auth/logout` đọc token từ cookie khi body không có. Logout xóa cookie.
+   - **CORS:** thêm `AllowCredentials()`. Origin vẫn liệt kê cụ thể, không dùng wildcard.
+   - **CSRF:** `SameSite=Strict` cùng header tùy chỉnh (buộc trình duyệt gửi preflight) là đủ cho đồ án. Web và API cùng host, khác cổng, nên vẫn tính là cùng site.
+   - Validator của `RefreshTokenRequest` cho phép thiếu `refreshToken` khi dùng cookie.
+   - Spec auth cần thêm BR, cập nhật bảng API, Postman và integration test.
+2. **`resendAvailableAtUtc` trong `OtpSentDto`:**
+   - Thời điểm sớm nhất được gửi lại, tính bằng lần gửi thành công cộng `Account:OtpResendCooldownSeconds`.
+   - Với quên mật khẩu, luôn trả `now + cooldown` cho mọi email để không lộ tài khoản (BR-AUTH-05).
+
+### Ghi chú backend khác (không chặn task FE)
+
+1. **Thông điệp validation của `LoginRequestValidator`, `RefreshTokenRequestValidator`.** Hai validator này chưa có `WithMessage` tiếng Việt, nên server có thể trả câu mặc định của FluentValidation. Zod ở FE chặn trước nên ít gặp.
+2. **Lệch tài liệu nhỏ.** Bảng API ghi `forgot-password/request-otp` trả `{ expiresAtUtc }`, nhưng DTO thực tế trả `{ email, expiresAtUtc }`. FE dùng kiểu `OtpSent` theo DTO.
+3. **Độ dài tối thiểu của mật khẩu** đọc từ `Account:PasswordMinLength`. FE viết cứng 8 theo mặc định; đổi cấu hình thì phải sửa schema FE.
+
+### Kiểm thử giao diện
+
+| Mã          | Tình huống                                                                                                                 | Kết quả mong đợi                                                                                                           |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| AUTH-UI-T01 | `AuthApi`: mỗi hàm gọi đúng method, path, body; `logout`/`resetPassword` nhận 204 trả `undefined`                          | Pass với `fetch` giả                                                                                                       |
+| AUTH-UI-T02 | Đăng nhập thành công với từng vai trò; có `redirect` hợp lệ / `redirect=//evil.com` / `redirect` sang khu vực vai trò khác | Lưu phiên, điều hướng tới `redirect` hoặc trang chủ theo vai trò                                                           |
+| AUTH-UI-T03 | Đăng nhập `invalid_credentials`, `account_locked`, `account_inactive`, `rate_limited`, mất mạng                            | `Alert` đúng message; `invalid_credentials` xóa ô mật khẩu và focus vào đó                                                 |
+| AUTH-UI-T04 | Form trống / quá dài, mật khẩu yếu, xác nhận không khớp, SĐT sai mẫu, OTP 5 chữ số                                         | Lỗi Zod dưới trường, không gọi API                                                                                         |
+| AUTH-UI-T05 | Server trả `validation_error` có `field: "PhoneNumber"`                                                                    | Lỗi hiện dưới ô Số điện thoại                                                                                              |
+| AUTH-UI-T06 | Đăng ký đủ 2 bước                                                                                                          | Bước 2 hiện email và đếm ngược từ `expiresAtUtc`; `201` → toast và về `/login` với ô đăng nhập điền sẵn email              |
+| AUTH-UI-T07 | Đăng ký: `email_exists`/`phone_exists` ở bước 1 và ở bước 2                                                                | Về bước 1, lỗi dưới đúng trường                                                                                            |
+| AUTH-UI-T08 | OTP `otp_invalid`, `otp_expired`, `otp_too_many_attempts`; gửi lại mã thành công / `rate_limited` / `email_send_failed`    | Hành vi đúng bảng; `otp_too_many_attempts` khóa nút xác nhận tới khi gửi lại thành công                                    |
+| AUTH-UI-T09 | Quên mật khẩu đủ 3 bước                                                                                                    | Câu trung lập ở bước 2; `204` → toast, xóa phiên nếu có, về `/login` điền sẵn email                                        |
+| AUTH-UI-T10 | Quên mật khẩu: `account_locked` ở bước 2, `invalid_reset_token` ở bước 3                                                   | `Alert` và ẩn nút / về bước 1 giữ email                                                                                    |
+| AUTH-UI-T11 | Request có xác thực nhận `401`: refresh thành công / refresh `invalid_refresh_token`; hai request `401` cùng lúc           | Gửi lại request với token mới / xóa phiên và về `/login?redirect=…`; chỉ một lần gọi `/auth/refresh`                       |
+| AUTH-UI-T12 | Đăng xuất (API 204 và API lỗi)                                                                                             | Cả hai: xóa phiên, `queryClient.clear()`, về `/`, toast                                                                    |
+| AUTH-UI-T13 | `RouteGuard`: không phiên vào `/owner` / customer vào `/owner` / đã đăng nhập vào `/login`                                 | `/login?redirect=/owner` / `/forbidden` / trang chủ theo vai trò                                                           |
+| AUTH-UI-T14 | Header và sidebar theo trạng thái phiên                                                                                    | Chưa đăng nhập: nút "Đăng nhập", link "Đăng ký"; đã đăng nhập: menu tài khoản, nút "Đăng xuất" có `aria-label`             |
+| AUTH-UI-T15 | Thiếu `VITE_API_BASE_URL`                                                                                                  | `Alert` Configuration Error, nút gửi bị tắt, không có request mạng                                                         |
+| AUTH-UI-T16 | Thủ công: 320px / tablet / desktop, dark mode, chỉ dùng bàn phím, mail OTP thật, tải lại trang khi đã đăng nhập            | Không cuộn ngang; focus đúng khi đổi bước; tải lại trang vẫn giữ phiên; đủ luồng với backend thật                          |
+| AUTH-UI-T17 | Khôi phục phiên khi mở app: `/auth/refresh` 200 / 401 / mất mạng; vào `/owner` trong lúc đang khôi phục                    | `authenticated` / `anonymous` không toast / `anonymous`; `RouteGuard` hiện `PageLoader`, không chuyển hướng sớm            |
+| AUTH-UI-T18 | Nút "Gửi lại mã" với `resendAvailableAtUtc` = now + 60 giây (đồng hồ giả)                                                  | `disabled`, hiện "Gửi lại mã sau 60 giây" rồi giảm dần; tới 0 thì bật lại; gửi lại thành công thì đếm lại từ đầu           |
+| AUTH-UI-T19 | `ApiClient` của web                                                                                                        | Mọi request có `credentials: 'include'` và header `X-Auth-Transport: cookie`; `refresh`/`logout` không gửi body chứa token |
+
 ## Câu hỏi còn mở
 
-- Web lưu refresh token ở cookie HttpOnly hay trong bộ nhớ — chốt khi làm giao diện web (frontend.md đang ghi cookie HttpOnly).
+- ~~Web lưu refresh token ở cookie HttpOnly hay trong bộ nhớ~~ — **đã chốt 05/11/2026: cookie HttpOnly** (task backend BE-1, xem mục "Giao diện (web)").
 - Có khóa tài khoản tạm sau N lần sai mật khẩu không — cần thêm cột vào `users` (sửa `data_db.py`) nếu có.
 - Q-12 (mới): độ mạnh mật khẩu — mặc định 8–128 ký tự, có chữ và số (`Account:PasswordMinLength`). Mật khẩu của tài khoản seed hiện có không bị kiểm tra lại.
 - Q-50 (mới): người dùng có tự đổi email không? Mặc định **không** (email là định danh đăng nhập; đổi cần OTP tới email mới — để sau). Chủ spa cũng không đổi email hộ.
