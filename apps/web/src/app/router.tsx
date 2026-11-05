@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { routes } from './routes';
 import { PublicLayout } from '@components/layout/PublicLayout/PublicLayout';
@@ -5,6 +6,7 @@ import { CustomerLayout } from '@components/layout/CustomerLayout/CustomerLayout
 import { StaffLayout } from '@components/layout/StaffLayout/StaffLayout';
 import { OwnerLayout } from '@components/layout/OwnerLayout/OwnerLayout';
 import { HomePage } from '@/pages/public/HomePage';
+import { LoginPage } from '@/pages/public/LoginPage';
 import { GuestOnly } from './GuestOnly';
 import { RouteGuard } from './RouteGuard';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
@@ -12,6 +14,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 
 const guestOnlyPaths = new Set<string>(['/login', '/register', '/forgot-password']);
+const guestPages: Record<string, ReactElement> = { '/login': <LoginPage /> };
 
 export const routeObjects: RouteObject[] = [
   {
@@ -23,9 +26,7 @@ export const routeObjects: RouteObject[] = [
           path === '/' ? (
             <HomePage />
           ) : guestOnlyPaths.has(path) ? (
-            <GuestOnly>
-              <PlaceholderPage title={title} />
-            </GuestOnly>
+            <GuestOnly>{guestPages[path] ?? <PlaceholderPage title={title} />}</GuestOnly>
           ) : (
             <PlaceholderPage title={title} />
           ),

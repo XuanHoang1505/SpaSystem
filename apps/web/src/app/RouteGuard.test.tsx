@@ -65,6 +65,18 @@ test('GuestOnly sends a signed-in user to their area', async () => {
   expect(await screen.findByText('Owner area')).toBeInTheDocument();
 });
 
+test('GuestOnly honours a safe redirect after login', async () => {
+  signIn('owner');
+  renderAt('/login?redirect=%2Fowner%2Fstaff');
+  expect(await screen.findByText('at /owner/staff')).toBeInTheDocument();
+});
+
+test('GuestOnly ignores an unsafe redirect', async () => {
+  signIn('owner');
+  renderAt('/login?redirect=%2F%2Fevil.com');
+  expect(await screen.findByText('Owner area')).toBeInTheDocument();
+});
+
 test('GuestOnly shows the page to anonymous visitors', () => {
   renderAt('/login');
   expect(screen.getByText('Login form')).toBeInTheDocument();
