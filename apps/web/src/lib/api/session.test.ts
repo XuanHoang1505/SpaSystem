@@ -104,3 +104,25 @@ test('a failed refreshSession ends the session as expired', async () => {
   expect(await refreshSession()).toBe(false);
   expect(useAuthStore.getState()).toMatchObject({ status: 'anonymous', endReason: 'expired' });
 });
+
+test.each([
+  ['the network is down', () => Promise.reject(new TypeError('Failed to fetch'))],
+  ['the API fails with 500', async () => new Response('{}', { status: 500 })],
+])('refreshSession keeps the session when %s', async (_case, answer) => {
+  useAuthStore.setState({ status: 'authenticated', accessToken: 'old', endReason: null });
+  fetcher.mockImplementation(answer);
+  expect(await refreshSession()).toBe(false);
+  expect(useAuthStore.getState()).toMatchObject({ status: 'authenticated', accessToken: 'old' });
+});
+
+test.each([
+  [403, 'account_locked'],
+  [429, 'rate_limited'],
+])('refreshSession ends the session on %s %s', async (status, code) => {
+  useAuthStore.setState({ status: 'authenticated', accessToken: 'old' });
+  fetcher.mockResolvedValue(
+    new Response(JSON.stringify({ success: false, errors: [{ code, message: 'x' }] }), { status }),
+  );
+  expect(await refreshSession()).toBe(false);
+  expect(useAuthStore.getState()).toMatchObject({ status: 'anonymous', endReason: 'expired' });
+});

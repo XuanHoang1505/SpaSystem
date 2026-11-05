@@ -42,13 +42,20 @@ function requestRefresh(): Promise<AuthResult> {
   return inFlight;
 }
 
-/** Renews the access token; on failure the session ends as expired. */
+/** Statuses of /auth/refresh that mean the cookie session is really over (invalid token, locked/inactive, 429). */
+const sessionOverStatuses = new Set([401, 403, 429]);
+
+/**
+ * Renews the access token. Only a refusal from the API ends the session; a network drop or a server error keeps it,
+ * so the cookie can still be used once the connection is back.
+ */
 export async function refreshSession(): Promise<boolean> {
   try {
     useAuthStore.getState().setSession(await requestRefresh());
     return true;
-  } catch {
-    useAuthStore.getState().endSession('expired');
+  } catch (error) {
+    if (error instanceof ApiClientError && sessionOverStatuses.has(error.status))
+      useAuthStore.getState().endSession('expired');
     return false;
   }
 }

@@ -42,7 +42,7 @@ test('anonymous visitors are sent to login with a redirect back', async () => {
   expect(router.state.location.search).toBe('?redirect=%2Fowner%3Ftab%3D1');
 });
 
-test('after a deliberate logout the guard goes home, not to login', async () => {
+test('while leaving after a logout the guard goes home, not to login', async () => {
   useAuthStore.setState({ status: 'anonymous', endReason: 'logout' });
   const router = renderAt('/owner');
   expect(await screen.findByText('at /')).toBeInTheDocument();

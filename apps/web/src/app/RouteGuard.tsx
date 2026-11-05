@@ -12,7 +12,7 @@ export function RouteGuard({ role, children }: PropsWithChildren<{ role: UserRol
   const endReason = useAuthStore((state) => state.endReason);
   const location = useLocation();
   if (status === 'restoring') return <PageLoader label="Đang kiểm tra phiên đăng nhập…" />;
-  // A deliberate logout leaves for home; an expired or missing session asks to log in and come back.
+  // Only while leaving after a logout (cleared by useSettleLogout once home is shown), go home instead of to the login page.
   if (status === 'anonymous')
     return <Navigate to={endReason === 'logout' ? '/' : loginPathFor(location)} replace />;
   return canAccessRole(user, role) ? children : <Navigate to="/forbidden" replace />;

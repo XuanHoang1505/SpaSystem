@@ -69,7 +69,8 @@ test('logout clears session even when the API fails', async () => {
   await userEvent.click(await screen.findByRole('menuitem', { name: 'Đăng xuất' }));
 
   await waitFor(() => expect(useAuthStore.getState().status).toBe('anonymous'));
-  expect(useAuthStore.getState()).toMatchObject({ accessToken: null, endReason: 'logout' });
+  // endReason goes back to null once the home page is shown (useSettleLogout).
+  expect(useAuthStore.getState()).toMatchObject({ accessToken: null, user: null });
   expect(router.state.location.pathname).toBe('/');
   expect(await screen.findByText('Đã đăng xuất.')).toBeInTheDocument();
 });
@@ -87,4 +88,10 @@ test('logout from the sidebar sends no body and leaves the workspace', async () 
   await waitFor(() => expect(router.state.location.pathname).toBe('/'));
   expect(useAuthStore.getState().status).toBe('anonymous');
   expect(callsTo(fetcher, '/api/v1/auth/logout')[0]?.[1]?.body).toBeUndefined();
+
+  // Later guarded links ask to log in again instead of silently going home.
+  await waitFor(() => expect(useAuthStore.getState().endReason).toBeNull());
+  await router.navigate('/account');
+  await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
+  expect(router.state.location.search).toBe('?redirect=%2Faccount');
 });
