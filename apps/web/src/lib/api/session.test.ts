@@ -81,6 +81,16 @@ test('restoreSession becomes anonymous without an API URL and makes no request',
   expect(fetcher).not.toHaveBeenCalled();
 });
 
+test('a failed restore does not end a session that started meanwhile', async () => {
+  let fail: (error: unknown) => void = () => undefined;
+  fetcher.mockReturnValue(new Promise<Response>((_resolve, reject) => (fail = reject)));
+  const restoring = restoreSession();
+  useAuthStore.setState({ status: 'authenticated', accessToken: 'fresh' });
+  fail(new TypeError('Failed to fetch'));
+  await restoring;
+  expect(useAuthStore.getState()).toMatchObject({ status: 'authenticated', accessToken: 'fresh' });
+});
+
 test('concurrent refreshSession calls send one request', async () => {
   fetcher.mockResolvedValue(ok());
   const results = await Promise.all([refreshSession(), refreshSession()]);

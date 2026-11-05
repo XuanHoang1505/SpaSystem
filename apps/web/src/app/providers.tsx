@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useThemeScopeStore } from '@/stores/themeScopeStore';
 import { createQueryClient } from './queryClient';
+import { SessionBootstrap } from './SessionBootstrap';
 
 export function AppProviders({ children }: PropsWithChildren) {
   const [client] = useState(createQueryClient);
@@ -19,6 +20,7 @@ export function AppProviders({ children }: PropsWithChildren) {
       forcedTheme={scope === 'light-only' ? 'light' : undefined}
     >
       <QueryClientProvider client={client}>
+        <SessionBootstrap client={client} />
         <TooltipProvider delayDuration={200}>
           {children}
           <Toaster richColors closeButton position="top-right" />

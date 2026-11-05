@@ -65,5 +65,6 @@ export async function restoreSession(): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, RESTORE_RETRY_DELAY_MS));
     }
   }
-  useAuthStore.getState().markAnonymous();
+  // A login that finished while the restore was failing keeps its session.
+  if (useAuthStore.getState().status === 'restoring') useAuthStore.getState().markAnonymous();
 }

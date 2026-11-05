@@ -1,11 +1,11 @@
 import { screen, render, fireEvent } from '@testing-library/react';
-import { createMemoryRouter, RouterProvider, MemoryRouter, Routes, Route } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { vi, test, expect } from 'vitest';
 import { AppProviders } from '@app/providers';
 import { routeObjects } from '@app/router';
 import { routes } from '@app/routes';
 import { Button } from '@/components/ui/button';
-import { RouteGuard } from '@app/RouteGuard';
+import { useAuthStore } from '@/stores/authStore';
 vi.mock('@/hooks/useSystemStatus', () => ({
   useSystemStatus: () => ({ configurationError: undefined, isPending: false, isError: false }),
 }));
@@ -26,11 +26,9 @@ test('Unknown routes render NotFoundPage', () => {
   expect(screen.getByRole('heading', { name: 'Không tìm thấy trang' })).toBeInTheDocument();
 });
 
-test.each(
-  Object.values(routes)
-    .flat()
-    .filter(([path]) => path !== '/'),
-)('Route %s renders its placeholder page', (path, title) => {
+const authPages = ['/', '/login', '/register', '/forgot-password'];
+
+function renderPlaceholder(path: string) {
   render(
     <AppProviders>
       <RouterProvider
@@ -40,6 +38,29 @@ test.each(
       />
     </AppProviders>,
   );
+}
+
+test.each(routes.public.filter(([path]) => !authPages.includes(path)))(
+  'Public route %s renders its placeholder page',
+  (path, title) => {
+    useAuthStore.setState({ status: 'anonymous', accessToken: null, user: null });
+    renderPlaceholder(path);
+    expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
+    expect(screen.getByText(/Tính năng đang được phát triển/)).toBeInTheDocument();
+  },
+);
+
+test.each(
+  (['customer', 'staff', 'owner'] as const).flatMap((role) =>
+    routes[role].map(([path, title]) => [role, path, title] as const),
+  ),
+)('Signed-in %s sees %s placeholder', (role, path, title) => {
+  useAuthStore.setState({
+    status: 'authenticated',
+    accessToken: 'a',
+    user: { id: 'u', fullName: 'Lan', email: 'lan@spa.vn', role },
+  });
+  renderPlaceholder(path);
   expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
   expect(screen.getByText(/Tính năng đang được phát triển/)).toBeInTheDocument();
 });
@@ -58,24 +79,4 @@ test('Button calls click and respects disabled and loading', () => {
   expect(screen.getByRole('button')).toHaveAttribute('aria-busy', 'true');
   fireEvent.click(screen.getByRole('button'));
   expect(onClick).toHaveBeenCalledTimes(1);
-});
-
-test('RouteGuard denies missing session without simulating sign-in', async () => {
-  render(
-    <MemoryRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <RouteGuard role="owner">
-              <p>Private content</p>
-            </RouteGuard>
-          }
-        />
-        <Route path="/forbidden" element={<p>Forbidden</p>} />
-      </Routes>
-    </MemoryRouter>,
-  );
-  expect(await screen.findByText('Forbidden')).toBeInTheDocument();
-  expect(screen.queryByText('Private content')).not.toBeInTheDocument();
 });

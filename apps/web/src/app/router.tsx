@@ -5,10 +5,13 @@ import { CustomerLayout } from '@components/layout/CustomerLayout/CustomerLayout
 import { StaffLayout } from '@components/layout/StaffLayout/StaffLayout';
 import { OwnerLayout } from '@components/layout/OwnerLayout/OwnerLayout';
 import { HomePage } from '@/pages/public/HomePage';
-import { AuthPlaceholderPage } from '@/pages/public/AuthPlaceholderPage';
+import { GuestOnly } from './GuestOnly';
+import { RouteGuard } from './RouteGuard';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
+
+const guestOnlyPaths = new Set<string>(['/login', '/register', '/forgot-password']);
 
 export const routeObjects: RouteObject[] = [
   {
@@ -19,8 +22,10 @@ export const routeObjects: RouteObject[] = [
         element:
           path === '/' ? (
             <HomePage />
-          ) : path === '/login' || path === '/register' ? (
-            <AuthPlaceholderPage title={title} />
+          ) : guestOnlyPaths.has(path) ? (
+            <GuestOnly>
+              <PlaceholderPage title={title} />
+            </GuestOnly>
           ) : (
             <PlaceholderPage title={title} />
           ),
@@ -36,7 +41,7 @@ export const routeObjects: RouteObject[] = [
       { group: 'owner', element: <OwnerLayout /> },
     ] as const
   ).map(({ group, element }) => ({
-    element,
+    element: <RouteGuard role={group}>{element}</RouteGuard>,
     children: routes[group].map(([path, title]) => ({
       path,
       element: <PlaceholderPage title={title} />,
