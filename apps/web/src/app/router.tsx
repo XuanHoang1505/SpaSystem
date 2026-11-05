@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { routes } from './routes';
+import { AuthLayout } from '@components/layout/AuthLayout/AuthLayout';
 import { PublicLayout } from '@components/layout/PublicLayout/PublicLayout';
 import { CustomerLayout } from '@components/layout/CustomerLayout/CustomerLayout';
 import { StaffLayout } from '@components/layout/StaffLayout/StaffLayout';
@@ -15,7 +16,7 @@ import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 
-const guestOnlyPaths = new Set<string>(['/login', '/register', '/forgot-password']);
+/** Login, register, forgot-password: own split layout without the site header/footer, guests only. */
 const guestPages: Record<string, ReactElement> = {
   '/login': <LoginPage />,
   '/register': <RegisterPage />,
@@ -26,20 +27,22 @@ export const routeObjects: RouteObject[] = [
   {
     element: <PublicLayout />,
     children: [
-      ...routes.public.map(([path, title]) => ({
-        path,
-        element:
-          path === '/' ? (
-            <HomePage />
-          ) : guestOnlyPaths.has(path) ? (
-            <GuestOnly>{guestPages[path] ?? <PlaceholderPage title={title} />}</GuestOnly>
-          ) : (
-            <PlaceholderPage title={title} />
-          ),
-      })),
+      ...routes.public
+        .filter(([path]) => !(path in guestPages))
+        .map(([path, title]) => ({
+          path,
+          element: path === '/' ? <HomePage /> : <PlaceholderPage title={title} />,
+        })),
       { path: '/forbidden', element: <ForbiddenPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
+  },
+  {
+    element: <AuthLayout />,
+    children: Object.entries(guestPages).map(([path, page]) => ({
+      path,
+      element: <GuestOnly>{page}</GuestOnly>,
+    })),
   },
   ...(
     [

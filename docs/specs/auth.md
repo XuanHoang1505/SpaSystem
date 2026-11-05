@@ -408,7 +408,7 @@ Thiếu `JWT_KEY` không chặn API khởi động (health check, Swagger vẫn 
 
 Phạm vi: UC-SPA-01, 02, 03 trên web (`apps/web`). Mobile (SCR-M06..M08) làm sau. UC-SPA-04/05 không thuộc lần này.
 
-Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts`, `index.ts`). Trang ở `src/pages/public/` chỉ ghép feature. Cả ba màn dùng `PublicLayout`, mẫu **trang nội dung**: một `Card` ở giữa (`max-w-md`), tiêu đề `font-heading`. Các bước của đăng ký và quên mật khẩu đổi **trong cùng một route** bằng state cục bộ (`useState`), không mở route con cho từng bước.
+Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts`, `index.ts`). Trang ở `src/pages/public/` chỉ ghép feature. Cả ba màn dùng `AuthLayout` riêng (**đã chốt 05/11/2026**: chia đôi, không có header/footer của site): một khung bo góc, bên trái (từ `lg`) là panel giới thiệu spa với logo, tiêu đề "Chăm sóc làn da _theo cách của bạn_" và ba tính năng thật của hệ thống (đặt lịch trực tuyến, theo dõi liệu trình, mua gói và thanh toán trực tuyến) trên nền hình khối phẳng, không có nội dung y khoa; bên phải là logo (dưới `lg`), link "Về trang chủ" và form (`max-w-md`), tiêu đề `font-heading`. Không có ô "Ghi nhớ đăng nhập" (phiên luôn sống 7 ngày qua cookie). Các bước của đăng ký và quên mật khẩu đổi **trong cùng một route** bằng state cục bộ (`useState`), không mở route con cho từng bước.
 
 ### Hợp đồng dùng chung
 

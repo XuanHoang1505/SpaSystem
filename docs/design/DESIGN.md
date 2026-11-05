@@ -121,6 +121,7 @@ Spa Như Nguyệt is a calm Vietnamese skincare and relaxation spa. The interfac
 ## Layout
 
 - **Public pages**: sticky top header (brand mark "N" in a plum circle + "Như Nguyệt / SPA & CHĂM SÓC DA", nav links, "Đăng ký" link and "Đăng nhập" button; **no theme toggle**, public pages are always light), content max-width 1280px, simple footer.
+- **Auth pages** (login, register, forgot password): no site header or footer. One rounded split card: left (from `lg`) a muted intro panel with the brand, a Lora title with an italic plum phrase and three real features (online booking, treatment progress, buy packages and pay online) over flat accent/sage circles; right the brand (below `lg`), a "Về trang chủ" link and the form. No medical claims, no social login, no "remember me".
 - **Customer / staff / owner areas**: shadcn **Sidebar** on the left (collapsible to icons; brand at top, grouped nav with lucide icons, footer note), a 64px top bar with sidebar trigger and the workspace name, then the page. Every page starts with a **page header**: eyebrow, Lora title, short description, actions on the right.
 - Mobile first: works at 320px; sidebar becomes a drawer; tables scroll inside their card, never the page.
 
