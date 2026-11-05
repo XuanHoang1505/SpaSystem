@@ -14,6 +14,8 @@ export interface RequestOptions {
 export interface ApiClientOptions {
   headers?: () => Record<string, string> | Promise<Record<string, string>>;
   fetch?: typeof fetch;
+  /** `'include'` makes the browser send and store cookies across origins (web refresh cookie). */
+  credentials?: RequestCredentials;
 }
 
 export class ApiClientError extends Error {
@@ -124,6 +126,7 @@ export class ApiClient {
           ...options.headers,
         },
         body: body === undefined ? undefined : JSON.stringify(body),
+        ...(this.options.credentials ? { credentials: this.options.credentials } : {}),
       });
     } catch (cause) {
       if (options.signal?.aborted || (cause instanceof Error && cause.name === 'AbortError'))
@@ -173,6 +176,11 @@ export class ApiClient {
   }
 }
 
+/** First error code of an API error, for branching on `errors[].code`. */
+export function errorCodeOf(error: unknown): string | undefined {
+  return error instanceof ApiClientError ? error.errors[0]?.code : undefined;
+}
+
 export class SystemApi {
   constructor(private readonly client: ApiClient) {}
   ping(signal?: AbortSignal) {
@@ -194,3 +202,5 @@ export async function checkSystemStatus(
     throw new ApiClientError('The API is not healthy.', 503);
   return ping.data;
 }
+
+export * from './auth';
