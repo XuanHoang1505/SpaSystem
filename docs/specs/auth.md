@@ -483,7 +483,7 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
   - Có nút hiện/ẩn cho hai ô mật khẩu.
 - **Bước 1, hành động "Gửi mã xác thực":** `useRequestRegistrationOtp`. Kết quả `202` thì sang bước 2 và giữ dữ liệu bước 1 trong state của component (để gửi lại mã), kèm `expiresAtUtc`.
 - **Bước 2, nội dung:** "Chúng tôi đã gửi mã gồm 6 chữ số tới **{email}**". Thời hạn mã: "Mã hết hạn sau mm:ss", tính từ `expiresAtUtc` của server, cập nhật mỗi giây. Hết giờ thì hiện "Mã đã hết hạn. Vui lòng gửi lại mã."
-- **Bước 2, trường:** "Mã OTP" (`Input`, `inputMode="numeric"`, `autoComplete="one-time-code"`, `maxLength=6`, chỉ nhận số, Zod `^\d{6}$`).
+- **Bước 2, trường:** "Mã OTP" (`Input`, `inputMode="numeric"`, `autoComplete="one-time-code"`, chỉ nhận số và tối đa 6 chữ số (lọc khi nhập; không đặt `maxLength` vì trình duyệt sẽ cắt chuỗi dán như "123 456" trước khi lọc), Zod `^\d{6}$`).
 - **Bước 2, hành động:**
   - "Xác nhận" → `useVerifyRegistrationOtp`. Kết quả `201` thì toast "Đăng ký thành công. Vui lòng đăng nhập." và chuyển `/login` với `state.login = email`. Không tự đăng nhập, theo DA bước 10.
   - "Gửi lại mã" (nút `link`) → gọi lại request-otp với dữ liệu bước 1. Thành công thì toast "Đã gửi lại mã xác thực.", cập nhật `expiresAtUtc` + `resendAvailableAtUtc` và xóa ô OTP.
