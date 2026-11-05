@@ -6,9 +6,8 @@ import { AuthCard } from './AuthCard';
 import { ConfigurationAlert } from './ConfigurationAlert';
 import { RegisterDetailsStep, type RegisterFieldError } from './RegisterDetailsStep';
 import { RegisterOtpStep } from './RegisterOtpStep';
-import { StepIndicator } from './StepIndicator';
 
-/** SCR-W08: two steps on one route, kept in local state (no route per step). */
+/** SCR-W08: two steps on one route, kept in local state (no route per step). No step indicator: it made the page scroll. */
 export function RegisterFlow() {
   const [step, setStep] = useState<1 | 2>(1);
   const [details, setDetails] = useState<RegisterValues | null>(null);
@@ -28,13 +27,6 @@ export function RegisterFlow() {
 
   return (
     <AuthCard
-      eyebrow={
-        <StepIndicator
-          current={step}
-          total={2}
-          label={step === 1 ? 'Thông tin tài khoản' : 'Xác thực email'}
-        />
-      }
       title="Đăng ký tài khoản"
       description={
         step === 1

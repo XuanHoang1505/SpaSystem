@@ -35,11 +35,14 @@ test('registers in two steps and hands the email to the login page', async () =>
     'POST /api/v1/auth/register/verify-otp': () => envelope({ id: 'n', email }, 201),
   });
   const router = renderApp('/register');
-  expect(await screen.findByText('Bước 1/2 · Thông tin tài khoản')).toBeInTheDocument();
+  expect(await screen.findByLabelText(/Họ và tên/)).toBeInTheDocument();
+  // No step indicator on this page (it made the page scroll).
+  expect(screen.queryByText(/^Bước \d\/2/)).not.toBeInTheDocument();
 
   await fillDetails();
 
-  expect(await screen.findByText('Bước 2/2 · Xác thực email')).toBeInTheDocument();
+  expect(await screen.findByText(/Chúng tôi đã gửi mã gồm 6 chữ số tới/)).toBeInTheDocument();
+  expect(screen.queryByText(/^Bước \d\/2/)).not.toBeInTheDocument();
   expect(screen.getByText(email, { selector: 'strong' })).toBeInTheDocument();
   expect(screen.getByText(/Mã hết hạn sau 0[45]:\d\d/)).toBeInTheDocument();
   expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
@@ -84,7 +87,7 @@ test('phone_exists at verification goes back to step 1 with the error and the in
 
   await enterOtp();
 
-  expect(await screen.findByText('Bước 1/2 · Thông tin tài khoản')).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: 'Gửi mã xác thực' })).toBeInTheDocument();
   expect(
     screen.getByText('Số điện thoại này đã được dùng cho một tài khoản khác.'),
   ).toBeInTheDocument();
@@ -156,7 +159,7 @@ test('email_send_failed offers a retry', async () => {
   fail = false;
   await userEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
 
-  expect(await screen.findByText('Bước 2/2 · Xác thực email')).toBeInTheDocument();
+  expect(await screen.findByText(/Chúng tôi đã gửi mã gồm 6 chữ số tới/)).toBeInTheDocument();
 });
 
 test('editing the details keeps them and waits for the resend time', async () => {

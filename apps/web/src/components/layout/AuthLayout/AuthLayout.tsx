@@ -34,11 +34,11 @@ export function AuthLayout() {
   return (
     <div className="flex min-h-svh flex-col bg-background">
       <SkipLink />
-      <div className="mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
         <div className="grid w-full overflow-hidden rounded-2xl border bg-card shadow-sm lg:grid-cols-[1fr_1.1fr]">
           <aside
             aria-label="Giới thiệu Spa Như Nguyệt"
-            className="relative hidden flex-col gap-10 overflow-hidden border-r bg-muted p-10 lg:flex"
+            className="relative hidden flex-col gap-8 overflow-hidden border-r bg-muted p-8 lg:flex"
           >
             <span
               aria-hidden="true"
@@ -76,7 +76,7 @@ export function AuthLayout() {
           <main
             id="main-content"
             tabIndex={-1}
-            className="flex flex-col gap-8 p-6 outline-none sm:p-10 lg:p-12"
+            className="flex flex-col gap-4 px-6 py-5 outline-none sm:px-10 sm:py-6 lg:px-12"
           >
             <div className="flex items-center justify-between gap-4">
               <Brand compact className="sm:hidden" />

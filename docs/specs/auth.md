@@ -448,7 +448,7 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 
 ### SCR-W07 — Đăng nhập
 
-- **Route:** `/login` · Vai trò: khách vãng lai · Layout: Public · Mẫu: trang nội dung (form trong Card).
+- **Route:** `/login` · Vai trò: khách vãng lai · Layout: Auth · Mẫu: trang nội dung (form trong khung chia đôi).
 - **Mẫu Stitch:** `9696885610900739659/e1b0b5d870b642d09287e737becb0f2a` (chỉ tham chiếu bố cục; bỏ nút theme và footer Stitch tự thêm).
 - **Trường:**
   - "Email hoặc số điện thoại" (`login`, `autoComplete="username"`, bắt buộc, ≤ 255 ký tự sau khi bỏ khoảng trắng).
@@ -471,9 +471,9 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 
 ### SCR-W08 — Đăng ký (2 bước)
 
-- **Route:** `/register` · Vai trò: khách vãng lai · Layout: Public · Mẫu: quy trình 2 bước trong một Card, có dòng "Bước 1/2 · Thông tin tài khoản" / "Bước 2/2 · Xác thực email".
+- **Route:** `/register` · Vai trò: khách vãng lai · Layout: Auth · Mẫu: quy trình 2 bước trong cùng một route, **không có chỉ báo bước** (chốt 05/11/2026: bỏ để trang không phải cuộn dọc); bước 2 nhận biết qua dòng "Chúng tôi đã gửi mã gồm 6 chữ số tới …".
 - **Mẫu Stitch:** `9696885610900739659/a644d9630ffb42cfa8e22a3b386ea540` (bước 1). Bước 2 dựng theo khung ô OTP + đếm ngược của mẫu SCR-W09.
-- **Chỉ báo bước:** dòng chữ "Bước x/y · …" kèm thanh tiến độ chia đoạn (mỗi bước một đoạn; đoạn đã qua và đang làm dùng `bg-primary`, đoạn còn lại `bg-muted`). Dùng chung cho SCR-W08 và SCR-W09, đặt ở `features/auth/components`.
+- **Chỉ báo bước:** dòng chữ "Bước x/y · …" kèm thanh tiến độ chia đoạn (mỗi bước một đoạn; đoạn đã qua và đang làm dùng `bg-primary`, đoạn còn lại `bg-muted`). Chỉ dùng ở SCR-W09, đặt ở `features/auth/components`.
 - **Bước 1, trường** (theo BR-AUTH-10, Zod kiểm tra trước, server vẫn là nguồn chuẩn):
   - "Họ và tên" (1–100 ký tự sau khi bỏ khoảng trắng, `autoComplete="name"`).
   - "Email" (đúng mẫu `^[^\s@]+@[^\s@]+\.[^\s@]+$`, ≤ 255).
@@ -508,7 +508,7 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 
 ### SCR-W09 — Quên mật khẩu (3 bước)
 
-- **Route:** `/forgot-password` (route mới) · Vai trò: khách vãng lai · Layout: Public · Mẫu: quy trình 3 bước trong một Card ("Bước x/3").
+- **Route:** `/forgot-password` (route mới) · Vai trò: khách vãng lai · Layout: Auth · Mẫu: quy trình 3 bước trong một Card ("Bước x/3").
 - **Mẫu Stitch:** `9696885610900739659/e16ef7014ab24c13b6de08d1e3172a30` (bước 2). Bước 1 và 3 dựng theo cùng khung Card; trường mật khẩu như mẫu SCR-W08.
 - **Bước 1, "Email":**
   - Trường email, kiểm tra như bước 1 của đăng ký.
