@@ -6,6 +6,7 @@ import { CustomerLayout } from '@components/layout/CustomerLayout/CustomerLayout
 import { StaffLayout } from '@components/layout/StaffLayout/StaffLayout';
 import { OwnerLayout } from '@components/layout/OwnerLayout/OwnerLayout';
 import { HomePage } from '@/pages/public/HomePage';
+import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@/pages/public/LoginPage';
 import { RegisterPage } from '@/pages/public/RegisterPage';
 import { GuestOnly } from './GuestOnly';
@@ -18,6 +19,7 @@ const guestOnlyPaths = new Set<string>(['/login', '/register', '/forgot-password
 const guestPages: Record<string, ReactElement> = {
   '/login': <LoginPage />,
   '/register': <RegisterPage />,
+  '/forgot-password': <ForgotPasswordPage />,
 };
 
 export const routeObjects: RouteObject[] = [
