@@ -14,6 +14,13 @@ const dateTime = new Intl.DateTimeFormat('vi-VN', {
   hour12: false,
 });
 
+const time = new Intl.DateTimeFormat('vi-VN', {
+  timeZone: 'Asia/Ho_Chi_Minh',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
 /** 1500000 → "1.500.000 ₫". */
 export const formatCurrency = (value: number) => currency.format(value);
 
@@ -33,3 +40,6 @@ export function formatLocalDate(value: string) {
 
 /** Giờ `TimeOnly` dạng "HH:mm" hoặc "HH:mm:ss" → "HH:mm", không đổi múi giờ. */
 export const formatLocalTime = (value: string) => value.slice(0, 5);
+
+/** Mốc thời gian UTC từ backend (`...AtUtc`) → giờ Việt Nam "HH:mm". */
+export const formatTimeUtc = (value: string) => time.format(new Date(value));
