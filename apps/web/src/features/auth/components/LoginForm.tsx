@@ -5,7 +5,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ApiClientError, authErrorCodes, errorCodeOf } from '@spa/api-client';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { FormField } from '@/components/shared/FormField/FormField';
 import { applyServerFieldErrors, authErrorMessage, UNKNOWN_ERROR } from '../errors';
 import { useLogin } from '../hooks/useLogin';
@@ -34,6 +36,8 @@ export function LoginForm() {
   const configured = useApiConfigured();
   const login = useLogin();
   const [alert, setAlert] = useState<string | null>(null);
+  // Visual only, never sent: the cookie session already lasts 7 days, so it starts checked.
+  const [remember, setRemember] = useState(true);
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { login: prefilledLogin(location.state), password: '' },
@@ -94,7 +98,18 @@ export function LoginForm() {
               {...form.register('password')}
             />
           </FormField>
-          <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="remember-login"
+                checked={remember}
+                onCheckedChange={(value) => setRemember(value === true)}
+                disabled={busy}
+              />
+              <Label htmlFor="remember-login" className="text-xs font-normal">
+                Ghi nhớ mật khẩu
+              </Label>
+            </div>
             <Link
               to="/forgot-password"
               className="text-xs font-medium text-primary hover:underline"

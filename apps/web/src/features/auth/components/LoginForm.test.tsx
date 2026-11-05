@@ -148,6 +148,22 @@ test('the forgot-password link sits right below the password field', async () =>
   expect(forgot.compareDocumentPosition(submit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 
+test('"Ghi nhớ mật khẩu" is shown checked, can be toggled, and is not sent', async () => {
+  const fetcher = mockApi({ 'POST /api/v1/auth/login': () => envelope(authResult('owner')) });
+  renderApp('/login');
+  const remember = await screen.findByRole('checkbox', { name: 'Ghi nhớ mật khẩu' });
+  expect(remember).toBeChecked();
+  await userEvent.click(remember);
+  expect(remember).not.toBeChecked();
+
+  await fillAndSubmit();
+
+  await waitFor(() => expect(callsTo(fetcher, '/api/v1/auth/login')).toHaveLength(1));
+  expect(callsTo(fetcher, '/api/v1/auth/login')[0]?.[1]?.body).toBe(
+    JSON.stringify({ login: 'lan@spa.vn', password: 'matkhau123' }),
+  );
+});
+
 test('without an API URL the form is disabled and nothing is sent', async () => {
   const fetcher = mockApi();
   vi.stubEnv('VITE_API_BASE_URL', '');

@@ -408,7 +408,7 @@ Thiếu `JWT_KEY` không chặn API khởi động (health check, Swagger vẫn 
 
 Phạm vi: UC-SPA-01, 02, 03 trên web (`apps/web`). Mobile (SCR-M06..M08) làm sau. UC-SPA-04/05 không thuộc lần này.
 
-Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts`, `index.ts`). Trang ở `src/pages/public/` chỉ ghép feature. Cả ba màn dùng `AuthLayout` riêng (**đã chốt 05/11/2026**: chia đôi, không có header/footer của site): một khung bo góc, bên trái (từ `lg`) là panel giới thiệu spa với logo, tiêu đề "Chăm sóc làn da _theo cách của bạn_" và ba tính năng thật của hệ thống (đặt lịch trực tuyến, theo dõi liệu trình, mua gói và thanh toán trực tuyến) trên nền hình khối phẳng, không có nội dung y khoa; bên phải là logo (dưới `lg`), link "Về trang chủ" và form (`max-w-md`), tiêu đề `font-heading`. Không có ô "Ghi nhớ đăng nhập" (phiên luôn sống 7 ngày qua cookie). Các bước của đăng ký và quên mật khẩu đổi **trong cùng một route** bằng state cục bộ (`useState`), không mở route con cho từng bước.
+Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts`, `index.ts`). Trang ở `src/pages/public/` chỉ ghép feature. Cả ba màn dùng `AuthLayout` riêng (**đã chốt 05/11/2026**: chia đôi, không có header/footer của site): một khung bo góc, bên trái (từ `lg`) là panel giới thiệu spa với logo, tiêu đề "Chăm sóc làn da _theo cách của bạn_" và ba tính năng thật của hệ thống (đặt lịch trực tuyến, theo dõi liệu trình, mua gói và thanh toán trực tuyến) trên nền hình khối phẳng, không có nội dung y khoa; bên phải là logo (dưới `lg`), link "Về trang chủ" và form (`max-w-md`), tiêu đề `font-heading`. Màn đăng nhập có ô "Ghi nhớ mật khẩu" **chỉ để hiển thị** (chốt 05/11/2026): tick sẵn, đổi được, không gửi lên API và không đổi hành vi; phiên luôn sống 7 ngày qua cookie. Các bước của đăng ký và quên mật khẩu đổi **trong cùng một route** bằng state cục bộ (`useState`), không mở route con cho từng bước.
 
 ### Hợp đồng dùng chung
 
@@ -453,7 +453,7 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 - **Trường:**
   - "Email hoặc số điện thoại" (`login`, `autoComplete="username"`, bắt buộc, ≤ 255 ký tự sau khi bỏ khoảng trắng).
   - "Mật khẩu" (`password`, `autoComplete="current-password"`, bắt buộc, ≤ 128 ký tự). Có nút hiện/ẩn mật khẩu (`aria-label` "Hiện mật khẩu"/"Ẩn mật khẩu", `aria-pressed`).
-- **Liên kết:** "Quên mật khẩu?" → `/forgot-password`, căn phải ngay dưới ô mật khẩu. "Chưa có tài khoản? Đăng ký" → `/register`.
+- **Liên kết:** "Quên mật khẩu?" → `/forgot-password`, căn phải ngay dưới ô mật khẩu; cùng hàng bên trái là ô "Ghi nhớ mật khẩu" (chỉ giao diện, xem đầu mục). "Chưa có tài khoản? Đăng ký" → `/register`.
 - **Điền sẵn:** từ `location.state.login`, do màn đăng ký hoặc đặt lại mật khẩu truyền sang. Không đưa email lên URL.
 - **Hành động "Đăng nhập":** `useLogin` → `AuthApi.login`. Thành công thì lưu phiên, `queryClient.clear()` và điều hướng tới đâu tùy `redirect`:
   - Có `redirect` hợp lệ thì đi tới đó. Hợp lệ là bắt đầu bằng `/`, không bắt đầu bằng `//`, và thuộc khu vực của vai trò hoặc là route công khai.
