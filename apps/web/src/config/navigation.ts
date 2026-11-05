@@ -64,7 +64,10 @@ const links = (entries: readonly (readonly [string, string])[]): NavigationItem[
 
 /** Menu sinh từ `routes.ts`; không viết cứng menu trong component layout. */
 export const navigation: Record<Workspace, readonly NavigationItem[]> = {
-  public: links(routes.public).filter(({ path }) => !['/login', '/register'].includes(path)),
+  // Auth pages are reached from the header buttons and the forms, not from the menu.
+  public: links(routes.public).filter(
+    ({ path }) => !['/login', '/register', '/forgot-password'].includes(path),
+  ),
   customer: links(routes.customer),
   staff: links(routes.staff),
   owner: links(routes.owner),

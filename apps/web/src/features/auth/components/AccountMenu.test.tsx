@@ -33,6 +33,15 @@ test('anonymous visitors see Đăng nhập and Đăng ký in the header', async 
   expect(header().queryByRole('button', { name: 'Tài khoản của bạn' })).not.toBeInTheDocument();
 });
 
+test('the header navigation has no auth pages (they are reached from the buttons and forms)', async () => {
+  mockApi();
+  renderApp('/services');
+  const nav = within(await header().findByRole('navigation', { name: 'Điều hướng chính' }));
+  expect(nav.queryByRole('link', { name: 'Quên mật khẩu' })).not.toBeInTheDocument();
+  expect(nav.queryByRole('link', { name: 'Đăng nhập' })).not.toBeInTheDocument();
+  expect(nav.queryByRole('link', { name: 'Đăng ký' })).not.toBeInTheDocument();
+});
+
 test('while restoring, the header shows a placeholder instead of the buttons', async () => {
   mockApi();
   useAuthStore.setState({ status: 'restoring' });
