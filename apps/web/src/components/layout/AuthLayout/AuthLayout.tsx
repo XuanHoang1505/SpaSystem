@@ -1,5 +1,6 @@
 import { Link, Outlet } from 'react-router-dom';
 import { ArrowLeftIcon, CalendarCheckIcon, CreditCardIcon, ListChecksIcon } from 'lucide-react';
+import authBackground from '@/assets/images/auth-spa.jpg';
 import { useSettleLogout } from '@/features/auth/hooks/useSettleLogout';
 import { useThemeScope } from '@/stores/themeScopeStore';
 import { Brand } from '../Brand/Brand';
@@ -32,7 +33,15 @@ export function AuthLayout() {
   useThemeScope('light-only');
   useSettleLogout();
   return (
-    <div className="flex min-h-svh flex-col bg-background">
+    <div className="relative isolate flex min-h-svh flex-col bg-background">
+      {/* The photo fills the space around the card; a light cream veil keeps it calm. */}
+      <img
+        src={authBackground}
+        alt=""
+        aria-hidden="true"
+        className="fixed inset-0 -z-10 size-full object-cover"
+      />
+      <span aria-hidden="true" className="fixed inset-0 -z-10 bg-background/30" />
       <SkipLink />
       <div className="mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
         <div className="grid w-full overflow-hidden rounded-2xl border bg-card shadow-sm lg:grid-cols-[1fr_1.1fr]">
