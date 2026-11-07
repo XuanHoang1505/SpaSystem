@@ -279,7 +279,7 @@ SPECS = {
  "UC-SPA-33": ("Khoảng thời gian và tiêu chí thống kê","Số liệu và biểu đồ thống kê",
    ["Chủ spa mở trang báo cáo","Hệ thống hiển thị trang thống kê","Chủ spa chọn khoảng thời gian và tiêu chí","Hệ thống hiển thị số liệu cùng biểu đồ tương ứng"],
    [],[],
-   "ĐX: A1 không có dữ liệu → biểu đồ rỗng; A2 xuất Excel. Tiêu chí đề xuất: theo tháng/quý/năm, theo dịch vụ lẻ/gói, theo sản phẩm","BR-RPT-01, 02"),
+   "ĐX: A1 không có dữ liệu → biểu đồ rỗng; A2 xuất Excel. Tiêu chí đề xuất: theo tháng/quý/năm, theo dịch vụ lẻ/gói, theo sản phẩm","BR-RPT-01, 02, 03, 04, 05"),
  "UC-SPA-34": ("Yêu cầu mở thông báo và thông báo được chọn","Nội dung thông báo và trạng thái đã đọc",
    ["Người dùng mở mục thông báo","Hệ thống kiểm tra có thông báo","Hệ thống hiển thị danh sách","Người dùng chọn một thông báo","Hệ thống hiển thị nội dung và đánh dấu đã đọc"],
    ["A1. Không có thông báo → Hệ thống hiển thị trạng thái trống và kết thúc"],[],"","BR-NTF-01"),

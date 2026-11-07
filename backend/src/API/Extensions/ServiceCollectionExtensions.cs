@@ -43,7 +43,8 @@ public static class ServiceCollectionExtensions
         var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
         services.AddCors(options => options.AddPolicy(CorsPolicy, policy =>
         {
-            if (origins.Length > 0) policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
+            // BR-AUTH-26: credentials (the web refresh cookie) only for the listed origins, never a wildcard.
+            if (origins.Length > 0) policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
         }));
         services.AddHealthChecks();
         return services;

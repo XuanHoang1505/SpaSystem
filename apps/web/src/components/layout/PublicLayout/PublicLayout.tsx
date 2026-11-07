@@ -1,9 +1,13 @@
 import { Outlet } from 'react-router-dom';
+import { useSettleLogout } from '@/features/auth/hooks/useSettleLogout';
+import { useThemeScope } from '@/stores/themeScopeStore';
 import { Header } from '../Header/Header';
 import { Footer } from '../Footer/Footer';
 import { SkipLink } from '../SkipLink/SkipLink';
 
 export function PublicLayout() {
+  useThemeScope('light-only');
+  useSettleLogout();
   return (
     <div className="flex min-h-svh flex-col">
       <SkipLink />

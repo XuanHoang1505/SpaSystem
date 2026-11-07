@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Options;
 using FluentValidation;
 using NhuNguyetSpa.Application.Common;
 using NhuNguyetSpa.Application.Common.Interfaces;
+using NhuNguyetSpa.Application.Common.Options;
 using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Auth;
 using NhuNguyetSpa.Application.Interfaces.Authentication;
@@ -20,6 +22,7 @@ public sealed class AuthService : IAuthService
     private readonly ITokenService _tokens;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDateTimeProvider _clock;
+    private readonly IOptions<JwtOptions> _jwtOptions;
     private readonly IValidator<LoginRequest> _loginValidator;
     private readonly IValidator<RefreshTokenRequest> _refreshValidator;
 
@@ -30,6 +33,7 @@ public sealed class AuthService : IAuthService
         ITokenService tokens,
         IUnitOfWork unitOfWork,
         IDateTimeProvider clock,
+        IOptions<JwtOptions> jwtOptions,
         IValidator<LoginRequest> loginValidator,
         IValidator<RefreshTokenRequest> refreshValidator)
     {
@@ -39,6 +43,7 @@ public sealed class AuthService : IAuthService
         _tokens = tokens;
         _unitOfWork = unitOfWork;
         _clock = clock;
+        _jwtOptions = jwtOptions;
         _loginValidator = loginValidator;
         _refreshValidator = refreshValidator;
     }
@@ -74,8 +79,11 @@ public sealed class AuthService : IAuthService
 
         if (stored.RevokedAtUtc is not null)
         {
-            // BR-AUTH-04: a revoked token coming back means it leaked; end every session of that user.
-            await _refreshTokens.RevokeAllActiveAsync(stored.UserId, now, cancellationToken);
+            // BR-AUTH-22: shortly after its rotation this is a concurrent refresh (two tabs, one cookie), not a theft.
+            if (now - stored.RevokedAtUtc.Value <= TimeSpan.FromSeconds(_jwtOptions.Value.RefreshReuseGraceSeconds))
+                throw AuthErrors.InvalidRefreshToken();
+            // BR-AUTH-04: only rotation marks a token, so a rotated token coming back means it leaked; end every session.
+            await _refreshTokens.DeleteAllActiveAsync(stored.UserId, now, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             throw AuthErrors.InvalidRefreshToken();
         }
@@ -83,12 +91,12 @@ public sealed class AuthService : IAuthService
             throw AuthErrors.InvalidRefreshToken();
         if (stored.User.Status != UserStatus.Active)
         {
-            await _refreshTokens.TryRevokeAsync(stored.Id, now, cancellationToken);
+            await _refreshTokens.DeleteAsync(stored.Id, cancellationToken);
             throw AuthErrors.NotActive(stored.User.Status);
         }
         if (await HasResignedAsync(stored.User, now, cancellationToken))
         {
-            await _refreshTokens.TryRevokeAsync(stored.Id, now, cancellationToken);
+            await _refreshTokens.DeleteAsync(stored.Id, cancellationToken);
             throw AuthErrors.NotActive(UserStatus.Inactive);
         }
 
@@ -103,12 +111,13 @@ public sealed class AuthService : IAuthService
         return OperationResult<AuthResultDto>.Success(result!);
     }
 
-    public async Task LogoutAsync(RefreshTokenRequest request, Guid currentUserId, CancellationToken cancellationToken)
+    public async Task LogoutAsync(RefreshTokenRequest request, Guid? currentUserId, CancellationToken cancellationToken)
     {
         await _refreshValidator.ValidateAndThrowAsync(request, cancellationToken);
         var stored = await _refreshTokens.FindByHashAsync(_tokens.HashRefreshToken(request.RefreshToken), cancellationToken);
-        if (stored is { RevokedAtUtc: null } && stored.UserId == currentUserId)
-            await _refreshTokens.TryRevokeAsync(stored.Id, _clock.UtcNow, cancellationToken);
+        // Without a caller (cookie mode, Q-69) holding the HttpOnly cookie is the proof of ownership.
+        if (stored is { RevokedAtUtc: null } && (currentUserId is null || stored.UserId == currentUserId))
+            await _refreshTokens.DeleteAsync(stored.Id, cancellationToken);
     }
 
     private async Task<AuthResultDto> IssueTokensAsync(User user, DateTime now, CancellationToken cancellationToken)

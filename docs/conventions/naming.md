@@ -4,18 +4,18 @@
 
 ## C#
 
-| Loại                           | Quy tắc                                                        | Ví dụ                                                   |
-| ------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------- |
-| Namespace                      | `NhuNguyetSpa.<Layer>.<Folder>`, khớp thư mục, file-scoped     | `namespace NhuNguyetSpa.Application.UseCases.Bookings;` |
-| Class, record, enum, interface | PascalCase; interface có tiền tố `I`                           | `Appointment`, `IAppointmentRepository`                 |
-| Method                         | PascalCase, động từ; bất đồng bộ có hậu tố `Async`             | `BookNowAsync`, `GetAvailabilityAsync`                  |
-| Property, public field         | PascalCase                                                     | `HoldExpiresAtUtc`                                      |
-| Tham số, biến cục bộ           | camelCase                                                      | `appointmentId`                                         |
-| Private field                  | `_camelCase` (ưu tiên primary constructor nếu không cần field) | `_repository`                                           |
-| Hằng số                        | PascalCase                                                     | `MaxReviewLength`                                       |
-| Thời điểm UTC                  | Hậu tố `AtUtc`, kiểu `DateTime`                                | `PaidAtUtc`                                             |
-| Ngày/giờ địa phương            | `DateOnly`/`TimeOnly`, không hậu tố                            | `Date`, `StartTime`                                     |
-| Bool                           | Tiền tố `Is`/`Has`/`Can`                                       | `IsActive`, `CanBeCancelled`                            |
+| Loại                           | Quy tắc                                                    | Ví dụ                                                   |
+| ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------- |
+| Namespace                      | `NhuNguyetSpa.<Layer>.<Folder>`, khớp thư mục, file-scoped | `namespace NhuNguyetSpa.Application.UseCases.Bookings;` |
+| Class, record, enum, interface | PascalCase; interface có tiền tố `I`                       | `Appointment`, `IAppointmentRepository`                 |
+| Method                         | PascalCase, động từ; bất đồng bộ có hậu tố `Async`         | `BookNowAsync`, `GetAvailabilityAsync`                  |
+| Property, public field         | PascalCase                                                 | `HoldExpiresAtUtc`                                      |
+| Tham số, biến cục bộ           | camelCase                                                  | `appointmentId`                                         |
+| Private field                  | `_camelCase`; dependency inject luôn là `private readonly` | `_repository`                                           |
+| Hằng số                        | PascalCase                                                 | `MaxReviewLength`                                       |
+| Thời điểm UTC                  | Hậu tố `AtUtc`, kiểu `DateTime`                            | `PaidAtUtc`                                             |
+| Ngày/giờ địa phương            | `DateOnly`/`TimeOnly`, không hậu tố                        | `Date`, `StartTime`                                     |
+| Bool                           | Tiền tố `Is`/`Has`/`Can`                                   | `IsActive`, `CanBeCancelled`                            |
 
 ### Hậu tố theo vai trò
 

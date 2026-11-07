@@ -14,6 +14,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { SidebarAccount } from '@/features/auth/components/SidebarAccount';
 import { Brand } from '../Brand/Brand';
 
 export function WorkspaceSidebar({ workspace }: { workspace: Exclude<Workspace, 'public'> }) {
@@ -44,8 +45,8 @@ export function WorkspaceSidebar({ workspace }: { workspace: Exclude<Workspace, 
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="px-4 py-3 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-        Bản nền tảng · Chưa có xác thực
+      <SidebarFooter className="border-t px-3 py-2">
+        <SidebarAccount />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

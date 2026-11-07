@@ -2,7 +2,7 @@
 
 Rules for work under `apps/web/`. They extend the root CLAUDE.md. UI stack and tokens: ADR-0005.
 
-- Read first: `docs/conventions/frontend.md`, `docs/conventions/naming.md`, `docs/frontend.md` (current routes) and `docs/domain/glossary.md`. For a use case's screens, use the `/implement-fe` skill.
+- Read first: `docs/conventions/frontend.md`, `docs/conventions/naming.md`, `docs/frontend.md` (current routes) and `docs/domain/glossary.md`. For a use case's screens, use the `/implement-fe` skill. Design brief: `docs/design/DESIGN.md`; Stitch mockups (layout reference only): `docs/design/stitch.md`.
 - Feature code goes in `src/features/<feature>/` (kebab-case, names from the glossary) with `components/`, `hooks/`, `schemas.ts` and `index.ts`. Pages in `src/pages/<area>/` only compose features.
 - API calls flow `@spa/api-client` (`<Feature>Api`, `<feature>QueryKeys`) → `src/lib/api/` → `features/<feature>/hooks` → components. Components never call `fetch`.
 - Handle API errors by `ApiClientError.errors[].code`, not by message text. Every data view renders loading, error, empty and data states.
@@ -11,7 +11,7 @@ Rules for work under `apps/web/`. They extend the root CLAUDE.md. UI stack and t
 
 - Build screens only from `src/components/ui` (shadcn primitives) and `src/components/shared` (`DataTable`, `PageHeader`, `StatusBadge`, `FormField`, `EmptyState`, `ErrorState`, `PageLoader`). Check both before writing a new component. Business-free pieces used by two features go to `shared/`, never copied.
 - Colors live only in `src/styles/theme.css` and are mapped in `src/styles/index.css` (`@theme inline`). Use token classes (`bg-primary`, `text-muted-foreground`, `bg-status-success`…). No hex/arbitrary colors (`text-[#…]`), no `bg-white`/`text-black`, no CSS Modules, no inline `style` for colors or spacing. A new color = a new token in both files, plus the mobile theme if it is a brand color.
-- Every page in the customer/staff/owner areas starts with `PageHeader`. Use `font-heading` only for headings; dark mode must work (check both themes).
+- Every page in the customer/staff/owner areas starts with `PageHeader`. Use `font-heading` only for headings. Theme: public pages and the customer area are always light (no `ThemeToggle`); only staff/owner pages switch, so check those in both themes.
 - **Every table of data uses `DataTable`** (`@/components/shared/DataTable`). Never hand-write `<table>` or use the shadcn `Table` directly for data. Paging, sorting and filtering run on the server; keep them in the URL with `useTableSearchParams` and pass `PagedResponse` metadata as `page`. Rows need a stable id from the data (`getRowId`), never the array index. Per-row actions go through `rowActions`; details open with `onRowClick` (Sheet/Dialog), not a new route for a short form.
 - Status enums map to `{ label, tone }` in one file per feature and render with `StatusBadge`; no new badge colors.
 - Forms: React Hook Form + Zod, each control wrapped in `FormField` (it wires `id`, `aria-invalid`, `aria-describedby`). Submit buttons use `<Button loading={mutation.isPending}>`. Success/failure feedback goes through `toast` from `sonner`.

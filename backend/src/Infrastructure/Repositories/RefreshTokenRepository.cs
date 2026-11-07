@@ -23,12 +23,15 @@ public sealed class RefreshTokenRepository : Repository<RefreshToken>, IRefreshT
         return affected == 1;
     }
 
-    public async Task RevokeAllActiveAsync(Guid userId, DateTime nowUtc, CancellationToken cancellationToken)
+    public Task DeleteAsync(Guid tokenId, CancellationToken cancellationToken) =>
+        Set.Where(token => token.Id == tokenId).ExecuteDeleteAsync(cancellationToken);
+
+    public async Task DeleteAllActiveAsync(Guid userId, DateTime nowUtc, CancellationToken cancellationToken)
     {
+        // Tracked removal, so the deletion commits together with the password or status change that caused it.
         var active = await Set
             .Where(token => token.UserId == userId && token.RevokedAtUtc == null && token.ExpiresAtUtc > nowUtc)
             .ToListAsync(cancellationToken);
-        foreach (var token in active)
-            token.RevokedAtUtc = nowUtc;
+        Set.RemoveRange(active);
     }
 }
