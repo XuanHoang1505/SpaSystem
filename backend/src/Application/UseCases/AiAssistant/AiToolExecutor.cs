@@ -125,7 +125,7 @@ public sealed class AiToolExecutor : IAiToolInvoker
             var services = Data(await _services.SearchAsync(paging, new ServiceFilter { MaxPrice = maxPrice }, cancellationToken));
             products.AddRange(services.Items.Select(service => (service.Name, (object)new
             {
-                productType = AiProductType.Service, service.Id, service.Name, service.Category, service.Price, service.DurationMinutes,
+                productType = AiProductType.Service, service.Id, service.Name, service.Category, service.ShortDescription, service.Price, service.DurationMinutes,
             })));
         }
         if (type is null or AiProductType.Package)
@@ -133,7 +133,7 @@ public sealed class AiToolExecutor : IAiToolInvoker
             var packages = Data(await _packages.SearchAsync(paging, new PackageFilter { MaxPrice = maxPrice }, cancellationToken));
             products.AddRange(packages.Items.Select(package => (package.Name, (object)new
             {
-                productType = AiProductType.Package, package.Id, package.Name, package.Price, package.TotalSessions, package.ValidityDays,
+                productType = AiProductType.Package, package.Id, package.Name, package.ShortDescription, package.Price, package.TotalSessions, package.ValidityDays,
             })));
         }
         return new { products = products.OrderBy(product => product.Name, StringComparer.CurrentCulture).Take(limit).Select(product => product.Item) };
@@ -148,14 +148,14 @@ public sealed class AiToolExecutor : IAiToolInvoker
             var service = Data(await _services.GetAsync(id, cancellationToken));
             return new
             {
-                productType = AiProductType.Service, service.Id, service.Name, service.Category, service.Description, service.Price,
+                productType = AiProductType.Service, service.Id, service.Name, service.Category, service.ShortDescription, service.Description, service.Price,
                 service.DurationMinutes,
             };
         }
         var package = Data(await _packages.GetAsync(id, cancellationToken));
         return new
         {
-            productType = AiProductType.Package, package.Id, package.Name, package.Description, package.Price, package.TotalSessions,
+            productType = AiProductType.Package, package.Id, package.Name, package.ShortDescription, package.Description, package.Price, package.TotalSessions,
             package.ValidityDays, package.SaleEndDate,
             items = package.Items.OrderBy(item => item.SortOrder)
                 .Select(item => new { item.ServiceName, item.SessionCount, item.MinDaysBetweenSessions }),

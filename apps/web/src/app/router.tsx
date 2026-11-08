@@ -9,12 +9,25 @@ import { OwnerLayout } from '@components/layout/OwnerLayout/OwnerLayout';
 import { HomePage } from '@/pages/public/HomePage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@/pages/public/LoginPage';
+import { PackageDetailPage } from '@/pages/public/PackageDetailPage';
+import { PackagesPage } from '@/pages/public/PackagesPage';
 import { RegisterPage } from '@/pages/public/RegisterPage';
+import { ServiceDetailPage } from '@/pages/public/ServiceDetailPage';
+import { ServicesPage } from '@/pages/public/ServicesPage';
 import { GuestOnly } from './GuestOnly';
 import { RouteGuard } from './RouteGuard';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
+
+/** Public pages that are built; the other public routes still show the placeholder. */
+const publicPages: Record<string, ReactElement> = {
+  '/': <HomePage />,
+  '/services': <ServicesPage />,
+  '/services/:serviceId': <ServiceDetailPage />,
+  '/packages': <PackagesPage />,
+  '/packages/:packageId': <PackageDetailPage />,
+};
 
 /** Login, register, forgot-password: own split layout without the site header/footer, guests only. */
 const guestPages: Record<string, ReactElement> = {
@@ -31,7 +44,7 @@ export const routeObjects: RouteObject[] = [
         .filter(([path]) => !(path in guestPages))
         .map(([path, title]) => ({
           path,
-          element: path === '/' ? <HomePage /> : <PlaceholderPage title={title} />,
+          element: publicPages[path] ?? <PlaceholderPage title={title} />,
         })),
       { path: '/forbidden', element: <ForbiddenPage /> },
       { path: '*', element: <NotFoundPage /> },

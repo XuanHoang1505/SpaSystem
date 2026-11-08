@@ -22,7 +22,7 @@ public sealed class UnitOfWorkTransactionTests
     public async Task CancellationAfterTheOperationStillCommits()
     {
         using var cancellation = new CancellationTokenSource();
-        var service = new SpaService { Name = "Giao dịch " + Guid.NewGuid().ToString("N")[..8], Category = "Kiểm tra", DurationMinutes = 30, Price = 1 };
+        var service = new SpaService { Name = "Giao dịch " + Guid.NewGuid().ToString("N")[..8], Category = TestCategories.New(), DurationMinutes = 30, Price = 1 };
         await using (var context = _postgres.CreateContext())
         {
             var unitOfWork = new UnitOfWork(context);

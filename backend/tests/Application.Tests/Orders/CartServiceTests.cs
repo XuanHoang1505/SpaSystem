@@ -35,7 +35,7 @@ public sealed class CartServiceTests
         _carts.EnsureCartIdAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(_cartId);
         _carts.GetLinesAsync(Arg.Any<Guid>(), Arg.Any<DateOnly>(), Arg.Any<CancellationToken>()).Returns([]);
         _services.GetDetailAsync(_serviceId, true, Arg.Any<CancellationToken>()).Returns(
-            new ServiceDetailDto(_serviceId, "Chăm sóc da", "Da", null, 350_000, 60, null, CatalogStatus.OnSale, StaffTestDoubles.Now, null));
+            new ServiceDetailDto(_serviceId, "Chăm sóc da", Guid.Empty, "Da", null, 350_000, 60, null, CatalogStatus.OnSale, StaffTestDoubles.Now, null));
     }
 
     private CartService Create(int maxItems = 20) => new(_carts, _services, _packages, _unitOfWork, _user, StaffTestDoubles.Clock(),

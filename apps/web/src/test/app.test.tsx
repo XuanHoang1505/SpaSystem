@@ -26,7 +26,17 @@ test('Unknown routes render NotFoundPage', () => {
   expect(screen.getByRole('heading', { name: 'Không tìm thấy trang' })).toBeInTheDocument();
 });
 
-const authPages = ['/', '/login', '/register', '/forgot-password'];
+/** Public routes with a real page (own tests) instead of the placeholder. */
+const builtPages = [
+  '/',
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/services',
+  '/services/:serviceId',
+  '/packages',
+  '/packages/:packageId',
+];
 
 function renderPlaceholder(path: string) {
   render(
@@ -40,13 +50,25 @@ function renderPlaceholder(path: string) {
   );
 }
 
-test.each(routes.public.filter(([path]) => !authPages.includes(path)))(
+test.each(routes.public.filter(([path]) => !builtPages.includes(path)))(
   'Public route %s renders its placeholder page',
   (path, title) => {
     useAuthStore.setState({ status: 'anonymous', accessToken: null, user: null });
     renderPlaceholder(path);
     expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
     expect(screen.getByText(/Tính năng đang được phát triển/)).toBeInTheDocument();
+  },
+);
+
+test.each(['/services', '/services/preview-id', '/packages', '/packages/preview-id'])(
+  'Catalog route %s renders a real page, not the placeholder (CAT-UI-T16)',
+  async (path) => {
+    useAuthStore.setState({ status: 'anonymous', accessToken: null, user: null });
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    renderPlaceholder(path);
+    expect(await screen.findByText('Lỗi cấu hình')).toBeInTheDocument();
+    expect(screen.queryByText(/Tính năng đang được phát triển/)).not.toBeInTheDocument();
+    vi.unstubAllEnvs();
   },
 );
 

@@ -197,7 +197,7 @@ public sealed class OrderingSchemaTests
         var service = new SpaService
         {
             Name = "Dịch vụ " + Guid.NewGuid().ToString("N")[..6],
-            Category = "Chăm sóc da",
+            Category = TestCategories.New(),
             DurationMinutes = 60,
             Price = 100_000,
         };

@@ -7,7 +7,7 @@ using NhuNguyetSpa.Application.Interfaces.Services.Catalog;
 
 namespace NhuNguyetSpa.Application.UseCases.Catalog;
 
-/// <summary>UC-SPA-06 category filter values and suggestions (A1). Suggestions always use the guest view.</summary>
+/// <summary>UC-SPA-06 suggestions (A1); always the guest view. Categories: <see cref="ServiceCategoryService"/>.</summary>
 public sealed class CatalogSearchService : ICatalogSearchService
 {
     public const int MaxSuggestions = 8;
@@ -27,9 +27,6 @@ public sealed class CatalogSearchService : ICatalogSearchService
         _viewer = viewer;
         _suggestionValidator = suggestionValidator;
     }
-
-    public async Task<OperationResult<IReadOnlyList<string>>> GetCategoriesAsync(CancellationToken cancellationToken) =>
-        OperationResult<IReadOnlyList<string>>.Success(await _services.GetCategoriesAsync(publicOnly: !_viewer.IsOwner, cancellationToken));
 
     public async Task<OperationResult<IReadOnlyList<CatalogSuggestionDto>>> SuggestAsync(SuggestionQuery query, CancellationToken cancellationToken)
     {

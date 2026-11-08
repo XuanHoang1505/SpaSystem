@@ -4,8 +4,10 @@ namespace NhuNguyetSpa.Application.DTOs.Catalog;
 public interface IServiceFields
 {
     string Name { get; }
-    string Category { get; }
+    Guid CategoryId { get; }
+    string? ShortDescription { get; }
     string? Description { get; }
     int DurationMinutes { get; }
     decimal Price { get; }
+    IReadOnlyList<ServiceStepRequest>? Steps { get; }
 }

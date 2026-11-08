@@ -5,11 +5,29 @@ namespace NhuNguyetSpa.API.Configuration;
 /// <summary>
 /// <c>dotnet run --project backend/src/API -- --seed-dev</c> (npm run db:seed): seeds the owner account, then exits. With
 /// <c>--seed-demo</c> (npm run db:seed:demo) it also recreates the demo catalog, staff, customers and purchases (<see cref="DemoDataSeeder"/>).
+/// <c>--seed-catalog</c> (npm run db:seed:catalog) only creates or resets the sample catalog (<see cref="CatalogDataSeeder"/>).
 /// </summary>
 public static class SeedCommand
 {
     public const string Argument = "--seed-dev";
     public const string DemoArgument = "--seed-demo";
+    public const string CatalogArgument = "--seed-catalog";
+
+    /// <summary>Sample categories, services and packages for testing the catalog screens; no account is needed.</summary>
+    public static async Task RunCatalogAsync(WebApplication app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+        if (!app.Environment.IsDevelopment())
+        {
+            app.Logger.LogError("{Argument} only runs in the Development environment (current: {Environment})",
+                CatalogArgument, app.Environment.EnvironmentName);
+            Environment.ExitCode = 1;
+            return;
+        }
+
+        await using var scope = app.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<CatalogDataSeeder>().SeedAsync(CancellationToken.None);
+    }
 
     public static async Task RunAsync(WebApplication app, bool withDemo = false)
     {

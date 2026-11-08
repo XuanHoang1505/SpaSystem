@@ -68,7 +68,7 @@ public sealed class StaffApi
 
         if (spaServiceId is null)
         {
-            var service = new SpaService { Name = "Dịch vụ " + Guid.NewGuid().ToString("N")[..6], Category = "Chăm sóc da", DurationMinutes = 60, Price = 300_000 };
+            var service = new SpaService { Name = "Dịch vụ " + Guid.NewGuid().ToString("N")[..6], Category = TestCategories.New(), DurationMinutes = 60, Price = 300_000 };
             context.SpaServices.Add(service);
             spaServiceId = service.Id;
         }

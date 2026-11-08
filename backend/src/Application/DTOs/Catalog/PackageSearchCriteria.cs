@@ -16,4 +16,7 @@ public sealed record PackageSearchCriteria(
     CatalogSortField SortBy,
     SortDirection SortDirection,
     int PageNumber,
-    int PageSize);
+    int PageSize)
+{
+    public Guid? ServiceId { get; init; }
+}

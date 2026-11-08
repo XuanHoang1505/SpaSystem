@@ -7,7 +7,6 @@ public sealed class ServiceFilterValidator : AbstractValidator<ServiceFilter>
 {
     public ServiceFilterValidator()
     {
-        RuleFor(filter => filter.Category).MaximumLength(100).WithMessage("Loại dịch vụ tối đa 100 ký tự.");
         RuleFor(filter => filter.MinPrice).OptionalVndAmount();
         RuleFor(filter => filter.MaxPrice).OptionalVndAmount()
             .Must((filter, max) => filter.MinPrice is null || max is null || max >= filter.MinPrice)

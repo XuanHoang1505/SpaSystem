@@ -24,7 +24,7 @@ afterEach(() => {
 
 test('anonymous visitors see Đăng nhập and Đăng ký in the header', async () => {
   mockApi();
-  renderApp('/services');
+  renderApp('/forbidden');
   expect(await header().findByRole('link', { name: 'Đăng nhập' })).toHaveAttribute(
     'href',
     '/login',
@@ -35,7 +35,7 @@ test('anonymous visitors see Đăng nhập and Đăng ký in the header', async 
 
 test('the header navigation has no auth pages (they are reached from the buttons and forms)', async () => {
   mockApi();
-  renderApp('/services');
+  renderApp('/forbidden');
   const nav = within(await header().findByRole('navigation', { name: 'Điều hướng chính' }));
   expect(nav.queryByRole('link', { name: 'Quên mật khẩu' })).not.toBeInTheDocument();
   expect(nav.queryByRole('link', { name: 'Đăng nhập' })).not.toBeInTheDocument();
@@ -43,9 +43,10 @@ test('the header navigation has no auth pages (they are reached from the buttons
 });
 
 test('while restoring, the header shows a placeholder instead of the buttons', async () => {
-  mockApi();
+  // The refresh never answers, so the session stays "restoring" however slow the run is.
+  mockApi({ 'POST /api/v1/auth/refresh': () => new Promise<Response>(() => undefined) });
   useAuthStore.setState({ status: 'restoring' });
-  renderApp('/services');
+  renderApp('/forbidden');
   expect(await header().findByTestId('account-skeleton')).toBeInTheDocument();
   expect(header().queryByRole('link', { name: 'Đăng nhập' })).not.toBeInTheDocument();
 });
@@ -53,7 +54,7 @@ test('while restoring, the header shows a placeholder instead of the buttons', a
 test('a signed-in owner gets an account menu with their area and logout', async () => {
   mockApi();
   signIn('owner');
-  renderApp('/services');
+  renderApp('/forbidden');
 
   const trigger = await header().findByRole('button', { name: 'Tài khoản của bạn' });
   expect(trigger).toHaveTextContent('L');
@@ -72,7 +73,7 @@ test('a signed-in owner gets an account menu with their area and logout', async 
 test('logout clears session even when the API fails', async () => {
   mockApi({ 'POST /api/v1/auth/logout': () => apiError(500, 'internal_error', 'x') });
   signIn('customer');
-  const router = renderApp('/services');
+  const router = renderApp('/forbidden');
 
   await userEvent.click(await header().findByRole('button', { name: 'Tài khoản của bạn' }));
   await userEvent.click(await screen.findByRole('menuitem', { name: 'Đăng xuất' }));

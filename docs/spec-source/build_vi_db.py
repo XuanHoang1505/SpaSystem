@@ -21,7 +21,8 @@ ERD = {
     "NhanVien": "maNguoiDung ngayVaoLam chuyenMon ngayNghiViec",
     "NhanVien_DichVu": "idNhanVien idDichVu",
     "LichLamViec": "id idNhanVien ngay gioBatDau gioKetThuc trangThai",
-    "DichVu": "id tenDichVu loaiDichVu moTa thoiLuongPhut gia hinhAnh trangThai ngayTao ngayCapNhat",
+    "DanhMucDichVu": "id tenDanhMuc moTa thuTu dangHienThi ngayTao ngayCapNhat",
+    "DichVu": "id tenDichVu idDanhMucDichVu moTa thoiLuongPhut gia hinhAnh trangThai ngayTao ngayCapNhat",
     "GoiDichVu": "id tenGoiDichVu moTa gia thoiHanNgay trangThai ngayBatDauBan ngayKetThucBan hinhAnh ngayTao ngayCapNhat",
     "GoiDichVuChiTiet": "id idDichVu idGoiDichVu soBuoi khoangCachNgayToiThieu thuTu ghiChu",
     "KhuyenMai": "id maCode moTa loaiGiamGia giaTri giaTriDonHangToiThieu giaTriGiamToiDa ngayBatDau ngayKetThuc "

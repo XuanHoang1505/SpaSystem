@@ -5,7 +5,7 @@ import type { AuthResult, UserRole } from '@spa/shared-types';
 import { AppProviders } from '@app/providers';
 import { routeObjects } from '@app/router';
 
-type Handler = (init: RequestInit | undefined) => Response | Promise<Response>;
+type Handler = (init: RequestInit | undefined, url: URL) => Response | Promise<Response>;
 
 const json = (body: unknown, status: number) => new Response(JSON.stringify(body), { status });
 
@@ -38,7 +38,7 @@ export function mockApi(handlers: Record<string, Handler> = {}) {
     );
     const handler = handlers[`${init?.method ?? 'GET'} ${url.pathname}`];
     return handler
-      ? handler(init)
+      ? handler(init, url)
       : apiError(401, 'invalid_refresh_token', 'Phiên đăng nhập đã hết hạn.');
   });
   vi.stubGlobal('fetch', fetcher);

@@ -22,18 +22,6 @@ public sealed class CatalogSearchServiceTests
     private static SuggestionCandidate Candidate(CatalogItemType type, string name, bool prefix) =>
         new(new CatalogSuggestionDto(type, Guid.NewGuid(), name, null), prefix);
 
-    [Theory]
-    [InlineData(null, true)]
-    [InlineData(Roles.Owner, false)]
-    public async Task CategoriesArePublicOnlyForNonOwner(string? role, bool publicOnly)
-    {
-        _services.GetCategoriesAsync(publicOnly, Arg.Any<CancellationToken>()).Returns(["Da", "Massage"]);
-
-        var result = await Create(role).GetCategoriesAsync(CancellationToken.None);
-
-        result.Data.Should().Equal("Da", "Massage");
-    }
-
     [Fact]
     public async Task SuggestReturnsAtMostEightPrefixMatchesFirst()
     {

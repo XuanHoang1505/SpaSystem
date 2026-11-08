@@ -4,6 +4,7 @@ namespace NhuNguyetSpa.Application.DTOs.Catalog;
 public interface IPackageFields
 {
     string Name { get; }
+    string? ShortDescription { get; }
     string? Description { get; }
     decimal Price { get; }
     int ValidityDays { get; }

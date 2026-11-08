@@ -11,8 +11,10 @@ public sealed class CatalogValidatorTests
     private static readonly Guid ServiceA = Guid.NewGuid();
     private static readonly Guid ServiceB = Guid.NewGuid();
 
-    private static CreateServiceRequest Service(string name = "Chăm sóc da", string category = "Da", int duration = 60, decimal price = 100_000) =>
-        new(name, category, null, duration, price, null);
+    private static readonly Guid CategoryA = Guid.NewGuid();
+
+    private static CreateServiceRequest Service(string name = "Chăm sóc da", Guid? categoryId = null, int duration = 60, decimal price = 100_000) =>
+        new(name, categoryId ?? CategoryA, null, duration, price, null);
 
     private static CreatePackageRequest Package(
         IReadOnlyList<PackageItemRequest>? items = null, int validityDays = 90, DateOnly? start = null, DateOnly? end = null, decimal price = 1_000_000) =>
@@ -34,8 +36,15 @@ public sealed class CatalogValidatorTests
         { Service(price: 1_000_000_000_000m), "Price" },
         { Service(name: ""), "Name" },
         { Service(name: new string('a', 151)), "Name" },
-        { Service(category: ""), "Category" },
-        { Service(category: new string('a', 101)), "Category" },
+        { Service(categoryId: Guid.Empty), "CategoryId" },
+        { Service() with { ShortDescription = new string('a', 201) }, "ShortDescription" },
+        { Service() with { Steps = Enumerable.Range(1, 13).Select(i => new ServiceStepRequest($"Bước {i}", null, null)).ToList() }, "Steps" },
+        { Service() with { Steps = [new ServiceStepRequest("", null, null)] }, "Steps[0].Title" },
+        { Service() with { Steps = [new ServiceStepRequest(new string('a', 101), null, null)] }, "Steps[0].Title" },
+        { Service() with { Steps = [new ServiceStepRequest("A", new string('a', 501), null)] }, "Steps[0].Description" },
+        { Service() with { Steps = [new ServiceStepRequest("A", null, 0)] }, "Steps[0].DurationMinutes" },
+        { Service() with { Steps = [new ServiceStepRequest("A", null, 601)] }, "Steps[0].DurationMinutes" },
+        { Service(duration: 60) with { Steps = [new ServiceStepRequest("A", null, 40), new ServiceStepRequest("B", null, null), new ServiceStepRequest("C", null, 30)] }, "Steps" },
     };
 
     [Theory]

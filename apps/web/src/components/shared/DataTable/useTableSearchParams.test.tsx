@@ -76,4 +76,11 @@ describe('useTableSearchParams', () => {
     expect(result.current.location.search).toBe('');
     expect(() => result.current.table.setFilter('page', '2')).toThrow(/reserved/);
   });
+
+  test('setFilters changes several filters in one URL update and resets the page', () => {
+    const { result } = setup('/x?page=3&maxPrice=900000');
+    act(() => result.current.table.setFilters({ minPrice: '100000', maxPrice: null }));
+    expect(result.current.location.search).toBe('?minPrice=100000');
+    expect(() => result.current.table.setFilters({ search: 'x' })).toThrow(/reserved/);
+  });
 });

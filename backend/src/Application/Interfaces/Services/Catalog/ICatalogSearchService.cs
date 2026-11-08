@@ -3,9 +3,8 @@ using NhuNguyetSpa.Application.DTOs.Catalog;
 
 namespace NhuNguyetSpa.Application.Interfaces.Services.Catalog;
 
-/// <summary>Search helpers for UC-SPA-06: category filter values and type-ahead suggestions (A1).</summary>
+/// <summary>Type-ahead suggestions for UC-SPA-06 (A1).</summary>
 public interface ICatalogSearchService
 {
-    Task<OperationResult<IReadOnlyList<string>>> GetCategoriesAsync(CancellationToken cancellationToken);
     Task<OperationResult<IReadOnlyList<CatalogSuggestionDto>>> SuggestAsync(SuggestionQuery query, CancellationToken cancellationToken);
 }

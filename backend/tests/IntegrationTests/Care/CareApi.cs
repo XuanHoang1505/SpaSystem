@@ -57,7 +57,7 @@ public sealed class CareApi
     {
         customerId ??= (await Staff.SeedCustomerAsync("Khách gói " + Guid.NewGuid().ToString("N")[..6])).Id;
         await using var context = _postgres.CreateContext();
-        var service = new SpaService { Name = "Dịch vụ gói " + Guid.NewGuid().ToString("N")[..6], Category = "Chăm sóc da", DurationMinutes = 60, Price = 300_000 };
+        var service = new SpaService { Name = "Dịch vụ gói " + Guid.NewGuid().ToString("N")[..6], Category = TestCategories.New(), DurationMinutes = 60, Price = 300_000 };
         context.SpaServices.Add(service);
         var now = _factory.Clock.UtcNow;
         var order = new Order

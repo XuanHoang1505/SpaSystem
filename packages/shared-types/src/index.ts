@@ -43,3 +43,6 @@ export interface SystemStatusResponse {
   utcTime: string;
 }
 export * from './auth';
+export * from './catalog';
+export * from './availability';
+export * from './staff';
