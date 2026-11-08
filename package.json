@@ -16,6 +16,7 @@
     "db:migrate": "dotnet tool restore && dotnet ef database update --project backend/src/Infrastructure --startup-project backend/src/API",
     "db:seed": "dotnet run --project backend/src/API --launch-profile http -- --seed-dev",
     "db:seed:demo": "dotnet run --project backend/src/API --launch-profile http -- --seed-demo",
+    "db:seed:catalog": "dotnet run --project backend/src/API --launch-profile http -- --seed-catalog",
     "web": "npm run dev --workspace @spa/web",
     "web:build": "npm run build --workspace @spa/web",
     "web:test": "npm run test --workspace @spa/web",
