@@ -25,7 +25,7 @@ APIS = [
  ("CAT","Chi tiết dịch vụ","GET",P+"/services/{id}","Query","UC-SPA-07","SCR-W03, SCR-M03","ALL","—","DichVuDetailDto","200","404 nếu NgungBan (với khách)"),
  ("CAT","Tìm kiếm gói dịch vụ","GET",P+"/packages","Query","UC-SPA-06, 09","SCR-W01, SCR-W04, SCR-W32, SCR-M04","ALL","?q&giaTu&giaDen&daSuDung&trangThai&page&pageSize","PagedResult<GoiDichVuListItemDto{id, tenGoiDichVu, gia, thoiHanNgay, tongSoBuoi}>","200","Khách: DangBan và trong NgayBatDauBan–NgayKetThucBan"),
  ("CAT","Chi tiết gói dịch vụ","GET",P+"/packages/{id}","Query","UC-SPA-07","SCR-W05, SCR-M05","ALL","—","GoiDichVuDetailDto{…, chiTiet[{dichVu, soBuoi, thuTu, khoangCachNgayToiThieu}]}","200",""),
- ("CAT","Danh sách loại dịch vụ","GET",P+"/service-categories","Query","UC-SPA-06","SCR-W02, SCR-M02, SCR-W31","ALL","—","string[] (DISTINCT LoaiDichVu, sắp theo tên)","200","Dùng làm bộ lọc 'danh mục'; khách chỉ thấy loại có dịch vụ DangBan"),
+ ("CAT","Danh sách loại dịch vụ","GET",P+"/service-categories","Query","UC-SPA-06","SCR-W02, SCR-M02, SCR-W31","ALL","—","[{id, name, description, sortOrder, isActive, serviceCount}] (sắp theo sortOrder, tên)","200","Bảng service_categories (Q-13); khách chỉ thấy danh mục đang hiển thị có dịch vụ DangBan"),
  ("CAT","Gợi ý tìm kiếm","GET",P+"/catalog/suggestions","Query","UC-SPA-06","SCR-W02, SCR-M02","ALL","?q (≥ 2 ký tự)","[{loai: DichVu|Goi, id, ten}] (≤ 8)","200","UC-SPA-06 A1"),
  ("CAT","Thông tin giới thiệu spa","GET",P+"/spa-info","Query","UC-SPA-08","SCR-W06, SCR-M09","ALL","—","{tenSpa, gioiThieu, diaChi, sdt, gioMoCua}","200","ERD chưa có bảng → ThongTinSpa (ĐX) hoặc appsettings"),
  ("CAT","Thêm dịch vụ","POST",P+"/services","Command","UC-SPA-09","SCR-W31","OWN","{tenDichVu, loaiDichVu, moTa, thoiLuongPhut, gia, trangThai}","DichVuDetailDto","201",""),
@@ -145,6 +145,9 @@ APIS = [
  ("TRT","Hủy liệu trình","POST",P+"/treatments/{id}/cancel","Command","UC-SPA-21","SCR-W36","OWN","{reason}","TreatmentPlanDto","200","ĐX (A2, Q-38); 409 TREATMENT_HAS_BOOKED_SESSIONS; gói → cancelled"),
  ("TRT","Đóng liệu trình","POST",P+"/treatments/{id}/complete","Command","UC-SPA-21","SCR-W36","OWN","—","TreatmentPlanDto","200","ĐX (CARE-LATER-03); 409 TREATMENT_SESSIONS_REMAINING; gói → completed"),
  ("AUTH","Xóa ảnh đại diện","DELETE",P+"/me/avatar","Command","UC-SPA-04","SCR-W22, SCR-M15","CUS, STF, OWN","—","—","204","ĐX (Q-56); chưa có ảnh → 204"),
+ ("CAT","Thêm danh mục dịch vụ","POST",P+"/service-categories","Command","UC-SPA-09","SCR-W31","OWN","{name, description?, sortOrder?, isActive?}","ServiceCategoryDto","201","ĐX (Q-13); 409 service_category_exists"),
+ ("CAT","Sửa danh mục dịch vụ","PUT",P+"/service-categories/{id}","Command","UC-SPA-09","SCR-W31","OWN","{name, description?, sortOrder, isActive}","ServiceCategoryDto","200","ĐX (Q-13); 404 service_category_not_found, 409 service_category_exists"),
+ ("CAT","Xóa danh mục dịch vụ","DELETE",P+"/service-categories/{id}","Command","UC-SPA-09","SCR-W31","OWN","—","—","204","ĐX (Q-13); 409 service_category_in_use khi còn dịch vụ"),
 ]
 
 DTO_EXAMPLES = [

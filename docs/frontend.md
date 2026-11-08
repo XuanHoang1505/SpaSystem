@@ -73,6 +73,18 @@ Semantic header/nav/main/footer, skip link, focus visible, label/input error ass
 - **Route:** `RouteGuard` bọc Customer/Staff/Owner: đang khôi phục → `PageLoader`; chưa đăng nhập → `/login?redirect=…` (sau khi tự đăng xuất thì về `/`); sai vai trò → `/forbidden`. `GuestOnly` bọc `/login`, `/register`, `/forgot-password`: đã đăng nhập thì chuyển tới `redirect` an toàn (`safeRedirect`) hoặc trang chủ theo vai trò (`/account`, `/staff`, `/owner`).
 - **Kết thúc phiên:** `SessionBootstrap` xóa cache TanStack Query mỗi khi phiên kết thúc và toast khi phiên hết hạn.
 
+## Danh mục dịch vụ và gói (UC-SPA-06/07)
+
+- **Trang:** `/services` (lưới thẻ, chip loại dịch vụ, khoảng giá, sắp xếp), `/services/:serviceId`, `/packages` (lưới thẻ, khoảng giá, sắp xếp), `/packages/:packageId` (timeline trình tự buổi). Trang ở `pages/public/` chỉ ghép feature. Spec: `docs/specs/catalog.md`, mục "Giao diện (web)".
+- **Feature:** `features/services` (hooks `useServiceSearch`, `useService`, `useServiceCategories`, `useCatalogSuggestions`, `useCatalogListParams`; component `CatalogSearchBox` (combobox gợi ý), `CatalogPageHeader`, `ServiceFilterPanel`, `ServiceCard`, `CatalogCard`, `CatalogGrid`, `CatalogDetailStates`, `ActiveFilterChips`, `CatalogTrustStrip`) và `features/service-packages` (`usePackageSearch`, `usePackage`, `PackageSearch`, `PackageDetailView`, `PackageTimeline`) dùng lại các khối của `services` qua `index.ts`.
+- **API:** `CatalogApi` + `catalogQueryKeys` (`@spa/api-client`) → `lib/api/catalog.ts` (`callCatalog`, ném `ApiConfigurationError` khi thiếu `VITE_API_BASE_URL`). `catalogRetry`: lỗi 4xx và lỗi cấu hình không retry. Chủ spa đang đăng nhập gửi Bearer nên thấy cả mục "Ngừng bán".
+- **Bộ lọc trên URL:** `search`, `categoryId` (GUID; giá trị khác hoặc link cũ `?category=` bị bỏ qua), `minPrice`, `maxPrice`, `sortBy`/`sortDirection`, `page` (12 thẻ/trang) qua `useTableSearchParams`; `setFilters` đổi nhiều khóa trong một lần. `/packages` không gửi `categoryId`. Ô chọn danh mục hiện `serviceCount` từ `GET /service-categories`.
+- **Shared mới:** `ImageWithFallback`, `InfoTile` (`row`/`stacked`), `PriceRangeFilter`, `SimplePager`, `NumberedPager`, `DecorativeShapes`; hook `hooks/useDocumentTitle`.
+- Mô tả ngắn trên thẻ và đầu trang chi tiết lấy từ `shortDescription`, "Quy trình chăm sóc" từ `steps` (ẩn khi rỗng) (Q-71).
+- Trang chi tiết dịch vụ ghép thêm (dữ liệu thật): "Giờ trống gần nhất" hôm nay/ngày mai (`features/bookings`, `AvailabilityApi`), "Kỹ thuật viên thực hiện" (`features/staff`, `StaffApi.listPublic`), "Gói liệu trình có dịch vụ này" với % tiết kiệm (`GET /packages?serviceId`, `retailPrice`). `ServiceDetailView` nhận `aside`/`sections` để `pages/public/ServiceDetailPage` ghép các feature đó mà `services` không import ngược. Trang chi tiết gói có so sánh giá lẻ, giá/buổi, thời gian hoàn thành sớm nhất (`coursePlan.ts`), "Cách sử dụng gói". Hai trang có "Câu hỏi thường gặp" lấy số từ `features/services/catalogPolicies.ts` (giữ đồng bộ với appsettings). Lời gọi API của feature mới đi qua `lib/api/call.ts` (`callApi`).
+- Bố cục theo mẫu Stitch (ID trong spec). **Nội dung tạm** gom ở `features/services/catalogPlaceholders.ts`: ★ giả, bộ lọc thời lượng/tình trạng da ("Sắp có"), dải cam kết, "Bạn sẽ nhận được", đặc quyền gói; nút "Đặt lịch" trên thẻ tạm dẫn sang chi tiết; nút đặt lịch/mua/hỏi AI ở trang chi tiết là `ComingSoonButton` (toast "đang được phát triển"). "Dịch vụ cùng loại" và "Gói liệu trình khác" dùng dữ liệu thật. Xóa khi có UC-SPA-29, mô tả trong API danh sách, UC-SPA-15 web.
+- Chưa có: "Thêm vào giỏ"/"Mua ngay" (UC-SPA-10/11).
+
 ## Chạy và kiểm tra
 
 ```powershell
@@ -81,4 +93,4 @@ npm run web:test
 npm run web:build
 ```
 
-Vitest tests mock network (`src/test/mockApi.tsx` giả `fetch` theo "METHOD /path"); kiểm tra các routes, App/home/404, guard, phiên, theme, ba màn auth, button và system status. Không cần backend thật. Build không có API URL vẫn chạy và giao diện báo Configuration Error; Dockerfile yêu cầu build arg API URL.
+Vitest tests mock network (`src/test/mockApi.tsx` giả `fetch` theo "METHOD /path"); kiểm tra các routes, App/home/404, guard, phiên, theme, ba màn auth, bốn màn danh mục, button và system status. Không cần backend thật. Build không có API URL vẫn chạy và giao diện báo Configuration Error; Dockerfile yêu cầu build arg API URL.
