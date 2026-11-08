@@ -43,3 +43,11 @@ export const formatLocalTime = (value: string) => value.slice(0, 5);
 
 /** Mốc thời gian UTC từ backend (`...AtUtc`) → giờ Việt Nam "HH:mm". */
 export const formatTimeUtc = (value: string) => time.format(new Date(value));
+
+/** Thời lượng dịch vụ: 45 → "45 phút", 60 → "1 giờ", 90 → "1 giờ 30 phút". */
+export function formatDuration(minutes: number) {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest} phút`;
+  return rest === 0 ? `${hours} giờ` : `${hours} giờ ${rest} phút`;
+}

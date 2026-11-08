@@ -62,8 +62,10 @@ export function useTableSearchParams({
     [setParams],
   );
 
+  /** `replace` sửa URL hiện tại thay vì thêm vào lịch sử (ví dụ tự về trang cuối khi trang vượt quá). */
   const setPage = useCallback(
-    (page: number) => update({ page: page > 1 ? String(page) : null }, { resetPage: false }),
+    (page: number, { replace = false }: { replace?: boolean } = {}) =>
+      update({ page: page > 1 ? String(page) : null }, { resetPage: false, replace }),
     [update],
   );
   const setPageSize = useCallback(
@@ -88,6 +90,15 @@ export function useTableSearchParams({
     (key: string, value: string | null) => {
       if (RESERVED.has(key)) throw new Error(`"${key}" is reserved by useTableSearchParams.`);
       update({ [key]: value });
+    },
+    [update],
+  );
+  /** Đổi nhiều bộ lọc trong một lần cập nhật URL (gọi `setFilter` liên tiếp sẽ ghi đè nhau). */
+  const setFilters = useCallback(
+    (changes: Record<string, string | null>) => {
+      const reserved = Object.keys(changes).find((key) => RESERVED.has(key));
+      if (reserved) throw new Error(`"${reserved}" is reserved by useTableSearchParams.`);
+      update(changes);
     },
     [update],
   );
@@ -120,6 +131,7 @@ export function useTableSearchParams({
     setSearch,
     getFilter,
     setFilter,
+    setFilters,
     resetFilters,
   };
 }
