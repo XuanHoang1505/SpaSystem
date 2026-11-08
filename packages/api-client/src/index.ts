@@ -204,3 +204,6 @@ export async function checkSystemStatus(
 }
 
 export * from './auth';
+export * from './catalog';
+export * from './availability';
+export * from './staff';
