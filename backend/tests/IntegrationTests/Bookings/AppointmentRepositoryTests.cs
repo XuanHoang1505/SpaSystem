@@ -36,7 +36,7 @@ public sealed class AppointmentRepositoryTests : IAsyncLifetime
     private async Task<SpaService> SeedServiceAsync(string name)
     {
         await using var context = _postgres.CreateContext();
-        var service = new SpaService { Name = name, Category = "Chăm sóc da", DurationMinutes = 60, Price = 300_000 };
+        var service = new SpaService { Name = name, Category = TestCategories.New(), DurationMinutes = 60, Price = 300_000 };
         context.SpaServices.Add(service);
         await context.SaveChangesAsync();
         return service;

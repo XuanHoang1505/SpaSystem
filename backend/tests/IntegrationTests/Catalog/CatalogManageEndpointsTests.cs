@@ -16,6 +16,7 @@ public sealed class CatalogManageEndpointsTests : IAsyncLifetime
     private AuthApiFactory _factory = null!;
     private CatalogApi _api = null!;
     private string _owner = null!;
+    private Guid _categoryId;
 
     public CatalogManageEndpointsTests(PostgresFixture postgres) => _postgres = postgres;
 
@@ -24,6 +25,7 @@ public sealed class CatalogManageEndpointsTests : IAsyncLifetime
         _factory = new AuthApiFactory(_postgres.ConnectionString);
         _api = new CatalogApi(_factory, _postgres);
         _owner = await _api.LoginAsync(UserRole.Owner);
+        _categoryId = (await _api.SeedCategoryAsync("Chăm sóc da")).Id;
     }
 
     public async Task DisposeAsync()
@@ -32,8 +34,79 @@ public sealed class CatalogManageEndpointsTests : IAsyncLifetime
         await _factory.DisposeAsync();
     }
 
-    private static object NewService(string name, string category = "Chăm sóc da", int durationMinutes = 60, decimal price = 350_000) =>
-        new { name, category, description = "Làm sạch sâu", durationMinutes, price };
+    private object NewService(string name, Guid? categoryId = null, int durationMinutes = 60, decimal price = 350_000) =>
+        new { name, categoryId = categoryId ?? _categoryId, description = "Làm sạch sâu", durationMinutes, price };
+
+    [Fact]
+    public async Task ShortDescriptionAndStepsAreSavedReplacedAndKept()
+    {
+        var tag = CatalogApi.NewTag();
+        var body = new
+        {
+            name = $"{tag} quy trình", categoryId = _categoryId, description = "Mô tả dài", durationMinutes = 60, price = 300_000,
+            shortDescription = "   ",
+            steps = new object[]
+            {
+                new { title = "Làm sạch", durationMinutes = 10 },
+                new { title = "Đắp mặt nạ", description = "Mặt nạ thảo mộc", durationMinutes = 20 },
+                new { title = "Thư giãn" },
+            },
+        };
+
+        var (created, createdBody) = await _api.SendJsonAsync(HttpMethod.Post, "/api/v1/services", body, _owner);
+        var id = CatalogApi.Data(createdBody).GetProperty("id").GetGuid();
+        var update = new
+        {
+            name = $"{tag} quy trình", categoryId = _categoryId, description = "Mô tả dài", durationMinutes = 60, price = 300_000,
+            shortDescription = "Làm sạch và cấp ẩm",
+        };
+        var (kept, keptBody) = await _api.SendJsonAsync(HttpMethod.Put, $"/api/v1/services/{id}", update, _owner);
+        var (replaced, replacedBody) = await _api.SendJsonAsync(HttpMethod.Put, $"/api/v1/services/{id}",
+            new { update.name, update.categoryId, update.durationMinutes, update.price, steps = new object[] { new { title = "Mới 1" }, new { title = "Mới 2" } } },
+            _owner);
+        var (cleared, clearedBody) = await _api.SendJsonAsync(HttpMethod.Put, $"/api/v1/services/{id}",
+            new { update.name, update.categoryId, update.durationMinutes, update.price, steps = Array.Empty<object>() }, _owner);
+
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
+        var data = CatalogApi.Data(createdBody);
+        data.GetProperty("shortDescription").ValueKind.Should().Be(System.Text.Json.JsonValueKind.Null, "blank is stored as null (CAT-T42)");
+        Steps(createdBody).Should().Equal((1, "Làm sạch"), (2, "Đắp mặt nạ"), (3, "Thư giãn"));
+        kept.StatusCode.Should().Be(HttpStatusCode.OK);
+        CatalogApi.Data(keptBody).GetProperty("shortDescription").GetString().Should().Be("Làm sạch và cấp ẩm");
+        Steps(keptBody).Should().HaveCount(3, "no step list keeps the steps (CAT-T44)");
+        replaced.StatusCode.Should().Be(HttpStatusCode.OK);
+        Steps(replacedBody).Should().Equal((1, "Mới 1"), (2, "Mới 2"));
+        cleared.StatusCode.Should().Be(HttpStatusCode.OK);
+        Steps(clearedBody).Should().BeEmpty();
+        await using var context = _postgres.CreateContext();
+        (await context.ServiceSteps.CountAsync(step => step.SpaServiceId == id)).Should().Be(0);
+
+        static (int, string)[] Steps(System.Text.Json.JsonDocument document) => CatalogApi.Data(document).GetProperty("steps")
+            .EnumerateArray().Select(step => (step.GetProperty("sortOrder").GetInt32(), step.GetProperty("title").GetString()!)).ToArray();
+    }
+
+    [Fact]
+    public async Task StepsAreValidated()
+    {
+        var tag = CatalogApi.NewTag();
+        object Body(object steps) => new { name = $"{tag} sai", categoryId = _categoryId, durationMinutes = 60, price = 1, steps };
+
+        var (tooLong, tooLongBody) = await _api.SendJsonAsync(HttpMethod.Post, "/api/v1/services",
+            new { name = $"{tag} sai", categoryId = _categoryId, durationMinutes = 60, price = 1, shortDescription = new string('a', 201) }, _owner);
+        var (noTitle, noTitleBody) = await _api.SendJsonAsync(HttpMethod.Post, "/api/v1/services", Body(new object[] { new { title = "" } }), _owner);
+        var (overTime, overTimeBody) = await _api.SendJsonAsync(HttpMethod.Post, "/api/v1/services",
+            Body(new object[] { new { title = "A", durationMinutes = 40 }, new { title = "B", durationMinutes = 30 } }), _owner);
+
+        tooLong.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        Fields(tooLongBody).Should().Contain("ShortDescription");
+        noTitle.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        Fields(noTitleBody).Should().Contain("Steps[0].Title");
+        overTime.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        Fields(overTimeBody).Should().Contain("Steps");
+
+        static string[] Fields(System.Text.Json.JsonDocument document) => document.RootElement.GetProperty("errors")
+            .EnumerateArray().Select(error => error.GetProperty("field").GetString()!).ToArray();
+    }
 
     [Fact]
     public async Task OwnerCreatesServiceWithLocationHeaderAndAudit()
@@ -47,6 +120,8 @@ public sealed class CatalogManageEndpointsTests : IAsyncLifetime
         var id = data.GetProperty("id").GetGuid();
         response.Headers.Location!.ToString().Should().EndWith($"/api/v1/services/{id}");
         data.GetProperty("status").GetString().Should().Be("on_sale");
+        data.GetProperty("categoryId").GetGuid().Should().Be(_categoryId);
+        data.GetProperty("category").GetString().Should().Be("Chăm sóc da");
         await using var context = _postgres.CreateContext();
         var saved = await context.SpaServices.AsNoTracking().SingleAsync(service => service.Id == id);
         saved.CreatedBy.Should().NotBeNull();
@@ -70,16 +145,23 @@ public sealed class CatalogManageEndpointsTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task CreateServiceReusesExistingCategorySpelling()
+    public async Task ServiceCategoryMustExistAndBeVisible()
     {
         var tag = CatalogApi.NewTag();
-        await _api.SeedServiceAsync($"{tag} có sẵn", category: $"Chăm sóc da {tag}");
+        var hidden = await _api.SeedCategoryAsync($"{tag} ẩn", isActive: false);
+        var kept = await _api.SeedServiceAsync($"{tag} giữ", category: $"{tag} ẩn");
 
-        var (_, reused) = await _api.SendJsonAsync(HttpMethod.Post, "/api/v1/services", NewService($"{tag} a", $"  cham   soc DA {tag} "), _owner);
-        var (_, fresh) = await _api.SendJsonAsync(HttpMethod.Post, "/api/v1/services", NewService($"{tag} b", $"Massage  body {tag}"), _owner);
+        var (missing, missingBody) = await _api.SendJsonAsync(HttpMethod.Post, "/api/v1/services", NewService($"{tag} a", Guid.NewGuid()), _owner);
+        var (inactive, inactiveBody) = await _api.SendJsonAsync(HttpMethod.Post, "/api/v1/services", NewService($"{tag} b", hidden.Id), _owner);
+        var (keep, _) = await _api.SendJsonAsync(HttpMethod.Put, $"/api/v1/services/{kept.Id}", NewService($"{tag} giữ 2", hidden.Id), _owner);
+        var (noCategory, _) = await _api.SendJsonAsync(HttpMethod.Post, "/api/v1/services", NewService($"{tag} c", Guid.Empty), _owner);
 
-        CatalogApi.Data(reused).GetProperty("category").GetString().Should().Be($"Chăm sóc da {tag}");
-        CatalogApi.Data(fresh).GetProperty("category").GetString().Should().Be($"Massage body {tag}");
+        missing.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        CatalogApi.ErrorCode(missingBody).Should().Be("service_category_not_found");
+        inactive.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        CatalogApi.ErrorCode(inactiveBody).Should().Be("service_category_inactive");
+        keep.StatusCode.Should().Be(HttpStatusCode.OK, "a service may keep the hidden category it already has (CAT-T37)");
+        noCategory.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Theory]

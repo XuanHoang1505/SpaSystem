@@ -8,6 +8,8 @@ internal static class CatalogRules
     public const decimal MaxPrice = 999_999_999_999m;
     public const int MaxDescriptionLength = 4000;
     public const int MaxNoteLength = 1000;
+    public const int MaxShortDescriptionLength = 200;
+    public const int MaxSteps = 12;
 
     /// <summary>Whole VND between 0 and <see cref="MaxPrice"/> (numeric(12,0)).</summary>
     public static IRuleBuilderOptions<T, decimal> VndAmount<T>(this IRuleBuilder<T, decimal> rule) => rule

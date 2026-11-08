@@ -1012,6 +1012,60 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.ServiceCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("sort_order");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_service_categories");
+
+                    b.ToTable("service_categories", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_service_categories_sort_order", "sort_order BETWEEN 0 AND 999");
+                        });
+                });
+
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.ServiceEntitlement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1093,6 +1147,11 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly?>("SaleStartDate")
                         .HasColumnType("date")
                         .HasColumnName("sale_start_date");
+
+                    b.Property<string>("ShortDescription")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("short_description");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1178,6 +1237,50 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_service_package_items_session_count_positive", "session_count > 0");
 
                             t.HasCheckConstraint("ck_service_package_items_sort_order_positive", "sort_order > 0");
+                        });
+                });
+
+            modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.ServiceStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<int?>("DurationMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_minutes");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<Guid>("SpaServiceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("spa_service_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_service_steps");
+
+                    b.HasIndex("SpaServiceId", "SortOrder")
+                        .IsUnique()
+                        .HasDatabaseName("ux_service_steps_spa_service_id_sort_order");
+
+                    b.ToTable("service_steps", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_service_steps_duration_minutes", "duration_minutes IS NULL OR duration_minutes BETWEEN 1 AND 600");
+
+                            t.HasCheckConstraint("ck_service_steps_sort_order", "sort_order BETWEEN 1 AND 12");
                         });
                 });
 
@@ -1310,11 +1413,9 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("category");
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -1348,6 +1449,11 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(12,0)")
                         .HasColumnName("price");
 
+                    b.Property<string>("ShortDescription")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("short_description");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -1365,8 +1471,8 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_spa_services");
 
-                    b.HasIndex("Category")
-                        .HasDatabaseName("ix_spa_services_category");
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("ix_spa_services_category_id");
 
                     b.ToTable("spa_services", null, t =>
                         {
@@ -2002,6 +2108,16 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.Navigation("SpaService");
                 });
 
+            modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.ServiceStep", b =>
+                {
+                    b.HasOne("NhuNguyetSpa.Domain.Entities.SpaService", null)
+                        .WithMany("Steps")
+                        .HasForeignKey("SpaServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_service_steps_spa_services_spa_service_id");
+                });
+
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.SkinProfile", b =>
                 {
                     b.HasOne("NhuNguyetSpa.Domain.Entities.Appointment", "Appointment")
@@ -2030,6 +2146,18 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.Navigation("AssessedByStaffMember");
 
                     b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.SpaService", b =>
+                {
+                    b.HasOne("NhuNguyetSpa.Domain.Entities.ServiceCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_spa_services_service_categories_category_id");
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.StaffMember", b =>
@@ -2133,6 +2261,11 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.ServicePackage", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.SpaService", b =>
+                {
+                    b.Navigation("Steps");
                 });
 
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.StaffMember", b =>

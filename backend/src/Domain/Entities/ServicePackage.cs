@@ -7,6 +7,7 @@ namespace NhuNguyetSpa.Domain.Entities;
 public sealed class ServicePackage : BaseAuditableEntity
 {
     public string Name { get; set; } = string.Empty;
+    public string? ShortDescription { get; set; }
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public int ValidityDays { get; set; }

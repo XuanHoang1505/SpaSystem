@@ -100,7 +100,7 @@ public sealed class AiToolExecutorTests
         var executor = Create(customer: false);
         _services.SearchAsync(Arg.Any<PagedQuery>(), Arg.Any<ServiceFilter>(), Arg.Any<CancellationToken>())
             .Returns(OperationResult<PagedResult<ServiceListItemDto>>.Success(new PagedResult<ServiceListItemDto>(
-                new[] { "D", "B", "F", "H" }.Select(name => new ServiceListItemDto(Guid.NewGuid(), name, "Da mặt", 100_000, 60, null, CatalogStatus.OnSale)), 1, 5, 4)));
+                new[] { "D", "B", "F", "H" }.Select(name => new ServiceListItemDto(Guid.NewGuid(), name, Guid.Empty, "Da mặt", 100_000, 60, null, CatalogStatus.OnSale)), 1, 5, 4)));
         _packages.SearchAsync(Arg.Any<PagedQuery>(), Arg.Any<PackageFilter>(), Arg.Any<CancellationToken>())
             .Returns(OperationResult<PagedResult<PackageListItemDto>>.Success(new PagedResult<PackageListItemDto>(
                 new[] { "A", "C", "E" }.Select(name => new PackageListItemDto(Guid.NewGuid(), name, 900_000, 90, 5, null, CatalogStatus.OnSale, null, null)), 1, 5, 3)));
@@ -300,7 +300,7 @@ public sealed class AiToolExecutorTests
     private static JsonElement Args(string json) => JsonDocument.Parse(json).RootElement.Clone();
 
     private static ServiceDetailDto Service(Guid id, string name, decimal price) =>
-        new(id, name, "Da mặt", "Mô tả", price, 60, "https://img.test/a.jpg", CatalogStatus.OnSale, DateTime.UtcNow, null);
+        new(id, name, Guid.Empty, "Da mặt", "Mô tả", price, 60, "https://img.test/a.jpg", CatalogStatus.OnSale, DateTime.UtcNow, null);
 
     private static PurchasedPackageDto Package(Guid sessionId, int total, int used) => new(
         Guid.NewGuid(), Guid.NewGuid(), "Gói trị mụn", "https://img.test/p.jpg", CustomerPackageStatus.Active, DateTime.UtcNow, DateTime.UtcNow,

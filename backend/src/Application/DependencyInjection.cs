@@ -42,7 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<CatalogViewer>();
-        services.AddScoped<ServiceCategoryResolver>();
+        services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
         services.AddScoped<IPackageCatalogService, PackageCatalogService>();
         services.AddScoped<ICatalogSearchService, CatalogSearchService>();

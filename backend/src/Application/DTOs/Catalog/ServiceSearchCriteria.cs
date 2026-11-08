@@ -9,7 +9,7 @@ namespace NhuNguyetSpa.Application.DTOs.Catalog;
 /// </summary>
 public sealed record ServiceSearchCriteria(
     string? Search,
-    string? Category,
+    Guid? CategoryId,
     decimal? MinPrice,
     decimal? MaxPrice,
     CatalogStatus? Status,

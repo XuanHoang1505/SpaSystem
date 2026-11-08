@@ -20,8 +20,8 @@ public sealed class PackageCatalogServiceTests
     private readonly IServicePackageRepository _packages = Substitute.For<IServicePackageRepository>();
     private readonly ISpaServiceRepository _services = Substitute.For<ISpaServiceRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly SpaService _onSale = new() { Name = "Chăm sóc da", Category = "Da", DurationMinutes = 60, Price = 1 };
-    private readonly SpaService _discontinued = new() { Name = "Massage cổ", Category = "Massage", DurationMinutes = 30, Price = 1 };
+    private readonly SpaService _onSale = new() { Name = "Chăm sóc da", DurationMinutes = 60, Price = 1 };
+    private readonly SpaService _discontinued = new() { Name = "Massage cổ", DurationMinutes = 30, Price = 1 };
 
     public PackageCatalogServiceTests()
     {
@@ -79,7 +79,7 @@ public sealed class PackageCatalogServiceTests
     {
         ServicePackage? added = null;
         await _packages.AddAsync(Arg.Do<ServicePackage>(package => added = package), Arg.Any<CancellationToken>());
-        var second = new SpaService { Name = "Tẩy da chết", Category = "Da", DurationMinutes = 30, Price = 1 };
+        var second = new SpaService { Name = "Tẩy da chết", DurationMinutes = 30, Price = 1 };
         _services.GetByIdsAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>()).Returns([_onSale, second]);
 
         var result = await Create(Roles.Owner).CreateAsync(NewPackage(Item(second, 2), Item(_onSale, 1)), CancellationToken.None);
@@ -89,6 +89,29 @@ public sealed class PackageCatalogServiceTests
         added.Items.Select(item => item.SortOrder).Should().BeEquivalentTo([1, 2]);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
         result.Data!.Id.Should().Be(added.Id);
+    }
+
+    [Fact]
+    public async Task SearchPassesTheServiceFilter()
+    {
+        var serviceId = Guid.NewGuid();
+
+        await Create(null).SearchAsync(new PagedQuery(), new PackageFilter { ServiceId = serviceId }, CancellationToken.None);
+
+        await _packages.Received(1).SearchAsync(
+            Arg.Is<PackageSearchCriteria>(criteria => criteria.ServiceId == serviceId), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CreatePackageTrimsShortDescription()
+    {
+        ServicePackage? added = null;
+        await _packages.AddAsync(Arg.Do<ServicePackage>(package => added = package), Arg.Any<CancellationToken>());
+        _services.GetByIdsAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>()).Returns([_onSale]);
+
+        await Create(Roles.Owner).CreateAsync(NewPackage(Item(_onSale, 1)) with { ShortDescription = "  Gói 1 buổi  " }, CancellationToken.None);
+
+        added!.ShortDescription.Should().Be("Gói 1 buổi");
     }
 
     [Fact]

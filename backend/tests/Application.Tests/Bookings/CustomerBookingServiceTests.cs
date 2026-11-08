@@ -55,7 +55,7 @@ public sealed class CustomerBookingServiceTests
     {
         _gateway.MinAmount.Returns(5000m);
         _services.GetDetailAsync(_serviceId, true, Arg.Any<CancellationToken>()).Returns(new ServiceDetailDto(
-            _serviceId, "Chăm sóc da", "Da", null, 300_000, 60, null, CatalogStatus.OnSale, Now, null));
+            _serviceId, "Chăm sóc da", Guid.Empty, "Da", null, 300_000, 60, null, CatalogStatus.OnSale, Now, null));
         _services.GetByIdAsync(_serviceId, Arg.Any<CancellationToken>()).Returns(new SpaService { Id = _serviceId, DurationMinutes = 60 });
         _staff.GetAvailabilityCandidatesAsync(_serviceId, Day, Arg.Any<Guid?>(), Arg.Any<CancellationToken>()).Returns([_an]);
         _shifts.GetActiveRangesAsync(default!, default, default, default).ReturnsForAnyArgs(call =>

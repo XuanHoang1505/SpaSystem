@@ -46,7 +46,7 @@ public sealed class AiAssistantServiceTests
         _clock.UtcNow.Returns(Now);
         _messages.GetRecentAsync(default, default, default).ReturnsForAnyArgs([]);
         _services.GetAsync(ServiceId, Arg.Any<CancellationToken>()).Returns(OperationResult<ServiceDetailDto>.Success(
-            new ServiceDetailDto(ServiceId, "Chăm sóc da mặt", "Da mặt", null, 350_000, 60, null, CatalogStatus.OnSale, Now, null)));
+            new ServiceDetailDto(ServiceId, "Chăm sóc da mặt", Guid.Empty, "Da mặt", null, 350_000, 60, null, CatalogStatus.OnSale, Now, null)));
         _availability.GetAsync(Arg.Any<AvailabilityQuery>(), Arg.Any<CancellationToken>()).Returns(OperationResult<AvailabilityDto>.Success(
             new AvailabilityDto(new DateOnly(2026, 11, 7), 60,
                 [new AvailableStaffDto(Guid.NewGuid(), "Lan", [new TimeSlotDto(new TimeOnly(9, 0), new TimeOnly(10, 0))])])));

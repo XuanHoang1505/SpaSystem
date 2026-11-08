@@ -1,3 +1,5 @@
+using NhuNguyetSpa.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -61,11 +63,39 @@ public sealed class CatalogApi
         return form;
     }
 
+    /// <summary>Creates the category, or updates the one with this name (ignoring case and accents).</summary>
+    public async Task<ServiceCategory> SeedCategoryAsync(string name, bool isActive = true, int sortOrder = 0)
+    {
+        await using var context = _postgres.CreateContext();
+        var category = await FindCategoryAsync(context, name);
+        if (category is null)
+        {
+            category = new ServiceCategory { Name = name };
+            context.ServiceCategories.Add(category);
+        }
+        category.IsActive = isActive;
+        category.SortOrder = sortOrder;
+        await context.SaveChangesAsync();
+        return category;
+    }
+
+    private static Task<ServiceCategory?> FindCategoryAsync(AppDbContext context, string name) => context.ServiceCategories
+        .FirstOrDefaultAsync(row => AppDbContext.Unaccent(row.Name.ToLower()) == AppDbContext.Unaccent(name.ToLower()));
+
+    /// <summary>The existing category with this name, unchanged, or a new visible one.</summary>
+    private async Task<Guid> CategoryIdAsync(string name)
+    {
+        await using var context = _postgres.CreateContext();
+        var existing = await FindCategoryAsync(context, name);
+        return existing?.Id ?? (await SeedCategoryAsync(name)).Id;
+    }
+
     public async Task<SpaService> SeedServiceAsync(
         string name, string category = "Chăm sóc da", decimal price = 300_000, CatalogStatus status = CatalogStatus.OnSale, string? imageUrl = null)
     {
+        var categoryId = await CategoryIdAsync(category);
         await using var context = _postgres.CreateContext();
-        var service = new SpaService { Name = name, Category = category, DurationMinutes = 60, Price = price, Description = "Mô tả" };
+        var service = new SpaService { Name = name, CategoryId = categoryId, DurationMinutes = 60, Price = price, Description = "Mô tả" };
         service.ChangeStatus(status);
         if (imageUrl is not null)
             service.SetImage(imageUrl);

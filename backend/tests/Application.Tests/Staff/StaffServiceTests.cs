@@ -332,7 +332,7 @@ public sealed class StaffServiceTests
 
     private static SpaService Service(string name, CatalogStatus status)
     {
-        var service = new SpaService { Name = name, Category = "Da", DurationMinutes = 60, Price = 100_000 };
+        var service = new SpaService { Name = name, DurationMinutes = 60, Price = 100_000 };
         service.ChangeStatus(status);
         return service;
     }

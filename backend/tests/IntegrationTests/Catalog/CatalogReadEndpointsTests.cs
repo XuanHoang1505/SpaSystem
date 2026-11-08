@@ -1,6 +1,8 @@
 using System.Net;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using NhuNguyetSpa.Application.Common;
+using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
 using NhuNguyetSpa.IntegrationTests.Infrastructure;
 using Xunit;
@@ -88,6 +90,61 @@ public sealed class CatalogReadEndpointsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ShortDescriptionsAndStepsAreReturned()
+    {
+        var tag = CatalogApi.NewTag();
+        var service = await _api.SeedServiceAsync($"{tag} có quy trình");
+        var package = await _api.SeedPackageAsync($"{tag} gói", [service]);
+        await using (var context = _postgres.CreateContext())
+        {
+            await context.SpaServices.Where(row => row.Id == service.Id)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.ShortDescription, "Ngắn dịch vụ"));
+            await context.ServicePackages.Where(row => row.Id == package.Id)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.ShortDescription, "Ngắn gói"));
+            context.ServiceSteps.AddRange(
+                new ServiceStep { SpaServiceId = service.Id, SortOrder = 2, Title = "Hai", DurationMinutes = 15 },
+                new ServiceStep { SpaServiceId = service.Id, SortOrder = 1, Title = "Một" });
+            await context.SaveChangesAsync();
+        }
+
+        var (_, list) = await _api.GetAsync($"/api/v1/services?search={tag}");
+        var (_, detail) = await _api.GetAsync($"/api/v1/services/{service.Id}");
+        var (_, packages) = await _api.GetAsync($"/api/v1/packages?search={tag}");
+        var (_, packageDetail) = await _api.GetAsync($"/api/v1/packages/{package.Id}");
+
+        CatalogApi.Data(list).GetProperty("items")[0].GetProperty("shortDescription").GetString().Should().Be("Ngắn dịch vụ");
+        var data = CatalogApi.Data(detail);
+        data.GetProperty("shortDescription").GetString().Should().Be("Ngắn dịch vụ");
+        data.GetProperty("steps").EnumerateArray().Select(step => step.GetProperty("title").GetString()).Should().Equal("Một", "Hai");
+        data.GetProperty("steps")[1].GetProperty("durationMinutes").GetInt32().Should().Be(15);
+        CatalogApi.Data(packages).GetProperty("items")[0].GetProperty("shortDescription").GetString().Should().Be("Ngắn gói");
+        CatalogApi.Data(packageDetail).GetProperty("shortDescription").GetString().Should().Be("Ngắn gói");
+    }
+
+    [Fact]
+    public async Task PackagesCanBeFilteredByServiceAndCarryTheirRetailPrice()
+    {
+        var tag = CatalogApi.NewTag();
+        var facial = await _api.SeedServiceAsync($"{tag} da mặt", price: 300_000);
+        var massage = await _api.SeedServiceAsync($"{tag} massage", price: 200_000);
+        // SeedPackageAsync gives item i (0-based) i + 1 sessions: facial × 1 + massage × 2 = 700 000.
+        var both = await _api.SeedPackageAsync($"{tag} gói đủ", [facial, massage], price: 500_000);
+        await _api.SeedPackageAsync($"{tag} gói massage", [massage], price: 150_000);
+
+        var (_, withFacial) = await _api.GetAsync($"/api/v1/packages?serviceId={facial.Id}&pageSize=100");
+        var (_, detail) = await _api.GetAsync($"/api/v1/packages/{both.Id}");
+        var (badId, _) = await _api.GetAsync("/api/v1/packages?serviceId=abc");
+
+        CatalogApi.Names(withFacial).Should().Equal($"{tag} gói đủ");
+        CatalogApi.Data(withFacial).GetProperty("items")[0].GetProperty("retailPrice").GetDecimal().Should().Be(700_000);
+        var data = CatalogApi.Data(detail);
+        data.GetProperty("retailPrice").GetDecimal().Should().Be(700_000);
+        data.GetProperty("items").EnumerateArray().Select(item => item.GetProperty("servicePrice").GetDecimal())
+            .Should().Equal(300_000m, 200_000m);
+        badId.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task SearchIgnoresCaseAndVietnameseDiacriticsAndTreatsWildcardsLiterally()
     {
         var tag = CatalogApi.NewTag();
@@ -113,14 +170,15 @@ public sealed class CatalogReadEndpointsTests : IAsyncLifetime
         foreach (var price in new[] { 100_000m, 200_000m, 300_000m, 400_000m, 500_000m })
             await _api.SeedServiceAsync($"{tag} giá {price}", category: category, price: price);
         await _api.SeedServiceAsync($"{tag} loại khác", category: "Khác", price: 250_000);
-        var categoryQuery = Uri.EscapeDataString($"loai {tag} dac biet");
+        var categoryQuery = (await _api.SeedCategoryAsync(category)).Id;
 
-        var (_, byCategory) = await _api.GetAsync($"/api/v1/services?search={tag}&category={categoryQuery}&pageSize=100");
+        var (_, byCategory) = await _api.GetAsync($"/api/v1/services?search={tag}&categoryId={categoryQuery}&pageSize=100");
         var (_, byPrice) = await _api.GetAsync($"/api/v1/services?search={tag}&minPrice=200000&maxPrice=400000&pageSize=100");
-        var (_, page) = await _api.GetAsync($"/api/v1/services?search={tag}&category={categoryQuery}&sortBy=price&sortDirection=desc&pageNumber=2&pageSize=2");
+        var (_, page) = await _api.GetAsync($"/api/v1/services?search={tag}&categoryId={categoryQuery}&sortBy=price&sortDirection=desc&pageNumber=2&pageSize=2");
         var (badRange, badRangeBody) = await _api.GetAsync("/api/v1/services?minPrice=500&maxPrice=100");
         var (negative, _) = await _api.GetAsync("/api/v1/services?minPrice=-1");
         var (badSort, badSortBody) = await _api.GetAsync("/api/v1/services?sortBy=rating");
+        var (badCategory, _) = await _api.GetAsync("/api/v1/services?categoryId=abc");
 
         CatalogApi.Names(byCategory).Should().HaveCount(5);
         CatalogApi.Names(byPrice).Should().HaveCount(4, "200k, 250k, 300k and 400k");
@@ -133,26 +191,42 @@ public sealed class CatalogReadEndpointsTests : IAsyncLifetime
         badRangeBody.RootElement.GetProperty("errors")[0].GetProperty("field").GetString().Should().Be("MaxPrice");
         negative.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         badSort.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        badCategory.StatusCode.Should().Be(HttpStatusCode.BadRequest, "categoryId must be a GUID (CAT-T36)");
         CatalogApi.Data(badSortBody).ValueKind.Should().Be(System.Text.Json.JsonValueKind.Null);
     }
 
     [Fact]
-    public async Task CategoriesListHidesCategoriesWithoutOnSaleServicesFromGuests()
+    public async Task CategoriesListHidesHiddenAndEmptyCategoriesFromGuests()
     {
         var tag = CatalogApi.NewTag();
-        await _api.SeedServiceAsync($"{tag} a", category: $"{tag} Bán");
-        await _api.SeedServiceAsync($"{tag} b", category: $"{tag} Bán");
-        await _api.SeedServiceAsync($"{tag} c", category: $"{tag} Ngừng", status: CatalogStatus.Discontinued);
+        await _api.SeedCategoryAsync($"{tag} B bán", sortOrder: 2);
+        await _api.SeedCategoryAsync($"{tag} A bán", sortOrder: 2);
+        await _api.SeedCategoryAsync($"{tag} Đầu", sortOrder: 1);
+        await _api.SeedServiceAsync($"{tag} a", category: $"{tag} B bán");
+        await _api.SeedServiceAsync($"{tag} b", category: $"{tag} B bán");
+        await _api.SeedServiceAsync($"{tag} b2", category: $"{tag} B bán", status: CatalogStatus.Discontinued);
+        await _api.SeedServiceAsync($"{tag} c", category: $"{tag} A bán");
+        await _api.SeedServiceAsync($"{tag} d", category: $"{tag} Đầu");
+        await _api.SeedCategoryAsync($"{tag} Ngừng", sortOrder: 0);
+        await _api.SeedServiceAsync($"{tag} e", category: $"{tag} Ngừng", status: CatalogStatus.Discontinued);
+        await _api.SeedCategoryAsync($"{tag} Ẩn", isActive: false, sortOrder: 3);
+        var hiddenService = await _api.SeedServiceAsync($"{tag} f vẫn bán", category: $"{tag} Ẩn");
         var owner = await _api.LoginAsync(UserRole.Owner);
 
         var (_, guest) = await _api.GetAsync("/api/v1/service-categories");
         var (_, ownerBody) = await _api.GetAsync("/api/v1/service-categories", owner);
+        var (detail, _) = await _api.GetAsync($"/api/v1/services/{hiddenService.Id}");
+        var (_, search) = await _api.GetAsync($"/api/v1/services?search={Uri.EscapeDataString(tag + " f")}");
 
-        Categories(guest).Should().Equal($"{tag} Bán");
-        Categories(ownerBody).Should().Equal($"{tag} Bán", $"{tag} Ngừng");
+        Categories(guest).Should().Equal(($"{tag} Đầu", 1), ($"{tag} A bán", 1), ($"{tag} B bán", 2));
+        Categories(ownerBody).Should().Equal(
+            ($"{tag} Ngừng", 1), ($"{tag} Đầu", 1), ($"{tag} A bán", 1), ($"{tag} B bán", 3), ($"{tag} Ẩn", 1));
+        detail.StatusCode.Should().Be(HttpStatusCode.OK, "a hidden category only leaves the filter (CAT-T40)");
+        CatalogApi.Names(search).Should().Contain($"{tag} f vẫn bán");
 
-        string[] Categories(System.Text.Json.JsonDocument body) => CatalogApi.Data(body).EnumerateArray()
-            .Select(item => item.GetString()!).Where(item => item.StartsWith(tag, StringComparison.Ordinal)).ToArray();
+        (string Name, int Count)[] Categories(System.Text.Json.JsonDocument body) => CatalogApi.Data(body).EnumerateArray()
+            .Select(item => (item.GetProperty("name").GetString()!, item.GetProperty("serviceCount").GetInt32()))
+            .Where(item => item.Item1.StartsWith(tag, StringComparison.Ordinal)).ToArray();
     }
 
     [Fact]

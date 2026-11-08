@@ -8,4 +8,7 @@ public sealed record UpdatePackageRequest(
     int ValidityDays,
     DateOnly? SaleStartDate,
     DateOnly? SaleEndDate,
-    IReadOnlyList<PackageItemRequest>? Items) : IPackageFields;
+    IReadOnlyList<PackageItemRequest>? Items) : IPackageFields
+{
+    public string? ShortDescription { get; init; }
+}

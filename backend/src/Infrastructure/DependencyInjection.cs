@@ -55,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IAiChatMessageRepository, AiChatMessageRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
+        services.AddScoped<IServiceCategoryRepository, ServiceCategoryRepository>();
         services.AddScoped<ISpaServiceRepository, SpaServiceRepository>();
         services.AddScoped<IServicePackageRepository, ServicePackageRepository>();
         services.AddScoped<IStaffMemberRepository, StaffMemberRepository>();
@@ -175,6 +176,7 @@ public static class DependencyInjection
         services.AddOptions<SeedOptions>().Bind(configuration.GetSection(SeedOptions.SectionName));
         services.AddScoped<DevelopmentSeeder>();
         services.AddScoped<DemoDataSeeder>();
+        services.AddScoped<CatalogDataSeeder>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 

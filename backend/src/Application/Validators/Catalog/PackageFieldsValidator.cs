@@ -12,6 +12,8 @@ public sealed class PackageFieldsValidator : AbstractValidator<IPackageFields>
         RuleFor(request => request.Name).RequiredText(150, "tên gói");
         RuleFor(request => request.Description).MaximumLength(CatalogRules.MaxDescriptionLength)
             .WithMessage($"Mô tả tối đa {CatalogRules.MaxDescriptionLength} ký tự.");
+        RuleFor(request => request.ShortDescription).MaximumLength(CatalogRules.MaxShortDescriptionLength)
+            .WithMessage($"Mô tả ngắn tối đa {CatalogRules.MaxShortDescriptionLength} ký tự.");
         RuleFor(request => request.Price).VndAmount();
         RuleFor(request => request.ValidityDays).InclusiveBetween(1, 3650).WithMessage("Thời hạn sử dụng phải từ 1 đến 3650 ngày.");
         RuleFor(request => request.SaleEndDate)

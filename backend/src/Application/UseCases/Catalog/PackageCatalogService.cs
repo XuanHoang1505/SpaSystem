@@ -51,7 +51,10 @@ public sealed class PackageCatalogService : IPackageCatalogService
         var publicOn = _viewer.PublicOn;
         var criteria = new PackageSearchCriteria(
             search, filter.MinPrice, filter.MaxPrice, publicOn is null ? CatalogQuery.ParseStatus(filter.Status) : null, publicOn,
-            sortBy, query.SortDirection, query.PageNumber, query.PageSize);
+            sortBy, query.SortDirection, query.PageNumber, query.PageSize)
+        {
+            ServiceId = filter.ServiceId,
+        };
         return OperationResult<PagedResult<PackageListItemDto>>.Success(await _packages.SearchAsync(criteria, cancellationToken));
     }
 
@@ -63,7 +66,12 @@ public sealed class PackageCatalogService : IPackageCatalogService
 
     public async Task<OperationResult<PackageDetailDto>> CreateAsync(CreatePackageRequest request, CancellationToken cancellationToken)
     {
-        request = request with { Name = request.Name?.Trim() ?? string.Empty, Description = request.Description.TrimToNull() };
+        request = request with
+        {
+            Name = request.Name?.Trim() ?? string.Empty,
+            ShortDescription = request.ShortDescription.TrimToNull(),
+            Description = request.Description.TrimToNull(),
+        };
         await _createValidator.ValidateAndThrowAsync(request, cancellationToken);
         await EnsureServicesCanBeAddedAsync(request.Items!, alreadyInPackage: new HashSet<Guid>(), cancellationToken);
         var package = new ServicePackage();
@@ -78,7 +86,12 @@ public sealed class PackageCatalogService : IPackageCatalogService
 
     public async Task<OperationResult<PackageDetailDto>> UpdateAsync(Guid id, UpdatePackageRequest request, CancellationToken cancellationToken)
     {
-        request = request with { Name = request.Name?.Trim() ?? string.Empty, Description = request.Description.TrimToNull() };
+        request = request with
+        {
+            Name = request.Name?.Trim() ?? string.Empty,
+            ShortDescription = request.ShortDescription.TrimToNull(),
+            Description = request.Description.TrimToNull(),
+        };
         await _updateValidator.ValidateAndThrowAsync(request, cancellationToken);
         var package = await _packages.GetWithItemsAsync(id, cancellationToken) ?? throw CatalogErrors.PackageNotFound();
         // A service that is already in the package may stay even if it was discontinued since (spec UC-SPA-09 A2).
@@ -116,6 +129,7 @@ public sealed class PackageCatalogService : IPackageCatalogService
     private static void Apply(ServicePackage package, IPackageFields fields)
     {
         package.Name = fields.Name;
+        package.ShortDescription = fields.ShortDescription;
         package.Description = fields.Description;
         package.Price = fields.Price;
         package.ValidityDays = fields.ValidityDays;

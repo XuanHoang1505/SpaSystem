@@ -67,7 +67,7 @@ public sealed class TreatmentApi
         await using var context = _postgres.CreateContext();
         if (service is null)
         {
-            service = new SpaService { Name = "Dịch vụ gói " + Guid.NewGuid().ToString("N")[..6], Category = "Chăm sóc da", DurationMinutes = 60, Price = 300_000 };
+            service = new SpaService { Name = "Dịch vụ gói " + Guid.NewGuid().ToString("N")[..6], Category = TestCategories.New(), DurationMinutes = 60, Price = 300_000 };
             context.SpaServices.Add(service);
         }
 

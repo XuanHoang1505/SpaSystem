@@ -96,10 +96,11 @@ public sealed class DemoDataSeeder
         var today = SpaTime.Today(now);
 
         // Catalog.
-        var basic = Service(DemoIds.ServiceBasic, "Chăm sóc da cơ bản (demo)", 60, 300_000);
-        var massage = Service(DemoIds.ServiceMassage, "Massage mặt thư giãn (demo)", 45, 250_000);
-        var acne = Service(DemoIds.ServiceAcne, "Trị mụn chuyên sâu (demo)", 90, 450_000);
-        var mask = Service(DemoIds.ServiceMask, "Đắp mặt nạ thảo dược (demo, ngừng bán)", 30, 150_000);
+        var category = await SkinCategoryAsync(cancellationToken);
+        var basic = Service(DemoIds.ServiceBasic, "Chăm sóc da cơ bản (demo)", 60, 300_000, category);
+        var massage = Service(DemoIds.ServiceMassage, "Massage mặt thư giãn (demo)", 45, 250_000, category);
+        var acne = Service(DemoIds.ServiceAcne, "Trị mụn chuyên sâu (demo)", 90, 450_000, category);
+        var mask = Service(DemoIds.ServiceMask, "Đắp mặt nạ thảo dược (demo, ngừng bán)", 30, 150_000, category);
         _context.SpaServices.AddRange(basic, massage, acne, mask);
         var package = new ServicePackage
         {
@@ -170,11 +171,28 @@ public sealed class DemoDataSeeder
             .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.UsedSessions, 1), cancellationToken);
     }
 
-    private static SpaService Service(Guid id, string name, int minutes, decimal price)
+    /// <summary>
+    /// Reuses a category named "Chăm sóc da" (ignoring case and accents, it may come from real data) or adds one. It is never
+    /// deleted by the reset because non-demo services may use it.
+    /// </summary>
+    private async Task<ServiceCategory> SkinCategoryAsync(CancellationToken cancellationToken)
+    {
+        const string name = "Chăm sóc da";
+        var existing = await _context.ServiceCategories
+            .FirstOrDefaultAsync(row => AppDbContext.Unaccent(row.Name.ToLower()) == AppDbContext.Unaccent(name.ToLower()), cancellationToken);
+        if (existing is not null)
+            return existing;
+        var category = new ServiceCategory { Id = DemoIds.CategorySkin, Name = name, Description = "Danh mục mẫu cho dữ liệu demo." };
+        _context.ServiceCategories.Add(category);
+        return category;
+    }
+
+    private static SpaService Service(Guid id, string name, int minutes, decimal price, ServiceCategory category)
     {
         var service = new SpaService
         {
-            Id = id, Name = name, Category = "Chăm sóc da", DurationMinutes = minutes, Price = price, Description = "Dịch vụ mẫu để thử đặt lịch.",
+            Id = id, Name = name, CategoryId = category.Id, Category = category, DurationMinutes = minutes, Price = price,
+            Description = "Dịch vụ mẫu để thử đặt lịch.",
         };
         service.ChangeStatus(id == DemoIds.ServiceMask ? CatalogStatus.Discontinued : CatalogStatus.OnSale);
         return service;
@@ -334,6 +352,7 @@ public sealed class DemoDataSeeder
 /// <summary>Fixed ids of the demo rows; the Postman environment carries the same values.</summary>
 public static class DemoIds
 {
+    public static readonly Guid CategorySkin = Guid.Parse("0d000000-0000-0000-0000-000000000100");
     public static readonly Guid ServiceBasic = Guid.Parse("0d000000-0000-0000-0000-000000000101");
     public static readonly Guid ServiceMassage = Guid.Parse("0d000000-0000-0000-0000-000000000102");
     public static readonly Guid ServiceAcne = Guid.Parse("0d000000-0000-0000-0000-000000000103");

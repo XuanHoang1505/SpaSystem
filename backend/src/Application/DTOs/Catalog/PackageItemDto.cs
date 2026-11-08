@@ -10,4 +10,8 @@ public sealed record PackageItemDto(
     int SessionCount,
     int SortOrder,
     int MinDaysBetweenSessions,
-    string? Note);
+    string? Note)
+{
+    /// <summary>Current price of one session of the service.</summary>
+    public decimal ServicePrice { get; init; }
+}

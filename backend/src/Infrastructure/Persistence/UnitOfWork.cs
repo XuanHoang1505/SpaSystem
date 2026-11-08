@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.UseCases.Auth;
 using NhuNguyetSpa.Application.UseCases.Care;
+using NhuNguyetSpa.Application.UseCases.Catalog;
 using NhuNguyetSpa.Domain.Exceptions;
 using Npgsql;
 
@@ -54,6 +55,8 @@ public sealed class UnitOfWork : IUnitOfWork
             new ConflictException("Mã khuyến mãi đã tồn tại.", "promotion_code_exists"),
         PostgresErrorCodes.UniqueViolation when exception.ConstraintName == Configurations.SkinProfileConfiguration.UniqueAppointment =>
             new ConflictException(CareErrors.SkinProfileExistsMessage, CareErrors.SkinProfileExistsCode),
+        PostgresErrorCodes.UniqueViolation when exception.ConstraintName == Configurations.ServiceCategoryConfiguration.UniqueName =>
+            CatalogErrors.ServiceCategoryExists(),
         PostgresErrorCodes.UniqueViolation when exception.ConstraintName == Configurations.UserConfiguration.UniquePhoneNumber =>
             AccountErrors.PhoneExists(),
         PostgresErrorCodes.UniqueViolation =>

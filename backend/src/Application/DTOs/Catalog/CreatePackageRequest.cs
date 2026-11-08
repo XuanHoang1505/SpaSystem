@@ -11,4 +11,7 @@ public sealed record CreatePackageRequest(
     DateOnly? SaleStartDate,
     DateOnly? SaleEndDate,
     CatalogStatus? Status,
-    IReadOnlyList<PackageItemRequest>? Items) : IPackageFields;
+    IReadOnlyList<PackageItemRequest>? Items) : IPackageFields
+{
+    public string? ShortDescription { get; init; }
+}
