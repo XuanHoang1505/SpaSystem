@@ -18,6 +18,9 @@ React + Vite + TypeScript strict, UI bằng Tailwind CSS v4 + shadcn/ui ([ADR-00
 ### customer
 
 - `/account` — Tài khoản
+- `/cart` — Giỏ hàng
+- `/checkout` — Thanh toán
+- `/payment/result` — Kết quả thanh toán
 - `/my-bookings` — Lịch hẹn của tôi
 - `/my-bookings/:bookingId` — Chi tiết lịch hẹn
 - `/my-treatment-plans` — Liệu trình
@@ -83,7 +86,28 @@ Semantic header/nav/main/footer, skip link, focus visible, label/input error ass
 - Mô tả ngắn trên thẻ và đầu trang chi tiết lấy từ `shortDescription`, "Quy trình chăm sóc" từ `steps` (ẩn khi rỗng) (Q-71).
 - Trang chi tiết dịch vụ ghép thêm (dữ liệu thật): "Giờ trống gần nhất" hôm nay/ngày mai (`features/bookings`, `AvailabilityApi`), "Kỹ thuật viên thực hiện" (`features/staff`, `StaffApi.listPublic`), "Gói liệu trình có dịch vụ này" với % tiết kiệm (`GET /packages?serviceId`, `retailPrice`). `ServiceDetailView` nhận `aside`/`sections` để `pages/public/ServiceDetailPage` ghép các feature đó mà `services` không import ngược. Trang chi tiết gói có so sánh giá lẻ, giá/buổi, thời gian hoàn thành sớm nhất (`coursePlan.ts`), "Cách sử dụng gói". Hai trang có "Câu hỏi thường gặp" lấy số từ `features/services/catalogPolicies.ts` (giữ đồng bộ với appsettings). Lời gọi API của feature mới đi qua `lib/api/call.ts` (`callApi`).
 - Bố cục theo mẫu Stitch (ID trong spec). **Nội dung tạm** gom ở `features/services/catalogPlaceholders.ts`: ★ giả, bộ lọc thời lượng/tình trạng da ("Sắp có"), dải cam kết, "Bạn sẽ nhận được", đặc quyền gói; nút "Đặt lịch" trên thẻ tạm dẫn sang chi tiết; nút đặt lịch/mua/hỏi AI ở trang chi tiết là `ComingSoonButton` (toast "đang được phát triển"). "Dịch vụ cùng loại" và "Gói liệu trình khác" dùng dữ liệu thật. Xóa khi có UC-SPA-29, mô tả trong API danh sách, UC-SPA-15 web.
-- Chưa có: "Thêm vào giỏ"/"Mua ngay" (UC-SPA-10/11).
+- "Thêm vào giỏ" (dịch vụ và gói) và "Mua ngay" (gói) đã làm ở UC-SPA-10/11, xem mục dưới.
+
+## Giỏ hàng và thanh toán (UC-SPA-10/11)
+
+- **Trang (khu khách, `RouteGuard`):** `/cart` (SCR-W10, danh sách dòng + thẻ tổng tiền, xóa có xác nhận), `/checkout` (SCR-W11) và `/payment/result` (SCR-W12). Trang ở `pages/customer/` chỉ ghép feature. Spec: `docs/specs/orders.md`, mục "Giao diện (web)".
+- **`/checkout` có hai chế độ:** `?source=cart` hoặc `?source=buy_now&packageId|serviceId=` chuẩn bị đơn (xem trước, ô mã khuyến mãi, "Xác nhận và thanh toán"); `?orderId=` thanh toán lại đơn có sẵn. Tạo đơn gửi `Idempotency-Key` UUID (một khóa cho mỗi nội dung đơn), nên bấm đúp hay gửi lại sau lỗi mạng không tạo hai đơn. Tạo thanh toán lỗi thì URL đổi sang `?orderId=` để thử lại không tạo đơn thứ hai. Đơn 0 đ đi thẳng sang trang kết quả. Chuyển sang VNPay qua `features/payments/redirect.ts` (`redirectTo`).
+- **Kết quả:** backend chuyển trình duyệt về `/payment/result?orderId=` (hoặc `?error=invalid_payment_result`). Trang đọc `GET /me/orders/{id}` và poll mỗi 2 giây, tối đa 10 lần, khi đơn còn `pending_payment` với lần thanh toán `pending` (ở Production chỉ IPN ghi nhận kết quả). Đơn `paid` làm mới giỏ.
+- **Feature:** `features/orders` (hooks `useCart`, `useAddToCart`, `useRemoveCartItem`, `useOrderPreview`, `useCreateOrder`, `useOrder`; component `CartView`, `CheckoutView`, `PaymentResultView`, `CartButton`, `AddToCartButton`, `BuyNowButton`) và `features/payments` (`useStartPayment`, `paymentStatus`, `redirectTo`). Lỗi theo `errors[].code` (`features/orders/errors.ts`). `OrdersApi` + `ordersQueryKeys` ở `@spa/api-client`, `lib/api/orders.ts` (`callOrders`).
+- **Header:** khách đã đăng nhập thấy biểu tượng giỏ kèm số dòng (header công khai và thanh trên khu khách). `useCountdown` nằm ở `src/hooks/`.
+- **Hằng chép tay từ backend:** hạn giữ đơn 15 phút (`catalogPolicies.paymentTimeoutMinutes`) và mức tối thiểu 5.000 đ (`MIN_PAYMENT_AMOUNT`), giữ đồng bộ `appsettings.json`.
+
+- **Đơn hàng của tôi (UC-SPA-12, 08/11/2026):** `/my-orders` (`features/orders`: `MyOrdersView`, `OrderCard`, `OrderDetailSheet`, `CancelOrderDialog`; hooks `useMyOrders`, `useCancelOrder`). Danh sách thẻ (không dùng `DataTable` vì là thẻ, như giỏ hàng), lọc theo một trạng thái và phân trang ở server, `?status=`/`?page=` trên URL, đổi bộ lọc thì về trang 1. Nút theo cờ API: `isPayable` → "Thanh toán ngay" (`/checkout?orderId=`), `canCancel` → "Hủy đơn" (bắt buộc lý do 1–500 ký tự, `order_not_cancellable` / `order_payment_in_progress` hiện thông báo và tải lại danh sách). "Xem chi tiết" mở `Sheet` với dòng hàng, tổng, các lần thanh toán và lý do hủy. Chưa có lọc theo khoảng ngày, tìm theo mã, đếm số đơn theo trạng thái (API chưa trả).
+
+## Khu vực khách hàng: khung giao diện (08/11/2026)
+
+Khách hàng không dùng sidebar admin. Mẫu Stitch "Khu Vực Khách Hàng (Menu Cột Trái Thanh Lịch)" chia ba khung (`app/router.tsx`, `customerRouteObjects`):
+
+- **Trang của tôi** (`/account`, `/my-bookings`, `/my-treatment-plans`, `/my-packages`, `/my-orders`, `/my-reviews`, `/ai-assistant`): `CustomerLayout` (header và footer công khai, luôn sáng) + `AccountLayout`: thẻ nổi bên trái (`AccountSideNav`: avatar, "Chào {tên}", menu, thẻ "Cần tư vấn?" dẫn tới `/ai-assistant`). Dưới `lg` chỉ còn hàng pill cuộn ngang, mục đang chọn được cuộn vào giữa. Menu sinh từ `config/navigation.ts` (`navigation.customer`, không có `/cart`, `/checkout`, `/payment/result`).
+- **Giỏ hàng** (`/cart`): `CustomerLayout`, không có menu tài khoản. Biểu tượng giỏ nằm trên header.
+- **Thanh toán** (`/checkout`, `/payment/result`): `CheckoutLayout`, header tối giản (logo và "Thanh toán an toàn"), không có menu.
+
+Staff và chủ spa giữ `WorkspaceLayout` (sidebar). Không còn dải "Bản xem trước giao diện" ở khu khách. Menu không có mục "Hồ sơ da" và "Hội viên" như mẫu vì hệ thống không có.
 
 ## Chạy và kiểm tra
 

@@ -437,13 +437,199 @@ Unit test (Application, Domain) dùng NSubstitute và đồng hồ giả; integr
 
 Chưa triển khai lần này. Khi làm, mở rộng spec này và cập nhật [progress.md](../progress.md).
 
-| Mã           | Việc                                                                                                                                            | Ghi chú                                                  | Làm cùng          |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ----------------- |
-| ORD-LATER-01 | **(đặc tả ở đợt 2, 01/11/2026)** Danh sách đơn của tôi, hủy đơn chưa thanh toán (`GET /me/orders`, `POST /me/orders/{id}/cancel`, BR-ORD-04)    | Hủy → `cancelled`, lần thanh toán `pending` → `expired`  | UC-SPA-12         |
-| ORD-LATER-02 | **(đặc tả ở đợt 2, 01/11/2026)** Chủ spa xem, tìm, hủy đơn (`/orders`, quyền `order.manage`)                                                    |                                                          | UC-SPA-13         |
-| ORD-LATER-07 | Hoàn tiền (khi kết quả thành công đến sau khi đơn đã hủy/đã trả bằng lần khác): trạng thái, API refund VNPay                                    | Hiện chỉ log cảnh báo (RS-21, Q-20)                      | —                 |
-| ORD-LATER-08 | Thông báo cho khách khi chủ spa hủy đơn (BR-NTF)                                                                                                | Ghi `notifications`; chưa gửi mail                       | UC-SPA-34         |
-| ORD-LATER-03 | **(đã làm 30/10/2026, UC-SPA-15)** Đặt ngay có giữ chỗ: tạo `appointments` `held` cùng đơn, xác nhận khi thanh toán, job giải phóng khi hết hạn | Dùng lại tạo đơn, bộ xử lý kết quả và `OrderExpiryJob`   | UC-SPA-15 luồng 1 |
-| ORD-LATER-04 | Thông báo khi thanh toán thành công / thất bại (BR-NTF-01)                                                                                      | Ghi `notifications` loại `payment`                       | UC-SPA-34         |
-| ORD-LATER-05 | Đối soát giao dịch VNPay (`querydr`) cho lần thanh toán `pending` khi không nhận được IPN                                                       | Thay cho Q-19 khi tắt xử lý return URL                   | —                 |
-| ORD-LATER-06 | shared-types, api-client, màn hình giỏ, thanh toán, kết quả (SCR-W10/W11/W12, SCR-M19), khuyến mãi (SCR-W35)                                    | Trang kết quả poll `GET /me/orders/{id}` tối đa 10 × 2 s | Đợt FE            |
+| Mã           | Việc                                                                                                                                            | Ghi chú                                                  | Làm cùng                    |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------- |
+| ORD-LATER-01 | **(đặc tả ở đợt 2, 01/11/2026)** Danh sách đơn của tôi, hủy đơn chưa thanh toán (`GET /me/orders`, `POST /me/orders/{id}/cancel`, BR-ORD-04)    | Hủy → `cancelled`, lần thanh toán `pending` → `expired`  | UC-SPA-12                   |
+| ORD-LATER-02 | **(đặc tả ở đợt 2, 01/11/2026)** Chủ spa xem, tìm, hủy đơn (`/orders`, quyền `order.manage`)                                                    |                                                          | UC-SPA-13                   |
+| ORD-LATER-07 | Hoàn tiền (khi kết quả thành công đến sau khi đơn đã hủy/đã trả bằng lần khác): trạng thái, API refund VNPay                                    | Hiện chỉ log cảnh báo (RS-21, Q-20)                      | —                           |
+| ORD-LATER-08 | Thông báo cho khách khi chủ spa hủy đơn (BR-NTF)                                                                                                | Ghi `notifications`; chưa gửi mail                       | UC-SPA-34                   |
+| ORD-LATER-03 | **(đã làm 30/10/2026, UC-SPA-15)** Đặt ngay có giữ chỗ: tạo `appointments` `held` cùng đơn, xác nhận khi thanh toán, job giải phóng khi hết hạn | Dùng lại tạo đơn, bộ xử lý kết quả và `OrderExpiryJob`   | UC-SPA-15 luồng 1           |
+| ORD-LATER-04 | Thông báo khi thanh toán thành công / thất bại (BR-NTF-01)                                                                                      | Ghi `notifications` loại `payment`                       | UC-SPA-34                   |
+| ORD-LATER-05 | Đối soát giao dịch VNPay (`querydr`) cho lần thanh toán `pending` khi không nhận được IPN                                                       | Thay cho Q-19 khi tắt xử lý return URL                   | —                           |
+| ORD-LATER-06 | shared-types, api-client, màn hình giỏ, thanh toán, kết quả (SCR-W10/W11/W12, SCR-M19), khuyến mãi (SCR-W35)                                    | Trang kết quả poll `GET /me/orders/{id}` tối đa 10 × 2 s | Đợt FE (web làm 08/11/2026) |
+
+## Giao diện (web) — UC-SPA-10, UC-SPA-11
+
+Phạm vi: giỏ hàng, thanh toán và kết quả thanh toán trên web (`apps/web`), ba màn SCR-W10, SCR-W11, SCR-W12, cùng nút "Thêm vào giỏ" / "Mua ngay" ở SCR-W03, SCR-W05 và biểu tượng giỏ trên header. Không làm lần này: mobile (SCR-M19), danh sách và hủy đơn của khách (SCR-W19, UC-SPA-12), quản lý đơn của chủ spa (SCR-W37, UC-SPA-13), khuyến mãi của chủ spa (SCR-W35, UC-SPA-14), "Đặt lịch ngay" có giữ chỗ (UC-SPA-15).
+
+Feature theo glossary: `src/features/orders/` (giỏ, xem trước và tạo đơn, kết quả đơn) và `src/features/payments/` (tạo lần thanh toán, chuyển sang VNPay; thư mục đã có `README.md`). Trang ở `src/pages/customer/` chỉ ghép feature. Cả ba màn dùng `CustomerLayout` (luôn sáng, `RouteGuard role="customer"`, cần đăng nhập).
+
+### Phụ thuộc và lệch so với `data_screens.py`
+
+- Auth thật, `RouteGuard`, trang chi tiết dịch vụ và gói đã có (UC-SPA-01..03, 06, 07) nên không bị chặn.
+- `SCR-W11` ghi route `/checkout?orderId=`, nhưng đơn chỉ được tạo **sau khi** khách xác nhận (xem trước không ghi gì, BR-ORD-02). Màn có **hai chế độ** trên cùng một route:
+  - **Chuẩn bị đơn:** `/checkout?source=cart` hoặc `/checkout?source=buy_now&serviceId=…|packageId=…` → `POST /me/orders/preview`, nhập mã khuyến mãi, "Xác nhận và thanh toán" tạo đơn rồi chuyển sang VNPay.
+  - **Thanh toán lại đơn có sẵn:** `/checkout?orderId=…` → `GET /me/orders/{id}`; dùng khi quay lại từ trang kết quả ("Thử lại") hoặc khi tạo lần thanh toán lỗi. Không có ô mã khuyến mãi (mã đã chốt theo đơn).
+- `routes.customer` chưa có `/cart`, `/checkout`, `/payment/result`: thêm cả ba (khớp `PAYMENT_WEB_RETURN_URL` = `http://localhost:5173/payment/result`).
+- Trang kết quả nhận `?orderId=` hoặc `?error=invalid_payment_result` từ backend.
+
+### Hợp đồng dùng chung
+
+- `packages/shared-types/src/orders.ts` (khớp DTO, camelCase, enum snake_case): `OrderStatus` (`pending_payment | paid | expired | cancelled`), `PaymentStatus` (`pending | succeeded | failed | expired`), `OrderSource` (`cart | buy_now`), `PaymentClient`, `CartItem`, `Cart`, `OrderRequest`, `OrderPreview` (+ `OrderPreviewItem`, `UnavailableItem`, `AppliedPromotion`, `PromotionError`), `OrderDetail` (+ `OrderItem`, `OrderPayment`), `PaymentAttempt`. Giá là `number` (VND nguyên); `type` của dòng dùng `CatalogItemType` có sẵn. Chỉ thêm `canCancel`, `cancelledAtUtc`, `cancellationReason` vào `OrderDetail` để kiểu khớp DTO, chưa dùng.
+- `packages/api-client/src/orders.ts`: `OrdersApi` gồm `getCart`, `addCartItem`, `removeCartItem`, `previewOrder`, `createOrder(request, idempotencyKey)` (gửi header `Idempotency-Key`, trả `ApiResponse<OrderDetail>`; `ApiClient` không lộ mã HTTP nên không có cờ `created`, giao diện không cần), `getOrder`, `createPayment(orderId, client)`. Hằng `orderErrorCodes`. `ordersQueryKeys`:
+  - `cart`: `['orders', 'cart']`
+  - `preview(request)`: `['orders', 'preview', request]`
+  - `order(id)`: `['orders', 'detail', id]`
+- `lib/api/orders.ts`: `callOrders` dựng `OrdersApi` từ client dùng chung qua `callApi`.
+- Hooks (`features/orders/hooks`): `useCart`, `useAddToCart`, `useRemoveCartItem`, `useOrderPreview`, `useCreateOrder`, `useOrder` (có `refetchInterval` cho trang kết quả); `features/payments/hooks`: `useStartPayment`. Lỗi 4xx không retry; mutation không retry. Phiên kết thúc đã `queryClient.clear()` nên giỏ không rò sang người khác.
+- Nhãn trạng thái: `features/orders/orderStatus.ts` map `OrderStatus` → `{ label, tone }`: `pending_payment` "Chờ thanh toán" (`warning`), `paid` "Đã thanh toán" (`success`), `expired` "Hết hạn" (`neutral`), `cancelled` "Đã hủy" (`neutral`); `features/payments/paymentStatus.ts`: `pending` "Đang xử lý" (`warning`), `succeeded` "Thành công" (`success`), `failed` "Thất bại" (`danger`), `expired` "Hết hạn" (`neutral`). Dùng `StatusBadge`, không thêm màu.
+- Tiền `formatCurrency`; hạn thanh toán `formatDateTimeUtc`; đếm ngược dùng `useCountdown` của `features/auth` (chuyển lên `src/hooks/` vì hai feature cùng dùng, không import chéo feature).
+
+### Nút "Thêm vào giỏ" / "Mua ngay" (SCR-W03, SCR-W05)
+
+Thay `ComingSoonButton` tương ứng bằng hành động thật; "Đặt lịch ngay" và "Hỏi trợ lý tư vấn" giữ nguyên.
+
+| Màn           | Nút                            | Hành vi                                                                                                                                                                      |
+| ------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W05 (gói)     | "Mua ngay gói liệu trình"      | Chưa đăng nhập → `/login?redirect=/checkout?source=buy_now&packageId=…`. Đã đăng nhập → `/checkout?source=buy_now&packageId=…`                                               |
+| W05 (gói)     | "Thêm vào giỏ"                 | Chưa đăng nhập → `/login?redirect=<trang hiện tại>`. Đã đăng nhập → `POST /me/cart/items { servicePackageId }`, toast "Đã thêm vào giỏ hàng" kèm hành động "Xem giỏ"         |
+| W03 (dịch vụ) | "Thêm vào giỏ" (mới)           | Như trên với `spaServiceId`; thêm thành hàng thứ hai dưới "Đặt lịch ngay". **Không** thêm "Mua ngay" cho dịch vụ (đường mua trực tiếp dịch vụ là "Đặt lịch ngay", UC-SPA-15) |
+| W03, W05      | Chủ spa/nhân viên đã đăng nhập | Ẩn hai nút (chỉ khách có `cart.self`/`order.self`); khách vãng lai vẫn thấy                                                                                                  |
+
+`409 cart_item_exists` → nút đổi thành "Đã có trong giỏ · Xem giỏ" (link `/cart`). Không dò giỏ lúc mở trang, để khách vãng lai không gọi API.
+
+### Biểu tượng giỏ trên header
+
+- `Header` công khai và thanh trên của `CustomerLayout` có nút giỏ (`ShoppingCartIcon`, `aria-label` "Giỏ hàng, {n} sản phẩm", link `/cart`) với huy hiệu `itemCount` (ẩn khi 0). Chỉ hiện khi đang đăng nhập với `role = customer`.
+- Số lấy từ `useCart` (`staleTime` 60 giây, không polling); làm mới sau mỗi mutation giỏ và sau khi đơn `paid`.
+
+### SCR-W10 — Giỏ hàng
+
+- **Route:** `/cart` · Vai trò: khách hàng · Layout: Customer · Mẫu: **danh sách thẻ dòng + khối tổng tiền** (hai cột từ `lg`: dòng bên trái, thẻ tổng tiền dính bên phải; dưới `lg` thẻ tổng nằm dưới danh sách). Không dùng `DataTable`: giỏ tối đa 20 dòng, không phân trang/sắp xếp/lọc, mỗi dòng có ảnh và nút xóa riêng.
+- **Dữ liệu:** `GET /me/cart` (`ordersQueryKeys.cart`).
+- **Mỗi dòng:** ảnh 64px (`ImageWithFallback`), tên (link `/services/:id` hoặc `/packages/:id` theo `type`; tắt link khi `isAvailable = false`), nhãn loại "Dịch vụ"/"Gói" (`Badge`), `currentPrice`. `priceChanged` → dòng nhỏ "Giá đã đổi, lúc thêm là {unitPrice}". `isAvailable = false` → dòng mờ, badge "Ngừng bán" và chữ "Sản phẩm này không còn bán, hãy xóa khỏi giỏ"; nút xóa luôn hiện. Nút "Xóa" có `aria-label` "Xóa {tên} khỏi giỏ".
+- **Khối tổng tiền:** "Tạm tính ({số dòng còn bán} sản phẩm)" = `totalAmount` (backend chỉ cộng dòng còn bán); ghi chú "Mã khuyến mãi áp ở bước thanh toán"; nút "Thanh toán" → `/checkout?source=cart`. Vô hiệu khi mọi dòng đều hết bán; còn dòng hết bán mà vẫn có dòng bán được thì **vẫn cho thanh toán** (xem trước bỏ phần hết bán, E4) kèm cảnh báo phía trên danh sách.
+- **Hành động:**
+
+| Hành động                                                                | Mutation                         | Làm mới                                                         |
+| ------------------------------------------------------------------------ | -------------------------------- | --------------------------------------------------------------- |
+| Xóa dòng (`AlertDialog` "Xóa khỏi giỏ hàng?", nêu tên sản phẩm, SCR-W10) | `DELETE /me/cart/items/{itemId}` | `ordersQueryKeys.cart` đặt bằng dữ liệu trả về (`setQueryData`) |
+
+- **Mã lỗi:** `404 cart_item_not_found` (dòng đã xóa ở tab khác) → toast "Sản phẩm không còn trong giỏ" và tải lại giỏ; `401` → phiên hết hạn, `SessionBootstrap` đưa về đăng nhập.
+- **Trạng thái:** đang tải: 3 dòng `Skeleton` + khối tổng `Skeleton`; lỗi: `ErrorState` "Không tải được giỏ hàng" + "Thử lại"; rỗng: `EmptyState` "Giỏ hàng của bạn đang trống" + "Khám phá dịch vụ" (`/services`) và "Xem gói liệu trình" (`/packages`); có dữ liệu: như trên.
+
+### SCR-W11 — Thanh toán
+
+- **Route:** `/checkout` (hai chế độ) · Vai trò: khách hàng · Layout: Customer · Mẫu: **trang hai cột** (tóm tắt đơn + mã khuyến mãi bên trái; thẻ "Tổng thanh toán" và nút xác nhận bên phải; dưới `lg` xếp dọc).
+- **Dữ liệu:** chế độ chuẩn bị: `POST /me/orders/preview` (`useOrderPreview`; gọi khi vào trang và mỗi khi áp/bỏ mã); chế độ có sẵn đơn: `GET /me/orders/{id}` (`ordersQueryKeys.order(id)`). Query URL sai (`source` lạ, `buy_now` thiếu hoặc thừa id, id không phải GUID, `source=cart` kèm id) → `EmptyState` "Liên kết thanh toán không hợp lệ" + "Về giỏ hàng", không gọi API.
+- **Nội dung chuẩn bị đơn:**
+  - Danh sách dòng (`items`): tên, nhãn loại, `unitPrice`, `discountAmount` (khi > 0, "−x đ"), `lineTotal`.
+  - `unavailableItems` (khi có) → `Alert` "Các sản phẩm sau không còn bán và không được tính: {tên…}" kèm link về giỏ. Nếu `items` rỗng → `EmptyState` "Không còn sản phẩm để thanh toán" + "Về giỏ hàng", ẩn nút xác nhận.
+  - **Ô mã khuyến mãi** (`FormField` + `Input`; React Hook Form + Zod: bỏ khoảng trắng hai đầu, viết hoa, tối đa 50 ký tự, không rỗng khi bấm "Áp dụng"). Áp dụng → gọi lại preview với `promotionCode`. `promotion` có giá trị → dòng "Mã {code}: −{discountAmount}" kèm "Bỏ mã"; `promotionError` → hiện `message` dưới ô, các con số tính như không có mã (E1). Phân biệt `promotion_invalid` / `promotion_not_applicable` chỉ bằng `code`.
+  - Thẻ tổng: `subtotal`, `discountTotal`, `grandTotal` (lớn, `text-primary`).
+  - Dòng thông tin "Thanh toán trực tuyến qua VNPay. Đơn được giữ 15 phút để bạn hoàn tất" (số phút trong `catalogPolicies.ts`, giữ đồng bộ `Order:PaymentTimeoutMinutes`).
+- **Nội dung có sẵn đơn (`?orderId=`):** mã đơn, các dòng, mã đã áp, tổng; `StatusBadge`; hạn thanh toán và đếm ngược (`paymentDueAtUtc`); nút "Thanh toán lại" khi `isPayable`. Đơn không còn `pending_payment` → thay nút bằng thông báo theo trạng thái và link "Xem kết quả" tới `/payment/result?orderId=`.
+- **Hành động:**
+
+| Hành động                                      | Mutation → hiệu ứng                                                                                                                                                                                                                                                                                                         | Làm mới                                             |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| "Xác nhận và thanh toán" (chuẩn bị đơn)        | `POST /me/orders` cùng body preview + `Idempotency-Key` (UUID tạo **một lần** cho mỗi nội dung đơn, giữ trong `useRef`; đổi mã hoặc sản phẩm thì tạo khóa mới; để bấm đúp hay gửi lại sau lỗi mạng không tạo hai đơn, BR-ORD-08) → `POST /me/orders/{id}/payments { client: "web" }` → `window.location.assign(paymentUrl)` | `ordersQueryKeys.cart`, `ordersQueryKeys.order(id)` |
+| "Thanh toán lại" (có sẵn đơn)                  | `POST /me/orders/{id}/payments { client: "web" }` → chuyển sang `paymentUrl`                                                                                                                                                                                                                                                | `ordersQueryKeys.order(id)`                         |
+| Tạo đơn xong nhưng tạo thanh toán lỗi          | Giữ `orderId`; đổi URL sang `/checkout?orderId=…` (`replace`) để "Thử lại" không tạo đơn thứ hai                                                                                                                                                                                                                            | —                                                   |
+| Đơn 0 đ (`status = paid`, không có `payments`) | Bỏ bước tạo thanh toán → chuyển thẳng `/payment/result?orderId=…`                                                                                                                                                                                                                                                           | giỏ, `order(id)`                                    |
+
+Nút `loading` suốt hai request liên tiếp và vô hiệu để chống bấm đúp.
+
+- **Mã lỗi → xử lý:**
+
+| Mã                                                                 | Hành vi UI                                                                                                                                                                      |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `400 cart_empty`                                                   | `EmptyState` "Giỏ hàng trống" + "Về giỏ hàng"                                                                                                                                   |
+| `400 order_items_unavailable`                                      | Toast với thông điệp backend (nêu tên sản phẩm); tải lại preview                                                                                                                |
+| `400 promotion_invalid` / `promotion_not_applicable` (lúc tạo đơn) | Toast; tải lại preview để hiện `promotionError` dưới ô mã; không tạo đơn                                                                                                        |
+| `400 order_amount_too_small`                                       | `Alert` "Giá trị thanh toán tối thiểu là 5.000 đ" (hằng cùng nguồn `Vnpay:MinAmount`); nút xác nhận vô hiệu khi `0 < grandTotal < 5000` (chỉ báo trước, backend vẫn quyết định) |
+| `400 validation_error`                                             | Toast "Dữ liệu không hợp lệ"                                                                                                                                                    |
+| `404 order_not_found`                                              | `EmptyState` "Không tìm thấy đơn hàng" + "Về giỏ hàng"                                                                                                                          |
+| `404 service_not_found` / `package_not_found` (mua ngay)           | `EmptyState` "Sản phẩm không còn bán" + về danh mục                                                                                                                             |
+| `409 order_not_payable`                                            | Toast "Đơn hàng đã hết hạn hoặc không còn chờ thanh toán"; tải lại đơn                                                                                                          |
+| `409 payment_attempts_exceeded`                                    | `Alert` "Bạn đã thử thanh toán quá số lần cho phép với đơn này"; ẩn "Thanh toán lại"                                                                                            |
+| `503 payment_gateway_unavailable`                                  | Toast "Cổng thanh toán tạm thời không khả dụng, vui lòng thử lại sau"; **giữ đơn** và hiện "Thử lại"                                                                            |
+| `401`                                                              | Phiên hết hạn → đăng nhập lại (`redirect` giữ `/checkout?…`)                                                                                                                    |
+| `403`                                                              | `/forbidden`                                                                                                                                                                    |
+| `status = 0`, `5xx` khác                                           | Toast "Không kết nối được máy chủ"; bấm lại dùng **cùng** `Idempotency-Key`                                                                                                     |
+
+- **Trạng thái:** đang tải: `Skeleton` dòng + thẻ tổng; lỗi: `ErrorState` + "Thử lại"; rỗng: như trên; có dữ liệu: như trên. Khi đổi mã, giữ dữ liệu cũ mờ (`placeholderData: keepPreviousData`, `aria-busy`).
+- **Rời khỏi trang:** chưa có "Hủy đơn" (UC-SPA-12). Đơn đã tạo mà khách bỏ đi sẽ hết hạn nhờ job nền.
+
+### SCR-W12 — Kết quả thanh toán
+
+- **Route:** `/payment/result` · Vai trò: khách hàng · Layout: Customer · Mẫu: **trang nội dung một cột** (thẻ trạng thái lớn có icon).
+- **Dữ liệu:** `GET /me/orders/{id}` theo `?orderId=` (`useOrder`). Thiếu `orderId` hoặc có `error=invalid_payment_result` → `EmptyState` "Không xác nhận được kết quả thanh toán" ("Nếu bạn đã bị trừ tiền, hãy liên hệ spa") + "Về trang chủ"; không gọi API khi thiếu `orderId`.
+- **Chờ kết quả (BR-ORD-05, Q-19, ORD-LATER-06):** ở Production, return URL chỉ để hiển thị, trạng thái đến từ IPN. Khi đơn còn `pending_payment` và lần thanh toán mới nhất `pending`, trang **poll** `GET /me/orders/{id}` mỗi 2 giây, tối đa 10 lần, hiện "Đang xác nhận thanh toán…" (`aria-live="polite"`). Hết 10 lần vẫn chờ → "Chưa nhận được kết quả từ cổng thanh toán" + "Kiểm tra lại" (một lần `refetch`). Không poll khi đơn `paid`, `expired`, `cancelled` hoặc lần mới nhất `failed`.
+- **Hiển thị (suy từ `status` của đơn và lần thanh toán mới nhất; FE không tự tính rule):**
+
+| Điều kiện                                | Nội dung                                                                                                                     | Hành động                                                                                                                                                        |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `paid`                                   | "Thanh toán thành công" (`CheckCircle2Icon`, `success`); mã đơn, tổng tiền, các dòng đã mua, `paidAtUtc` của lần `succeeded` | "Xem gói của tôi" → `/my-packages` (khi có dòng gói); "Đặt lịch" → `/my-bookings` (route placeholder đến khi UC-SPA-15 web có); "Tiếp tục mua sắm" → `/services` |
+| `pending_payment`, lần mới nhất `failed` | "Thanh toán chưa thành công" (`XCircleIcon`, `danger`); "Đơn được giữ đến {hạn}"                                             | "Thử lại thanh toán" → `/checkout?orderId=` (khi `isPayable`); "Về giỏ hàng"                                                                                     |
+| `pending_payment`, hết lượt poll         | "Chưa nhận được kết quả"                                                                                                     | "Kiểm tra lại", "Về trang chủ"                                                                                                                                   |
+| `expired`                                | "Đơn hàng đã hết hạn"; "Nếu bạn đã thanh toán, hệ thống sẽ cập nhật khi nhận được kết quả"                                   | "Mua lại" → `/cart`                                                                                                                                              |
+| `cancelled`                              | "Đơn hàng đã bị hủy"                                                                                                         | "Về trang chủ"                                                                                                                                                   |
+
+- **Trạng thái dữ liệu:** đang tải `Skeleton` thẻ trạng thái; lỗi `ErrorState` "Không tải được kết quả" + "Thử lại"; `404 order_not_found` → `EmptyState` "Không tìm thấy đơn hàng".
+
+### Responsive và a11y
+
+- 320px: danh sách giỏ xếp dọc (ảnh nhỏ bên trái, tên và giá bên phải, nút xóa cùng hàng giá); thẻ tổng nằm dưới danh sách, nút "Thanh toán"/"Xác nhận" rộng hết hàng. `lg`: hai cột (dòng 2/3, tổng 1/3, dính khi cuộn). Không cuộn ngang cả trang.
+- Focus: mở `AlertDialog` xóa → focus vào "Hủy", đóng → trả về nút "Xóa" (hoặc tiêu đề giỏ nếu dòng biến mất); sau khi áp mã, thông điệp có `role="status"`; trang kết quả chuyển focus vào tiêu đề trạng thái khi dữ liệu về. Số trên huy hiệu giỏ có trong `aria-label`.
+- Chuyển động chỉ bật với `motion-safe`. Màu chỉ bằng token; trạng thái luôn có chữ.
+
+### Thiếu từ backend (chỉ liệt kê, không sửa backend trong task này)
+
+| Mục                                                                                  | Ảnh hưởng                           | Tạm thời                                                        |
+| ------------------------------------------------------------------------------------ | ----------------------------------- | --------------------------------------------------------------- |
+| `OrderDetailDto` không trả liên kết tới quyền sử dụng/lịch hẹn vừa tạo               | SCR-W12 "Quyền sử dụng/Lịch hẹn"    | Chỉ hiện các dòng đã mua và link tới danh sách                  |
+| `CartItemDto` không có thời lượng hay số buổi                                        | Dòng giỏ chỉ có tên, loại, giá, ảnh | Không gọi thêm API chỉ để làm đẹp                               |
+| Thời hạn giữ đơn (15 phút) và `Vnpay:MinAmount` (5.000 đ) không có endpoint cấu hình | Văn bản trên trang thanh toán       | Hằng trong `catalogPolicies.ts`, giữ đồng bộ `appsettings.json` |
+
+### Kiểm thử giao diện
+
+Vitest + Testing Library, `fetch` giả theo `src/test/mockApi.tsx`, test đặt cạnh file; thêm test `OrdersApi` trong `packages/api-client`.
+
+| Mã         | Kiểm tra                                                                                                                                                                                                                                                                                              |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ORD-UI-T01 | `OrdersApi`: đúng method, đường dẫn, body; `createOrder` gửi header `Idempotency-Key`                                                                                                                                                                                                                 |
+| ORD-UI-T02 | Giỏ: đủ 4 trạng thái (skeleton, `ErrorState` + "Thử lại" gọi lại, rỗng có CTA tới `/services` và `/packages`, có dữ liệu hiện tên, giá, tổng)                                                                                                                                                         |
+| ORD-UI-T03 | Giỏ: `priceChanged` hiện giá lúc thêm; `isAvailable = false` mờ dòng, badge "Ngừng bán", tắt link; mọi dòng hết bán thì "Thanh toán" vô hiệu                                                                                                                                                          |
+| ORD-UI-T04 | Giỏ: xóa mở hộp xác nhận; xác nhận gọi `DELETE` và cập nhật danh sách; hủy thì không gọi; `404 cart_item_not_found` toast và tải lại                                                                                                                                                                  |
+| ORD-UI-T05 | "Thêm vào giỏ" ở gói và dịch vụ: khách vãng lai chuyển `/login?redirect=…`; khách gọi `POST /me/cart/items` đúng id và toast; `409 cart_item_exists` đổi nút "Đã có trong giỏ"; `400 cart_full` toast; chủ spa không thấy nút                                                                         |
+| ORD-UI-T06 | Header: khách hiện huy hiệu `itemCount`, 0 thì ẩn; khách vãng lai và chủ spa không có biểu tượng giỏ                                                                                                                                                                                                  |
+| ORD-UI-T07 | Checkout: query sai không gọi API và hiện "Liên kết không hợp lệ"; `source=cart` gọi preview với `{ source: 'cart' }`; `buy_now` gửi đúng id                                                                                                                                                          |
+| ORD-UI-T08 | Checkout: `unavailableItems` hiện cảnh báo; `items` rỗng hiện "Không còn sản phẩm" và ẩn nút xác nhận                                                                                                                                                                                                 |
+| ORD-UI-T09 | Mã khuyến mãi: tự viết hoa, bỏ khoảng trắng; ô rỗng không gọi; mã hợp lệ hiện dòng giảm và tổng mới; `promotionError.code` hiện thông điệp, tổng không đổi; "Bỏ mã" gọi lại không có mã; quá 50 ký tự báo lỗi                                                                                         |
+| ORD-UI-T10 | Xác nhận: `POST /me/orders` (kèm `Idempotency-Key` UUID) rồi `POST …/payments { client: 'web' }` rồi chuyển tới `paymentUrl`; bấm đúp chỉ gọi một lần; gửi lại sau lỗi mạng cùng khóa; đổi mã thì khóa mới                                                                                            |
+| ORD-UI-T11 | Tạo đơn xong, tạo thanh toán lỗi `503`: toast, URL đổi sang `?orderId=`, "Thử lại" chỉ gọi `POST …/payments`                                                                                                                                                                                          |
+| ORD-UI-T12 | Đơn 0 đ (`status = paid`) không gọi tạo thanh toán, chuyển thẳng `/payment/result?orderId=`                                                                                                                                                                                                           |
+| ORD-UI-T13 | Mã lỗi: `cart_empty`, `order_items_unavailable` (tải lại preview), `promotion_invalid`/`promotion_not_applicable` (lỗi ở ô mã), `order_amount_too_small`, `order_not_payable` (tải lại đơn), `payment_attempts_exceeded` (ẩn "Thanh toán lại"), `payment_gateway_unavailable` (giữ đơn, có "Thử lại") |
+| ORD-UI-T14 | Checkout `?orderId=`: `isPayable` hiện "Thanh toán lại" và đếm ngược; `paid`/`expired`/`cancelled` không có nút mà có "Xem kết quả"; không có ô mã                                                                                                                                                    |
+| ORD-UI-T15 | Kết quả `paid`: hiện thành công, mã đơn, tổng, các dòng, link tiếp tục; không poll                                                                                                                                                                                                                    |
+| ORD-UI-T16 | Kết quả `pending_payment` + lần `pending`: poll 2 giây, tối đa 10 lần (fake timers), rồi "Chưa nhận được kết quả" và "Kiểm tra lại"; chuyển `paid` giữa chừng thì dừng                                                                                                                                |
+| ORD-UI-T17 | Kết quả: lần mới nhất `failed` hiện "Thanh toán chưa thành công" và "Thử lại thanh toán" → `/checkout?orderId=`; `expired`, `cancelled` đúng nội dung                                                                                                                                                 |
+| ORD-UI-T18 | Kết quả: thiếu `orderId` hoặc `error=invalid_payment_result` không gọi API; `404 order_not_found` đúng thông điệp                                                                                                                                                                                     |
+| ORD-UI-T19 | Route: `/cart`, `/checkout`, `/payment/result` thuộc khu khách; chưa đăng nhập → `/login?redirect=…`; sai vai trò → `/forbidden`                                                                                                                                                                      |
+| ORD-UI-T20 | Tiền `vi-VN` đ, nhãn trạng thái đúng bảng; không còn `ComingSoonButton` cho "Thêm vào giỏ"/"Mua ngay"                                                                                                                                                                                                 |
+
+### Chỉnh theo mẫu Stitch (08/11/2026)
+
+Mẫu tham chiếu bố cục (project web `9696885610900739659`): giỏ hàng `…/0873e375b49b40d49e89addd9cb9f793`, thanh toán `…/c399af7492b548b29332cb2faa360aed` (và `…/53d0fe7c91924d10a587b31b0bd33e9d` "Thanh Toán VNPay"), kết quả `…/90bc6198f0f6469a87dcfedcab1f813b`. Chỉ lấy bố cục; mục dưới **thay thế** mô tả bố cục ở trên khi có khác biệt.
+
+- **Giỏ hàng:** mỗi dòng có ảnh lớn hơn (96px từ `sm`), nhãn loại phía trên, tên tiêu đề `font-heading`, giá bên dưới. Dưới danh sách có link "← Tiếp tục chọn thêm dịch vụ". Thẻ "Tóm tắt đơn hàng" (dính khi cuộn): tạm tính, "Tổng thanh toán" cỡ lớn `text-primary`, nút "Tiến hành thanh toán →", ghi chú dịch vụ được lưu vào tài khoản để đặt lịch, hai dòng chính sách (đổi/hủy lịch trước 24 giờ từ `catalogPolicies`, thanh toán qua VNPay).
+- **Thanh toán:** tiêu đề "Xác nhận & thanh toán đơn hàng". Cột trái: thẻ "Dịch vụ & sản phẩm đã chọn" (huy hiệu "n mục", từng dòng có loại, giá, tiền giảm) và thẻ "Phương thức thanh toán" chỉ có VNPay. Cột phải (dính): hộp xanh giữ đơn ("Đơn được giữ 15 phút…", với đơn có sẵn là hạn và đếm ngược), "Tóm tắt đơn hàng", ô mã khuyến mãi, tổng, nút "Thanh toán VNPay (số tiền)" có icon khiên.
+- **Kết quả:** vòng tròn icon trạng thái, ba ô thông tin "Mã đơn / Phương thức / Số tiền", danh sách dòng đã mua, rồi các nút.
+- **Bỏ nội dung Stitch tự thêm:** quà tặng kèm và thanh tiến độ ưu đãi, "Chọn tất cả" và ô chọn từng dòng, ưu đãi đặt trước, form thông tin khách và ghi chú cho bác sĩ, "mã hồ sơ bệnh án", cam kết y khoa/Bộ Y Tế/dược phẩm chính hãng, thanh toán thẻ quốc tế và tại quầy, hotline. Hệ thống không có các tính năng này.
+- Nút giỏ icon trên thẻ ở danh sách dịch vụ không có trong mẫu `Danh Sách Dịch Vụ`; do người dùng yêu cầu thêm.
+- **Phương thức thanh toán (08/11/2026):** thẻ hiện 4 lựa chọn dạng `radiogroup`: VNPay (đã chọn, dùng được) và MoMo, ZaloPay, thẻ quốc tế (khóa, nhãn "Sắp có", `aria-disabled`). Backend chỉ có `VnpayPaymentGateway`; thêm cổng khác cần một `IPaymentGateway` mới và cho phép chọn cổng khi tạo lần thanh toán (hiện `POST /me/orders/{id}/payments` chỉ nhận `{ client }`). Biểu trưng là ô chữ cái (VN, MM, ZP, CC) thay cho logo chính thức, vì chưa có file logo hợp lệ của từng cổng.
+- **Quay về từ VNPay bị đăng xuất (08/11/2026):** API chuyển trình duyệt về `Payment:ClientReturnUrls:Web`. Phiên của web nằm trong bộ nhớ và cookie refresh gắn với host đang mở, nên trang kết quả phải cùng origin với trang người dùng đang đăng nhập. `.env` mặc định `http://localhost:5173/...` trong khi `npm run dev` chạy web ở `http://<IP LAN>:5173`, nên bị đăng xuất. `scripts/dev.mjs` giờ đặt `Payment__ClientReturnUrls__Web` = `http://<IP LAN>:5173/payment/result`. Ở môi trường khác, đặt `PAYMENT_WEB_RETURN_URL` cùng origin với web.
+
+### Giao diện web: Đơn hàng của tôi (UC-SPA-12, SCR-W19, 08/11/2026)
+
+- **Route:** `/my-orders`, khu "Trang của tôi" (header + menu tài khoản bên trái). Mẫu Stitch `…/20f00f087ed24f55bebcba965a0c1002` (Đơn Hàng Của Tôi, Menu Cột Trái): thẻ đơn có dải mã/ngày/trạng thái, thân (sản phẩm, tổng tiền), chân (nút).
+- **Dữ liệu:** `GET /me/orders` (`ordersQueryKeys.list`), `GET /me/orders/{id}` (chi tiết trong `Sheet`), `POST /me/orders/{id}/cancel`. `OrdersApi.listOrders`, `cancelOrder`; kiểu `MyOrderListItem`, `OrderListParams`.
+- **Lọc và phân trang:** chip một trạng thái (Tất cả, Chờ thanh toán, Đã thanh toán, Hết hạn, Đã hủy) gửi `status` lên server; `?status=`, `?page=` trên URL; trạng thái lạ trên URL bị bỏ qua; đổi bộ lọc thì về trang 1; 10 đơn/trang (`SimplePager`).
+- **Nút theo cờ API (không tự suy luận):** `isPayable` → "Thanh toán ngay (VNPay)" tới `/checkout?orderId=`; `canCancel` → "Hủy đơn"; "Xem chi tiết" luôn có.
+- **Hủy đơn:** hộp thoại "Hủy đơn hàng?" có ô "Lý do hủy" bắt buộc (cắt khoảng trắng, 1–500 ký tự, Q-43). Lỗi `409 order_not_cancellable` → "Đơn hàng không còn có thể hủy."; `409 order_payment_in_progress` → "Đơn hàng đang được thanh toán, chưa thể hủy."; cả hai tải lại danh sách. Thành công: toast "Đã hủy đơn {mã}", danh sách và chi tiết cập nhật.
+- **Trạng thái:** đang tải (3 thẻ `Skeleton`), lỗi (`ErrorState` + "Thử lại"), rỗng không lọc ("Bạn chưa có đơn hàng nào" + "Khám phá dịch vụ"), rỗng có lọc ("Không có đơn hàng nào ở trạng thái này" + "Xem tất cả đơn"), có dữ liệu.
+- **Lọc theo ngày tạo (đã làm):** hai ô "Từ ngày", "Đến ngày" (`?fromDate=`, `?toDate=`, `yyyy-MM-dd`); ngày kết thúc trước ngày bắt đầu thì báo "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu." và không gửi.
+- **Theo mẫu Stitch:** khối đầu trang gộp tiêu đề "Đơn hàng của bạn", chip trạng thái và lọc ngày trong một thẻ; dải đầu mỗi thẻ đơn "Mã … · Ngày đặt", đơn chờ thanh toán có viền nổi và nhãn đếm ngược "Tự hủy sau mm:ss" (hạn `paymentDueAtUtc`); chân thẻ có dòng nói trạng thái (chưa thanh toán, đã lưu dịch vụ vào tài khoản, hết hạn, đã hủy).
+- **Chưa làm / thiếu từ backend:** số đơn theo từng trạng thái trên chip (API không trả), tên/ảnh sản phẩm đầy đủ (danh sách chỉ có `productNames` và `itemCount`), "Đặt lịch với quyền này" và "Xem hóa đơn" của mẫu (chưa có API/UC).
+- **Kiểm thử:** `MyOrdersView.test.tsx` (4 trạng thái, chip lọc và URL, trang, nút theo cờ, hủy đơn có lý do và các mã lỗi, chi tiết) và `orders.test.ts` của `api-client` (`listOrders`, `cancelOrder`).
