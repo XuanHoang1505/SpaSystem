@@ -7,10 +7,13 @@ import { useThemeScope } from '@/stores/themeScopeStore';
 import { SkipLink } from './SkipLink/SkipLink';
 import { WorkspaceSidebar } from './WorkspaceSidebar/WorkspaceSidebar';
 
-export function WorkspaceLayout({ workspace }: { workspace: Exclude<Workspace, 'public'> }) {
-  // Customers always get the light theme; only staff and owners may switch.
-  const lightOnly = workspace === 'customer';
-  useThemeScope(lightOnly ? 'light-only' : 'user');
+/** Admin shell (sidebar) for staff and owner. The customer area uses the site header instead (`AccountLayout`). */
+export function WorkspaceLayout({
+  workspace,
+}: {
+  workspace: Exclude<Workspace, 'public' | 'customer'>;
+}) {
+  useThemeScope('user');
   return (
     <SidebarProvider>
       <SkipLink />
@@ -22,7 +25,9 @@ export function WorkspaceLayout({ workspace }: { workspace: Exclude<Workspace, '
           <span className="truncate text-sm text-muted-foreground">
             {workspaceLabels[workspace]}
           </span>
-          <div className="ml-auto">{!lightOnly && <ThemeToggle />}</div>
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
         </header>
         <div className="bg-status-warning px-4 py-2 text-center text-xs text-status-warning-foreground">
           Bản xem trước giao diện · Dữ liệu nghiệp vụ đang được phát triển
