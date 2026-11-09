@@ -46,3 +46,4 @@ export * from './auth';
 export * from './catalog';
 export * from './availability';
 export * from './staff';
+export * from './orders';
