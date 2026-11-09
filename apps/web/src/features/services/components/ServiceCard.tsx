@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ClockIcon, SparklesIcon, StarIcon } from 'lucide-react';
 import type { ServiceListItem } from '@spa/shared-types';
 import { Button } from '@/components/ui/button';
+import { AddToCartButton } from '@/features/orders';
 import { ImageWithFallback } from '@/components/shared/ImageWithFallback/ImageWithFallback';
 import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge';
 import { formatCurrency, formatDuration } from '@/lib/formatting/formatters';
@@ -64,18 +65,25 @@ export function ServiceCard({ service }: { service: ServiceListItem }) {
             {formatCurrency(service.price)}
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <Button asChild variant="outline">
+        <div className="flex gap-2 pt-1">
+          <Button asChild variant="outline" className="flex-1">
             <Link to={to} aria-label={`Xem chi tiết ${service.name}`}>
               Chi tiết
             </Link>
           </Button>
           {/* TẠM: chưa có màn đặt lịch web (UC-SPA-15), dẫn sang trang chi tiết. */}
-          <Button asChild>
+          <Button asChild className="flex-1">
             <Link to={to} aria-label={`Đặt lịch ${service.name}`}>
               Đặt lịch
             </Link>
           </Button>
+          {service.status === 'on_sale' && (
+            <AddToCartButton
+              product={{ type: 'service', id: service.id }}
+              iconOnly
+              productName={service.name}
+            />
+          )}
         </div>
       </div>
     </article>

@@ -134,7 +134,14 @@ try {
     'dotnet',
     ['run', '--project', 'backend/src/API', '--no-launch-profile', '--urls', 'http://0.0.0.0:5000'],
     root,
-    { ASPNETCORE_ENVIRONMENT: 'Development', Cors__AllowedOrigins__2: `http://${host}:5173` },
+    {
+      ASPNETCORE_ENVIRONMENT: 'Development',
+      Cors__AllowedOrigins__2: `http://${host}:5173`,
+      // The payment gateway sends the browser back through the API to this page. It must be the origin the user is
+      // signed in on (the LAN IP above); the session lives in memory and in a cookie of that host, so returning to
+      // localhost would show the user as signed out.
+      Payment__ClientReturnUrls__Web: `http://${host}:5173/payment/result`,
+    },
   );
   start(
     'WEB',

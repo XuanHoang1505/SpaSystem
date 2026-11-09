@@ -491,7 +491,7 @@ Theo yêu cầu người dùng, giao diện dựng lại theo mẫu Stitch; ph�
 
 ### Hành động mua hàng (Thêm vào giỏ, Đặt ngay, Mua ngay)
 
-SCR-W02..W05 có các nút này, nhưng giao diện giỏ hàng, đơn hàng và đặt lịch (UC-SPA-10, 11, 15) chưa làm trên web. Lần này không có "Thêm vào giỏ"/"Mua ngay"; riêng "Đặt lịch" trên thẻ SCR-W02 có tạm (xem mục trên).
+"Thêm vào giỏ" (dịch vụ và gói) và "Mua ngay" (gói) đã làm cùng UC-SPA-10/11, xem `docs/specs/orders.md` mục "Giao diện (web)". "Đặt lịch" (UC-SPA-15) vẫn chưa làm trên web; nút trên thẻ SCR-W02 có tạm (xem mục trên).
 
 ### Mã lỗi → hành vi UI
 

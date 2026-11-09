@@ -8,6 +8,8 @@ import {
   HomeIcon,
   LayoutDashboardIcon,
   PackageIcon,
+  ReceiptTextIcon,
+  ShoppingCartIcon,
   SparklesIcon,
   StarIcon,
   TagIcon,
@@ -38,6 +40,8 @@ const icons: Record<string, LucideIcon> = {
   '/services': SparklesIcon,
   '/packages': PackageIcon,
   '/account': UserIcon,
+  '/cart': ShoppingCartIcon,
+  '/my-orders': ReceiptTextIcon,
   '/my-bookings': CalendarCheckIcon,
   '/my-treatment-plans': CalendarClockIcon,
   '/my-packages': WalletCardsIcon,
@@ -68,7 +72,11 @@ export const navigation: Record<Workspace, readonly NavigationItem[]> = {
   public: links(routes.public).filter(
     ({ path }) => !['/login', '/register', '/forgot-password'].includes(path),
   ),
-  customer: links(routes.customer),
+  // The account menu lists my pages. The cart is reached from the header; checkout and the payment result need an
+  // order or a cart in the URL, so they are reached from the cart.
+  customer: links(routes.customer).filter(
+    ({ path }) => !['/cart', '/checkout', '/payment/result'].includes(path),
+  ),
   staff: links(routes.staff),
   owner: links(routes.owner),
 };

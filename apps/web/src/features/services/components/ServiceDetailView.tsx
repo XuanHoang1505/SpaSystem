@@ -26,6 +26,7 @@ import { CatalogBreadcrumb } from './CatalogBreadcrumb';
 import { CatalogDetailStates } from './CatalogDetailStates';
 import { CatalogFaq } from './CatalogFaq';
 import { CatalogTrustStrip } from './CatalogTrustStrip';
+import { AddToCartButton } from '@/features/orders';
 import { ComingSoonButton } from './ComingSoonButton';
 import { RelatedServices } from './RelatedServices';
 
@@ -124,6 +125,9 @@ export function ServiceDetailView({
                     <BotIcon aria-hidden="true" />
                     Hỏi trợ lý tư vấn
                   </ComingSoonButton>
+                  <div className="sm:col-span-2">
+                    <AddToCartButton product={{ type: 'service', id: service.id }} />
+                  </div>
                 </div>
               </div>
               {aside?.(service)}

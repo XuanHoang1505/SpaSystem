@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/FormField/FormField';
 import { applyServerFieldErrors, authErrorMessage, UNKNOWN_ERROR } from '../errors';
-import { useCountdown } from '../hooks/useCountdown';
+import { useCountdown } from '@/hooks/useCountdown';
 import { useRequestRegistrationOtp } from '../hooks/useRegistration';
 import { registerSchema, type RegisterValues } from '../schemas';
 import { useApiConfigured } from './ConfigurationAlert';

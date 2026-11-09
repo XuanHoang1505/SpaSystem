@@ -6,8 +6,6 @@ import {
   CreditCardIcon,
   FlowerIcon,
   PackageIcon,
-  ShoppingBagIcon,
-  ShoppingCartIcon,
 } from 'lucide-react';
 import type { PackageDetail } from '@spa/shared-types';
 import { Badge } from '@/components/ui/badge';
@@ -21,10 +19,10 @@ import {
   CatalogDetailStates,
   CatalogFaq,
   CatalogTrustStrip,
-  ComingSoonButton,
   catalogStatusBadge,
   placeholderPackagePerks,
 } from '@/features/services';
+import { AddToCartButton, BuyNowButton } from '@/features/orders';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { formatCurrency, formatLocalDate } from '@/lib/formatting/formatters';
 import { minCourseDays, savingPercent } from '../coursePlan';
@@ -201,19 +199,8 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
                   </ul>
                 </div>
                 <div className="grid gap-2">
-                  <ComingSoonButton feature="Mua gói trực tuyến" size="lg">
-                    <ShoppingBagIcon aria-hidden="true" />
-                    Mua ngay gói liệu trình
-                  </ComingSoonButton>
-                  <ComingSoonButton
-                    feature="Giỏ hàng"
-                    size="lg"
-                    variant="outline"
-                    className="bg-card"
-                  >
-                    <ShoppingCartIcon aria-hidden="true" />
-                    Thêm vào giỏ
-                  </ComingSoonButton>
+                  <BuyNowButton packageId={pkg.id} />
+                  <AddToCartButton product={{ type: 'package', id: pkg.id }} />
                 </div>
                 <p className="flex items-center gap-2 text-xs text-muted-foreground">
                   <CreditCardIcon className="size-4" aria-hidden="true" />
