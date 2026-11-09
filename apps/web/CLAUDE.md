@@ -19,6 +19,16 @@ Rules for work under `apps/web/`. They extend the root CLAUDE.md. UI stack and t
 - Add a primitive with `npx shadcn@4.23.0 add <name>` from `apps/web`, then: fix the generated `import { cn } from "cn"` to `@/lib/utils`, uninstall the `cn` package it adds, and delete any `--sidebar-*` block it appends to `index.css`. Only the unified `radix-ui` package; never `@radix-ui/react-*`. Icons from `lucide-react`.
 - Accessibility: semantic landmarks, visible focus, icon-only buttons have `aria-label`, works from 320px wide without horizontal page scroll.
 
+## Visual taste (taste-skill)
+
+`.claude/skills/taste-skill` (`design-taste-frontend`, MIT, upstream `Leonxlnx/taste-skill`, added 2026-11-08) guides how pages _look_: avoid templated "AI" visuals. Use it for the public pages (home, service and package pages, about) and for the visual polish of customer pages. It is not for `DataTable` screens, forms or admin screens (its own scope note says the same). **The rules in this file win whenever they conflict:**
+
+- **Stack:** Tailwind v4 + shadcn/ui and the tokens in `theme.css` only. Do not add Motion, Geist, icon packs or other libraries, and no hex colors, even if the skill suggests them.
+- **Fonts:** Lora for headings and DM Sans for body (`docs/design/DESIGN.md`). A serif is fine here because the brand names it; ignore the skill's "serif is discouraged" and font-pool advice.
+- **Theme:** public pages and the customer area are always light (ADR-0005); ignore the skill's "dark mode is mandatory". Staff and owner pages support both themes.
+- **Content:** Vietnamese with diacritics. No invented testimonials, numbers, doctors, medical claims or features; use real data or `ImageWithFallback`, never decorative filler. Skip the skill's "Design Read" and clarifying-question step for small edits.
+- **Keep from the skill:** no thick colored side borders or decorative hairlines, restrained type sizes, eyebrows rationed, one shape language, loading/empty/error states, motion only with `motion-safe` and a purpose, no em-dash (—) in visible text (use a comma or a period).
+
 ## Other rules
 
 - User-facing text is Vietnamese with diacritics. Named exports only (shadcn files in `ui/` keep their own style). Keep tests next to the file (`*.test.tsx`) and mock `fetch`.
