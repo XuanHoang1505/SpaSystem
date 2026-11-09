@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { useCountdown } from '../hooks/useCountdown';
+import { useCountdown } from '@/hooks/useCountdown';
 
 /** Disabled until the server's `resendAvailableAtUtc` (BR-AUTH-25); the wait is never hard-coded here. */
 export function ResendCodeButton({
