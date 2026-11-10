@@ -68,9 +68,14 @@ export function MyTreatmentPlanDetailView({ planId }: { planId: string }) {
     <div className="space-y-6">
       {/* Navigation & Breadcrumb */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <Button asChild variant="ghost" size="sm" className="font-medium -ml-2 text-muted-foreground hover:text-foreground">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="-ml-2 font-medium text-muted-foreground hover:text-foreground"
+        >
           <Link to="/my-treatment-plans">
-            <ArrowLeftIcon className="size-4 mr-1.5" aria-hidden="true" />
+            <ArrowLeftIcon className="mr-1.5 size-4" aria-hidden="true" />
             Quay lại danh sách liệu trình
           </Link>
         </Button>
@@ -88,10 +93,7 @@ export function MyTreatmentPlanDetailView({ planId }: { planId: string }) {
       </div>
 
       {/* Plan overview card */}
-      <TreatmentPlanOverviewCard
-        plan={plan}
-        onViewOrder={(order) => setSelectedOrder(order)}
-      />
+      <TreatmentPlanOverviewCard plan={plan} onViewOrder={(order) => setSelectedOrder(order)} />
 
       {/* Sessions timeline */}
       <TreatmentSessionTimeline
@@ -111,10 +113,7 @@ export function MyTreatmentPlanDetailView({ planId }: { planId: string }) {
       />
 
       {/* Order detail sheet */}
-      <OrderDetailSheet
-        order={selectedOrder}
-        onClose={() => setSelectedOrder(null)}
-      />
+      <OrderDetailSheet order={selectedOrder} onClose={() => setSelectedOrder(null)} />
     </div>
   );
 }

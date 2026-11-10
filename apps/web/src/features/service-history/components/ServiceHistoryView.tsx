@@ -198,7 +198,7 @@ export function ServiceHistoryView() {
         onPageSizeChange={handlePageSizeChange}
         empty={
           <div className="py-12 text-center text-sm text-muted-foreground">
-            {Boolean(filters.fromDate || filters.toDate || filters.spaServiceId || filters.status)
+            {filters.fromDate || filters.toDate || filters.spaServiceId || filters.status
               ? 'Không có lần sử dụng dịch vụ nào khớp với bộ lọc.'
               : 'Bạn chưa có lịch sử sử dụng dịch vụ nào.'}
           </div>
@@ -216,10 +216,7 @@ export function ServiceHistoryView() {
       />
 
       {/* Order detail sheet */}
-      <OrderDetailSheet
-        order={selectedOrder}
-        onClose={() => setSelectedOrder(null)}
-      />
+      <OrderDetailSheet order={selectedOrder} onClose={() => setSelectedOrder(null)} />
     </div>
   );
 }

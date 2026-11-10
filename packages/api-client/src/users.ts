@@ -14,32 +14,15 @@ export class UsersApi {
     return this.client.get<ApiResponse<MeDto>>('/api/v1/me', options);
   }
 
-  updateMe(
-    body: UpdateProfileRequest,
-    options?: RequestOptions,
-  ): Promise<ApiResponse<MeDto>> {
-    return this.client.put<UpdateProfileRequest, ApiResponse<MeDto>>(
-      '/api/v1/me',
-      body,
-      options,
-    );
+  updateMe(body: UpdateProfileRequest, options?: RequestOptions): Promise<ApiResponse<MeDto>> {
+    return this.client.put<UpdateProfileRequest, ApiResponse<MeDto>>('/api/v1/me', body, options);
   }
 
-  changePassword(
-    body: ChangePasswordRequest,
-    options?: RequestOptions,
-  ): Promise<void> {
-    return this.client.put<ChangePasswordRequest, void>(
-      '/api/v1/me/password',
-      body,
-      options,
-    );
+  changePassword(body: ChangePasswordRequest, options?: RequestOptions): Promise<void> {
+    return this.client.put<ChangePasswordRequest, void>('/api/v1/me/password', body, options);
   }
 
-  uploadAvatar(
-    file: File | Blob,
-    options?: RequestOptions,
-  ): Promise<ApiResponse<AvatarUrlDto>> {
+  uploadAvatar(file: File | Blob, options?: RequestOptions): Promise<ApiResponse<AvatarUrlDto>> {
     const formData = new FormData();
     formData.append('file', file);
     return this.client.post<FormData, ApiResponse<AvatarUrlDto>>(

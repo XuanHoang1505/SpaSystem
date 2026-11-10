@@ -157,20 +157,20 @@ export function CartView({ suggestions }: { suggestions?: ReactNode }) {
               </div>
 
               {/* Special Spa Perks & Reassurance card */}
-              <div className="rounded-2xl border bg-card/60 p-5 sm:p-6 space-y-4">
+              <div className="space-y-4 rounded-2xl border bg-card/60 p-5 sm:p-6">
                 <div className="flex items-center gap-2">
                   <SparklesIcon className="size-4.5 text-primary" aria-hidden="true" />
                   <h3 className="font-heading font-semibold text-foreground">
                     Đặc quyền khi mua dịch vụ tại Như Nguyệt Spa
                   </h3>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-3 pt-1">
+                <div className="grid gap-3 pt-1 sm:grid-cols-3">
                   <div className="space-y-1.5 rounded-xl border bg-background/70 p-3.5 text-xs">
                     <p className="flex items-center gap-1.5 font-semibold text-foreground">
                       <CalendarCheckIcon className="size-4 text-primary" aria-hidden="true" />
                       Chủ động đặt lịch
                     </p>
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="leading-relaxed text-muted-foreground">
                       Sau khi mua, bạn tự do chọn ngày, giờ và chuyên viên trực tuyến 24/7.
                     </p>
                   </div>
@@ -179,7 +179,7 @@ export function CartView({ suggestions }: { suggestions?: ReactNode }) {
                       <ShieldCheckIcon className="size-4 text-primary" aria-hidden="true" />
                       Bảo lưu thời hạn
                     </p>
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="leading-relaxed text-muted-foreground">
                       Hỗ trợ bảo lưu và gia hạn linh hoạt nếu bạn bận lịch trình cá nhân.
                     </p>
                   </div>
@@ -188,7 +188,7 @@ export function CartView({ suggestions }: { suggestions?: ReactNode }) {
                       <CheckCircle2Icon className="size-4 text-primary" aria-hidden="true" />
                       Đổi lịch miễn phí
                     </p>
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="leading-relaxed text-muted-foreground">
                       Được đổi hoặc hủy lịch hẹn trước 24 giờ hoàn toàn không tính phí.
                     </p>
                   </div>

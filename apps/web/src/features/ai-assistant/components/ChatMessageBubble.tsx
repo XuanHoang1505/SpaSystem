@@ -14,18 +14,18 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
   return (
     <div
       className={cn(
-        'flex gap-3 max-w-[88%] sm:max-w-[80%]',
+        'flex max-w-[88%] gap-3 sm:max-w-[80%]',
         isUser ? 'ml-auto flex-row-reverse' : 'mr-auto',
       )}
     >
       <div
         className={cn(
-          'size-8 rounded-full shrink-0 flex items-center justify-center text-xs font-semibold shadow-xs',
+          'flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold shadow-xs',
           isUser
             ? 'bg-primary text-primary-foreground'
             : message.isError
-            ? 'bg-destructive/10 text-destructive'
-            : 'bg-primary/10 text-primary',
+              ? 'bg-destructive/10 text-destructive'
+              : 'bg-primary/10 text-primary',
         )}
       >
         {isUser ? (
@@ -40,12 +40,12 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
       <div className="space-y-2.5 overflow-hidden">
         <div
           className={cn(
-            'p-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words shadow-xs',
+            'rounded-2xl p-3.5 text-sm leading-relaxed break-words whitespace-pre-wrap shadow-xs',
             isUser
-              ? 'bg-primary text-primary-foreground rounded-tr-xs'
+              ? 'rounded-tr-xs bg-primary text-primary-foreground'
               : message.isError
-              ? 'bg-destructive/10 border border-destructive/20 text-destructive rounded-tl-xs'
-              : 'bg-muted/80 dark:bg-muted/50 border border-border text-foreground rounded-tl-xs',
+                ? 'rounded-tl-xs border border-destructive/20 bg-destructive/10 text-destructive'
+                : 'rounded-tl-xs border border-border bg-muted/80 text-foreground dark:bg-muted/50',
           )}
         >
           {message.content}

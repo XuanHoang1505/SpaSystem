@@ -1,8 +1,7 @@
-import { ArrowRightIcon, CalendarClockIcon, CreditCardIcon, ShieldCheckIcon, SparklesIcon } from 'lucide-react';
+import { ArrowRightIcon, CalendarClockIcon, CreditCardIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Cart } from '@spa/shared-types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { catalogPolicies } from '@/features/services/catalogPolicies';
 import { formatCurrency } from '@/lib/formatting/formatters';
 import { checkoutPath } from '../checkoutParams';
@@ -26,7 +25,7 @@ export function CartSummary({ cart }: { cart: Cart }) {
             <span className="shrink-0 font-heading text-lg font-semibold text-foreground">
               Tổng thanh toán
             </span>
-            <span className="font-heading text-2xl sm:text-3xl font-bold text-primary">
+            <span className="font-heading text-2xl font-bold text-primary sm:text-3xl">
               {formatCurrency(cart.totalAmount)}
             </span>
           </div>
@@ -49,7 +48,9 @@ export function CartSummary({ cart }: { cart: Cart }) {
         <ul className="space-y-2.5 border-t pt-4 text-xs text-muted-foreground">
           <li className="flex items-start gap-2.5">
             <CalendarClockIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-            <span>Đổi hoặc hủy lịch hẹn linh hoạt trước {catalogPolicies.customerChangeCutoffHours} giờ.</span>
+            <span>
+              Đổi hoặc hủy lịch hẹn linh hoạt trước {catalogPolicies.customerChangeCutoffHours} giờ.
+            </span>
           </li>
           <li className="flex items-start gap-2.5">
             <CreditCardIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />

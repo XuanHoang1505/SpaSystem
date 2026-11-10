@@ -4,7 +4,6 @@ import { callUsersVoid } from '@/lib/api/users';
 
 export function useChangePassword() {
   return useMutation({
-    mutationFn: (data: ChangePasswordRequest) =>
-      callUsersVoid((api) => api.changePassword(data)),
+    mutationFn: (data: ChangePasswordRequest) => callUsersVoid((api) => api.changePassword(data)),
   });
 }

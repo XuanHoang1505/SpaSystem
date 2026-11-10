@@ -14,7 +14,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-18 sm:h-24 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:h-24 sm:px-6 lg:px-8">
         <Brand />
         <nav aria-label="Điều hướng chính" className="hidden items-center gap-1.5 md:flex">
           {publicLinks.map(({ path, title }) => (

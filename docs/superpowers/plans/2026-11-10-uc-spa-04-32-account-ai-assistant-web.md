@@ -10,6 +10,7 @@
 ## 1. Mục tiêu & Phạm vi
 
 ### Màn hình mục tiêu:
+
 1. **`SCR-W22` — Thông tin tài khoản (`/account`)**:
    - Người dùng đã đăng nhập (`customer`, `staff`, `owner`) xem và sửa thông tin cá nhân.
    - Quản lý ảnh đại diện: Tải ảnh mới (PNG/JPG/WEBP $\le$ 5MB) qua `POST /api/v1/me/avatar`, xóa ảnh qua `DELETE /api/v1/me/avatar`.
@@ -40,6 +41,7 @@
 ## 3. Danh sách các Task triển khai
 
 ### Task 1: Hợp đồng Types & API Client (`shared-types` & `api-client`)
+
 - **File tạo/sửa**:
   - `packages/shared-types/src/users.ts`: Các type `MeDto`, `UpdateProfileRequest`, `ChangePasswordRequest`, `AvatarUrlDto`, `Gender`.
   - `packages/shared-types/src/aiAssistant.ts`: Các type `AiProductType`, `AiBookingKind`, `AiProductSuggestion`, `AiBookingProposal`, `AiChatReply`, `AiChatMessage`, `AiChatHistory`, `AiChatHistoryQuery`, `AskAiAssistantRequest`.
@@ -51,6 +53,7 @@
 - **Kiểm tra**: Chạy `npm --workspace @spa/api-client run test`.
 
 ### Task 2: Feature `users` (Thông tin tài khoản — UC-SPA-04)
+
 - **File tạo/sửa**:
   - `apps/web/src/lib/api/users.ts`: Khởi tạo caller `UsersApi`.
   - `apps/web/src/features/users/schemas.ts`: Zod schema xác thực sửa thông tin và đổi mật khẩu.
@@ -67,6 +70,7 @@
 - **Kiểm tra**: Chạy `npm --workspace @spa/web run test src/features/users`.
 
 ### Task 3: Feature `ai-assistant` (Trợ lý AI & Widget — UC-SPA-32)
+
 - **File tạo/sửa**:
   - `apps/web/src/lib/api/aiAssistant.ts`: Khởi tạo caller `AiAssistantApi`.
   - `apps/web/src/features/ai-assistant/schemas.ts`: Zod schema câu hỏi (1–1000 ký tự).
@@ -84,6 +88,7 @@
 - **Kiểm tra**: Chạy `npm --workspace @spa/web run test src/features/ai-assistant`.
 
 ### Task 4: Pages, Router & Tích hợp Layout
+
 - **File tạo/sửa**:
   - `apps/web/src/pages/customer/AccountPage.tsx`: Thay thế placeholder `/account`.
   - `apps/web/src/pages/customer/AiAssistantPage.tsx`: Màn hình `/ai-assistant` cho khách hàng.
@@ -95,6 +100,7 @@
 - **Kiểm tra**: Chạy `npm --workspace @spa/web run test`.
 
 ### Task 5: Xác thực toàn diện & Cập nhật tài liệu
+
 - **Kiểm tra**:
   - `npm --workspace @spa/web run typecheck`
   - `npm --workspace @spa/web run test` (toàn bộ test suite)

@@ -1,5 +1,4 @@
-import { CheckCircle2Icon, MailIcon, ShieldCheckIcon, UserIcon } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { MailIcon, UserIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -25,7 +24,7 @@ export function CustomerInfoCard() {
           </span>
           <div className="min-w-0 flex-1 space-y-1">
             <p className="font-heading text-base font-semibold text-foreground">{user.fullName}</p>
-            <p className="flex items-center gap-1.5 text-xs text-muted-foreground break-all">
+            <p className="flex items-center gap-1.5 text-xs break-all text-muted-foreground">
               <MailIcon className="size-3.5 shrink-0" aria-hidden="true" />
               <span>{user.email}</span>
             </p>

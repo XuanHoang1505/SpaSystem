@@ -42,7 +42,7 @@ export function TreatmentPlanCard({ plan }: { plan: MyTreatmentListItem }) {
     plan.totalSessions > 0 ? Math.min(100, (plan.usedSessions / plan.totalSessions) * 100) : 0;
 
   return (
-    <article className="space-y-4 rounded-2xl border bg-card p-5 sm:p-6 shadow-xs transition-shadow hover:shadow-sm">
+    <article className="space-y-4 rounded-2xl border bg-card p-5 shadow-xs transition-shadow hover:shadow-sm sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b pb-4">
         <div className="min-w-0 space-y-1">
           <h3 className="font-heading text-lg font-semibold tracking-tight text-foreground sm:text-xl">
@@ -121,9 +121,7 @@ export function TreatmentPlanCard({ plan }: { plan: MyTreatmentListItem }) {
       <div className="flex flex-wrap items-center gap-3 pt-1">
         {canBookNext && (
           <Button asChild className="font-medium shadow-xs">
-            <Link
-              to={`/booking/new?treatmentSessionId=${next.id}&treatmentPlanId=${plan.id}`}
-            >
+            <Link to={`/booking/new?treatmentSessionId=${next.id}&treatmentPlanId=${plan.id}`}>
               <CalendarPlusIcon aria-hidden="true" />
               Đặt lịch buổi tiếp theo
             </Link>

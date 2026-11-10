@@ -47,16 +47,21 @@ export function ServiceCard({ service }: { service: ServiceListItem }) {
             {rating.count})
           </span>
         </div>
-        <h3 className="truncate font-heading text-lg font-semibold tracking-tight" title={service.name}>
+        <h3
+          className="truncate font-heading text-lg font-semibold tracking-tight"
+          title={service.name}
+        >
           <Link
             to={to}
-            className="rounded-sm outline-none transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="rounded-sm transition-colors outline-none hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             {service.name}
           </Link>
         </h3>
         {service.shortDescription && (
-          <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{service.shortDescription}</p>
+          <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+            {service.shortDescription}
+          </p>
         )}
         <div className="mt-auto flex items-end justify-between gap-2 border-t pt-3">
           <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
@@ -67,7 +72,11 @@ export function ServiceCard({ service }: { service: ServiceListItem }) {
           </span>
         </div>
         <div className="flex gap-2 pt-1">
-          <Button asChild variant="outline" className="flex-1 font-medium transition-colors hover:bg-accent hover:text-accent-foreground">
+          <Button
+            asChild
+            variant="outline"
+            className="flex-1 font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
             <Link to={to} aria-label={`Xem chi tiết ${service.name}`}>
               Chi tiết
             </Link>

@@ -7,7 +7,6 @@ import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
 import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { catalogPolicies } from '@/features/services/catalogPolicies';
 import { redirectTo } from '@/features/payments/redirect';
@@ -212,12 +211,15 @@ function PrepareCheckout({ baseRequest }: { baseRequest: OrderRequest }) {
           )}
           <Button
             size="lg"
-            className="h-auto min-h-12 w-full py-2.5 font-medium whitespace-normal shadow-xs group"
+            className="group h-auto min-h-12 w-full py-2.5 font-medium whitespace-normal shadow-xs"
             disabled={tooSmall}
             loading={createOrder.isPending || startPayment.isPending}
             onClick={() => void confirm()}
           >
-            <ShieldCheckIcon className="size-5 transition-transform group-hover:scale-110" aria-hidden="true" />
+            <ShieldCheckIcon
+              className="size-5 transition-transform group-hover:scale-110"
+              aria-hidden="true"
+            />
             Thanh toán VNPay ({formatCurrency(data.grandTotal)})
           </Button>
           <p className="text-center text-xs text-muted-foreground">

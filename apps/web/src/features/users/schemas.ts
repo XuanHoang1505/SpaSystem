@@ -1,6 +1,5 @@
-  import { z } from 'zod';
+import { z } from 'zod';
 
-const PHONE = /^0\d{9}$/;
 const PASSWORD_MIN = 8;
 const PASSWORD_MAX = 128;
 const passwordLength = `Mật khẩu phải có từ ${PASSWORD_MIN} đến ${PASSWORD_MAX} ký tự.`;
@@ -15,11 +14,7 @@ const strongPassword = z
   });
 
 export const profileSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    .min(1, 'Vui lòng nhập họ tên.')
-    .max(100, 'Họ tên tối đa 100 ký tự.'),
+  fullName: z.string().trim().min(1, 'Vui lòng nhập họ tên.').max(100, 'Họ tên tối đa 100 ký tự.'),
   phoneNumber: z.string().optional(),
   dateOfBirth: z
     .string()

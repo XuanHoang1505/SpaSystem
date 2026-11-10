@@ -175,10 +175,10 @@ function SourceCard({ source }: { source: ResolvedSource }) {
   return (
     <section
       aria-label="Thông tin đặt lịch"
-      className="rounded-2xl border bg-card p-5 sm:p-6 shadow-xs"
+      className="rounded-2xl border bg-card p-5 shadow-xs sm:p-6"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
-        <div className="relative size-20 sm:size-24 shrink-0 overflow-hidden rounded-xl border bg-muted">
+        <div className="relative size-20 shrink-0 overflow-hidden rounded-xl border bg-muted sm:size-24">
           <ImageWithFallback
             src={source.imageUrl ?? null}
             alt={source.name}
@@ -487,9 +487,12 @@ function BookingForm({
         )}
         <section
           aria-labelledby="pick-title"
-          className="space-y-4 rounded-2xl border bg-card p-5 sm:p-6 shadow-xs"
+          className="space-y-4 rounded-2xl border bg-card p-5 shadow-xs sm:p-6"
         >
-          <h2 id="pick-title" className="font-heading text-lg font-semibold text-foreground sm:text-xl">
+          <h2
+            id="pick-title"
+            className="font-heading text-lg font-semibold text-foreground sm:text-xl"
+          >
             1. Chọn ngày, giờ và kỹ thuật viên
           </h2>
           {!resolved.canBook ? (
@@ -535,9 +538,12 @@ function BookingForm({
         {resolved.canBook && (
           <section
             aria-labelledby="note-title"
-            className="space-y-3.5 rounded-2xl border bg-card p-5 sm:p-6 shadow-xs"
+            className="space-y-3.5 rounded-2xl border bg-card p-5 shadow-xs sm:p-6"
           >
-            <h2 id="note-title" className="font-heading text-lg font-semibold text-foreground sm:text-xl">
+            <h2
+              id="note-title"
+              className="font-heading text-lg font-semibold text-foreground sm:text-xl"
+            >
               2. Ghi chú cho kỹ thuật viên
             </h2>
             <div className="flex flex-wrap gap-1.5 pb-1">

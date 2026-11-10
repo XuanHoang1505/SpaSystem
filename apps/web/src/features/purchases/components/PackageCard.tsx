@@ -48,7 +48,7 @@ export function PackageCard({
     item.totalSessions > 0 ? Math.min(100, (item.usedSessions / item.totalSessions) * 100) : 0;
 
   return (
-    <article className="space-y-4 rounded-2xl border bg-card p-5 sm:p-6 shadow-xs transition-shadow hover:shadow-sm">
+    <article className="space-y-4 rounded-2xl border bg-card p-5 shadow-xs transition-shadow hover:shadow-sm sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b pb-4">
         <div className="min-w-0 space-y-1">
           <div className="flex items-center gap-2">
@@ -70,7 +70,7 @@ export function PackageCard({
         <StatusBadge label={badge.label} tone={badge.tone} status={item.status} />
       </div>
 
-      <div className="space-y-2.5 rounded-xl bg-muted/30 p-4 border">
+      <div className="space-y-2.5 rounded-xl border bg-muted/30 p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
           <span className="flex items-center gap-1.5 font-medium text-foreground">
             <CircleCheckIcon className="size-4 text-primary" aria-hidden="true" />
@@ -91,7 +91,7 @@ export function PackageCard({
             style={{ width: `${percent}%` }}
           />
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground pt-0.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5 text-xs text-muted-foreground">
           {item.bookedSessions > 0 ? (
             <span className="inline-flex items-center gap-1 font-medium text-foreground">
               <span className="size-1.5 rounded-full bg-primary" />
@@ -125,7 +125,7 @@ export function PackageCard({
 
       <div className="flex flex-wrap items-center gap-3 pt-1">
         {canBookNext && (
-          <Button asChild className="shadow-xs font-medium">
+          <Button asChild className="font-medium shadow-xs">
             <Link
               to={bookingPath({
                 kind: 'session',
@@ -144,10 +144,12 @@ export function PackageCard({
             <ArrowRightIcon aria-hidden="true" />
           </Link>
         </Button>
-        <Button asChild variant="ghost" className="font-medium text-xs text-primary hover:text-primary">
-          <Link to={`/my-treatment-plans/${item.treatmentPlan.id}`}>
-            Xem phác đồ điều trị →
-          </Link>
+        <Button
+          asChild
+          variant="ghost"
+          className="text-xs font-medium text-primary hover:text-primary"
+        >
+          <Link to={`/my-treatment-plans/${item.treatmentPlan.id}`}>Xem phác đồ điều trị →</Link>
         </Button>
         {reason && <span className="text-xs text-muted-foreground">{reason}</span>}
       </div>

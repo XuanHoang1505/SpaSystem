@@ -38,25 +38,26 @@
 
 ## File Structure
 
-| File | Trách nhiệm |
-| --- | --- |
-| `packages/shared-types/src/{treatments,purchases,index}.ts` | Kiểu DTO cho danh sách liệu trình và lịch sử sử dụng dịch vụ |
-| `packages/api-client/src/{treatments,serviceHistory,index}.ts` | API client, query keys và mã lỗi cho Treatments và ServiceHistory |
-| `apps/web/src/lib/api/{treatments,serviceHistory}.ts` | Wrapper `callTreatments` và `callServiceHistory` với client dùng chung |
-| `apps/web/src/features/treatments/{treatmentStatus,index}.ts` | Nhãn trạng thái, tông màu StatusBadge của phác đồ và buổi |
-| `apps/web/src/features/treatments/hooks/{useMyTreatments,useMyTreatmentPlan,useMyTreatmentSession}.ts` | React Query hooks cho UC-SPA-19 |
-| `apps/web/src/features/treatments/components/*` | `TreatmentPlanCard`, `TreatmentPlanOverviewCard`, `TreatmentSessionTimeline`, `TreatmentSessionDetailSheet`, `MyTreatmentPlansView`, `MyTreatmentPlanDetailView` |
-| `apps/web/src/features/service-history/{historyStatus,index}.ts` | Nhãn trạng thái và tông màu cho lần sử dụng dịch vụ |
-| `apps/web/src/features/service-history/hooks/{useServiceHistory,useServiceHistoryDetail}.ts` | React Query hooks cho UC-SPA-20 |
-| `apps/web/src/features/service-history/components/*` | `ServiceHistoryFilterToolbar`, `ServiceHistoryDetailSheet`, `ServiceHistoryView` |
-| `apps/web/src/pages/customer/{MyTreatmentPlansPage,MyTreatmentPlanDetailPage,MyServiceHistoryPage}.tsx` | Trang khách hàng kết nối feature |
-| `apps/web/src/app/{routes,router}.ts(x)`, `config/navigation.ts` | Khai báo route, gắn component vào `AccountLayout`, bổ sung icon navigation |
+| File                                                                                                    | Trách nhiệm                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/shared-types/src/{treatments,purchases,index}.ts`                                             | Kiểu DTO cho danh sách liệu trình và lịch sử sử dụng dịch vụ                                                                                                     |
+| `packages/api-client/src/{treatments,serviceHistory,index}.ts`                                          | API client, query keys và mã lỗi cho Treatments và ServiceHistory                                                                                                |
+| `apps/web/src/lib/api/{treatments,serviceHistory}.ts`                                                   | Wrapper `callTreatments` và `callServiceHistory` với client dùng chung                                                                                           |
+| `apps/web/src/features/treatments/{treatmentStatus,index}.ts`                                           | Nhãn trạng thái, tông màu StatusBadge của phác đồ và buổi                                                                                                        |
+| `apps/web/src/features/treatments/hooks/{useMyTreatments,useMyTreatmentPlan,useMyTreatmentSession}.ts`  | React Query hooks cho UC-SPA-19                                                                                                                                  |
+| `apps/web/src/features/treatments/components/*`                                                         | `TreatmentPlanCard`, `TreatmentPlanOverviewCard`, `TreatmentSessionTimeline`, `TreatmentSessionDetailSheet`, `MyTreatmentPlansView`, `MyTreatmentPlanDetailView` |
+| `apps/web/src/features/service-history/{historyStatus,index}.ts`                                        | Nhãn trạng thái và tông màu cho lần sử dụng dịch vụ                                                                                                              |
+| `apps/web/src/features/service-history/hooks/{useServiceHistory,useServiceHistoryDetail}.ts`            | React Query hooks cho UC-SPA-20                                                                                                                                  |
+| `apps/web/src/features/service-history/components/*`                                                    | `ServiceHistoryFilterToolbar`, `ServiceHistoryDetailSheet`, `ServiceHistoryView`                                                                                 |
+| `apps/web/src/pages/customer/{MyTreatmentPlansPage,MyTreatmentPlanDetailPage,MyServiceHistoryPage}.tsx` | Trang khách hàng kết nối feature                                                                                                                                 |
+| `apps/web/src/app/{routes,router}.ts(x)`, `config/navigation.ts`                                        | Khai báo route, gắn component vào `AccountLayout`, bổ sung icon navigation                                                                                       |
 
 ---
 
 ### Task 1: Bổ sung Hợp đồng `shared-types` và API Client cho Treatments & Service History
 
 **Files:**
+
 - Modify: `packages/shared-types/src/treatments.ts`
 - Modify: `packages/shared-types/src/purchases.ts`
 - Modify: `packages/shared-types/src/index.ts`
@@ -67,6 +68,7 @@
 - Modify: `packages/api-client/src/index.ts`
 
 **Interfaces:**
+
 - `packages/shared-types/src/treatments.ts`:
   - `MyTreatmentListItem`: `{ id: string; customerPackageId: string; packageName: string; imageUrl: string | null; status: TreatmentPlanStatus; packageStatus: CustomerPackageStatus; expiresAtUtc: string | null; totalSessions: number; usedSessions: number; bookedSessions: number; primaryStaff?: StaffRef | null; nextSession?: MyTreatmentNextSession | null }`.
 - `packages/shared-types/src/purchases.ts`:
@@ -92,6 +94,7 @@
 ### Task 2: Nền Web & Feature `treatments` (UC-SPA-19)
 
 **Files:**
+
 - Create: `apps/web/src/features/treatments/treatmentStatus.ts` (+ test)
 - Create: `apps/web/src/features/treatments/hooks/useMyTreatments.ts`
 - Create: `apps/web/src/features/treatments/hooks/useMyTreatmentPlan.ts`
@@ -106,6 +109,7 @@
 - Modify: `apps/web/src/lib/api/treatments.ts` (thêm wrapper gọi API nếu cần)
 
 **Interfaces & Components:**
+
 - `treatmentStatusBadge(status: TreatmentPlanStatus): { label: string; tone: StatusTone }`:
   - `not_started`: "Chưa bắt đầu" (`neutral`)
   - `in_progress`: "Đang thực hiện" (`success`)
@@ -131,6 +135,7 @@
 ### Task 3: Feature `service-history` với DataTable (UC-SPA-20)
 
 **Files:**
+
 - Create: `apps/web/src/lib/api/serviceHistory.ts`
 - Create: `apps/web/src/features/service-history/historyStatus.ts` (+ test)
 - Create: `apps/web/src/features/service-history/hooks/useServiceHistory.ts`
@@ -141,6 +146,7 @@
 - Create: `apps/web/src/features/service-history/index.ts`
 
 **Interfaces & Components:**
+
 - `historyStatusBadge(status: AppointmentStatus): { label: string; tone: StatusTone }`:
   - `completed`: "Đã hoàn thành" (`success`)
   - `no_show`: "Vắng mặt" (`danger`)
@@ -167,6 +173,7 @@
 ### Task 4: Tích hợp Pages, Routes và Navigation
 
 **Files:**
+
 - Create: `apps/web/src/pages/customer/MyTreatmentPlansPage.tsx`
 - Create: `apps/web/src/pages/customer/MyTreatmentPlanDetailPage.tsx`
 - Create: `apps/web/src/pages/customer/MyServiceHistoryPage.tsx`
@@ -176,6 +183,7 @@
 - Modify: `apps/web/src/features/auth/navigation.test.ts`
 
 **Specifications:**
+
 - `apps/web/src/app/routes.ts`:
   - Trong `routes.customer`:
     - Đảm bảo có `['/my-treatment-plans', 'Liệu trình']`.
@@ -201,6 +209,7 @@
 ### Task 5: Kiểm tra Hồi quy, Typecheck và Hoàn tất Tài liệu
 
 **Files:**
+
 - Modify: `docs/frontend.md` (cập nhật route mới của customer)
 - Modify: `docs/progress.md` (đánh dấu UI UC-SPA-19 và UC-SPA-20 hoàn thành)
 
@@ -217,6 +226,7 @@
 ---
 
 ## Plan Review Checklist
+
 - [x] Đầy đủ 2 use case: UC-SPA-19 (`SCR-W17`), UC-SPA-20 (`SCR-W18`).
 - [x] Đúng thứ tự: shared-types → api-client → lib/api → hooks → components → pages/routes → test → docs.
 - [x] Tuân thủ 100% Global Constraints và quy tắc UI tastes của hệ thống.

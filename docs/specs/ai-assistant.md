@@ -210,11 +210,11 @@ Feature: `src/features/ai-assistant/` (`components/`, `hooks/`, `schemas.ts`, `e
    - Tên trợ lý: "Trợ lý ảo Như Nguyệt Spa", biểu tượng Bot/Sparkles, trạng thái "Sẵn sàng hỗ trợ".
    - Dòng giới thiệu: "Tư vấn dịch vụ · Bảng giá · Tra cứu giờ trống · Gợi ý đặt lịch".
 2. **Thanh lưu ý y khoa cố định (BR-AI-01):**
-   - Alert viền vàng cố định ở đầu màn hình chat: *"Lưu ý: Trợ lý AI chỉ tư vấn thông tin dịch vụ, gói và hỗ trợ chọn lịch tại Spa Như Nguyệt; không đưa ra chẩn đoán y khoa hay thay thế bác sĩ da liễu."*
+   - Alert viền vàng cố định ở đầu màn hình chat: _"Lưu ý: Trợ lý AI chỉ tư vấn thông tin dịch vụ, gói và hỗ trợ chọn lịch tại Spa Như Nguyệt; không đưa ra chẩn đoán y khoa hay thay thế bác sĩ da liễu."_
 3. **Danh sách tin nhắn (`ChatMessageList`):**
    - Tin nhắn chào mừng mặc định từ AI khi khởi đầu cuộc hội thoại: Giới thiệu các chủ đề có thể hỗ trợ và kèm 4 gợi ý nhanh (Quick Prompts).
    - **Khách hàng đã đăng nhập:** Gọi `GET /api/v1/me/ai/history` khi vào trang để tải các lượt hỏi – đáp trước đó. Nếu `hasMore = true`, hiển thị nút "Xem tin nhắn cũ hơn".
-   - **Khách vãng lai:** Khung chat không lưu lịch sử trên server, có ghi chú: *"Đăng nhập để trợ lý có thể tra cứu lịch hẹn và tiến độ gói của riêng bạn."*
+   - **Khách vãng lai:** Khung chat không lưu lịch sử trên server, có ghi chú: _"Đăng nhập để trợ lý có thể tra cứu lịch hẹn và tiến độ gói của riêng bạn."_
    - Tin nhắn khách hàng: Bong bóng bên phải, nền màu thương hiệu `primary`.
    - Tin nhắn trợ lý: Bong bóng bên trái, kèm ảnh avatar đại diện Như Nguyệt Spa, hỗ trợ định dạng văn bản có cấu trúc (xuống dòng, gạch đầu dòng, in đậm).
    - **Thẻ sản phẩm gợi ý (`AiProductSuggestionCard`, BR-AI-05):**
@@ -225,18 +225,18 @@ Feature: `src/features/ai-assistant/` (`components/`, `hooks/`, `schemas.ts`, `e
      - Nằm dưới câu trả lời của AI nếu có `bookingProposals` (tối đa 3 đề xuất).
      - Hiển thị: Dịch vụ, Ngày hẹn (`Thứ Bảy, 15/11/2026`), Giờ hẹn (`09:00 – 10:15`), Chuyên viên đề xuất (nếu có).
      - Nút CTA: **"Đặt lịch theo đề xuất này"** $\rightarrow$ điều hướng tới link `path` điền sẵn (`/booking/new?serviceId=...&date=...&startTime=...`). Khách vãng lai bấm vào sẽ được yêu cầu đăng nhập trước khi hoàn tất đặt lịch.
-     - Ghi chú minh bạch: *"Giờ hẹn chưa được giữ chỗ. Vui lòng bấm để hoàn tất xác nhận đặt lịch."*
-   - **Chỉ báo chờ trả lời (Typing indicator):** Trong lúc gọi `POST /ai/chat`, hiển thị bong bóng tin nhắn với hiệu ứng nhấp nháy: *"Trợ lý đang tìm kiếm thông tin và soạn câu trả lời..."*.
+     - Ghi chú minh bạch: _"Giờ hẹn chưa được giữ chỗ. Vui lòng bấm để hoàn tất xác nhận đặt lịch."_
+   - **Chỉ báo chờ trả lời (Typing indicator):** Trong lúc gọi `POST /ai/chat`, hiển thị bong bóng tin nhắn với hiệu ứng nhấp nháy: _"Trợ lý đang tìm kiếm thông tin và soạn câu trả lời..."_.
 4. **Thanh nhập câu hỏi (`ChatInputBar`):**
    - Ô `Textarea` tự co giãn 1–3 dòng, giới hạn 1–1000 ký tự (BR-AI-03).
    - Hỗ trợ phím tắt: Nhấn `Enter` để gửi, `Shift + Enter` để xuống dòng.
    - Bộ đếm ký tự: `0/1000`.
    - Nút gửi (icon `SendHorizontal`): Hiển thị trạng thái loading khi đang gửi, bị khóa khi ô nhập chỉ toàn khoảng trắng hoặc đang chờ phản hồi.
    - Hàng chip câu hỏi gợi ý nhanh (khi chưa gửi tin nhắn hoặc sau lời chào):
-     - *"Tư vấn dịch vụ cho da nhạy cảm"*
-     - *"Các gói cấp ẩm phục hồi da"*
-     - *"Bảng giá các dịch vụ chăm sóc da"*
-     - *(Nếu đã đăng nhập)*: *"Kiểm tra lịch hẹn sắp tới của tôi"*, *"Gói của tôi còn bao nhiêu buổi?"*
+     - _"Tư vấn dịch vụ cho da nhạy cảm"_
+     - _"Các gói cấp ẩm phục hồi da"_
+     - _"Bảng giá các dịch vụ chăm sóc da"_
+     - _(Nếu đã đăng nhập)_: _"Kiểm tra lịch hẹn sắp tới của tôi"_, _"Gói của tôi còn bao nhiêu buổi?"_
 
 ### Dữ liệu & Hợp đồng
 
@@ -256,14 +256,14 @@ Feature: `src/features/ai-assistant/` (`components/`, `hooks/`, `schemas.ts`, `e
 
 ### Mã lỗi & Cách xử lý UI
 
-| Mã / tình huống | Thao tác | Hành vi UI |
-| :--- | :--- | :--- |
-| `validation_error` (400) | Gửi câu hỏi | Báo lỗi đỏ dưới ô nhập tin nhắn (câu hỏi rỗng hoặc vượt quá 1000 ký tự) |
-| `forbidden` (403) | Gửi câu hỏi hoặc xem lịch sử | Banner thông báo: "Trợ lý AI chỉ phục vụ khách hàng và khách vãng lai. Tài khoản nhân viên/quản lý không được phép sử dụng." |
-| `rate_limited` (429) | Gửi câu hỏi | Thông báo lỗi trong luồng chat: "Bạn đã gửi quá giới hạn cho phép (10 câu/phút hoặc 50 câu/ngày). Vui lòng đợi trong giây lát." |
-| `ai_unavailable` (503) | Gửi câu hỏi | Hiển thị tin nhắn lỗi trong khung chat kèm nút "Thử gửi lại" |
-| `unauthorized` (401) | Xem lịch sử | Chuyển sang trạng thái khách vãng lai (không cố gọi lại lịch sử) |
-| Mất mạng / 500 | Gửi câu hỏi | Hiển thị trạng thái mất kết nối kèm nút bấm gửi lại |
+| Mã / tình huống          | Thao tác                     | Hành vi UI                                                                                                                      |
+| :----------------------- | :--------------------------- | :------------------------------------------------------------------------------------------------------------------------------ |
+| `validation_error` (400) | Gửi câu hỏi                  | Báo lỗi đỏ dưới ô nhập tin nhắn (câu hỏi rỗng hoặc vượt quá 1000 ký tự)                                                         |
+| `forbidden` (403)        | Gửi câu hỏi hoặc xem lịch sử | Banner thông báo: "Trợ lý AI chỉ phục vụ khách hàng và khách vãng lai. Tài khoản nhân viên/quản lý không được phép sử dụng."    |
+| `rate_limited` (429)     | Gửi câu hỏi                  | Thông báo lỗi trong luồng chat: "Bạn đã gửi quá giới hạn cho phép (10 câu/phút hoặc 50 câu/ngày). Vui lòng đợi trong giây lát." |
+| `ai_unavailable` (503)   | Gửi câu hỏi                  | Hiển thị tin nhắn lỗi trong khung chat kèm nút "Thử gửi lại"                                                                    |
+| `unauthorized` (401)     | Xem lịch sử                  | Chuyển sang trạng thái khách vãng lai (không cố gọi lại lịch sử)                                                                |
+| Mất mạng / 500           | Gửi câu hỏi                  | Hiển thị trạng thái mất kết nối kèm nút bấm gửi lại                                                                             |
 
 ### Trạng thái, responsive, a11y (SCR-W21)
 
@@ -277,16 +277,16 @@ Feature: `src/features/ai-assistant/` (`components/`, `hooks/`, `schemas.ts`, `e
 
 ### Kiểm thử giao diện (AI-UI)
 
-| Mã | Tình huống | Kết quả mong đợi |
-| :--- | :--- | :--- |
-| AI-UI-T01 | `AiAssistantApi`: `chat` và `getHistory` gọi đúng endpoint, query param và body | Pass với mock API |
-| AI-UI-T02 | Khách vãng lai vào `/ai-assistant`: hiển thị lời chào mặc định, các nút gợi ý nhanh, không gọi API lịch sử | Pass 4 trạng thái, sẵn sàng chat |
-| AI-UI-T03 | Khách hàng đăng nhập vào `/ai-assistant`: gọi `GET /me/ai/history`, tải danh sách câu hỏi cũ đảo lại theo thứ tự thời gian | Hiển thị đầy đủ tin nhắn cũ |
-| AI-UI-T04 | Gửi câu hỏi: validate client rỗng/quá 1000 ký tự; khi hợp lệ gọi `POST /ai/chat` hiển thị typing indicator | Hiển thị câu hỏi của người dùng và câu trả lời của AI |
-| AI-UI-T05 | Câu trả lời kèm gợi ý sản phẩm (`suggestions`): render thẻ sản phẩm, click mở đúng trang `/services/:id` hoặc `/packages/:id` | Hiển thị đúng tối đa 3 thẻ sản phẩm |
-| AI-UI-T06 | Câu trả lời kèm đề xuất lịch (`bookingProposals`): render thẻ lịch hẹn, click mở `/booking/new` với query params | Hiển thị chi tiết giờ trống và link đặt sẵn |
-| AI-UI-T07 | Server trả `scope = medical` hoặc `out_of_scope`: AI hiển thị câu cố định bảo vệ người dùng, không gợi ý sản phẩm | Render đúng văn bản bảo vệ |
-| AI-UI-T08 | Lỗi `503 ai_unavailable` hoặc `429 rate_limited`: hiển thị thông báo lỗi thân thiện, có nút gửi lại cho lỗi 503 | UI không bị crash, hỗ trợ thử lại |
+| Mã        | Tình huống                                                                                                                    | Kết quả mong đợi                                      |
+| :-------- | :---------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------- |
+| AI-UI-T01 | `AiAssistantApi`: `chat` và `getHistory` gọi đúng endpoint, query param và body                                               | Pass với mock API                                     |
+| AI-UI-T02 | Khách vãng lai vào `/ai-assistant`: hiển thị lời chào mặc định, các nút gợi ý nhanh, không gọi API lịch sử                    | Pass 4 trạng thái, sẵn sàng chat                      |
+| AI-UI-T03 | Khách hàng đăng nhập vào `/ai-assistant`: gọi `GET /me/ai/history`, tải danh sách câu hỏi cũ đảo lại theo thứ tự thời gian    | Hiển thị đầy đủ tin nhắn cũ                           |
+| AI-UI-T04 | Gửi câu hỏi: validate client rỗng/quá 1000 ký tự; khi hợp lệ gọi `POST /ai/chat` hiển thị typing indicator                    | Hiển thị câu hỏi của người dùng và câu trả lời của AI |
+| AI-UI-T05 | Câu trả lời kèm gợi ý sản phẩm (`suggestions`): render thẻ sản phẩm, click mở đúng trang `/services/:id` hoặc `/packages/:id` | Hiển thị đúng tối đa 3 thẻ sản phẩm                   |
+| AI-UI-T06 | Câu trả lời kèm đề xuất lịch (`bookingProposals`): render thẻ lịch hẹn, click mở `/booking/new` với query params              | Hiển thị chi tiết giờ trống và link đặt sẵn           |
+| AI-UI-T07 | Server trả `scope = medical` hoặc `out_of_scope`: AI hiển thị câu cố định bảo vệ người dùng, không gợi ý sản phẩm             | Render đúng văn bản bảo vệ                            |
+| AI-UI-T08 | Lỗi `503 ai_unavailable` hoặc `429 rate_limited`: hiển thị thông báo lỗi thân thiện, có nút gửi lại cho lỗi 503               | UI không bị crash, hỗ trợ thử lại                     |
 
 ## Việc để sau
 

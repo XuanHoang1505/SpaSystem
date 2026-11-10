@@ -8,8 +8,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateProfileRequest) =>
-      callUsers((api) => api.updateMe(data)),
+    mutationFn: (data: UpdateProfileRequest) => callUsers((api) => api.updateMe(data)),
     onSuccess: (updated: MeDto) => {
       queryClient.setQueryData(usersQueryKeys.me(), updated);
       queryClient.invalidateQueries({ queryKey: usersQueryKeys.me() });

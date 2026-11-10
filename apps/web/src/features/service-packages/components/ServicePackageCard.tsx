@@ -21,7 +21,12 @@ export function ServicePackageCard({ pkg }: { pkg: PackageListItem }) {
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-md">
-      <Link to={to} tabIndex={-1} aria-hidden="true" className="relative block aspect-[16/10] overflow-hidden bg-muted">
+      <Link
+        to={to}
+        tabIndex={-1}
+        aria-hidden="true"
+        className="relative block aspect-[16/10] overflow-hidden bg-muted"
+      >
         <ImageWithFallback
           src={pkg.imageUrl}
           alt=""
@@ -59,10 +64,13 @@ export function ServicePackageCard({ pkg }: { pkg: PackageListItem }) {
           )}
         </div>
 
-        <h3 className="line-clamp-2 font-heading text-lg font-semibold tracking-tight text-foreground" title={pkg.name}>
+        <h3
+          className="line-clamp-2 font-heading text-lg font-semibold tracking-tight text-foreground"
+          title={pkg.name}
+        >
           <Link
             to={to}
-            className="rounded-sm outline-none transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="rounded-sm transition-colors outline-none hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             {pkg.name}
           </Link>

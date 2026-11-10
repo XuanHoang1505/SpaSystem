@@ -11,7 +11,7 @@ export function AccountView() {
   const { data: user, isLoading, isError, refetch, isRefetching } = useMe();
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="max-w-4xl space-y-6">
       <PageHeader
         title="Thông tin tài khoản"
         description="Quản lý thông tin cá nhân, ảnh đại diện và bảo mật tài khoản của bạn."

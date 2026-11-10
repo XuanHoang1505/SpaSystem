@@ -34,12 +34,13 @@ export function AvatarUploader({ avatarUrl, fullName }: AvatarUploaderProps) {
 
   const isBusy = uploadMutation.isPending || deleteMutation.isPending;
 
-  const initials = fullName
-    .split(' ')
-    .filter(Boolean)
-    .slice(-2)
-    .map((w) => w[0]?.toUpperCase())
-    .join('') || 'U';
+  const initials =
+    fullName
+      .split(' ')
+      .filter(Boolean)
+      .slice(-2)
+      .map((w) => w[0]?.toUpperCase())
+      .join('') || 'U';
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -80,22 +81,22 @@ export function AvatarUploader({ avatarUrl, fullName }: AvatarUploaderProps) {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center gap-6">
-      <div className="relative group">
-        <Avatar className="h-24 w-24 ring-2 ring-border shadow-sm">
+    <div className="flex flex-col items-center gap-6 sm:flex-row">
+      <div className="group relative">
+        <Avatar className="h-24 w-24 shadow-sm ring-2 ring-border">
           {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName} className="object-cover" />}
-          <AvatarFallback className="bg-primary/10 text-primary font-semibold text-2xl">
+          <AvatarFallback className="bg-primary/10 text-2xl font-semibold text-primary">
             {initials}
           </AvatarFallback>
         </Avatar>
         {isBusy && (
-          <div className="absolute inset-0 bg-background/60 rounded-full flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-background/60">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         )}
       </div>
 
-      <div className="flex flex-col items-center sm:items-start gap-2">
+      <div className="flex flex-col items-center gap-2 sm:items-start">
         <input
           ref={fileInputRef}
           type="file"
@@ -133,7 +134,7 @@ export function AvatarUploader({ avatarUrl, fullName }: AvatarUploaderProps) {
                   size="sm"
                   disabled={isBusy}
                   aria-label="Xóa ảnh đại diện"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+                  className="gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
                 >
                   {deleteMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -168,9 +169,7 @@ export function AvatarUploader({ avatarUrl, fullName }: AvatarUploaderProps) {
             </AlertDialog>
           )}
         </div>
-        <p className="text-xs text-muted-foreground">
-          Định dạng PNG, JPG, WEBP. Tối đa 5MB.
-        </p>
+        <p className="text-xs text-muted-foreground">Định dạng PNG, JPG, WEBP. Tối đa 5MB.</p>
       </div>
     </div>
   );

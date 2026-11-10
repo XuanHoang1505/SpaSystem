@@ -10,10 +10,7 @@ import type { ApiClient, RequestOptions } from './index';
 export class AiAssistantApi {
   constructor(private readonly client: ApiClient) {}
 
-  chat(
-    body: AskAiAssistantRequest,
-    options?: RequestOptions,
-  ): Promise<ApiResponse<AiChatReply>> {
+  chat(body: AskAiAssistantRequest, options?: RequestOptions): Promise<ApiResponse<AiChatReply>> {
     return this.client.post<AskAiAssistantRequest, ApiResponse<AiChatReply>>(
       '/api/v1/ai/chat',
       body,

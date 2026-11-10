@@ -1,4 +1,4 @@
-                                                                                                                      {
+{
   "info": {
     "_postman_id": "d8801020-3215-4b99-9a01-20261103de00",
     "name": "Nhu Nguyet Spa – DEMO GIẢNG VIÊN (Đặt lịch chống trùng & Trợ lý AI)",
@@ -218,9 +218,7 @@
               "listen": "prerequest",
               "script": {
                 "type": "text/javascript",
-                "exec": [
-                  "pm.environment.set('bookNowKey', pm.variables.replaceIn('{{$guid}}'));"
-                ]
+                "exec": ["pm.environment.set('bookNowKey', pm.variables.replaceIn('{{$guid}}'));"]
               }
             },
             {
@@ -957,4 +955,3 @@
     }
   ]
 }
-
