@@ -1,4 +1,12 @@
 import type { AllergySeverity, AppointmentStatus } from '@spa/shared-types';
+import type { LucideIcon } from 'lucide-react';
+import {
+  CalendarClockIcon,
+  CalendarX2Icon,
+  CheckCircle2Icon,
+  UserCheckIcon,
+  UserXIcon,
+} from 'lucide-react';
 import type { StatusTone } from '@/components/shared/StatusBadge/StatusBadge';
 
 const labels: Record<AppointmentStatus, { label: string; tone: StatusTone }> = {
@@ -53,6 +61,14 @@ export const ownerActionLabels: Record<OwnerAppointmentAction, string> = {
   assign_staff: 'Đổi nhân viên',
   cancel: 'Hủy lịch',
   no_show: 'Khách không đến',
+};
+
+export const ownerActionIcons: Record<OwnerAppointmentAction, LucideIcon> = {
+  confirm: CheckCircle2Icon,
+  reschedule: CalendarClockIcon,
+  assign_staff: UserCheckIcon,
+  cancel: CalendarX2Icon,
+  no_show: UserXIcon,
 };
 
 const allergyLabels: Record<AllergySeverity, { label: string; tone: StatusTone }> = {

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { EyeIcon } from 'lucide-react';
 import type { AppointmentListItem } from '@spa/shared-types';
 import {
   DataTable,
@@ -12,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { formatLocalDate } from '@/lib/formatting/formatters';
 import {
   appointmentStatusBadge,
+  ownerActionIcons,
   ownerActionLabels,
   ownerAppointmentActions,
   type OwnerAppointmentAction,
@@ -97,10 +99,12 @@ export function OwnerAppointmentsTable({
   const rowActions = (row: AppointmentListItem): DataTableRowAction<AppointmentListItem>[] => [
     {
       label: 'Xem chi tiết',
+      icon: EyeIcon,
       onSelect: () => onOpen(row.id),
     },
     ...ownerAppointmentActions(row.status).map((action) => ({
       label: ownerActionLabels[action],
+      icon: ownerActionIcons[action],
       variant: action === 'cancel' ? ('destructive' as const) : undefined,
       onSelect: () => onAction(action, row),
     })),
