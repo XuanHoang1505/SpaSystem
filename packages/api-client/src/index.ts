@@ -219,3 +219,4 @@ export * from './treatments';
 export * from './serviceHistory';
 export * from './users';
 export * from './aiAssistant';
+export * from './workSchedules';
