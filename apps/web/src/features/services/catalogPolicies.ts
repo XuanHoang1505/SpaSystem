@@ -19,6 +19,12 @@ export const catalogPolicies = {
   /** Default hours of the owner's day calendar; it widens to fit appointments outside them. */
   dayGridStartTime: '08:00',
   dayGridEndTime: '20:00',
+  /** `WorkSchedule:MaxDaysAhead`: ngày xa nhất được phân ca (UC-SPA-23). */
+  maxShiftDaysAhead: 60,
+  /** `WorkSchedule:MaxQueryRangeDays`: khoảng ngày tối đa khi xem lịch làm việc. */
+  maxWorkScheduleQueryRangeDays: 42,
+  /** `WorkSchedule:MaxBatchShifts`: số ca tối đa tạo trong 1 lần phân ca hàng loạt. */
+  maxBatchShifts: 500,
 } as const;
 
 /** Thông tin liên hệ hiển thị cho khách. Số điện thoại là số mẫu của Stitch: thay số thật trước khi dùng. */
