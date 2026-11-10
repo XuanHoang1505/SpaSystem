@@ -3,7 +3,7 @@
 - **Nhóm:** `Staff` · **Sprint:** 1 · **Nguồn:** DA §2.2.3 (UC Quản lý nhân viên, UC Phân công lịch làm việc) / ĐX
 - **Entity:** `StaffMember` (bảng `staff_members`), `StaffSkill` (bảng `staff_skills`), `WorkSchedule` (bảng `work_schedules`), cùng `User` (bảng `users`) — xem [glossary](../domain/glossary.md), [data-model](../domain/data-model.md)
 - **Trạng thái triển khai:** xem [progress.md](../progress.md)
-- **Đã đặc tả:** UC-SPA-22, 23 (chỉ backend) — **đã triển khai backend 27/10/2026** (kế hoạch: `docs/superpowers/plans/2026-10-27-uc-spa-22-23-staff.md`). UC-SPA-25 (nhân viên xem lịch hẹn được phân công, chỉ backend) đặc tả và **đã triển khai backend 31/10/2026** (kế hoạch: `docs/superpowers/plans/2026-10-31-uc-spa-25-27-28-care.md`), làm cùng UC-SPA-27, 28 ([care.md](care.md)). UC-SPA-24 (lịch làm việc cá nhân) viết sau.
+- **Đã đặc tả:** UC-SPA-22, 23 (backend triển khai 27/10/2026; web triển khai 10/11/2026 — kế hoạch: `docs/superpowers/plans/2026-11-10-uc-spa-22-23-staff-web.md`). UC-SPA-25 (nhân viên xem lịch hẹn được phân công, chỉ backend) đặc tả và **đã triển khai backend 31/10/2026** (kế hoạch: `docs/superpowers/plans/2026-10-31-uc-spa-25-27-28-care.md`), làm cùng UC-SPA-27, 28 ([care.md](care.md)). UC-SPA-24 (lịch làm việc cá nhân) viết sau.
 
 ## Use case
 
@@ -267,3 +267,226 @@ Unit test (Application) dùng NSubstitute và đồng hồ giả; integration te
 | STF-LATER-02 | Thông báo cho nhân viên khi được phân ca, sửa hoặc hủy ca (BR-NTF-01)                                        | Ghi `notifications` loại `system`                                                                                              | UC-SPA-34           |
 | STF-LATER-03 | Bỏ dịch vụ khỏi nhân viên khi còn lịch hẹn chiếm chỗ trong tương lai của dịch vụ đó                          | Chặn `409` hoặc trả danh sách cần phân công lại, giống nghỉ việc                                                               | UC-SPA-15, 17       |
 | STF-LATER-04 | Khóa dòng ca (`SELECT … FOR UPDATE`) khi sửa/hủy ca và khi đặt lịch vào ca                                   | Hiện kiểm tra lịch hẹn rồi mới lưu ca, không khóa; khi có API đặt lịch, một lịch hẹn ghi vào giữa hai bước có thể nằm ngoài ca | UC-SPA-15, 17       |
+
+
+## Giao diện (web): UC-SPA-22, UC-SPA-23 — Quản lý nhân viên & Lịch làm việc
+
+Phạm vi: màn hình quản trị nhân viên và phân công lịch làm việc của chủ spa (`SCR-W33`, `/owner/staff`). Không làm lần này: mobile (SCR-M30 xem nhanh nhân viên trên Android để làm sau ở Sprint 3), sao chép lịch tuần (STF-LATER-01).
+
+> **Lưu ý mẫu Stitch:** Không có công cụ Stitch MCP trong môi trường hiện tại; giao diện được thiết kế theo các quy chuẩn của hệ thống (`components/ui` shadcn + `components/shared` DataTable, PageHeader, StatusBadge + tokens theme).
+
+Feature: `apps/web/src/features/staff/` (đã có `ServiceStaffList`, `useServiceStaff` cho trang chi tiết dịch vụ; mở rộng thêm các hooks và components quản trị của chủ spa). Trang ở `apps/web/src/pages/owner/OwnerStaffPage.tsx`. Route `/owner/staff` chạy trong `OwnerLayout` (sidebar workspace, hỗ trợ cả theme sáng và tối).
+
+### Bố cục tổng thể (SCR-W33 — `/owner/staff`)
+
+- **Khung bao ngoài:** Thẻ `<section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">` đồng bộ với các trang quản trị khác.
+- **Breadcrumb:** `Trang chủ > Tài khoản > Nhân viên & lịch làm việc`.
+- **PageHeader:** 
+  - Tiêu đề: "Nhân viên & Lịch làm việc"
+  - Mô tả: "Quản lý hồ sơ nhân viên, chuyên môn, dịch vụ thực hiện và phân công lịch làm việc theo ca."
+  - Actions trên Header: Các nút thao tác chính theo tab đang mở.
+- **Thanh chuyển Tab (Tabs):**
+  - Tab 1: **"Danh sách nhân viên"** (UC-SPA-22) — `?tab=staff` (mặc định)
+  - Tab 2: **"Lịch làm việc"** (UC-SPA-23) — `?tab=schedule`
+
+---
+
+### Tab 1: Quản lý nhân viên (UC-SPA-22)
+
+- **Mẫu bố cục:** `DataTable` dùng chung + thanh công cụ bộ lọc (`StaffFilterToolbar`) + Chi tiết trượt từ phải (`StaffDetailSheet`) + các hộp thoại nghiệp vụ (`CreateStaffDialog`, `EditStaffDialog`, `UpdateStaffServicesDialog`, `ResignStaffDialog`).
+- **Thanh công cụ bộ lọc (`StaffFilterToolbar`):**
+  - Ô tìm kiếm (`SearchInput`): Tìm theo họ tên, email, số điện thoại (debounce 300 ms).
+  - Chọn trạng thái (`Select`): "Tất cả trạng thái", "Đang làm việc" (`working`), "Đã nghỉ việc" (`resigned`).
+  - Chọn dịch vụ (`Select`): Lọc nhân viên có kỹ năng thực hiện dịch vụ cụ thể (lấy từ `servicesQueryKeys.all`).
+  - Nút "Xóa bộ lọc" (`Button variant="ghost"`): Chỉ hiển thị khi có bộ lọc được áp dụng.
+  - Nút hành động: "Thêm nhân viên" (`Button variant="default"` kèm icon `UserPlusIcon`).
+- **Bảng dữ liệu (`StaffTable`):**
+  - Cột 1 — **Nhân viên:** Avatar + Họ tên (font đậm, click để mở sheet chi tiết) + Email.
+  - Cột 2 — **Số điện thoại:** Định dạng số điện thoại Việt Nam.
+  - Cột 3 — **Chuyên môn:** Text chuyên môn hoặc "—".
+  - Cột 4 — **Dịch vụ thực hiện:** Badge số lượng dịch vụ (ví dụ "5 dịch vụ"), hover hiện tooltip danh sách dịch vụ.
+  - Cột 5 — **Ngày vào làm:** Định dạng `dd/MM/yyyy`.
+  - Cột 6 — **Trạng thái làm việc:** `StatusBadge`:
+    - `working`: "Đang làm việc" (`success` - xanh lá).
+    - `resigned`: "Đã nghỉ việc" (`neutral` - xám), kèm dòng phụ ngày nghỉ (`Nghỉ dd/MM/yyyy`).
+  - Cột 7 — **Trạng thái tài khoản:** `StatusBadge`:
+    - `active`: "Hoạt động" (`success`).
+    - `locked`: "Bị khóa" (`danger`).
+    - `inactive`: "Ngừng hoạt động" (`neutral`).
+  - Cột 8 — **Thao tác (`DropdownMenu`):**
+    - "Xem chi tiết": Mở `StaffDetailSheet`.
+    - "Sửa thông tin": Mở `EditStaffDialog`.
+    - "Cập nhật dịch vụ": Mở `UpdateStaffServicesDialog`.
+    - "Ghi nhận nghỉ việc": Mở `ResignStaffDialog` (chỉ hiển thị nếu nhân viên chưa có `resignationDate`).
+- **Chi tiết nhân viên (`StaffDetailSheet`):**
+  - Mở từ URL `?staffId=` hoặc khi bấm vào dòng / menu Xem chi tiết.
+  - Hiển thị: Avatar lớn, họ tên, vai trò, trạng thái làm việc, trạng thái tài khoản.
+  - Thông tin liên hệ: Email, số điện thoại.
+  - Thông tin công việc: Ngày vào làm, ngày nghỉ việc (nếu có), chuyên môn.
+  - Kỹ năng dịch vụ: Danh sách các dịch vụ nhân viên có thể thực hiện (tên dịch vụ, thời lượng, giá).
+  - Chân sheet: Nút "Sửa thông tin", "Cập nhật dịch vụ", "Ghi nhận nghỉ việc".
+- **Hộp thoại thêm nhân viên (`CreateStaffDialog`):**
+  - Form validation qua Zod (`createStaffSchema`):
+    - Họ và tên (`fullName`): Bắt buộc, 2–100 ký tự.
+    - Email (`email`): Bắt buộc, đúng định dạng email, không đổi được sau khi tạo (tên đăng nhập).
+    - Số điện thoại (`phoneNumber`): Bắt buộc, 10 số di động VN (`0[3|5|7|8|9]...`).
+    - Ngày vào làm (`hireDate`): Datepicker, mặc định ngày hôm nay, từ 2000-01-01 đến hôm nay + 365 ngày.
+    - Chuyên môn (`specialty`): Tùy chọn, tối đa 255 ký tự.
+    - Dịch vụ thực hiện (`spaServiceIds`): Danh sách checkbox các dịch vụ đang kinh doanh.
+  - Ghi chú: Thẻ thông báo nổi bật: *"Mật khẩu tạm thời sẽ được hệ sinh tự động và gửi qua email cho nhân viên. Nhân viên có thể đổi mật khẩu sau khi đăng nhập."*
+- **Hộp thoại sửa nhân viên (`EditStaffDialog`):**
+  - Sửa họ tên, số điện thoại, ngày vào làm, chuyên môn. Trường email bị disable (không được sửa theo BR-STF-04).
+- **Hộp thoại cập nhật dịch vụ (`UpdateStaffServicesDialog`):**
+  - Multi-select / checkbox chọn danh sách dịch vụ mới. Hỗ trợ tìm nhanh dịch vụ trong hộp thoại.
+- **Hộp thoại ghi nhận nghỉ việc (`ResignStaffDialog`):**
+  - Chọn ngày nghỉ việc (`resignationDate` $\ge$ `hireDate`).
+  - Cảnh báo: *"Tất cả các ca làm việc từ ngày nghỉ việc trở đi sẽ tự động bị hủy. Nếu ngày nghỉ là hôm nay hoặc trong quá khứ, tài khoản nhân viên sẽ ngừng hoạt động ngay lập tức."*
+  - Nếu API trả về `appointmentsToReassign` (các lịch hẹn chiếm chỗ cần đổi nhân viên): Hộp thoại hiển thị danh sách các lịch hẹn bị ảnh hưởng kèm nút chuyển sang `/owner/bookings` để chủ spa phân công lại cho nhân viên khác.
+
+---
+
+### Tab 2: Phân công lịch làm việc (UC-SPA-23)
+
+- **Mẫu bố cục:** Thanh điều hướng tuần + Bộ lọc nhân viên/trạng thái + Lưới tuần (Weekly Schedule Grid) + Dialog thêm ca đơn (`CreateShiftDialog`) + Dialog thêm ca hàng loạt (`CreateBatchShiftsDialog`) + Dialog sửa ca (`EditShiftDialog`) + Dialog hủy ca (`CancelShiftDialog`).
+- **Thanh điều hướng & Bộ lọc tuần:**
+  - Nút "Tuần trước", "Tuần này", "Tuần sau".
+  - Hiển thị khoảng ngày hiện tại: `dd/MM – dd/MM/yyyy` (luôn chuẩn hóa từ Thứ Hai đến Chủ Nhật).
+  - Datepicker chọn ngày để nhảy nhanh đến tuần chứa ngày đó.
+  - Lọc theo nhân viên (`Select`): "Tất cả nhân viên" hoặc chọn một nhân viên cụ thể (lấy từ `staffQueryKeys.working()`).
+  - Lọc trạng thái (`Select`): "Tất cả", "Đang hoạt động" (`active`), "Đã hủy" (`cancelled`).
+  - Nhóm nút hành động:
+    - "Thêm ca làm việc": Mở `CreateShiftDialog`.
+    - "Phân ca theo khoảng ngày": Mở `CreateBatchShiftsDialog`.
+- **Lưới lịch tuần (`WeeklyScheduleGrid`):**
+  - **Cấu trúc lưới:**
+    - Cột 1 (bên trái): Danh sách nhân viên (Avatar + Tên + Tổng số ca trong tuần).
+    - Cột 2–8: 7 ngày trong tuần (Thứ 2 $\rightarrow$ Chủ Nhật). Tiêu đề mỗi cột gồm Thứ và Ngày (`Thứ Hai, 10/11`), làm nổi bật cột ngày hôm nay.
+  - **Ô ca làm việc trong lưới (`ShiftCell`):**
+    - Chứa danh sách các ca làm việc của nhân viên trong ngày đó.
+    - Thẻ ca làm việc (`ShiftBadge`):
+      - Hiển thị khung giờ: `{startTime} – {endTime}` (ví dụ: `08:00 – 16:00`).
+      - Màu sắc:
+        - Ca `active`: Nền thẻ `bg-primary/10 text-primary border-primary/20 hover:bg-primary/20`.
+        - Ca `cancelled`: Nền thẻ mờ `bg-muted text-muted-foreground line-through`.
+      - Click vào ca mở menu thao tác:
+        - "Sửa ca làm việc" (`EditShiftDialog`): Chỉ hiện với ca `active` và ngày ca $\ge$ hôm nay.
+        - "Hủy ca làm việc" (`CancelShiftDialog`): Chỉ hiện với ca `active` và ngày ca $\ge$ hôm nay.
+    - Nút "+" nhỏ ở mỗi ô: Cho phép chủ spa bấm trực tiếp vào ngày của nhân viên đó để mở nhanh `CreateShiftDialog` với `staffMemberId` và `date` được điền sẵn.
+- **Hộp thoại thêm ca đơn lẻ (`CreateShiftDialog`):**
+  - Nhân viên (`staffMemberId`): Select nhân viên (chỉ gồm nhân viên đang làm việc).
+  - Ngày làm việc (`date`): Datepicker (từ hôm nay đến tối đa hôm nay + 60 ngày).
+  - Khung giờ: Giờ bắt đầu (`startTime`) và Giờ kết thúc (`endTime`) — bước 30 phút (`08:00`, `08:30`...), bắt buộc `endTime > startTime`.
+- **Hộp thoại phân ca hàng loạt (`CreateBatchShiftsDialog` — BR-STF-09):**
+  - Chọn nhân viên: Danh sách checkbox / multi-select (cho phép chọn một, nhiều hoặc tất cả nhân viên đang làm).
+  - Khoảng ngày: `fromDate` và `toDate` (khoảng cách $\le$ 42 ngày, không quá 60 ngày tới).
+  - Các thứ trong tuần áp dụng: 7 nút bấm chọn thứ (T2, T3, T4, T5, T6, T7, CN). Mặc định chọn T2 đến T6.
+  - Khung giờ áp dụng chung: `startTime` và `endTime`.
+  - Xử lý kết quả trả về (`WorkScheduleBatchResultDto`):
+    - Hiển thị thông báo thành công: `Đã tạo thành công {created.length} ca làm việc.`
+    - Nếu có ca bị bỏ qua (`skipped.length > 0`): Mở bảng danh sách các ca bị bỏ qua kèm lý do tiếng Việt (ví dụ: "Trùng ca làm việc", "Nhân viên đã nghỉ việc", "Trước ngày vào làm") để chủ spa nắm rõ.
+- **Hộp thoại sửa ca làm việc (`EditShiftDialog`):**
+  - Cho phép điều chỉnh `date`, `startTime`, `endTime`.
+  - Cảnh báo: Nếu ca có lịch hẹn của khách nằm ngoài khung giờ mới, backend sẽ trả về lỗi `shift_has_appointments` kèm số lịch hẹn bị ảnh hưởng.
+- **Hộp thoại hủy ca (`CancelShiftDialog`):**
+  - Xác nhận hủy ca làm việc.
+  - Cảnh báo: Ca đã hủy không thể mở lại. Nếu có lịch hẹn của khách trong ca, việc hủy ca sẽ bị chặn cho đến khi dời lịch hẹn.
+
+---
+
+### Hợp đồng dữ liệu & Query Keys
+
+- **Kiểu dữ liệu (`packages/shared-types/src/staff.ts` & `workSchedules.ts`):**
+  - `StaffListItem`: `{ id, fullName, email, phoneNumber, avatarUrl, specialty, hireDate, resignationDate, accountStatus, services }`
+  - `StaffDetail`: Mở rộng từ `StaffListItem` thêm `createdAtUtc`, `updatedAtUtc`
+  - `StaffServiceItem`: `{ id, name }`
+  - `CreateStaffRequest`: `{ fullName, email, phoneNumber, hireDate?, specialty?, spaServiceIds? }`
+  - `UpdateStaffRequest`: `{ fullName, phoneNumber, hireDate, specialty? }`
+  - `UpdateStaffServicesRequest`: `{ spaServiceIds }`
+  - `ResignStaffRequest`: `{ resignationDate }`
+  - `ResignationResult`: `{ staff: StaffDetail, appointmentsToReassign: AppointmentToReassign[] }`
+  - `AppointmentToReassign`: `{ id, date, startTime, endTime, status, customerId, customerName }`
+  - `StaffFilterParams`: `{ pageNumber?, pageSize?, search?, status?, spaServiceId? }`
+  - `WorkScheduleItem`: `{ id, staffMemberId, staffName, date, startTime, endTime, status }`
+  - `WorkScheduleQueryParams`: `{ fromDate, toDate, staffMemberId?, status? }`
+  - `CreateWorkScheduleRequest`: `{ staffMemberId, date, startTime, endTime }`
+  - `UpdateWorkScheduleRequest`: `{ date, startTime, endTime }`
+  - `CreateWorkScheduleBatchRequest`: `{ staffMemberIds, fromDate, toDate, weekdays?, startTime, endTime }`
+  - `WorkScheduleBatchResult`: `{ created: WorkScheduleItem[], skipped: SkippedShift[] }`
+  - `SkippedShift`: `{ staffMemberId, staffName, date, reason }`
+- **API Client (`packages/api-client/src/`):**
+  - `StaffApi`: Bổ sung các phương thức quản trị: `list(params)`, `get(id)`, `create(body)`, `update(id, body)`, `updateServices(id, body)`, `resign(id, body)`.
+  - `WorkSchedulesApi`: Class mới quản lý ca làm: `list(params)`, `create(body)`, `createBatch(body)`, `update(id, body)`, `cancel(id)`.
+- **Query Keys:**
+  - `staffQueryKeys.all`: `['staff']`
+  - `staffQueryKeys.list(params)`: `['staff', 'list', params]`
+  - `staffQueryKeys.detail(id)`: `['staff', 'detail', id]`
+  - `staffQueryKeys.working()`: `['staff', 'working']`
+  - `workSchedulesQueryKeys.all`: `['work-schedules']`
+  - `workSchedulesQueryKeys.list(params)`: `['work-schedules', 'list', params]`
+- **Invaliation Rules:**
+  - Viết nhân viên (`create`, `update`, `updateServices`, `resign`): Invalidate `staffQueryKeys.all`.
+  - Viết ca làm (`create`, `createBatch`, `update`, `cancel`): Invalidate `workSchedulesQueryKeys.all`, `availabilityQueryKeys.all`.
+  - Ghi nhận nghỉ việc (`resign`): Invalidate cả `staffQueryKeys.all` và `workSchedulesQueryKeys.all`.
+
+---
+
+### Bảng xử lý mã lỗi (Error Handling)
+
+| Mã lỗi (`code`) | Trường / Ngữ cảnh | Cách xử lý trên giao diện |
+| --- | --- | --- |
+| `validation_error` | Form thêm/sửa | Hiển thị thông điệp lỗi tương ứng dưới từng ô nhập liệu. |
+| `email_exists` | Email (thêm nhân viên) | Hiển thị lỗi dưới ô Email: *"Email này đã được sử dụng cho một tài khoản khác."* |
+| `phone_exists` | SĐT (thêm/sửa) | Hiển thị lỗi dưới ô SĐT: *"Số điện thoại này đã được sử dụng."* |
+| `email_send_failed` | Thêm nhân viên | Alert trong dialog: *"Không thể gửi email chứa mật khẩu tạm. Vui lòng kiểm tra lại địa chỉ email hoặc thử lại sau."* |
+| `staff_service_not_found` / `staff_service_discontinued` | Chọn dịch vụ | Alert/toast: *"Một số dịch vụ được chọn không tồn tại hoặc đã ngừng kinh doanh."* |
+| `staff_not_found` | Thao tác nhân viên | Toast lỗi: *"Không tìm thấy thông tin nhân viên."* và làm mới danh sách. |
+| `resignation_before_hire_date` | Ngày nghỉ việc | Lỗi dưới ô Ngày nghỉ: *"Ngày nghỉ việc không được trước ngày vào làm."* |
+| `hire_date_after_shift` | Ngày vào làm (sửa) | Lỗi dưới ô Ngày vào làm: *"Ngày vào làm không được sau ca làm việc sớm nhất của nhân viên."* |
+| `staff_already_resigned` | Ghi nhận nghỉ việc | Toast lỗi: *"Nhân viên này đã được ghi nhận nghỉ việc trước đó."* |
+| `shift_conflict` | Thêm/sửa ca | Alert trong dialog: *"Ca làm việc bị trùng giờ với một ca đang hoạt động khác của nhân viên."* |
+| `shift_has_appointments` | Sửa/hủy ca | Alert trong dialog: *"Không thể thay đổi hoặc hủy ca vì đã có lịch hẹn của khách. Vui lòng chuyển lịch hẹn sang ca/nhân viên khác trước."* (kèm số lượng lịch). |
+| `shift_date_out_of_range` | Ngày ca | Lỗi dưới trường ngày: *"Ngày làm việc phải từ hôm nay đến tối đa 60 ngày tới."* |
+| `shift_in_past` | Sửa/hủy ca | Toast lỗi: *"Không thể chỉnh sửa hoặc hủy ca làm việc trong quá khứ."* |
+| `shift_before_hire_date` | Ngày ca | Lỗi: *"Ngày làm việc không được trước ngày nhân viên vào làm."* |
+| `staff_resigned` | Ngày ca | Lỗi: *"Nhân viên đã nghỉ việc vào ngày này."* |
+| `shift_cancelled` | Sửa ca | Alert: *"Ca làm việc này đã bị hủy trước đó."* |
+| `work_schedule_not_found` | Sửa/hủy ca | Toast lỗi: *"Không tìm thấy ca làm việc."* và tải lại lịch. |
+
+---
+
+### Responsive và Tiếp cận (A11y)
+
+- **320px – 768px (Mobile & Tablet):**
+  - Tab Danh sách nhân viên: `DataTable` ẩn bớt các cột Chuyên môn, Dịch vụ, Ngày vào làm; chỉ giữ Cột Nhân viên (Avatar, Tên), Trạng thái và Thao tác `...`. Bấm vào dòng mở `StaffDetailSheet` xem đầy đủ.
+  - Tab Lịch làm việc: Lưới 7 cột được bọc `overflow-x-auto` cuộn ngang êm ái, hoặc chuyển sang chế độ xem từng ngày với bộ chọn thứ 2–CN ở trên cùng.
+- **Tiếp cận (A11y):**
+  - Mọi nút biểu tượng đều có `aria-label`.
+  - Lưới tuần có tiêu đề cột rõ ràng, các ô ca có `aria-label="Ca làm việc {startTime} đến {endTime} của {staffName}"`.
+  - Phím Tab điều hướng tuần tự qua các thẻ ca và các nút hành động.
+
+---
+
+### Bảng kiểm thử giao diện (UI Tests)
+
+| Mã | Tình huống kiểm thử | Kết quả mong đợi |
+| --- | --- | --- |
+| STF-UI-T01 | Truy cập `/owner/staff` với quyền owner | Hiển thị tiêu đề, breadcrumb, 2 tab "Nhân viên" và "Lịch làm việc", mặc định mở tab Nhân viên với danh sách tải từ `GET /staff`. |
+| STF-UI-T02 | Truy cập `/owner/staff` khi chưa đăng nhập hoặc với quyền customer/staff | Chưa đăng nhập $\rightarrow$ chuyển hướng `/login?redirect=...`; vai trò khác $\rightarrow$ chuyển hướng `/forbidden`. |
+| STF-UI-T03 | Đủ 4 trạng thái danh sách nhân viên | Đang tải (skeleton rows); Rỗng không có bộ lọc (EmptyState + nút Thêm nhân viên); Rỗng có bộ lọc (EmptyState + nút Xóa bộ lọc); Có dữ liệu (hiển thị đủ cột). |
+| STF-UI-T04 | Tìm kiếm và lọc nhân viên | Nhập từ khóa debounce 300 ms gửi query `search`; chọn trạng thái gửi `status=working` hoặc `resigned`; đổi bộ lọc tự động về `page=1`. |
+| STF-UI-T05 | Mở sheet chi tiết nhân viên | Click dòng hoặc menu "Xem chi tiết" mở `StaffDetailSheet`, đồng bộ `?staffId=` lên URL; đóng sheet xóa param URL. |
+| STF-UI-T06 | Thêm nhân viên thành công | Mở dialog, nhập hợp lệ, chọn dịch vụ; submit gửi `POST /staff`, toast thông báo thành công và nhắc mật khẩu tạm đã gửi qua email, làm mới danh sách. |
+| STF-UI-T07 | Thêm nhân viên lỗi `email_exists`, `phone_exists`, `email_send_failed` | `email_exists` $\rightarrow$ lỗi dưới ô email; `phone_exists` $\rightarrow$ lỗi dưới ô SĐT; `email_send_failed` $\rightarrow$ Alert trong dialog, giữ nguyên dữ liệu đã nhập. |
+| STF-UI-T08 | Sửa nhân viên và cập nhật dịch vụ | Sửa họ tên/SĐT gửi `PUT /staff/{id}`; Cập nhật dịch vụ gửi `PUT /staff/{id}/services`; toast thành công và làm mới chi tiết/danh sách. |
+| STF-UI-T09 | Ghi nhận nghỉ việc không có lịch hẹn bị kẹt | Nhập ngày nghỉ việc gửi `POST /staff/{id}/resign`; thành công cập nhật trạng thái nhân viên thành "Đã nghỉ việc". |
+| STF-UI-T10 | Ghi nhận nghỉ việc có `appointmentsToReassign` | API trả về danh sách lịch hẹn; dialog chuyển sang bước hiển thị danh sách các lịch hẹn bị ảnh hưởng kèm nút chuyển sang `/owner/bookings`. |
+| STF-UI-T11 | Điều hướng tuần trong tab Lịch làm việc | Bấm "Tuần trước", "Tuần sau", "Tuần này" cập nhật khoảng `fromDate`–`toDate` (7 ngày T2–CN) và gửi đúng query `GET /work-schedules`. |
+| STF-UI-T12 | Đủ 4 trạng thái lưới lịch làm việc | Đang tải (skeleton grid); Lỗi (ErrorState + nút Thử lại); Rỗng (hiển thị bảng tuần trống + nút Thêm ca); Có ca (hiển thị đúng ô ngày của nhân viên). |
+| STF-UI-T13 | Thêm một ca làm việc thành công | Mở `CreateShiftDialog`, chọn nhân viên, ngày, giờ bắt đầu, kết thúc; gửi `POST /work-schedules`; thành công toast và làm mới lưới tuần. |
+| STF-UI-T14 | Thêm ca trùng giờ (`shift_conflict`) | Backend trả `409 shift_conflict`; hiển thị Alert lỗi trong dialog và giữ nguyên form. |
+| STF-UI-T15 | Phân ca hàng loạt theo khoảng ngày (`POST /batch`) | Chọn nhiều nhân viên, chọn khoảng ngày, chọn các thứ trong tuần; gửi `POST /work-schedules/batch`; hiển thị dialog kết quả với số ca thành công và danh sách ca bị bỏ qua nếu có. |
+| STF-UI-T16 | Sửa ca làm việc thành công | Mở `EditShiftDialog`, đổi giờ/ngày; gửi `PUT /work-schedules/{id}`; thành công toast và cập nhật lưới. |
+| STF-UI-T17 | Sửa ca có lịch hẹn chiếm chỗ (`shift_has_appointments`) | Backend trả `409 shift_has_appointments`; hiển thị cảnh báo không thể sửa vì đã có lịch hẹn của khách. |
+| STF-UI-T18 | Hủy ca làm việc thành công | Mở `CancelShiftDialog`, xác nhận; gửi `PATCH /work-schedules/{id}/status` với `status: "cancelled"`; thẻ ca chuyển sang hiển thị gạch ngang/mờ. |
+| STF-UI-T19 | Ca trong quá khứ hoặc đã hủy | Không hiển thị các nút thao tác Sửa/Hủy ca. |
+| STF-UI-T20 | Validate form giờ ca làm | `endTime <= startTime` báo lỗi *"Giờ kết thúc phải sau giờ bắt đầu"*; ngày ở quá khứ báo lỗi *"Ngày làm việc không được ở quá khứ"*. |

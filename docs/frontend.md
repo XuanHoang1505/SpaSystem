@@ -157,6 +157,17 @@ Staff và chủ spa giữ `WorkspaceLayout` (sidebar). Không còn dải "Bản 
 - **Hooks & API:** `OwnerAppointmentsApi` (`@spa/api-client`), hooks tại `features/bookings/hooks/owner/` (`useOwnerAppointments`, `useOwnerAppointment`, `useConfirmAppointment`, `useOwnerReschedule`, `useAssignAppointmentStaff`, `useOwnerCancelAppointment`, `useMarkNoShow`, `useWorkingStaff`).
 - **Hằng chép tay từ backend:** `catalogPolicies.maxAppointmentQueryRangeDays` (42), `dayGridStartTime` ('08:00'), `dayGridEndTime` ('20:00'), `noShowConsumesEntitlement` (false). Nhãn `no_show` đổi thống nhất thành "Không đến" trên toàn web.
 
+### Quản lý nhân viên & Lịch làm việc (chủ spa, UC-SPA-22, UC-SPA-23)
+
+- **Trang:** `/owner/staff` (SCR-W33, `OwnerStaffPage`, `OwnerStaffView`), chạy trong `OwnerLayout` (sidebar, hỗ trợ theme sáng và tối).
+- **Cấu trúc 2 Tab:**
+  - **Tab 1: Danh sách nhân viên (UC-SPA-22):** `StaffFilterToolbar` (tìm kiếm debounce 300ms theo tên/SĐT/email, lọc trạng thái làm việc đang làm/đã nghỉ, lọc theo dịch vụ phụ trách), `StaffTable` (TanStack Table 8 với phân trang, hiển thị avatar, tên, SĐT, email, ngày vào làm, badges dịch vụ, trạng thái làm việc và tài khoản).
+  - **Chi tiết & Thao tác nhân viên:** `StaffDetailSheet` xem toàn bộ hồ sơ, ngày vào/nghỉ làm, tài khoản và danh sách dịch vụ kèm trạng thái kinh doanh; `CreateStaffDialog` (thêm nhân viên, mật khẩu tạm gửi qua mail); `EditStaffDialog` (sửa họ tên, SĐT, ngày vào làm, chuyên môn); `UpdateStaffServicesDialog` (chọn nhanh các dịch vụ mở bán); `ResignStaffDialog` (ghi nhận ngày nghỉ việc, hủy ca tương lai, cảnh báo danh sách lịch hẹn cần phân công lại `appointmentsToReassign`).
+  - **Tab 2: Lịch làm việc (UC-SPA-23):** `WeeklyScheduleToolbar` (điều hướng tuần trước/tuần này/tuần sau, nhãn khoảng ngày thứ 2 đến CN, lọc theo nhân viên, lọc theo trạng thái ca hoạt động/đã hủy), `WeeklyScheduleGrid` (lưới 7 cột thứ 2 đến CN với vạch nổi bật ngày hôm nay, nút thêm ca nhanh trên từng ngày).
+  - **Thao tác ca làm:** `ShiftCard` hiển thị tên nhân viên, khung giờ, gạch ngang khi đã hủy; `CreateShiftDialog` (phân ca lẻ theo nhân viên, ngày, giờ bắt đầu/kết thúc); `CreateBatchShiftsDialog` (phân ca hàng loạt theo nhiều nhân viên, khoảng ngày tối đa 42 ngày, chọn thứ trong tuần T2–CN); `BatchResultDialog` (tổng kết số ca đã tạo và danh sách ca bị bỏ qua kèm lý do); `EditShiftDialog` (sửa ngày/giờ ca); `CancelShiftDialog` (xác nhận hủy ca, kiểm tra và ngăn chặn khi ca đang có lịch hẹn).
+- **Hooks & API:** `StaffApi` (mở rộng owner methods), `WorkSchedulesApi` (`@spa/api-client`), wrappers `callStaff`, `callWorkSchedules` (`apps/web/src/lib/api/`), hooks tại `features/staff/hooks/` (`useStaffList`, `useStaffDetail`, `useStaffMutations`, `useWorkSchedules`, `useWorkScheduleMutations`).
+- **Chính sách:** `catalogPolicies.maxShiftDaysAhead` (60 ngày), `maxBatchShifts` (500 ca), `maxWorkScheduleQueryRangeDays` (42 ngày).
+
 ## Chạy và kiểm tra
 
 ```powershell
