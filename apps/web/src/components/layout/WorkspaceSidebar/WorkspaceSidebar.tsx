@@ -23,7 +23,10 @@ export function WorkspaceSidebar({ workspace }: { workspace: Exclude<Workspace, 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-16 justify-center border-b px-3">
-        <Brand className="group-data-[collapsible=icon]:hidden" imgClassName="h-11 sm:h-11 max-w-[150px]" />
+        <Brand
+          className="group-data-[collapsible=icon]:hidden"
+          imgClassName="h-11 sm:h-11 max-w-[150px]"
+        />
         <Brand compact className="hidden group-data-[collapsible=icon]:flex" />
       </SidebarHeader>
       <SidebarContent>

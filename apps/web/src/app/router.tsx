@@ -25,6 +25,7 @@ import { MyServiceHistoryPage } from '@/pages/customer/MyServiceHistoryPage';
 import { MyTreatmentPlanDetailPage } from '@/pages/customer/MyTreatmentPlanDetailPage';
 import { MyTreatmentPlansPage } from '@/pages/customer/MyTreatmentPlansPage';
 import { PaymentResultPage } from '@/pages/customer/PaymentResultPage';
+import { OwnerAppointmentsPage } from '@/pages/owner/OwnerAppointmentsPage';
 import { HomePage } from '@/pages/public/HomePage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@/pages/public/LoginPage';
@@ -53,7 +54,7 @@ function AccountRoute() {
     );
   }
   return (
-    <div className="container max-w-4xl py-6 mx-auto">
+    <div className="container mx-auto max-w-4xl py-6">
       <AccountPage />
     </div>
   );
@@ -78,7 +79,7 @@ function AiAssistantRoute() {
 }
 
 /** Public pages that are built; the other public routes still show the placeholder. */
-const publicPages: Record<string, ReactElement> = {
+export const publicPages: Record<string, ReactElement> = {
   '/': <HomePage />,
   '/services': <ServicesPage />,
   '/services/:serviceId': <ServiceDetailPage />,
@@ -88,7 +89,7 @@ const publicPages: Record<string, ReactElement> = {
 };
 
 /** Customer pages that are built; the other customer routes still show the placeholder. */
-const customerPages: Record<string, ReactElement> = {
+export const customerPages: Record<string, ReactElement> = {
   '/account': <AccountPage />,
   '/cart': <CartPage />,
   '/booking/new': <BookingPage />,
@@ -104,6 +105,11 @@ const customerPages: Record<string, ReactElement> = {
   '/my-packages': <MyPackagesPage />,
   '/my-packages/:packageId': <MyPackageDetailPage />,
   '/ai-assistant': <AiAssistantRoute />,
+};
+
+/** Owner pages that are built; the other owner routes still show the placeholder. */
+export const ownerPages: Record<string, ReactElement> = {
+  '/owner/bookings': <OwnerAppointmentsPage />,
 };
 
 /** Login, register, forgot-password: own split layout without the site header/footer, guests only. */
@@ -138,9 +144,7 @@ function customerRouteObjects(): RouteObject[] {
           children: entries
             .filter(
               ([path]) =>
-                !standalonePaths.has(path) &&
-                !focusedPaths.has(path) &&
-                path !== '/account',
+                !standalonePaths.has(path) && !focusedPaths.has(path) && path !== '/account',
             )
             .map(page),
         },
@@ -194,14 +198,14 @@ export const routeObjects: RouteObject[] = [
   ...customerRouteObjects(),
   ...(
     [
-      { group: 'staff', element: <StaffLayout /> },
-      { group: 'owner', element: <OwnerLayout /> },
+      { group: 'staff', element: <StaffLayout />, pages: {} as Record<string, ReactElement> },
+      { group: 'owner', element: <OwnerLayout />, pages: ownerPages },
     ] as const
-  ).map(({ group, element }) => ({
+  ).map(({ group, element, pages }) => ({
     element: <RouteGuard role={group}>{element}</RouteGuard>,
     children: routes[group].map(([path, title]) => ({
       path,
-      element: <PlaceholderPage title={title} />,
+      element: pages[path] ?? <PlaceholderPage title={title} />,
     })),
   })),
 ];

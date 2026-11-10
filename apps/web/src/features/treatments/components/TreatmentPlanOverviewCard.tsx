@@ -5,7 +5,6 @@ import {
   CalendarPlusIcon,
   CircleCheckIcon,
   ClockIcon,
-  SparklesIcon,
   TargetIcon,
   UserRoundIcon,
 } from 'lucide-react';
@@ -42,7 +41,7 @@ export function TreatmentPlanOverviewCard({
     plan.totalSessions > 0 ? Math.min(100, (plan.usedSessions / plan.totalSessions) * 100) : 0;
 
   return (
-    <div className="space-y-6 rounded-2xl border bg-card p-5 sm:p-6 shadow-xs">
+    <div className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
         <div className="min-w-0 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
@@ -51,7 +50,11 @@ export function TreatmentPlanOverviewCard({
             </h2>
             <StatusBadge label={planBadge.label} tone={planBadge.tone} status={plan.status} />
             {plan.packageStatus !== 'active' && (
-              <StatusBadge label={pkgBadge.label} tone={pkgBadge.tone} status={plan.packageStatus} />
+              <StatusBadge
+                label={pkgBadge.label}
+                tone={pkgBadge.tone}
+                status={plan.packageStatus}
+              />
             )}
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
@@ -69,9 +72,7 @@ export function TreatmentPlanOverviewCard({
 
         {canBookNext && (
           <Button asChild className="font-medium shadow-xs">
-            <Link
-              to={`/booking/new?treatmentSessionId=${next.id}&treatmentPlanId=${plan.id}`}
-            >
+            <Link to={`/booking/new?treatmentSessionId=${next.id}&treatmentPlanId=${plan.id}`}>
               <CalendarPlusIcon aria-hidden="true" />
               {`Đặt lịch buổi tiếp theo (Buổi ${next.sequenceNumber})`}
             </Link>
@@ -80,12 +81,15 @@ export function TreatmentPlanOverviewCard({
       </div>
 
       {plan.statusReason && (plan.status === 'paused' || plan.status === 'cancelled') && (
-        <Alert variant={plan.status === 'cancelled' ? 'destructive' : 'default'} className="border-warning/50 bg-warning/10 text-foreground">
-          <AlertTriangleIcon className="size-4 text-warning" aria-hidden="true" />
+        <Alert
+          variant={plan.status === 'cancelled' ? 'destructive' : 'default'}
+          className="border-warning/50 bg-warning/10 text-foreground"
+        >
+          <AlertTriangleIcon className="text-warning size-4" aria-hidden="true" />
           <AlertTitle className="font-semibold">
             {plan.status === 'paused' ? 'Liệu trình đang tạm dừng' : 'Liệu trình đã hủy'}
           </AlertTitle>
-          <AlertDescription className="text-xs text-muted-foreground mt-1">
+          <AlertDescription className="mt-1 text-xs text-muted-foreground">
             {`Lý do: ${plan.statusReason}`}
           </AlertDescription>
         </Alert>
@@ -93,22 +97,22 @@ export function TreatmentPlanOverviewCard({
 
       {plan.goal && (
         <div className="flex items-start gap-3 rounded-xl border border-secondary bg-secondary/20 p-4">
-          <TargetIcon className="size-5 shrink-0 text-primary mt-0.5" aria-hidden="true" />
+          <TargetIcon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
           <div className="space-y-0.5">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h4 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
               Mục tiêu chăm sóc da
             </h4>
-            <p className="text-sm font-medium text-foreground italic leading-relaxed">
+            <p className="text-sm leading-relaxed font-medium text-foreground italic">
               "{plan.goal}"
             </p>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+      <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 md:grid-cols-3">
         {plan.primaryStaff && (
           <div className="flex items-center gap-2 rounded-lg border bg-muted/20 p-3">
-            <UserRoundIcon className="size-4 text-primary shrink-0" aria-hidden="true" />
+            <UserRoundIcon className="size-4 shrink-0 text-primary" aria-hidden="true" />
             <div>
               <span className="text-muted-foreground">Kỹ thuật viên phụ trách:</span>
               <p className="font-medium text-foreground">{plan.primaryStaff.fullName}</p>
@@ -117,7 +121,7 @@ export function TreatmentPlanOverviewCard({
         )}
         {plan.startDate && (
           <div className="flex items-center gap-2 rounded-lg border bg-muted/20 p-3">
-            <CalendarCheckIcon className="size-4 text-primary shrink-0" aria-hidden="true" />
+            <CalendarCheckIcon className="size-4 shrink-0 text-primary" aria-hidden="true" />
             <div>
               <span className="text-muted-foreground">Ngày bắt đầu:</span>
               <p className="font-medium text-foreground">{formatLocalDate(plan.startDate)}</p>
@@ -126,7 +130,7 @@ export function TreatmentPlanOverviewCard({
         )}
         {plan.expectedEndDate && (
           <div className="flex items-center gap-2 rounded-lg border bg-muted/20 p-3">
-            <CalendarClockIcon className="size-4 text-primary shrink-0" aria-hidden="true" />
+            <CalendarClockIcon className="size-4 shrink-0 text-primary" aria-hidden="true" />
             <div>
               <span className="text-muted-foreground">Dự kiến kết thúc:</span>
               <p className="font-medium text-foreground">{formatLocalDate(plan.expectedEndDate)}</p>

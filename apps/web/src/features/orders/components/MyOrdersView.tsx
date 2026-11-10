@@ -73,7 +73,7 @@ export function MyOrdersView() {
   };
 
   return (
-    <section className="rounded-2xl border bg-card p-5 sm:p-6 lg:p-8 space-y-6 shadow-xs">
+    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
       <OrdersBreadcrumb
         trail={[
           { label: 'Trang chủ', to: '/' },
@@ -87,7 +87,11 @@ export function MyOrdersView() {
         className="border-b pb-5"
       />
       <div className="flex flex-col gap-3.5 rounded-xl bg-muted/40 p-3.5 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
-        <div role="group" aria-label="Lọc theo trạng thái" className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <div
+          role="group"
+          aria-label="Lọc theo trạng thái"
+          className="flex flex-wrap items-center gap-1.5 sm:gap-2"
+        >
           {[undefined, ...statuses].map((value) => (
             <button
               key={value ?? 'all'}
@@ -95,7 +99,7 @@ export function MyOrdersView() {
               aria-pressed={status === value}
               onClick={() => update({ status: value, fromDate, toDate })}
               className={cn(
-                'rounded-full border px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors',
+                'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm',
                 status === value
                   ? 'border-primary bg-primary text-primary-foreground shadow-xs'
                   : 'border-border/70 bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground',
@@ -109,7 +113,7 @@ export function MyOrdersView() {
           <FormField label="Từ ngày">
             <Input
               type="date"
-              className="bg-card h-9 text-xs sm:text-sm"
+              className="h-9 bg-card text-xs sm:text-sm"
               value={draft.from}
               onChange={(event) => changeDate('from', event.target.value)}
             />
@@ -117,7 +121,7 @@ export function MyOrdersView() {
           <FormField label="Đến ngày" error={rangeError}>
             <Input
               type="date"
-              className="bg-card h-9 text-xs sm:text-sm"
+              className="h-9 bg-card text-xs sm:text-sm"
               value={draft.to}
               onChange={(event) => changeDate('to', event.target.value)}
             />

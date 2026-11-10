@@ -594,7 +594,7 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
     - Gửi đủ 4 trường `{ fullName, phoneNumber: user.phoneNumber, dateOfBirth, gender }`.
     - Thành công → Toast "Cập nhật thông tin thành công.", đồng bộ `authStore.user.fullName` để cập nhật ngay tên trên header và sidebar.
 - **Khối 2 — Đổi mật khẩu (`ChangePasswordCard`):**
-  - Dòng nhắc bảo mật: *"Đổi mật khẩu sẽ đăng xuất tất cả các phiên đăng nhập khác của bạn trên mọi thiết bị."* (BR-AUTH-16).
+  - Dòng nhắc bảo mật: _"Đổi mật khẩu sẽ đăng xuất tất cả các phiên đăng nhập khác của bạn trên mọi thiết bị."_ (BR-AUTH-16).
   - "Mật khẩu hiện tại" (`currentPassword`, bắt buộc, có nút hiện/ẩn mật khẩu).
   - "Mật khẩu mới" (`newPassword`, 8–128 ký tự, có chữ và số, bắt buộc, có nút hiện/ẩn mật khẩu).
   - "Xác nhận mật khẩu mới" (`confirmPassword`, bắt buộc, phải khớp với mật khẩu mới).
@@ -602,16 +602,16 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
     - Thành công (204) → Form tự xóa trắng mật khẩu, toast "Đổi mật khẩu thành công. Các phiên đăng nhập khác đã được thu hồi."
 - **Mã lỗi:**
 
-| Mã / tình huống | Thao tác | Hành vi UI |
-| :--- | :--- | :--- |
-| `validation_error` | Sửa thông tin, đổi mật khẩu | Lỗi dưới trường theo `field` (`FullName`, `PhoneNumber`, `CurrentPassword`, `NewPassword`, `ConfirmPassword`) |
-| `phone_exists` | Sửa thông tin | Lỗi dưới ô Số điện thoại: "Số điện thoại đã được sử dụng bởi tài khoản khác." |
-| `password_mismatch` | Đổi mật khẩu | Lỗi dưới ô Mật khẩu hiện tại: "Mật khẩu hiện tại không chính xác." |
-| `password_same_as_current` | Đổi mật khẩu | Lỗi dưới ô Mật khẩu mới: "Mật khẩu mới không được trùng với mật khẩu hiện tại." |
-| `rate_limited` | Đổi mật khẩu | `Alert` cảnh báo: "Bạn đã thao tác quá nhiều lần, vui lòng thử lại sau ít phút." |
-| `invalid_file_type` / kích thước > 5MB | Tải ảnh avatar | Toast lỗi client: "Ảnh phải có định dạng PNG, JPG, WEBP và dung lượng không quá 5MB." |
-| `service_unavailable` (503) | Tải/xóa ảnh avatar | Toast lỗi: "Dịch vụ lưu trữ ảnh tạm thời không khả dụng, vui lòng thử lại sau." |
-| `status = 0`, 500 | Mọi thao tác | `Alert` hoặc Toast lỗi mạng theo quy ước chung |
+| Mã / tình huống                        | Thao tác                    | Hành vi UI                                                                                                    |
+| :------------------------------------- | :-------------------------- | :------------------------------------------------------------------------------------------------------------ |
+| `validation_error`                     | Sửa thông tin, đổi mật khẩu | Lỗi dưới trường theo `field` (`FullName`, `PhoneNumber`, `CurrentPassword`, `NewPassword`, `ConfirmPassword`) |
+| `phone_exists`                         | Sửa thông tin               | Lỗi dưới ô Số điện thoại: "Số điện thoại đã được sử dụng bởi tài khoản khác."                                 |
+| `password_mismatch`                    | Đổi mật khẩu                | Lỗi dưới ô Mật khẩu hiện tại: "Mật khẩu hiện tại không chính xác."                                            |
+| `password_same_as_current`             | Đổi mật khẩu                | Lỗi dưới ô Mật khẩu mới: "Mật khẩu mới không được trùng với mật khẩu hiện tại."                               |
+| `rate_limited`                         | Đổi mật khẩu                | `Alert` cảnh báo: "Bạn đã thao tác quá nhiều lần, vui lòng thử lại sau ít phút."                              |
+| `invalid_file_type` / kích thước > 5MB | Tải ảnh avatar              | Toast lỗi client: "Ảnh phải có định dạng PNG, JPG, WEBP và dung lượng không quá 5MB."                         |
+| `service_unavailable` (503)            | Tải/xóa ảnh avatar          | Toast lỗi: "Dịch vụ lưu trữ ảnh tạm thời không khả dụng, vui lòng thử lại sau."                               |
+| `status = 0`, 500                      | Mọi thao tác                | `Alert` hoặc Toast lỗi mạng theo quy ước chung                                                                |
 
 ### Trạng thái, responsive, a11y (SCR-W22)
 
@@ -647,11 +647,11 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 | AUTH-UI-T18 | Nút "Gửi lại mã" với `resendAvailableAtUtc` = now + 60 giây (đồng hồ giả)                                                                                     | `disabled`, hiện "Gửi lại mã sau 60 giây" rồi giảm dần; tới 0 thì bật lại; gửi lại thành công thì đếm lại từ đầu                                                                      |
 | AUTH-UI-T19 | `ApiClient` của web                                                                                                                                           | Mọi request có `credentials: 'include'` và header `X-Auth-Transport: cookie`; `refresh`/`logout` không gửi body chứa token                                                            |
 | AUTH-UI-T20 | `MeApi`: `getMe`, `updateMe`, `changePassword`, `uploadAvatar`, `deleteAvatar` gọi đúng endpoint, method và body                                              | Pass với mock API                                                                                                                                                                     |
-| AUTH-UI-T21 | Màn `/account`: Tải và hiển thị đúng thông tin người dùng từ `GET /me` (họ tên, email, SĐT, ngày sinh, giới tính, avatar, ngày tạo)                            | Pass 4 trạng thái: skeleton, hiển thị, form rỗng (ngày sinh/giới tính null), lỗi tải                                                                                                   |
+| AUTH-UI-T21 | Màn `/account`: Tải và hiển thị đúng thông tin người dùng từ `GET /me` (họ tên, email, SĐT, ngày sinh, giới tính, avatar, ngày tạo)                           | Pass 4 trạng thái: skeleton, hiển thị, form rỗng (ngày sinh/giới tính null), lỗi tải                                                                                                  |
 | AUTH-UI-T22 | Sửa thông tin cá nhân: validate Zod client (SĐT không đủ 10 số, họ tên rỗng), submit thành công `PUT /me`                                                     | Chặn submit khi sai client; thành công cập nhật store và hiển thị toast                                                                                                               |
 | AUTH-UI-T23 | Sửa thông tin: server trả `409 phone_exists`                                                                                                                  | Lỗi hiển thị dưới trường Số điện thoại                                                                                                                                                |
 | AUTH-UI-T24 | Đổi mật khẩu: validate client (mật khẩu mới quá ngắn, không có số, xác nhận không khớp); `PUT /me/password` thành công                                        | Chặn submit khi sai; thành công reset form và toast                                                                                                                                   |
-| AUTH-UI-T25 | Đổi mật khẩu: `400 password_mismatch`, `password_same_as_current`, `429 rate_limited`                                                                         | Hiển thị lỗi đúng trường hoặc alert tần suất                                                                                                                                         |
+| AUTH-UI-T25 | Đổi mật khẩu: `400 password_mismatch`, `password_same_as_current`, `429 rate_limited`                                                                         | Hiển thị lỗi đúng trường hoặc alert tần suất                                                                                                                                          |
 | AUTH-UI-T26 | Tải ảnh đại diện: chọn file > 5MB / file không phải ảnh bị chặn; upload thành công cập nhật ảnh hiển thị; xóa ảnh đại diện thành công                         | Chặn file lỗi; upload/xóa thành công cập nhật UI                                                                                                                                      |
 
 ## Câu hỏi còn mở

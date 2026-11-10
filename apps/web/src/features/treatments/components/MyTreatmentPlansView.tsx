@@ -31,7 +31,8 @@ export function MyTreatmentPlansView() {
 
   const statusParam = searchParams.get('status') as TreatmentPlanStatus | null;
   const currentStatus: StatusFilter =
-    statusParam && ['in_progress', 'not_started', 'completed', 'paused', 'cancelled'].includes(statusParam)
+    statusParam &&
+    ['in_progress', 'not_started', 'completed', 'paused', 'cancelled'].includes(statusParam)
       ? statusParam
       : 'all';
 
@@ -84,7 +85,7 @@ export function MyTreatmentPlansView() {
       />
 
       {/* Filter toolbar */}
-      <div className="space-y-4 rounded-2xl border bg-card p-4 sm:p-5 shadow-xs">
+      <div className="space-y-4 rounded-2xl border bg-card p-4 shadow-xs sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {filterOptions.map((opt) => {
@@ -95,7 +96,7 @@ export function MyTreatmentPlansView() {
                   type="button"
                   onClick={() => handleStatusChange(opt.value)}
                   className={cn(
-                    'rounded-full border px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors',
+                    'rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors sm:text-sm',
                     active
                       ? 'border-primary bg-primary text-primary-foreground shadow-xs'
                       : 'border-border/70 bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground',
@@ -108,7 +109,10 @@ export function MyTreatmentPlansView() {
           </div>
 
           <div className="relative w-full sm:w-64">
-            <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <SearchIcon
+              className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
             <Input
               type="search"
               placeholder="Tìm theo tên gói..."

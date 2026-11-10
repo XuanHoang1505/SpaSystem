@@ -5,7 +5,6 @@ import {
   FileTextIcon,
   MapPinIcon,
   PhoneIcon,
-  SparklesIcon,
   ClockExclamationPoint,
   UserIcon,
 } from 'lucide-react';
@@ -76,7 +75,7 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
   const session = appointment.treatmentSession;
 
   return (
-    <section className="rounded-2xl border bg-card p-5 sm:p-6 lg:p-8 space-y-6 shadow-xs">
+    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
       <OrdersBreadcrumb
         trail={[
           { label: 'Trang chủ', to: '/' },
@@ -85,15 +84,12 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
           { label: 'Chi tiết lịch hẹn' },
         ]}
       />
-      <PageHeader
-        title="Chi tiết lịch hẹn"
-        className="border-b pb-5"
-      />
+      <PageHeader title="Chi tiết lịch hẹn" className="border-b pb-5" />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-8 items-start">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-8">
         {/* Left Column: Spa Appointment Pass */}
         <div className="space-y-6">
-          <div className="rounded-2xl border bg-card p-5 sm:p-6 shadow-xs">
+          <div className="rounded-2xl border bg-card p-5 shadow-xs sm:p-6">
             {/* Header: Service Name + Status */}
             <div className="flex flex-wrap items-start justify-between gap-3 border-b pb-4">
               <div>
@@ -108,18 +104,20 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
             </div>
 
             {/* Date & Time Highlights Box */}
-            <div className="my-5 grid gap-3 rounded-xl bg-muted/40 p-4 border sm:grid-cols-2">
+            <div className="my-5 grid gap-3 rounded-xl border bg-muted/40 p-4 sm:grid-cols-2">
               <div className="flex items-start gap-3">
-                <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-card border text-primary">
+                <div className="grid size-9 shrink-0 place-items-center rounded-lg border bg-card text-primary">
                   <CalendarDaysIcon className="size-4" aria-hidden="true" />
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground">Ngày hẹn</dt>
-                  <dd className="font-medium text-foreground">{formatLongDate(appointment.date)}</dd>
+                  <dd className="font-medium text-foreground">
+                    {formatLongDate(appointment.date)}
+                  </dd>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-card border text-primary">
+                <div className="grid size-9 shrink-0 place-items-center rounded-lg border bg-card text-primary">
                   <ClockIcon className="size-4" aria-hidden="true" />
                 </div>
                 <div>
@@ -132,9 +130,9 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
             </div>
 
             {/* Details: Staff and Source */}
-            <dl className="grid gap-4 text-sm sm:grid-cols-2 border-b pb-5">
+            <dl className="grid gap-4 border-b pb-5 text-sm sm:grid-cols-2">
               <div className="flex items-start gap-3">
-                <div className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-secondary-foreground text-xs font-semibold">
+                <div className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
                   <UserIcon className="size-4" aria-hidden="true" />
                 </div>
                 <div>
@@ -143,7 +141,7 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-secondary-foreground text-xs font-semibold">
+                <div className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
                   <FileTextIcon className="size-4" aria-hidden="true" />
                 </div>
                 <div>
@@ -168,8 +166,8 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
 
             {/* Customer Note */}
             {appointment.note && (
-              <div className="my-4 space-y-1.5 rounded-xl bg-muted/40 p-4 text-sm border">
-                <p className="font-medium text-foreground flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+              <div className="my-4 space-y-1.5 rounded-xl border bg-muted/40 p-4 text-sm">
+                <p className="flex items-center gap-1.5 text-xs font-medium tracking-wider text-foreground text-muted-foreground uppercase">
                   Ghi chú của bạn
                 </p>
                 <p className="whitespace-pre-line text-foreground/90">{appointment.note}</p>
@@ -207,7 +205,7 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
                 </Alert>
               )}
               {appointment.status === 'cancelled' && (
-                <div className="space-y-1 rounded-xl bg-destructive/10 p-3.5 text-sm text-destructive-foreground border border-destructive/20">
+                <div className="space-y-1 rounded-xl border border-destructive/20 bg-destructive/10 p-3.5 text-sm text-destructive-foreground">
                   {appointment.cancelledAtUtc && (
                     <p className="font-medium">{`Đã hủy lúc ${formatDateTimeUtc(appointment.cancelledAtUtc)}`}</p>
                   )}
@@ -249,19 +247,21 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
         {/* Right Column: Spa Experience, Location & Preparation */}
         <div className="space-y-5">
           {/* Location & Contact Card */}
-          <div className="rounded-2xl border bg-card p-5 space-y-4 shadow-xs">
+          <div className="space-y-4 rounded-2xl border bg-card p-5 shadow-xs">
             <div className="flex items-center gap-2.5 border-b pb-3">
               <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                 <MapPinIcon className="size-4" aria-hidden="true" />
               </div>
-              <h3 className="font-heading text-base font-semibold text-foreground">Địa chỉ cơ sở Spa</h3>
+              <h3 className="font-heading text-base font-semibold text-foreground">
+                Địa chỉ cơ sở Spa
+              </h3>
             </div>
             <div className="space-y-2 text-sm">
               <p className="font-medium text-foreground">Như Nguyệt Spa & Chăm Sóc Da</p>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 Số 123 Nam Kỳ Khởi Nghĩa, Phường Võ Thị Sáu, Quận 3, TP. Hồ Chí Minh
               </p>
-              <div className="pt-2 flex flex-wrap gap-2 text-xs">
+              <div className="flex flex-wrap gap-2 pt-2 text-xs">
                 <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2.5 py-1 text-muted-foreground">
                   <ClockIcon className="size-3" aria-hidden="true" />
                   09:00 – 20:30 hàng ngày
@@ -275,34 +275,47 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
           </div>
 
           {/* Preparation & Welcome Card */}
-          <div className="rounded-2xl border bg-card p-5 space-y-3.5 shadow-xs">
+          <div className="space-y-3.5 rounded-2xl border bg-card p-5 shadow-xs">
             <div className="flex items-center gap-2.5 border-b pb-3">
               <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                 <ClockExclamationPoint className="size-4" aria-hidden="true" />
               </div>
-              <h3 className="font-heading text-base font-semibold text-foreground">Lưu ý trước buổi hẹn</h3>
+              <h3 className="font-heading text-base font-semibold text-foreground">
+                Lưu ý trước buổi hẹn
+              </h3>
             </div>
             <ul className="space-y-2.5 text-xs leading-relaxed text-muted-foreground">
               <li className="flex items-start gap-2">
                 <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
-                <span>Vui lòng đến trước <strong>10 – 15 phút</strong> để lễ tân tiếp đón, soi da miễn phí và thưởng thức trà thảo mộc thư giãn.</span>
+                <span>
+                  Vui lòng đến trước <strong>10 – 15 phút</strong> để lễ tân tiếp đón, soi da miễn
+                  phí và thưởng thức trà thảo mộc thư giãn.
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
-                <span>Tránh sử dụng các hoạt chất treatment mạnh (AHA, BHA, Retinol) trong vòng 24 giờ trước buổi chăm sóc da chuyên sâu.</span>
+                <span>
+                  Tránh sử dụng các hoạt chất treatment mạnh (AHA, BHA, Retinol) trong vòng 24 giờ
+                  trước buổi chăm sóc da chuyên sâu.
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
-                <span>Nếu có thay đổi đột xuất, vui lòng báo trước qua hotline hoặc đổi lịch trên hệ thống trước ít nhất <strong>24 giờ</strong>.</span>
+                <span>
+                  Nếu có thay đổi đột xuất, vui lòng báo trước qua hotline hoặc đổi lịch trên hệ
+                  thống trước ít nhất <strong>24 giờ</strong>.
+                </span>
               </li>
             </ul>
           </div>
 
           {/* Quick Help Card */}
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
             <div className="space-y-0.5">
               <p className="text-xs font-semibold text-primary">Cần hỗ trợ khẩn cấp?</p>
-              <p className="text-xs text-muted-foreground">Lễ tân luôn sẵn sàng hỗ trợ bạn đổi giờ hoặc chỉ đường.</p>
+              <p className="text-xs text-muted-foreground">
+                Lễ tân luôn sẵn sàng hỗ trợ bạn đổi giờ hoặc chỉ đường.
+              </p>
             </div>
             <Button asChild size="sm" variant="default" className="shrink-0 font-medium">
               <a href="tel:19006886">Gọi 1900 6886</a>

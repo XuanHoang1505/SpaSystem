@@ -13,26 +13,28 @@ export function AiBookingProposalCard({ proposal }: AiBookingProposalCardProps) 
   const dateFormatted = formatLocalDate(proposal.date);
 
   return (
-    <div className="p-3.5 rounded-lg border bg-primary/5 dark:bg-primary/10 border-primary/20 space-y-3">
+    <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-3.5 dark:bg-primary/10">
       <div className="flex items-start justify-between gap-2">
-        <h4 className="font-semibold text-sm text-foreground">{proposal.serviceName}</h4>
-        <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+        <h4 className="text-sm font-semibold text-foreground">{proposal.serviceName}</h4>
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
           Đề xuất lịch trống
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
+      <div className="grid grid-cols-1 gap-2 text-xs text-muted-foreground sm:grid-cols-2">
         <div className="flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+          <Calendar className="h-3.5 w-3.5 shrink-0 text-primary" />
           <span>{dateFormatted}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+          <Clock className="h-3.5 w-3.5 shrink-0 text-primary" />
           <span>{timeRange}</span>
         </div>
         <div className="flex items-center gap-1.5 sm:col-span-2">
-          <User className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span>{proposal.staffName ? `Kỹ thuật viên: ${proposal.staffName}` : 'Kỹ thuật viên bất kỳ'}</span>
+          <User className="h-3.5 w-3.5 shrink-0 text-primary" />
+          <span>
+            {proposal.staffName ? `Kỹ thuật viên: ${proposal.staffName}` : 'Kỹ thuật viên bất kỳ'}
+          </span>
         </div>
       </div>
 
@@ -43,7 +45,7 @@ export function AiBookingProposalCard({ proposal }: AiBookingProposalCardProps) 
             Đặt lịch theo đề xuất này
           </Link>
         </Button>
-        <p className="text-[11px] text-muted-foreground text-center mt-1.5">
+        <p className="mt-1.5 text-center text-[11px] text-muted-foreground">
           Giờ hẹn chưa được giữ chỗ. Vui lòng bấm để hoàn tất xác nhận đặt lịch.
         </p>
       </div>

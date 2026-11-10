@@ -20,7 +20,11 @@ export function RouteGuard({
     return <Navigate to={endReason === 'logout' ? '/' : loginPathFor(location)} replace />;
   if (!role) return <>{children}</>;
   if (typeof role !== 'string') {
-    return role.includes(user?.role as UserRole) ? <>{children}</> : <Navigate to="/forbidden" replace />;
+    return role.includes(user?.role as UserRole) ? (
+      <>{children}</>
+    ) : (
+      <Navigate to="/forbidden" replace />
+    );
   }
   return canAccessRole(user, role) ? <>{children}</> : <Navigate to="/forbidden" replace />;
 }

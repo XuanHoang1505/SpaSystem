@@ -1,5 +1,9 @@
 import type {
   ApiResponse,
+  AppointmentDetail,
+  AppointmentListItem,
+  AppointmentListParams,
+  OwnerRescheduleAppointmentRequest,
   BookAppointmentRequest,
   BookNowRequest,
   BookNowResult,
@@ -35,6 +39,10 @@ export const appointmentErrorCodes = {
   promotionNotApplicable: 'promotion_not_applicable',
   orderAmountTooSmall: 'order_amount_too_small',
   validationError: 'validation_error',
+  staffNotOnShift: 'staff_not_on_shift',
+  staffBusy: 'staff_busy',
+  noShowTooEarly: 'no_show_too_early',
+  appointmentNotAssigned: 'appointment_not_assigned',
 } as const;
 
 /** UC-SPA-15, 16: the signed-in customer's appointments. */
@@ -84,4 +92,66 @@ export const appointmentsQueryKeys = {
   all: ['appointments'] as const,
   list: (params: MyAppointmentListParams) => ['appointments', 'list', params] as const,
   detail: (id: string) => ['appointments', 'detail', id] as const,
+};
+
+const ownerBase = '/api/v1/appointments';
+const ownerPath = (id: string, command?: string) =>
+  `${ownerBase}/${encodeURIComponent(id)}${command ? `/${command}` : ''}`;
+
+/** UC-SPA-17: the owner's view of every appointment and the five owner commands. */
+export class OwnerAppointmentsApi {
+  constructor(private readonly client: ApiClient) {}
+
+  list(params: AppointmentListParams, signal?: AbortSignal) {
+    return this.client.get<ApiResponse<PagedResponse<AppointmentListItem>>>(ownerBase, {
+      query: { ...params },
+      signal,
+    });
+  }
+
+  get(id: string, signal?: AbortSignal) {
+    return this.client.get<ApiResponse<AppointmentDetail>>(ownerPath(id), { signal });
+  }
+
+  confirm(id: string) {
+    return this.client.post<Record<string, never>, ApiResponse<AppointmentDetail>>(
+      ownerPath(id, 'confirm'),
+      {},
+    );
+  }
+
+  reschedule(id: string, body: OwnerRescheduleAppointmentRequest) {
+    return this.client.post<OwnerRescheduleAppointmentRequest, ApiResponse<AppointmentDetail>>(
+      ownerPath(id, 'reschedule'),
+      body,
+    );
+  }
+
+  assignStaff(id: string, staffMemberId: string) {
+    return this.client.post<{ staffMemberId: string }, ApiResponse<AppointmentDetail>>(
+      ownerPath(id, 'assign-staff'),
+      { staffMemberId },
+    );
+  }
+
+  cancel(id: string, reason: string) {
+    return this.client.post<{ reason: string }, ApiResponse<AppointmentDetail>>(
+      ownerPath(id, 'cancel'),
+      { reason },
+    );
+  }
+
+  /** BR-BKG-08: only a confirmed appointment whose start time has passed (the backend decides). */
+  markNoShow(id: string, note?: string) {
+    return this.client.post<{ note?: string }, ApiResponse<AppointmentDetail>>(
+      ownerPath(id, 'no-show'),
+      note ? { note } : {},
+    );
+  }
+}
+
+export const ownerAppointmentsQueryKeys = {
+  all: ['owner-appointments'] as const,
+  list: (params: AppointmentListParams) => ['owner-appointments', 'list', params] as const,
+  detail: (id: string) => ['owner-appointments', 'detail', id] as const,
 };

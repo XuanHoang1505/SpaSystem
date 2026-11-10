@@ -12,3 +12,19 @@ export const cancelAppointmentSchema = z.object({
 });
 
 export type CancelAppointmentValues = z.input<typeof cancelAppointmentSchema>;
+
+/** The owner's cancel reason (UC-SPA-17): the same rule and messages as the customer's. */
+export const ownerCancelSchema = cancelAppointmentSchema;
+
+export const NO_SHOW_NOTE_MAX = 1000;
+
+/** Optional note when the customer did not come: trimmed, at most 1000 characters. */
+export const noShowSchema = z.object({
+  note: z
+    .string()
+    .trim()
+    .max(NO_SHOW_NOTE_MAX, `Ghi chú tối đa ${NO_SHOW_NOTE_MAX} ký tự.`)
+    .optional(),
+});
+
+export type NoShowValues = z.input<typeof noShowSchema>;

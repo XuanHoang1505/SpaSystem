@@ -21,37 +21,37 @@ export function AiChatView({ compact = false }: AiChatViewProps) {
 
   return (
     <div
-      className={`flex flex-col border rounded-2xl bg-card overflow-hidden shadow-sm ${
+      className={`flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm ${
         compact ? 'h-[540px]' : 'h-[calc(100vh-12rem)] min-h-[580px]'
       }`}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b bg-card">
-        <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+      <div className="flex items-center gap-3 border-b bg-card p-4">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Bot className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-sm sm:text-base text-foreground truncate">
+            <h2 className="truncate text-sm font-semibold text-foreground sm:text-base">
               Trợ lý ảo Như Nguyệt Spa
             </h2>
-            <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full shrink-0">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+              <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
               Sẵn sàng
             </span>
           </div>
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="truncate text-xs text-muted-foreground">
             Tư vấn dịch vụ · Bảng giá · Tra cứu giờ trống · Gợi ý đặt lịch
           </p>
         </div>
       </div>
 
       {/* Main Chat Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 space-y-4 overflow-y-auto p-4">
         <AiMedicalDisclaimer />
 
         {isLoadingHistory && (
-          <div className="flex items-center justify-center py-4 text-xs text-muted-foreground gap-2">
+          <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
             Đang tải lịch sử trò chuyện...
           </div>
@@ -63,11 +63,11 @@ export function AiChatView({ compact = false }: AiChatViewProps) {
           ))}
 
           {isSending && (
-            <div className="flex items-center gap-3 mr-auto max-w-[80%]">
-              <div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 animate-pulse">
+            <div className="mr-auto flex max-w-[80%] items-center gap-3">
+              <div className="flex size-8 shrink-0 animate-pulse items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Sparkles className="h-4 w-4" />
               </div>
-              <div className="p-3.5 rounded-2xl rounded-tl-xs bg-muted/60 border border-border text-xs text-muted-foreground flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-2xl rounded-tl-xs border border-border bg-muted/60 p-3.5 text-xs text-muted-foreground">
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                 Trợ lý đang tìm kiếm thông tin và soạn câu trả lời...
               </div>

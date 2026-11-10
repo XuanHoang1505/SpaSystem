@@ -199,7 +199,10 @@ export function PaymentMethodCard() {
     <Card className="rounded-2xl border bg-card/80 shadow-2xs">
       <CardContent className="space-y-4 p-5 sm:p-6">
         <div className="space-y-1 border-b pb-3.5">
-          <h2 id="payment-methods" className="flex items-center gap-2 font-heading text-lg font-semibold text-foreground">
+          <h2
+            id="payment-methods"
+            className="flex items-center gap-2 font-heading text-lg font-semibold text-foreground"
+          >
             <CreditCardIcon className="size-5 text-primary" aria-hidden="true" />
             3. Phương thức thanh toán
           </h2>
@@ -221,7 +224,10 @@ export function PaymentMethodCard() {
 export function HoldNotice({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-amber-200/90 bg-amber-50/90 p-3.5 text-xs font-medium text-amber-950 shadow-2xs">
-      <HourglassIcon className="mt-0.5 size-4.5 shrink-0 text-amber-600 animate-pulse" aria-hidden="true" />
+      <HourglassIcon
+        className="mt-0.5 size-4.5 shrink-0 animate-pulse text-amber-600"
+        aria-hidden="true"
+      />
       <div className="leading-relaxed">{children}</div>
     </div>
   );

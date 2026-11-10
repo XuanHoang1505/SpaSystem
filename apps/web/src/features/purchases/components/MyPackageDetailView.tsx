@@ -95,7 +95,7 @@ export function MyPackageDetailView({ packageId }: { packageId: string }) {
   const showReason = (data.status === 'paused' || data.status === 'cancelled') && data.statusReason;
 
   return (
-    <section className="rounded-2xl border bg-card p-5 sm:p-6 lg:p-8 space-y-6 shadow-xs">
+    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
       <div className="space-y-3 border-b pb-5">
         <OrdersBreadcrumb
           trail={[
@@ -197,9 +197,15 @@ export function MyPackageDetailView({ packageId }: { packageId: string }) {
       </div>
 
       {pkg.data.items && pkg.data.items.length > 0 && (
-        <section aria-labelledby="package-items-title" className="space-y-3 rounded-2xl border bg-card p-5 sm:p-6 shadow-xs">
+        <section
+          aria-labelledby="package-items-title"
+          className="space-y-3 rounded-2xl border bg-card p-5 shadow-xs sm:p-6"
+        >
           <div className="flex items-center justify-between border-b pb-3">
-            <h2 id="package-items-title" className="font-sans text-base font-semibold text-foreground sm:text-lg">
+            <h2
+              id="package-items-title"
+              className="font-sans text-base font-semibold text-foreground sm:text-lg"
+            >
               Cơ cấu dịch vụ trong gói
             </h2>
             <span className="text-xs text-muted-foreground">{pkg.data.items.length} dịch vụ</span>
@@ -208,7 +214,7 @@ export function MyPackageDetailView({ packageId }: { packageId: string }) {
             {pkg.data.items.map((item) => (
               <div
                 key={item.spaServiceId}
-                className="flex flex-col justify-between rounded-xl border bg-muted/20 p-4 space-y-2"
+                className="flex flex-col justify-between space-y-2 rounded-xl border bg-muted/20 p-4"
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-medium text-foreground">{item.serviceName}</span>
@@ -228,21 +234,26 @@ export function MyPackageDetailView({ packageId }: { packageId: string }) {
         </section>
       )}
 
-      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-5 shadow-xs sm:flex-row sm:items-center sm:p-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <SparklesIcon className="size-4 text-primary" aria-hidden="true" />
             <h3 className="font-semibold text-foreground">Phác đồ & Nhật ký chăm sóc da</h3>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl">
+          <p className="max-w-2xl text-xs text-muted-foreground sm:text-sm">
             {data.goal ? `Mục tiêu phác đồ: "${data.goal}". ` : ''}
-            Gói dịch vụ này đi kèm phác đồ điều trị được cá nhân hóa. Bạn có thể theo dõi chi tiết tình trạng da và lưu ý phục hồi sau mỗi buổi tại mục Liệu trình.
+            Gói dịch vụ này đi kèm phác đồ điều trị được cá nhân hóa. Bạn có thể theo dõi chi tiết
+            tình trạng da và lưu ý phục hồi sau mỗi buổi tại mục Liệu trình.
           </p>
         </div>
-        <Button asChild variant="outline" className="shrink-0 border-primary/30 text-primary hover:bg-primary/10">
+        <Button
+          asChild
+          variant="outline"
+          className="shrink-0 border-primary/30 text-primary hover:bg-primary/10"
+        >
           <Link to={`/my-treatment-plans/${data.id}`}>
             Xem phác đồ điều trị
-            <ArrowRightIcon className="size-4 ml-1.5" aria-hidden="true" />
+            <ArrowRightIcon className="ml-1.5 size-4" aria-hidden="true" />
           </Link>
         </Button>
       </div>

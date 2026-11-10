@@ -25,30 +25,33 @@ export function TreatmentSessionTimeline({
   onViewSessionResult: (session: MyTreatmentSession) => void;
 }) {
   return (
-    <div className="space-y-4 rounded-2xl border bg-card p-5 sm:p-6 shadow-xs">
+    <div className="space-y-4 rounded-2xl border bg-card p-5 shadow-xs sm:p-6">
       <div className="border-b pb-4">
         <h3 className="font-heading text-lg font-bold tracking-tight text-foreground sm:text-xl">
           {`Nhật ký phác đồ (${sessions.length} buổi)`}
         </h3>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Quy trình trị liệu được thực hiện tuần tự để đạt kết quả phục hồi da tốt nhất
         </p>
       </div>
 
-      <div className="relative pl-6 sm:pl-8 before:absolute before:bottom-3 before:left-3 before:top-3 before:w-0.5 before:bg-border">
+      <div className="relative pl-6 before:absolute before:top-3 before:bottom-3 before:left-3 before:w-0.5 before:bg-border sm:pl-8">
         <ul className="space-y-6">
           {sessions.map((session) => {
             const badge = treatmentSessionStatusBadge(session.status);
             return (
               <li key={session.id} className="relative">
                 {/* Node icon on timeline */}
-                <span className="absolute -left-6 sm:-left-8 flex size-6 sm:size-7 items-center justify-center rounded-full bg-card border-2 border-border text-xs font-bold text-foreground">
+                <span className="absolute -left-6 flex size-6 items-center justify-center rounded-full border-2 border-border bg-card text-xs font-bold text-foreground sm:-left-8 sm:size-7">
                   {session.status === 'completed' ? (
-                    <CheckCircle2Icon className="size-4 text-success" aria-hidden="true" />
+                    <CheckCircle2Icon className="text-success size-4" aria-hidden="true" />
                   ) : session.status === 'booked' ? (
-                    <CalendarDaysIcon className="size-3.5 text-info" aria-hidden="true" />
+                    <CalendarDaysIcon className="text-info size-3.5" aria-hidden="true" />
                   ) : session.status === 'skipped' ? (
-                    <MinusCircleIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
+                    <MinusCircleIcon
+                      className="size-3.5 text-muted-foreground"
+                      aria-hidden="true"
+                    />
                   ) : (
                     <span>{session.sequenceNumber}</span>
                   )}
@@ -57,7 +60,7 @@ export function TreatmentSessionTimeline({
                 <div className="space-y-3 rounded-xl border bg-muted/20 p-4 transition-colors hover:bg-muted/30">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                      <span className="text-xs font-bold tracking-wider text-primary uppercase">
                         {`Buổi ${session.sequenceNumber}`}
                       </span>
                       <h4 className="text-base font-semibold text-foreground">
@@ -101,7 +104,7 @@ export function TreatmentSessionTimeline({
                   )}
 
                   {session.status === 'booked' && session.appointment && (
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-info/30 bg-info/10 p-3 text-xs">
+                    <div className="border-info/30 bg-info/10 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-xs">
                       <div className="space-y-1">
                         <div className="font-medium text-foreground">
                           {`Lịch hẹn: ${formatLocalDate(session.appointment.date)} lúc ${session.appointment.startTime} – ${session.appointment.endTime}`}

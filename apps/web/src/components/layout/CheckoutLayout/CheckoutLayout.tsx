@@ -13,7 +13,7 @@ export function CheckoutLayout() {
     <div className="flex min-h-svh flex-col">
       <SkipLink />
       <header className="border-b bg-background/85">
-        <div className="mx-auto flex h-18 sm:h-24 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:h-24 sm:px-6 lg:px-8">
           <Brand />
           <span className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground">
             <LockIcon className="size-4" aria-hidden="true" />

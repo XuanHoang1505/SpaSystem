@@ -115,7 +115,7 @@ export function ProfileCard({ user }: ProfileCardProps) {
         <div className="h-px bg-border" />
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -205,17 +205,16 @@ export function ProfileCard({ user }: ProfileCardProps) {
                   </Select>
                 )}
               />
-              {errors.gender && (
-                <p className="text-xs text-destructive">{errors.gender.message}</p>
-              )}
+              {errors.gender && <p className="text-xs text-destructive">{errors.gender.message}</p>}
             </div>
           </div>
 
-          <div className="text-xs text-muted-foreground pt-1">
-            Ngày tham gia: <span className="font-medium text-foreground">{formatDate(user.createdAtUtc)}</span>
+          <div className="pt-1 text-xs text-muted-foreground">
+            Ngày tham gia:{' '}
+            <span className="font-medium text-foreground">{formatDate(user.createdAtUtc)}</span>
           </div>
 
-          <div className="pt-2 flex justify-end">
+          <div className="flex justify-end pt-2">
             <Button type="submit" disabled={isBusy} className="gap-2">
               {isBusy && <Loader2 className="h-4 w-4 animate-spin" />}
               Lưu thông tin

@@ -27,7 +27,7 @@ export function ServiceHistoryFilterToolbar({
   );
 
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-2xl border bg-card p-4 sm:p-5 shadow-xs">
+    <div className="flex flex-wrap items-end gap-3 rounded-2xl border bg-card p-4 shadow-xs sm:p-5">
       <div className="space-y-1.5">
         <label htmlFor="from-date" className="text-xs font-medium text-muted-foreground">
           Từ ngày
@@ -62,7 +62,7 @@ export function ServiceHistoryFilterToolbar({
           id="service-select"
           value={filters.spaServiceId ?? ''}
           onChange={(e) => onChange({ ...filters, spaServiceId: e.target.value || undefined })}
-          className="h-9 w-44 rounded-md border border-input bg-transparent px-3 py-1 text-xs sm:text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="h-9 w-44 rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-xs transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none sm:text-sm"
         >
           <option value="">Tất cả dịch vụ</option>
           {serviceCatalog?.items.map((svc) => (
@@ -86,11 +86,11 @@ export function ServiceHistoryFilterToolbar({
               status: (e.target.value as AppointmentStatus) || undefined,
             })
           }
-          className="h-9 w-36 rounded-md border border-input bg-transparent px-3 py-1 text-xs sm:text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="h-9 w-36 rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-xs transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none sm:text-sm"
         >
           <option value="">Tất cả trạng thái</option>
           <option value="completed">Đã hoàn thành</option>
-          <option value="no_show">Vắng mặt</option>
+          <option value="no_show">Không đến</option>
         </select>
       </div>
 
@@ -102,7 +102,7 @@ export function ServiceHistoryFilterToolbar({
           onClick={onReset}
           className="h-9 text-xs font-medium"
         >
-          <RotateCcwIcon className="size-3.5 mr-1" aria-hidden="true" />
+          <RotateCcwIcon className="mr-1 size-3.5" aria-hidden="true" />
           Đặt lại
         </Button>
       )}

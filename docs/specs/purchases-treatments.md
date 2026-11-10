@@ -518,7 +518,7 @@ Không có Stitch MCP: Dựng trực tiếp bằng `DataTable` chuẩn của h�
   - Error codes: `appointment_not_found`, `validation_error`.
 - Nhãn & tông màu trạng thái lần sử dụng:
   - `completed`: "Đã hoàn thành" (`success`)
-  - `no_show`: "Vắng mặt" (`danger`)
+  - `no_show`: "Không đến" (`danger`)
 
 ### SCR-W18 — Lịch sử sử dụng dịch vụ
 
@@ -528,7 +528,7 @@ Không có Stitch MCP: Dựng trực tiếp bằng `DataTable` chuẩn của h�
 - **Thanh công cụ bộ lọc (FilterToolbar):**
   - Khoảng ngày (`fromDate`, `toDate`): 2 ô chọn ngày (input `date`), hỗ trợ lọc linh hoạt theo thời gian.
   - Dịch vụ (`spaServiceId`): Dropdown chọn dịch vụ từ danh mục dịch vụ hoạt động (`useServices`).
-  - Trạng thái (`status`): Dropdown chọn `Tất cả` | `Đã hoàn thành` (`completed`) | `Vắng mặt` (`no_show`).
+  - Trạng thái (`status`): Dropdown chọn `Tất cả` | `Đã hoàn thành` (`completed`) | `Không đến` (`no_show`).
   - Nút "Đặt lại bộ lọc" khi có bất kỳ bộ lọc nào được áp dụng.
   - Thay đổi bộ lọc tự động đưa `pageNumber` về 1 và đồng bộ query param lên URL (`?fromDate=&toDate=&serviceId=&status=&page=`).
 - **Các cột `DataTable`:**
@@ -538,7 +538,7 @@ Không có Stitch MCP: Dựng trực tiếp bằng `DataTable` chuẩn của h�
      - `source = "service"`: `Badge` màu xám nhạt "Dịch vụ lẻ".
      - `source = "package"`: `Badge` thương hiệu "Gói: {packageName}" kèm dòng phụ "Buổi {sequenceNumber}".
   4. **Kỹ thuật viên**: Tên kỹ thuật viên phụ trách (`staff.fullName`).
-  5. **Trạng thái**: `StatusBadge` (`completed`: "Đã hoàn thành", `no_show`: "Vắng mặt").
+  5. **Trạng thái**: `StatusBadge` (`completed`: "Đã hoàn thành", `no_show`: "Không đến").
   6. **Thao tác**: Nút "Xem chi tiết" (icon con mắt hoặc text button) mở Sheet chi tiết.
 - **Drawer chi tiết lần chăm sóc (`ServiceHistoryDetailSheet`):**
   - Mở khi khách bấm xem một dòng trong bảng; gọi `GET /me/service-history/{appointmentId}`.
@@ -563,20 +563,20 @@ Không có Stitch MCP: Dựng trực tiếp bằng `DataTable` chuẩn của h�
 
 ### Bảng kiểm thử giao diện bổ sung (UC-SPA-19 & UC-SPA-20)
 
-| Mã         | Màn hình | Kiểm tra                                                                                                                                                                                           |
-| ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TRT-UI-T11 | SCR-W17  | `TreatmentsApi.list`: Gọi đúng `GET /api/v1/me/treatments?status=...`; giải mã đúng DTO; hiển thị đủ 4 trạng thái (loading skeleton, error + retry, empty có CTA, có dữ liệu).                  |
-| TRT-UI-T12 | SCR-W17  | Thẻ liệu trình: Hiển thị đúng tên gói, `StatusBadge` liệu trình & gói, thanh tiến độ số buổi `{used}/{total}`, hạn dùng, kỹ thuật viên phụ trách.                                                |
-| TRT-UI-T13 | SCR-W17  | Nút "Đặt lịch buổi tiếp theo" chỉ hiển thị khi `nextSession.canBook = true`, đường dẫn `/booking/new?treatmentSessionId=...&treatmentPlanId=...`; hiển thị lý do phù hợp khi không thể đặt.    |
-| TRT-UI-T14 | SCR-W17  | Chip lọc trạng thái trên `/my-treatment-plans`: Lọc đúng danh sách; ô tìm kiếm theo tên không phân biệt hoa thường và dấu tiếng Việt; đồng bộ URL query params.                                  |
-| TRT-UI-T15 | SCR-W17  | Chi tiết `/my-treatment-plans/:id`: Hiển thị đầy đủ mục tiêu `goal`, ngày bắt đầu/kết thúc, cảnh báo `statusReason` khi tạm dừng hoặc đã hủy; `404` hiển thị `EmptyState` "Không tìm thấy".     |
+| Mã         | Màn hình | Kiểm tra                                                                                                                                                                                               |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| TRT-UI-T11 | SCR-W17  | `TreatmentsApi.list`: Gọi đúng `GET /api/v1/me/treatments?status=...`; giải mã đúng DTO; hiển thị đủ 4 trạng thái (loading skeleton, error + retry, empty có CTA, có dữ liệu).                         |
+| TRT-UI-T12 | SCR-W17  | Thẻ liệu trình: Hiển thị đúng tên gói, `StatusBadge` liệu trình & gói, thanh tiến độ số buổi `{used}/{total}`, hạn dùng, kỹ thuật viên phụ trách.                                                      |
+| TRT-UI-T13 | SCR-W17  | Nút "Đặt lịch buổi tiếp theo" chỉ hiển thị khi `nextSession.canBook = true`, đường dẫn `/booking/new?treatmentSessionId=...&treatmentPlanId=...`; hiển thị lý do phù hợp khi không thể đặt.            |
+| TRT-UI-T14 | SCR-W17  | Chip lọc trạng thái trên `/my-treatment-plans`: Lọc đúng danh sách; ô tìm kiếm theo tên không phân biệt hoa thường và dấu tiếng Việt; đồng bộ URL query params.                                        |
+| TRT-UI-T15 | SCR-W17  | Chi tiết `/my-treatment-plans/:id`: Hiển thị đầy đủ mục tiêu `goal`, ngày bắt đầu/kết thúc, cảnh báo `statusReason` khi tạm dừng hoặc đã hủy; `404` hiển thị `EmptyState` "Không tìm thấy".            |
 | TRT-UI-T16 | SCR-W17  | Timeline buổi: Buổi `completed` có nút xem ghi chú; buổi `booked` có link sang `/my-bookings/:id`; buổi `not_booked` có nút đặt lịch khi `canBook` hoặc hiển thị `reason`; buổi `skipped` hiện bỏ qua. |
-| TRT-UI-T17 | SCR-W17  | Xem ghi chú trị liệu: Mở Sheet/Dialog, gọi `GET /me/treatments/{id}/sessions/{sessionId}` và hiển thị đúng kết quả `result` hoặc thông báo chưa có ghi chú.                                      |
-| HIS-UI-T01 | SCR-W18  | `ServiceHistoryApi.list`: Gọi đúng `GET /api/v1/me/service-history?fromDate=...&pageNumber=...`; giải mã đúng `PagedResult<ServiceHistoryItem>`.                                                   |
-| HIS-UI-T02 | SCR-W18  | Đủ 4 trạng thái trên `/my-history`: Skeleton khi đang tải, `ErrorState` khi lỗi kết nối, Empty state khi không có dữ liệu (hoặc khi lọc không khớp), hiển thị dữ liệu dạng `DataTable`.         |
-| HIS-UI-T03 | SCR-W18  | Bộ lọc lịch sử: Lọc theo khoảng ngày (`fromDate`, `toDate`), dịch vụ (`spaServiceId`), trạng thái (`completed`, `no_show`); đổi bộ lọc tự động quay về trang 1 và đồng bộ URL.                    |
-| HIS-UI-T04 | SCR-W18  | Phân trang `DataTable`: Chuyển trang và kích thước trang gọi API với `pageNumber` và `pageSize` tương ứng.                                                                                        |
-| HIS-UI-T05 | SCR-W18  | Phân loại nguồn sử dụng: Dòng dịch vụ lẻ hiển thị badge "Dịch vụ lẻ"; dòng buổi của gói hiển thị badge "Gói: {packageName}" kèm buổi thứ `{sequenceNumber}`.                                     |
-| HIS-UI-T06 | SCR-W18  | Drawer chi tiết: Bấm "Xem chi tiết" mở `ServiceHistoryDetailSheet`, gọi `GET /me/service-history/{appointmentId}`, hiển thị đầy đủ thời lượng, kỹ thuật viên, nguồn và kết quả chăm sóc `result`. |
-| HIS-UI-T07 | SCR-W18  | Trạng thái `no_show`: Hiển thị badge màu đỏ "Vắng mặt", trong sheet chi tiết thông báo khách không đến, không có kết quả chăm sóc.                                                               |
-| HIS-UI-T08 | SCR-W18  | Điều hướng bảo vệ: Truy cập `/my-treatment-plans` hoặc `/my-history` khi chưa đăng nhập chuyển hướng sang `/login?redirect=...`; menu bên trái active đúng mục.                                   |
+| TRT-UI-T17 | SCR-W17  | Xem ghi chú trị liệu: Mở Sheet/Dialog, gọi `GET /me/treatments/{id}/sessions/{sessionId}` và hiển thị đúng kết quả `result` hoặc thông báo chưa có ghi chú.                                            |
+| HIS-UI-T01 | SCR-W18  | `ServiceHistoryApi.list`: Gọi đúng `GET /api/v1/me/service-history?fromDate=...&pageNumber=...`; giải mã đúng `PagedResult<ServiceHistoryItem>`.                                                       |
+| HIS-UI-T02 | SCR-W18  | Đủ 4 trạng thái trên `/my-history`: Skeleton khi đang tải, `ErrorState` khi lỗi kết nối, Empty state khi không có dữ liệu (hoặc khi lọc không khớp), hiển thị dữ liệu dạng `DataTable`.                |
+| HIS-UI-T03 | SCR-W18  | Bộ lọc lịch sử: Lọc theo khoảng ngày (`fromDate`, `toDate`), dịch vụ (`spaServiceId`), trạng thái (`completed`, `no_show`); đổi bộ lọc tự động quay về trang 1 và đồng bộ URL.                         |
+| HIS-UI-T04 | SCR-W18  | Phân trang `DataTable`: Chuyển trang và kích thước trang gọi API với `pageNumber` và `pageSize` tương ứng.                                                                                             |
+| HIS-UI-T05 | SCR-W18  | Phân loại nguồn sử dụng: Dòng dịch vụ lẻ hiển thị badge "Dịch vụ lẻ"; dòng buổi của gói hiển thị badge "Gói: {packageName}" kèm buổi thứ `{sequenceNumber}`.                                           |
+| HIS-UI-T06 | SCR-W18  | Drawer chi tiết: Bấm "Xem chi tiết" mở `ServiceHistoryDetailSheet`, gọi `GET /me/service-history/{appointmentId}`, hiển thị đầy đủ thời lượng, kỹ thuật viên, nguồn và kết quả chăm sóc `result`.      |
+| HIS-UI-T07 | SCR-W18  | Trạng thái `no_show`: Hiển thị badge màu đỏ "Không đến", trong sheet chi tiết thông báo khách không đến, không có kết quả chăm sóc.                                                                    |
+| HIS-UI-T08 | SCR-W18  | Điều hướng bảo vệ: Truy cập `/my-treatment-plans` hoặc `/my-history` khi chưa đăng nhập chuyển hướng sang `/login?redirect=...`; menu bên trái active đúng mục.                                        |

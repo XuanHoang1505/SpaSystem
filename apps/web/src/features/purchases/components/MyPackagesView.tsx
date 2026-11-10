@@ -107,7 +107,7 @@ export function MyPackagesView() {
     : 0;
 
   return (
-    <section className="rounded-2xl border bg-card p-5 sm:p-6 lg:p-8 space-y-6 shadow-xs">
+    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
       <OrdersBreadcrumb
         trail={[
           { label: 'Trang chủ', to: '/' },

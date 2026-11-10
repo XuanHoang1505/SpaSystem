@@ -14,10 +14,10 @@ export function AiChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed right-6 bottom-6 z-50 flex flex-col items-end">
       {isOpen && (
-        <div className="mb-3 w-[calc(100vw-2rem)] sm:w-[420px] max-h-[calc(100vh-6rem)] shadow-2xl rounded-2xl overflow-hidden border bg-background animate-in fade-in slide-in-from-bottom-4 duration-200">
-          <div className="flex items-center justify-between px-3 py-2 bg-primary text-primary-foreground border-b">
+        <div className="mb-3 max-h-[calc(100vh-6rem)] w-[calc(100vw-2rem)] animate-in overflow-hidden rounded-2xl border bg-background shadow-2xl duration-200 fade-in slide-in-from-bottom-4 sm:w-[420px]">
+          <div className="flex items-center justify-between border-b bg-primary px-3 py-2 text-primary-foreground">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
               <span className="text-xs font-medium">Trợ lý ảo Như Nguyệt Spa</span>
@@ -28,7 +28,7 @@ export function AiChatWidget() {
               size="icon"
               onClick={() => setIsOpen(false)}
               aria-label="Đóng khung chat trợ lý AI"
-              className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20 rounded-full"
+              className="h-7 w-7 rounded-full text-primary-foreground hover:bg-primary-foreground/20"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -42,13 +42,13 @@ export function AiChatWidget() {
         size="icon"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-label={isOpen ? 'Đóng trợ lý ảo AI' : 'Mở trợ lý ảo AI'}
-        className="h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 hover:bg-primary/90 active:scale-95"
       >
         {isOpen ? <X className="h-6 w-6" /> : <Bot className="h-7 w-7" />}
         {!isOpen && (
           <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-emerald-500" />
           </span>
         )}
       </Button>

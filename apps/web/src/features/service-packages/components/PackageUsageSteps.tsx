@@ -38,7 +38,9 @@ export function PackageUsageSteps() {
             <h2 id="package-usage" className="font-heading text-xl font-semibold text-foreground">
               Quy trình sử dụng gói liệu trình
             </h2>
-            <p className="text-xs text-muted-foreground">3 bước tiện lợi, linh hoạt và chủ động tối đa cho bạn</p>
+            <p className="text-xs text-muted-foreground">
+              3 bước tiện lợi, linh hoạt và chủ động tối đa cho bạn
+            </p>
           </div>
         </div>
         <ol aria-labelledby="package-usage" className="grid gap-4 sm:grid-cols-3">

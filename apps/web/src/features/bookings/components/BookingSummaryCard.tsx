@@ -31,7 +31,7 @@ function Row({
   return (
     <div className="flex items-start justify-between gap-3 text-sm">
       <dt className="flex items-center gap-1.5 text-muted-foreground">
-        {Icon && <Icon className="size-3.5 text-primary shrink-0" aria-hidden="true" />}
+        {Icon && <Icon className="size-3.5 shrink-0 text-primary" aria-hidden="true" />}
         <span>{label}</span>
       </dt>
       <dd className="text-right font-medium text-foreground">{children}</dd>
@@ -83,7 +83,9 @@ export function BookingSummaryCard({
           {entitlement ? 'Chi tiết quyền sử dụng' : 'Thông tin lịch hẹn'}
         </h2>
         <dl className="space-y-2.5 text-sm">
-          <Row icon={SparklesIcon} label="Dịch vụ">{source.name}</Row>
+          <Row icon={SparklesIcon} label="Dịch vụ">
+            {source.name}
+          </Row>
           {source.sequenceNumber !== undefined && (
             <Row icon={LayersIcon} label="Buổi">
               {source.totalSessions
@@ -91,10 +93,18 @@ export function BookingSummaryCard({
                 : `Buổi ${source.sequenceNumber}`}
             </Row>
           )}
-          <Row icon={ClockIcon} label="Thời lượng">{formatDuration(source.durationMinutes)}</Row>
-          <Row icon={CalendarDaysIcon} label="Ngày">{date ? formatLongDate(date) : 'Chưa chọn'}</Row>
-          <Row icon={ClockIcon} label="Khung giờ">{slot ? `${slot.startTime} – ${endTime}` : 'Chưa chọn'}</Row>
-          <Row icon={UserIcon} label="Kỹ thuật viên">{staffName ?? 'Hệ thống chọn giúp bạn'}</Row>
+          <Row icon={ClockIcon} label="Thời lượng">
+            {formatDuration(source.durationMinutes)}
+          </Row>
+          <Row icon={CalendarDaysIcon} label="Ngày">
+            {date ? formatLongDate(date) : 'Chưa chọn'}
+          </Row>
+          <Row icon={ClockIcon} label="Khung giờ">
+            {slot ? `${slot.startTime} – ${endTime}` : 'Chưa chọn'}
+          </Row>
+          <Row icon={UserIcon} label="Kỹ thuật viên">
+            {staffName ?? 'Hệ thống chọn giúp bạn'}
+          </Row>
         </dl>
 
         {!entitlement && (
@@ -139,11 +149,11 @@ export function BookingSummaryCard({
 
         <div className="space-y-2 border-t pt-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <ShieldCheckIcon className="size-3.5 text-primary shrink-0" aria-hidden="true" />
+            <ShieldCheckIcon className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
             <span>Cam kết giữ đúng chuyên viên & giờ hẹn</span>
           </div>
           <div className="flex items-center gap-2">
-            <SparklesIcon className="size-3.5 text-primary shrink-0" aria-hidden="true" />
+            <SparklesIcon className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
             <span>Phục vụ trà thảo mộc & phòng riêng thư giãn</span>
           </div>
         </div>

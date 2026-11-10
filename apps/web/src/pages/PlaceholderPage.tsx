@@ -1,6 +1,5 @@
 import { HammerIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogClose,
@@ -19,14 +18,10 @@ export function PlaceholderPage({ title }: { title: string }) {
   const trail =
     title === 'Tài khoản'
       ? [{ label: 'Trang chủ', to: '/' }, { label: 'Tài khoản' }]
-      : [
-          { label: 'Trang chủ', to: '/' },
-          { label: 'Tài khoản', to: '/account' },
-          { label: title },
-        ];
+      : [{ label: 'Trang chủ', to: '/' }, { label: 'Tài khoản', to: '/account' }, { label: title }];
 
   return (
-    <section className="rounded-2xl border bg-card p-5 sm:p-6 lg:p-8 space-y-6 shadow-xs">
+    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
       <OrdersBreadcrumb trail={trail} />
       <PageHeader
         title={title}

@@ -12,6 +12,13 @@ export const catalogPolicies = {
   maxBookingDaysAhead: 60,
   /** `Booking:SlotStepMinutes`. */
   slotStepMinutes: 30,
+  /** `Booking:MaxQueryRangeDays`: widest date range of the owner's appointment list (UC-SPA-17). */
+  maxAppointmentQueryRangeDays: 42,
+  /** `Booking:NoShowConsumesEntitlement`: false gives the right or session back on a no-show. */
+  noShowConsumesEntitlement: false,
+  /** Default hours of the owner's day calendar; it widens to fit appointments outside them. */
+  dayGridStartTime: '08:00',
+  dayGridEndTime: '20:00',
 } as const;
 
 /** Thông tin liên hệ hiển thị cho khách. Số điện thoại là số mẫu của Stitch: thay số thật trước khi dùng. */

@@ -29,10 +29,7 @@ export function WorkspaceLayout({
             <ThemeToggle />
           </div>
         </header>
-        <div className="bg-status-warning px-4 py-2 text-center text-xs text-status-warning-foreground">
-          Bản xem trước giao diện · Dữ liệu nghiệp vụ đang được phát triển
-        </div>
-        <div className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto w-full max-w-7xl flex-1 p-3 sm:p-4 lg:p-6">
           <Outlet />
         </div>
       </SidebarInset>

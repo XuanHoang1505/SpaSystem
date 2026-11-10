@@ -7,8 +7,7 @@ export function useUploadAvatar() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (file: File | Blob) =>
-      callUsers((api) => api.uploadAvatar(file)),
+    mutationFn: (file: File | Blob) => callUsers((api) => api.uploadAvatar(file)),
     onSuccess: (result: AvatarUrlDto) => {
       queryClient.setQueryData<MeDto>(usersQueryKeys.me(), (old) =>
         old ? { ...old, avatarUrl: result.avatarUrl } : old,

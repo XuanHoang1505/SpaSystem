@@ -31,10 +31,10 @@ export function TreatmentSessionDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader className="space-y-1 border-b pb-4">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+            <span className="text-xs font-semibold tracking-wider text-primary uppercase">
               {`Buổi ${session.sequenceNumber}`}
             </span>
             <StatusBadge label={badge.label} tone={badge.tone} status={session.status} />
@@ -49,8 +49,8 @@ export function TreatmentSessionDetailSheet({
 
         <div className="space-y-6 py-6">
           {session.appointment && (
-            <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="space-y-2 rounded-xl border bg-muted/30 p-4">
+              <h4 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Thông tin lịch thực hiện
               </h4>
               <div className="text-sm font-medium text-foreground">
@@ -75,7 +75,7 @@ export function TreatmentSessionDetailSheet({
                 <Skeleton className="h-4 w-4/6" />
               </div>
             ) : data?.result ? (
-              <div className="rounded-xl border border-secondary bg-secondary/20 p-4 text-sm leading-relaxed text-foreground whitespace-pre-line">
+              <div className="rounded-xl border border-secondary bg-secondary/20 p-4 text-sm leading-relaxed whitespace-pre-line text-foreground">
                 {data.result}
               </div>
             ) : (
@@ -86,38 +86,57 @@ export function TreatmentSessionDetailSheet({
           </div>
 
           {Boolean(
-            (data as { skinProfile?: { skinType?: string; careGoals?: string; recommendedTreatment?: string } | null })?.skinProfile,
-          ) && (() => {
-            const profile = (data as { skinProfile?: { skinType?: string; careGoals?: string; recommendedTreatment?: string } }).skinProfile!;
-            return (
-              <div className="space-y-3 rounded-xl border p-4 bg-card">
-                <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <SparklesIcon className="size-4 text-primary" aria-hidden="true" />
-                  Tóm tắt hồ sơ da
-                </h4>
-                <dl className="space-y-2 text-xs">
-                  {profile.skinType && (
-                    <div>
-                      <dt className="text-muted-foreground">Loại da:</dt>
-                      <dd className="font-medium text-foreground">{profile.skinType}</dd>
-                    </div>
-                  )}
-                  {profile.careGoals && (
-                    <div>
-                      <dt className="text-muted-foreground">Mục tiêu chăm sóc:</dt>
-                      <dd className="font-medium text-foreground">{profile.careGoals}</dd>
-                    </div>
-                  )}
-                  {profile.recommendedTreatment && (
-                    <div>
-                      <dt className="text-muted-foreground">Khuyến nghị:</dt>
-                      <dd className="font-medium text-foreground">{profile.recommendedTreatment}</dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-            );
-          })()}
+            (
+              data as {
+                skinProfile?: {
+                  skinType?: string;
+                  careGoals?: string;
+                  recommendedTreatment?: string;
+                } | null;
+              }
+            )?.skinProfile,
+          ) &&
+            (() => {
+              const profile = (
+                data as {
+                  skinProfile?: {
+                    skinType?: string;
+                    careGoals?: string;
+                    recommendedTreatment?: string;
+                  };
+                }
+              ).skinProfile!;
+              return (
+                <div className="space-y-3 rounded-xl border bg-card p-4">
+                  <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <SparklesIcon className="size-4 text-primary" aria-hidden="true" />
+                    Tóm tắt hồ sơ da
+                  </h4>
+                  <dl className="space-y-2 text-xs">
+                    {profile.skinType && (
+                      <div>
+                        <dt className="text-muted-foreground">Loại da:</dt>
+                        <dd className="font-medium text-foreground">{profile.skinType}</dd>
+                      </div>
+                    )}
+                    {profile.careGoals && (
+                      <div>
+                        <dt className="text-muted-foreground">Mục tiêu chăm sóc:</dt>
+                        <dd className="font-medium text-foreground">{profile.careGoals}</dd>
+                      </div>
+                    )}
+                    {profile.recommendedTreatment && (
+                      <div>
+                        <dt className="text-muted-foreground">Khuyến nghị:</dt>
+                        <dd className="font-medium text-foreground">
+                          {profile.recommendedTreatment}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+                </div>
+              );
+            })()}
         </div>
       </SheetContent>
     </Sheet>

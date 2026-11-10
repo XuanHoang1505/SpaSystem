@@ -20,7 +20,7 @@ export function CartLine({
   const isPackage = item.type === 'package';
   const href = `${isPackage ? '/packages' : '/services'}/${item.productId}`;
   return (
-    <li className="group relative flex gap-4 rounded-2xl border bg-card/80 p-4 sm:p-5 shadow-2xs transition-all hover:bg-card hover:shadow-xs">
+    <li className="group relative flex gap-4 rounded-2xl border bg-card/80 p-4 shadow-2xs transition-all hover:bg-card hover:shadow-xs sm:p-5">
       <ImageWithFallback
         src={item.imageUrl}
         alt={item.name}
@@ -37,7 +37,12 @@ export function CartLine({
           </Badge>
           {!item.isAvailable && <Badge variant="outline">Ngừng bán</Badge>}
         </div>
-        <h3 className={cn('font-heading text-lg font-semibold leading-snug', !item.isAvailable && 'opacity-60')}>
+        <h3
+          className={cn(
+            'font-heading text-lg leading-snug font-semibold',
+            !item.isAvailable && 'opacity-60',
+          )}
+        >
           {item.isAvailable ? (
             <Link to={href} className="text-foreground transition-colors hover:text-primary">
               {item.name}

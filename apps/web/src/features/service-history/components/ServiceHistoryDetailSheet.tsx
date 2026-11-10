@@ -1,7 +1,6 @@
 import {
   AlertCircleIcon,
   CalendarDaysIcon,
-  ClockIcon,
   ExternalLinkIcon,
   FileTextIcon,
   PackageIcon,
@@ -42,10 +41,10 @@ export function ServiceHistoryDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader className="space-y-1 border-b pb-4">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
               Chi tiết lần sử dụng
             </span>
             {badge && <StatusBadge label={badge.label} tone={badge.tone} status={data?.status} />}
@@ -69,26 +68,26 @@ export function ServiceHistoryDetailSheet({
           ) : data ? (
             <>
               {/* Date & staff */}
-              <div className="rounded-xl border bg-muted/30 p-4 space-y-2.5">
+              <div className="space-y-2.5 rounded-xl border bg-muted/30 p-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <CalendarDaysIcon className="size-4 text-primary shrink-0" aria-hidden="true" />
+                  <CalendarDaysIcon className="size-4 shrink-0 text-primary" aria-hidden="true" />
                   <span>{`${formatLocalDate(data.date)} lúc ${data.startTime} – ${data.endTime}`}</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <UserRoundIcon className="size-3.5 text-primary shrink-0" aria-hidden="true" />
+                  <UserRoundIcon className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
                   <span>{`Kỹ thuật viên: ${data.staff.fullName}`}</span>
                 </div>
               </div>
 
               {/* Source information */}
-              <div className="rounded-xl border bg-card p-4 space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-2 rounded-xl border bg-card p-4">
+                <h4 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                   Nguồn dịch vụ
                 </h4>
                 {data.source === 'package' ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      <PackageIcon className="size-4 text-primary shrink-0" aria-hidden="true" />
+                      <PackageIcon className="size-4 shrink-0 text-primary" aria-hidden="true" />
                       <span>{`Gói: ${data.packageName}`}</span>
                     </div>
                     {data.sequenceNumber !== undefined && (
@@ -100,7 +99,7 @@ export function ServiceHistoryDetailSheet({
                       <Button asChild variant="outline" size="sm" className="mt-1 text-xs">
                         <Link to={`/my-treatment-plans/${data.treatmentPlanId}`}>
                           Xem phác đồ liệu trình
-                          <ExternalLinkIcon className="size-3 ml-1.5" aria-hidden="true" />
+                          <ExternalLinkIcon className="ml-1.5 size-3" aria-hidden="true" />
                         </Link>
                       </Button>
                     )}
@@ -110,7 +109,10 @@ export function ServiceHistoryDetailSheet({
                     <p className="text-sm font-medium text-foreground">Dịch vụ lẻ</p>
                     {data.order && (
                       <div className="flex items-center gap-2">
-                        <ReceiptIcon className="size-3.5 text-primary shrink-0" aria-hidden="true" />
+                        <ReceiptIcon
+                          className="size-3.5 shrink-0 text-primary"
+                          aria-hidden="true"
+                        />
                         <button
                           type="button"
                           onClick={() => onViewOrder?.(data.order!)}
@@ -126,11 +128,15 @@ export function ServiceHistoryDetailSheet({
 
               {/* Care result / No-show alert */}
               {data.status === 'no_show' ? (
-                <Alert variant="destructive" className="border-destructive/30 bg-destructive/10 text-destructive">
+                <Alert
+                  variant="destructive"
+                  className="border-destructive/30 bg-destructive/10 text-destructive"
+                >
                   <AlertCircleIcon className="size-4 text-destructive" aria-hidden="true" />
                   <AlertTitle className="font-semibold">Buổi hẹn vắng mặt</AlertTitle>
-                  <AlertDescription className="text-xs text-muted-foreground mt-1">
-                    Khách hàng không đến theo lịch hẹn đã đặt. Không có kết quả chăm sóc được ghi nhận.
+                  <AlertDescription className="mt-1 text-xs text-muted-foreground">
+                    Khách hàng không đến theo lịch hẹn đã đặt. Không có kết quả chăm sóc được ghi
+                    nhận.
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -140,7 +146,7 @@ export function ServiceHistoryDetailSheet({
                     Kết quả chăm sóc da
                   </h4>
                   {data.result ? (
-                    <div className="rounded-xl border border-secondary bg-secondary/20 p-4 text-sm leading-relaxed text-foreground whitespace-pre-line">
+                    <div className="rounded-xl border border-secondary bg-secondary/20 p-4 text-sm leading-relaxed whitespace-pre-line text-foreground">
                       {data.result}
                     </div>
                   ) : (

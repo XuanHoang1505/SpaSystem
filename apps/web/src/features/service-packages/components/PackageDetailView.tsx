@@ -100,7 +100,7 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
                   {pkg.name}
                 </h1>
                 {pkg.shortDescription && (
-                  <p className="text-base text-muted-foreground sm:text-lg leading-relaxed">
+                  <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
                     {pkg.shortDescription}
                   </p>
                 )}
@@ -142,16 +142,22 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
                   <h2 className="font-heading text-xl font-semibold text-foreground">
                     Giới thiệu &amp; Hiệu quả liệu trình
                   </h2>
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground sm:text-base">
                     {pkg.description ?? 'Chưa có mô tả cho gói này.'}
                   </p>
-                  <div className="grid gap-3 pt-3 sm:grid-cols-2 border-t">
+                  <div className="grid gap-3 border-t pt-3 sm:grid-cols-2">
                     <div className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                      <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                      <CheckCircle2Icon
+                        className="mt-0.5 size-4 shrink-0 text-primary"
+                        aria-hidden="true"
+                      />
                       <span>Phác đồ chuyên sâu được cá nhân hóa theo từng tình trạng da</span>
                     </div>
                     <div className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                      <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                      <CheckCircle2Icon
+                        className="mt-0.5 size-4 shrink-0 text-primary"
+                        aria-hidden="true"
+                      />
                       <span>Sử dụng 100% dòng dược mỹ phẩm chuẩn y khoa an toàn và lành tính</span>
                     </div>
                   </div>
@@ -183,7 +189,7 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
             <aside aria-label="Giá và đăng ký gói" className="lg:sticky lg:top-28">
               <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
                 <div className="border-b bg-muted/40 p-5 sm:p-6">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                     Chi phí trọn gói {pkg.totalSessions} buổi
                   </p>
                   {saving > 0 && (
@@ -196,7 +202,7 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
                       </Badge>
                     </div>
                   )}
-                  <p className="font-heading text-3xl sm:text-4xl font-bold text-primary mt-1">
+                  <p className="mt-1 font-heading text-3xl font-bold text-primary sm:text-4xl">
                     {formatCurrency(pkg.price)}
                   </p>
                   <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-3 py-1 text-xs font-semibold text-secondary-foreground">
@@ -213,17 +219,25 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
 
                 <div className="space-y-5 p-5 sm:p-6">
                   <div className="space-y-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                       Thời hạn sử dụng gói
                     </p>
                     <ul className="space-y-2">
                       <li className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                        <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-                        <span>Dùng trong {pkg.validityDays} ngày kể từ ngày kích hoạt thanh toán</span>
+                        <CheckCircle2Icon
+                          className="mt-0.5 size-4 shrink-0 text-primary"
+                          aria-hidden="true"
+                        />
+                        <span>
+                          Dùng trong {pkg.validityDays} ngày kể từ ngày kích hoạt thanh toán
+                        </span>
                       </li>
                       {finish && (
                         <li className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                          <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                          <CheckCircle2Icon
+                            className="mt-0.5 size-4 shrink-0 text-primary"
+                            aria-hidden="true"
+                          />
                           <span>{`Hoàn thành sớm nhất sau ${finish}`}</span>
                         </li>
                       )}
@@ -231,13 +245,19 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
                   </div>
 
                   <div className="space-y-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                       Đặc quyền kèm gói
                     </p>
                     <ul className="space-y-2">
                       {placeholderPackagePerks.map((perk) => (
-                        <li key={perk} className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                          <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                        <li
+                          key={perk}
+                          className="flex items-start gap-2.5 text-xs text-muted-foreground"
+                        >
+                          <CheckCircle2Icon
+                            className="mt-0.5 size-4 shrink-0 text-primary"
+                            aria-hidden="true"
+                          />
                           <span>{perk}</span>
                         </li>
                       ))}

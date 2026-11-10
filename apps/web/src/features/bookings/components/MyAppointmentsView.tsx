@@ -53,7 +53,7 @@ export function MyAppointmentsView() {
   };
 
   return (
-    <section className="rounded-2xl border bg-card p-5 sm:p-6 lg:p-8 space-y-6 shadow-xs">
+    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
       <OrdersBreadcrumb
         trail={[
           { label: 'Trang chủ', to: '/' },
@@ -61,17 +61,17 @@ export function MyAppointmentsView() {
           { label: 'Lịch hẹn của tôi' },
         ]}
       />
-        <PageHeader
-          title="Lịch hẹn của tôi"
-          description="Xem, đổi giờ hoặc hủy các lịch hẹn của bạn."
-          className="border-b pb-5"
-          actions={
-            <Button asChild>
-              <Link to="/services">Đặt lịch hẹn mới</Link>
-            </Button>
-          }
-        />
-        <div role="group" aria-label="Nhóm lịch hẹn" className="flex gap-6 border-b">
+      <PageHeader
+        title="Lịch hẹn của tôi"
+        description="Xem, đổi giờ hoặc hủy các lịch hẹn của bạn."
+        className="border-b pb-5"
+        actions={
+          <Button asChild>
+            <Link to="/services">Đặt lịch hẹn mới</Link>
+          </Button>
+        }
+      />
+      <div role="group" aria-label="Nhóm lịch hẹn" className="flex gap-6 border-b">
         {scopes.map(({ value, label }) => (
           <button
             key={value}
@@ -81,7 +81,7 @@ export function MyAppointmentsView() {
             className={cn(
               '-mb-px border-b-2 px-1 pb-3 text-sm font-medium transition-colors',
               scope === value
-                ? 'border-primary text-foreground font-semibold'
+                ? 'border-primary font-semibold text-foreground'
                 : 'border-transparent text-muted-foreground hover:text-foreground',
             )}
           >

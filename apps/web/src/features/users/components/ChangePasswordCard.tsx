@@ -47,7 +47,10 @@ export function ChangePasswordCard() {
       toast.success('Đổi mật khẩu thành công. Các phiên đăng nhập khác đã được thu hồi.');
     } catch (error) {
       if (error instanceof ApiClientError) {
-        if (error.status === 429 || error.errors.some((e) => e.code === usersErrorCodes.rateLimited)) {
+        if (
+          error.status === 429 ||
+          error.errors.some((e) => e.code === usersErrorCodes.rateLimited)
+        ) {
           setRateLimitAlert('Bạn đã thao tác quá nhiều lần, vui lòng thử lại sau ít phút.');
           return;
         }
@@ -63,10 +66,7 @@ export function ChangePasswordCard() {
               message: 'Mật khẩu hiện tại không chính xác.',
             });
             handled = true;
-          } else if (
-            err.code === 'password_unchanged' ||
-            err.code === 'password_same_as_current'
-          ) {
+          } else if (err.code === 'password_unchanged' || err.code === 'password_same_as_current') {
             setError('newPassword', {
               message: 'Mật khẩu mới phải khác mật khẩu hiện tại.',
             });
@@ -78,7 +78,11 @@ export function ChangePasswordCard() {
             handled = true;
           } else if (err.field) {
             const field = err.field.charAt(0).toLowerCase() + err.field.slice(1);
-            if (field === 'currentPassword' || field === 'newPassword' || field === 'confirmPassword') {
+            if (
+              field === 'currentPassword' ||
+              field === 'newPassword' ||
+              field === 'confirmPassword'
+            ) {
               setError(field as keyof ChangePasswordFormValues, { message: err.message });
               handled = true;
             }
@@ -100,14 +104,12 @@ export function ChangePasswordCard() {
     <Card>
       <CardHeader>
         <CardTitle>Đổi mật khẩu</CardTitle>
-        <CardDescription>
-          Cập nhật mật khẩu để bảo vệ tài khoản của bạn.
-        </CardDescription>
+        <CardDescription>Cập nhật mật khẩu để bảo vệ tài khoản của bạn.</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="flex items-start gap-3 p-3 text-sm rounded-md bg-amber-500/10 text-amber-900 dark:text-amber-200 border border-amber-500/20">
-          <ShieldAlert className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+        <div className="flex items-start gap-3 rounded-md border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-200">
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
           <p>
             Đổi mật khẩu sẽ đăng xuất tất cả các phiên đăng nhập khác của bạn trên mọi thiết bị.
           </p>
@@ -140,7 +142,7 @@ export function ChangePasswordCard() {
                 onClick={() => setShowCurrent((prev) => !prev)}
                 tabIndex={-1}
                 aria-label={showCurrent ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-foreground"
+                className="absolute top-0 right-0 h-full px-3 text-muted-foreground hover:text-foreground"
               >
                 {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
@@ -170,7 +172,7 @@ export function ChangePasswordCard() {
                 onClick={() => setShowNew((prev) => !prev)}
                 tabIndex={-1}
                 aria-label={showNew ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-foreground"
+                className="absolute top-0 right-0 h-full px-3 text-muted-foreground hover:text-foreground"
               >
                 {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
@@ -203,7 +205,7 @@ export function ChangePasswordCard() {
                 onClick={() => setShowConfirm((prev) => !prev)}
                 tabIndex={-1}
                 aria-label={showConfirm ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-foreground"
+                className="absolute top-0 right-0 h-full px-3 text-muted-foreground hover:text-foreground"
               >
                 {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
@@ -213,7 +215,7 @@ export function ChangePasswordCard() {
             )}
           </div>
 
-          <div className="pt-2 flex justify-end">
+          <div className="flex justify-end pt-2">
             <Button type="submit" disabled={isBusy} className="gap-2">
               {isBusy && <Loader2 className="h-4 w-4 animate-spin" />}
               Đổi mật khẩu

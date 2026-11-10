@@ -106,6 +106,73 @@ export interface RescheduleAppointmentRequest {
   staffMemberId?: string;
 }
 
+/** UC-SPA-17 (owner): the customer of an appointment. */
+export interface AppointmentCustomer {
+  id: string;
+  fullName: string;
+  phoneNumber: string;
+}
+
+export type AllergySeverity = 'mild' | 'moderate' | 'severe';
+
+export interface CustomerAllergy {
+  id: string;
+  allergen: string;
+  severity: AllergySeverity;
+  note: string | null;
+  recordedAtUtc: string;
+}
+
+export interface TreatmentSessionRef {
+  id: string;
+  sequenceNumber: number;
+  totalSessions: number;
+  customerPackageId: string;
+  packageName: string;
+}
+
+/** A row of `GET /appointments` (owner); the server orders rows by `date, startTime`. */
+export interface AppointmentListItem {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: AppointmentStatus;
+  customer: AppointmentCustomer;
+  staff: AppointmentStaff;
+  service: AppointmentService;
+}
+
+/** `GET /appointments/{id}` and the result of every owner command. */
+export interface AppointmentDetail extends AppointmentListItem {
+  holdExpiresAtUtc: string | null;
+  cancelledAtUtc: string | null;
+  cancellationReason: string | null;
+  note: string | null;
+  createdAtUtc: string;
+  allergies: readonly CustomerAllergy[];
+  treatmentSession: TreatmentSessionRef | null;
+  hasSkinProfile: boolean;
+  skinProfileId: string | null;
+}
+
+/** Filters of `GET /appointments`; both dates are required and inclusive. */
+export interface AppointmentListParams {
+  fromDate: string;
+  toDate: string;
+  staffMemberId?: string;
+  status?: AppointmentStatus;
+  search?: string;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+/** The owner's reschedule keeps the staff member and the length. */
+export interface OwnerRescheduleAppointmentRequest {
+  date: string;
+  startTime: string;
+}
+
 /** The appointment held by a book-now order (`OrderDetail.appointment`). */
 export interface OrderAppointment {
   id: string;
