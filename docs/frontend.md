@@ -140,6 +140,23 @@ Staff và chủ spa giữ `WorkspaceLayout` (sidebar). Không còn dải "Bản 
   - Gợi ý sản phẩm (`AiProductSuggestionCard`) và đề xuất lịch hẹn (`AiBookingProposalCard` kèm nút điền sẵn thông tin đặt lịch).
   - `ChatInputBar`: Ô nhập tự co giãn kèm bộ đếm ký tự (1–1000) và các câu hỏi gợi ý nhanh.
 
+## Quản lý lịch hẹn của chủ spa (UC-SPA-17)
+
+- **Trang:** `/owner/bookings` (SCR-W34, `OwnerAppointmentsPage`, `OwnerAppointmentsView`). Màn chủ spa đầu tiên thay thế `PlaceholderPage`, chạy trong `OwnerLayout` (sidebar, hỗ trợ theme sáng và tối).
+- **Bộ lọc & điều hướng:** Giữ trên URL qua `useOwnerAppointmentFilters` (`view=list|day`, `fromDate`, `toDate`, `date`, `staffMemberId`, `status`, `search`, `page`, `pageSize`, `appointmentId`). Giới hạn tối đa 42 ngày (`maxAppointmentQueryRangeDays` trong `catalogPolicies.ts`), tìm kiếm khách trễ 300 ms, đổi bộ lọc tự động về trang 1.
+- **Chế độ Danh sách:** `OwnerAppointmentsTable` (TanStack Table 8) hiển thị Thời gian, Khách (tên + SĐT), Dịch vụ, Nhân viên, Trạng thái (`StatusBadge`), menu Thao tác từng dòng. Bấm dòng mở `OwnerAppointmentSheet`.
+- **Chế độ Lịch ngày:** `DayCalendar`, `DayCalendarCard`, `dayGrid.ts`. CSS Grid với cột giờ dính bên trái, đầu cột nhân viên dính phía trên ("{tên}", "{n} lịch"), các hàng nền 30 phút theo `gridRange` (mặc định 08:00 – 20:00, tự nới khi có lịch ngoài khung), thẻ lịch đặt theo bước 5 phút và phân lane chia đều chiều ngang khi trùng giờ, vạch giờ hiện tại (now-line) khi xem ngày hôm nay. Cảnh báo khi ngày có trên 100 lịch. Phần lịch đã hủy trong ngày hiển thị dạng `Collapsible` bên dưới lưới.
+- **Kéo thả trên Lịch ngày:** Thư viện `@dnd-kit/core`. Chỉ cho phép kéo thẻ `pending_confirmation` và `confirmed`. Kéo dọc trong cột để đổi giờ (bám bước 30 phút), kéo ngang sang cột khác để đổi nhân viên (giữ nguyên giờ cũ). Thả mở `DropConfirmDialog` xác nhận trước khi gọi API; lỗi backend được toast trực tiếp và đưa thẻ về vị trí cũ. Tắt kéo thả ở màn hình nhỏ dưới `md` (< 768px). Hỗ trợ kéo thả bằng bàn phím với thông báo hỗ trợ tiếp cận (`accessibility.announcements`) bằng tiếng Việt.
+- **Chi tiết:** `OwnerAppointmentSheet` mở qua `?appointmentId=` trên URL hoặc khi bấm vào thẻ/dòng. Hiển thị dị ứng nổi bật (`CustomerAllergy` kèm mức độ nhẹ/vừa/nặng), nguồn buổi liệu trình, ghi chú, trạng thái hồ sơ da, thời điểm và lý do hủy/giữ chỗ, chân sheet gồm các nút hành động tương ứng trạng thái.
+- **Hành động chủ spa:** 5 hộp thoại thao tác:
+  - `ConfirmAppointmentDialog`: Xác nhận lịch hẹn (`POST /appointments/{id}/confirm`).
+  - `OwnerRescheduleDialog`: Đổi giờ hẹn qua `StaffSlotPicker` của nhân viên hiện tại (`POST /appointments/{id}/reschedule`).
+  - `AssignStaffDialog`: Đổi nhân viên từ danh sách nhân viên đang làm (`GET /staff?status=working`), ưu tiên gắn nhãn "Rảnh giờ này" theo `AvailabilityApi` (`POST /appointments/{id}/assign-staff`).
+  - `OwnerCancelDialog`: Hủy lịch hẹn kèm lý do bắt buộc 1–500 ký tự (`POST /appointments/{id}/cancel`).
+  - `NoShowDialog`: Ghi nhận khách không đến kèm ghi chú tùy chọn $\le$ 1000 ký tự (`POST /appointments/{id}/no-show`).
+- **Hooks & API:** `OwnerAppointmentsApi` (`@spa/api-client`), hooks tại `features/bookings/hooks/owner/` (`useOwnerAppointments`, `useOwnerAppointment`, `useConfirmAppointment`, `useOwnerReschedule`, `useAssignAppointmentStaff`, `useOwnerCancelAppointment`, `useMarkNoShow`, `useWorkingStaff`).
+- **Hằng chép tay từ backend:** `catalogPolicies.maxAppointmentQueryRangeDays` (42), `dayGridStartTime` ('08:00'), `dayGridEndTime` ('20:00'), `noShowConsumesEntitlement` (false). Nhãn `no_show` đổi thống nhất thành "Không đến" trên toàn web.
+
 ## Chạy và kiểm tra
 
 ```powershell
