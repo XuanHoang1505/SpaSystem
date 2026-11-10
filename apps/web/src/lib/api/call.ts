@@ -17,3 +17,15 @@ export async function callApi<TApi, T>(
   if (response.data === null || response.data === undefined) throw new Error('Empty API response.');
   return response.data;
 }
+
+/**
+ * Runs one call on a feature API that returns void (e.g. 204 No Content).
+ */
+export async function callVoidApi<TApi>(
+  create: (client: ApiClient) => TApi,
+  call: (api: TApi) => Promise<void>,
+): Promise<void> {
+  const { client, error } = getApiClient();
+  if (!client) throw new ApiConfigurationError(error ?? 'Configuration Error');
+  await call(create(client));
+}
