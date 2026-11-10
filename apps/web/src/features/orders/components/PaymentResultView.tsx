@@ -3,14 +3,17 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { ordersQueryKeys } from '@spa/api-client';
-import type { OrderDetail } from '@spa/shared-types';
+import type { OrderAppointment, OrderDetail } from '@spa/shared-types';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
 import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
+import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { cn } from '@/lib/utils';
-import { formatCurrency, formatDateTimeUtc } from '@/lib/formatting/formatters';
+import { appointmentStatusBadge } from '@/features/bookings/appointmentStatus';
+import { formatCurrency, formatDateTimeUtc, formatLocalTime } from '@/lib/formatting/formatters';
+import { formatLongDate } from '@/lib/formatting/vietnamTime';
 import { orderErrorCode } from '../errors';
 import { useOrder } from '../hooks/useOrder';
 import { CheckoutSteps } from './CheckoutSteps';
@@ -147,9 +150,15 @@ function ResultCard({
             <Link to="/my-packages">Xem gói của tôi</Link>
           </Button>
         )}
-        <Button asChild variant="outline">
-          <Link to="/my-bookings">Đặt lịch</Link>
-        </Button>
+        {order.appointment ? (
+          <Button asChild>
+            <Link to={`/booking/success?appointmentId=${order.appointment.id}`}>Xem lịch hẹn</Link>
+          </Button>
+        ) : (
+          <Button asChild variant="outline">
+            <Link to="/my-packages">Đặt lịch</Link>
+          </Button>
+        )}
         <Button asChild variant="outline">
           <Link to="/services">Tiếp tục mua sắm</Link>
         </Button>
@@ -245,7 +254,27 @@ function ResultCard({
           </li>
         ))}
       </ul>
+      {order.appointment && <AppointmentBlock appointment={order.appointment} />}
       {actions && <div className="flex flex-wrap justify-center gap-2">{actions}</div>}
+    </section>
+  );
+}
+
+/** The appointment a book-now order holds: when, with whom, and whether the hold is still there. */
+function AppointmentBlock({ appointment }: { appointment: OrderAppointment }) {
+  const badge = appointmentStatusBadge(appointment.status);
+  return (
+    <section aria-label="Lịch hẹn" className="space-y-2 rounded-xl border p-3 text-left text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-sans text-base font-semibold">Lịch hẹn</h3>
+        <StatusBadge label={badge.label} tone={badge.tone} status={appointment.status} />
+      </div>
+      <p>{formatLongDate(appointment.date)}</p>
+      <p>{`${formatLocalTime(appointment.startTime)} – ${formatLocalTime(appointment.endTime)}`}</p>
+      <p>{`Kỹ thuật viên ${appointment.staff.fullName}`}</p>
+      {appointment.status === 'hold_expired' && (
+        <p className="text-muted-foreground">Chỗ giữ đã hết hạn, hãy đặt lại</p>
+      )}
     </section>
   );
 }

@@ -1,13 +1,13 @@
 import { CalendarClockIcon, RotateCcwIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ComingSoonButton } from '@/features/services';
 import { formatLocalDate } from '@/lib/formatting/formatters';
 import { useNextSlots, type NextSlotsDay } from '../hooks/useNextSlots';
+import { BookServiceButton } from './BookServiceButton';
 
 /**
- * "Giờ trống gần nhất" trên trang chi tiết dịch vụ: giờ thật từ lịch làm việc và lịch hẹn. Bấm một giờ tạm báo "đang
- * phát triển" (đặt lịch trên web là UC-SPA-15).
+ * "Giờ trống gần nhất" trên trang chi tiết dịch vụ: giờ thật từ lịch làm việc và lịch hẹn. Bấm một giờ sang trang đặt
+ * lịch với ngày và giờ đó được điền sẵn (UC-SPA-15).
  */
 export function NextAvailableSlots({ serviceId }: { serviceId: string }) {
   const { days, isError, retry } = useNextSlots(serviceId);
@@ -26,7 +26,7 @@ export function NextAvailableSlots({ serviceId }: { serviceId: string }) {
           </Button>
         </div>
       ) : (
-        days.map((day) => <SlotDay key={day.date} day={day} />)
+        days.map((day) => <SlotDay key={day.date} day={day} serviceId={serviceId} />)
       )}
       <p className="text-xs text-muted-foreground">
         Theo lịch làm việc thực tế của kỹ thuật viên, giờ Việt Nam.
@@ -35,7 +35,7 @@ export function NextAvailableSlots({ serviceId }: { serviceId: string }) {
   );
 }
 
-function SlotDay({ day }: { day: NextSlotsDay }) {
+function SlotDay({ day, serviceId }: { day: NextSlotsDay; serviceId: string }) {
   const name = `${day.label} · ${formatLocalDate(day.date)}`;
   return (
     <div role="group" aria-label={name} className="space-y-2">
@@ -51,15 +51,16 @@ function SlotDay({ day }: { day: NextSlotsDay }) {
       ) : (
         <div className="flex flex-wrap gap-2">
           {day.times.map((time) => (
-            <ComingSoonButton
+            <BookServiceButton
               key={time}
-              feature="Đặt lịch trực tuyến"
+              serviceId={serviceId}
+              prefill={{ date: day.date, startTime: time }}
               size="sm"
               variant="outline"
               className="tabular-nums"
             >
               {time}
-            </ComingSoonButton>
+            </BookServiceButton>
           ))}
         </div>
       )}

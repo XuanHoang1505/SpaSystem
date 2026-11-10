@@ -5,9 +5,12 @@ import {
   CalendarClockIcon,
   CalendarDaysIcon,
   CreditCardIcon,
+  HistoryIcon,
   HomeIcon,
+  InfoIcon,
   LayoutDashboardIcon,
   PackageIcon,
+  PhoneIcon,
   ReceiptTextIcon,
   ShoppingCartIcon,
   SparklesIcon,
@@ -39,11 +42,14 @@ const icons: Record<string, LucideIcon> = {
   '/': HomeIcon,
   '/services': SparklesIcon,
   '/packages': PackageIcon,
+  '/about': InfoIcon,
+  '/contact': PhoneIcon,
   '/account': UserIcon,
   '/cart': ShoppingCartIcon,
   '/my-orders': ReceiptTextIcon,
   '/my-bookings': CalendarCheckIcon,
   '/my-treatment-plans': CalendarClockIcon,
+  '/my-history': HistoryIcon,
   '/my-packages': WalletCardsIcon,
   '/my-reviews': StarIcon,
   '/ai-assistant': BotIcon,
@@ -75,7 +81,8 @@ export const navigation: Record<Workspace, readonly NavigationItem[]> = {
   // The account menu lists my pages. The cart is reached from the header; checkout and the payment result need an
   // order or a cart in the URL, so they are reached from the cart.
   customer: links(routes.customer).filter(
-    ({ path }) => !['/cart', '/checkout', '/payment/result'].includes(path),
+    ({ path }) =>
+      !['/cart', '/checkout', '/payment/result', '/booking/new', '/booking/success'].includes(path),
   ),
   staff: links(routes.staff),
   owner: links(routes.owner),

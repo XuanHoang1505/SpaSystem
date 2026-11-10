@@ -2,6 +2,7 @@ import { BotIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { navigation } from '@/config/navigation';
+import { siteContact } from '@/features/services/catalogPolicies';
 import { initialOf } from '@/features/auth/components/AccountMenu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -45,7 +46,6 @@ export function AccountSideNav() {
             <NavLink
               key={path}
               to={path}
-              end
               className={({ isActive }) =>
                 cn(
                   'flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors',
@@ -74,6 +74,7 @@ export function AccountSideNav() {
         <Button asChild variant="outline" className="w-full">
           <Link to="/ai-assistant">Hỏi trợ lý</Link>
         </Button>
+        <p className="text-center text-xs text-muted-foreground">{`Hotline: ${siteContact.hotline}`}</p>
       </div>
     </aside>
   );

@@ -10,7 +10,16 @@ import { StaffLayout } from '@components/layout/StaffLayout/StaffLayout';
 import { OwnerLayout } from '@components/layout/OwnerLayout/OwnerLayout';
 import { CartPage } from '@/pages/customer/CartPage';
 import { CheckoutPage } from '@/pages/customer/CheckoutPage';
+import { BookingPage } from '@/pages/customer/BookingPage';
+import { BookingSuccessPage } from '@/pages/customer/BookingSuccessPage';
+import { MyAppointmentDetailPage } from '@/pages/customer/MyAppointmentDetailPage';
+import { MyAppointmentsPage } from '@/pages/customer/MyAppointmentsPage';
 import { MyOrdersPage } from '@/pages/customer/MyOrdersPage';
+import { MyPackageDetailPage } from '@/pages/customer/MyPackageDetailPage';
+import { MyPackagesPage } from '@/pages/customer/MyPackagesPage';
+import { MyServiceHistoryPage } from '@/pages/customer/MyServiceHistoryPage';
+import { MyTreatmentPlanDetailPage } from '@/pages/customer/MyTreatmentPlanDetailPage';
+import { MyTreatmentPlansPage } from '@/pages/customer/MyTreatmentPlansPage';
 import { PaymentResultPage } from '@/pages/customer/PaymentResultPage';
 import { HomePage } from '@/pages/public/HomePage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
@@ -38,9 +47,18 @@ const publicPages: Record<string, ReactElement> = {
 /** Customer pages that are built; the other customer routes still show the placeholder. */
 const customerPages: Record<string, ReactElement> = {
   '/cart': <CartPage />,
+  '/booking/new': <BookingPage />,
+  '/booking/success': <BookingSuccessPage />,
   '/checkout': <CheckoutPage />,
   '/payment/result': <PaymentResultPage />,
+  '/my-bookings': <MyAppointmentsPage />,
+  '/my-bookings/:bookingId': <MyAppointmentDetailPage />,
   '/my-orders': <MyOrdersPage />,
+  '/my-treatment-plans': <MyTreatmentPlansPage />,
+  '/my-treatment-plans/:id': <MyTreatmentPlanDetailPage />,
+  '/my-history': <MyServiceHistoryPage />,
+  '/my-packages': <MyPackagesPage />,
+  '/my-packages/:packageId': <MyPackageDetailPage />,
 };
 
 /** Login, register, forgot-password: own split layout without the site header/footer, guests only. */
@@ -51,7 +69,7 @@ const guestPages: Record<string, ReactElement> = {
 };
 
 /** The cart sits in the customer shell without the account menu; the checkout steps use the focused shell. */
-const standalonePaths = new Set(['/cart']);
+const standalonePaths = new Set(['/cart', '/booking/new', '/booking/success']);
 const focusedPaths = new Set(['/checkout', '/payment/result']);
 
 /** Customer routes in three shells: my pages (header + account menu), the cart (header), the checkout (focused). */

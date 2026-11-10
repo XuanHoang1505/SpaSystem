@@ -26,6 +26,7 @@ import { CatalogBreadcrumb } from './CatalogBreadcrumb';
 import { CatalogDetailStates } from './CatalogDetailStates';
 import { CatalogFaq } from './CatalogFaq';
 import { CatalogTrustStrip } from './CatalogTrustStrip';
+import { BookServiceButton } from '@/features/bookings/components/BookServiceButton';
 import { AddToCartButton } from '@/features/orders';
 import { ComingSoonButton } from './ComingSoonButton';
 import { RelatedServices } from './RelatedServices';
@@ -112,10 +113,10 @@ export function ServiceDetailView({
                   </p>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <ComingSoonButton feature="Đặt lịch trực tuyến" size="lg">
+                  <BookServiceButton serviceId={service.id} size="lg">
                     <CalendarPlusIcon aria-hidden="true" />
                     Đặt lịch ngay
-                  </ComingSoonButton>
+                  </BookServiceButton>
                   <ComingSoonButton
                     feature="Trợ lý tư vấn"
                     size="lg"
