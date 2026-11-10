@@ -15,10 +15,15 @@ export type BookingErrorKind =
   | 'status_invalid'
   | 'not_found'
   | 'validation'
+  | 'staff_unavailable'
+  | 'no_show_too_early'
   | 'network'
   | 'other';
 
 const kinds: Record<string, BookingErrorKind> = {
+  [codes.staffBusy]: 'staff_unavailable',
+  [codes.staffNotOnShift]: 'staff_unavailable',
+  [codes.noShowTooEarly]: 'no_show_too_early',
   [codes.slotUnavailable]: 'slot_taken',
   [codes.customerBusy]: 'slot_taken',
   [codes.outsideWorkSchedule]: 'slot_taken',
