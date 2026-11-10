@@ -15,7 +15,7 @@ export function OrdersBreadcrumb({ trail }: { trail: readonly { label: string; t
     <Breadcrumb aria-label="Vị trí trang" className="pb-2">
       <BreadcrumbList>
         {trail.map((step, index) => (
-          <Fragment key={step.label}>
+          <Fragment key={`${step.label}-${index}`}>
             {index > 0 && <BreadcrumbSeparator />}
             <BreadcrumbItem>
               {step.to && index < trail.length - 1 ? (

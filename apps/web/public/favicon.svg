@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="petal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f78ab8"/>
+      <stop offset="100%" stop-color="#e83f87"/>
+    </linearGradient>
+    <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f9a6ca"/>
+      <stop offset="100%" stop-color="#e84b91"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="#fff8fb"/>
+  <!-- Crescent moon -->
+  <path d="M44 7a25 25 0 0 1-25 42A25 25 0 0 0 44 7Z" fill="url(#moon)"/>
+  <!-- Lotus petals -->
+  <path d="M32 48C20 37 23 23 32 13C41 23 44 37 32 48Z" fill="url(#petal)"/>
+  <path d="M30 47C15 45 8 34 9 22C21 26 29 35 30 47Z" fill="url(#petal)"/>
+  <path d="M34 47C49 45 56 34 55 22C43 26 35 35 34 47Z" fill="url(#petal)"/>
+  <path d="M31 49C19 52 12 47 8 40C18 39 26 42 31 49Z" fill="#ed6aa2"/>
+  <path d="M33 49C45 52 52 47 56 40C46 39 38 42 33 49Z" fill="#ed6aa2"/>
+  <path d="M32 49V55" stroke="#8d294f" stroke-width="2" stroke-linecap="round"/>
+</svg>

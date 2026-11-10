@@ -6,4 +6,6 @@ export { PackageTimeline } from './components/PackageTimeline';
 export { RelatedPackages } from './components/RelatedPackages';
 export { PackagesWithService } from './components/PackagesWithService';
 export { PackageUsageSteps } from './components/PackageUsageSteps';
+export { ServicePackageCard } from './components/ServicePackageCard';
+export { PackageTrustStrip } from './components/PackageTrustStrip';
 export { minCourseDays, savingPercent } from './coursePlan';

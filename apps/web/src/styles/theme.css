@@ -14,12 +14,12 @@
   --popover-foreground: #342e30;
 
   /* ── Thương hiệu ─────────────────────────────── */
-  --primary: #92596b;
+  --primary: #884d5f;
   --primary-foreground: #ffffff;
   --secondary: #dde6da;
   --secondary-foreground: #2f3d31;
   --muted: #f1ebe5;
-  --muted-foreground: #72666a;
+  --muted-foreground: #5c5256;
   --accent: #f5e8eb;
   --accent-foreground: #6e3f50;
   --destructive: #a23846;
@@ -28,7 +28,7 @@
   /* ── Viền, input, focus ──────────────────────── */
   --border: #e5dadb;
   --input: #ddd0d2;
-  --ring: #92596b;
+  --ring: #884d5f;
   --radius: 0.75rem;
 
   /* ── Trạng thái (StatusBadge, thông báo) ─────── */
@@ -44,7 +44,7 @@
   --status-neutral-foreground: #5f5559;
 
   /* ── Biểu đồ (báo cáo doanh thu) ─────────────── */
-  --chart-1: #92596b;
+  --chart-1: #884d5f;
   --chart-2: #6f8f77;
   --chart-3: #c39a5b;
   --chart-4: #5f7d99;
@@ -53,12 +53,12 @@
   /* ── Sidebar khu vực staff/owner/customer ────── */
   --sidebar: #fffdf9;
   --sidebar-foreground: #342e30;
-  --sidebar-primary: #92596b;
+  --sidebar-primary: #884d5f;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f5e8eb;
   --sidebar-accent-foreground: #6e3f50;
   --sidebar-border: #e5dadb;
-  --sidebar-ring: #92596b;
+  --sidebar-ring: #884d5f;
 }
 
 .dark {

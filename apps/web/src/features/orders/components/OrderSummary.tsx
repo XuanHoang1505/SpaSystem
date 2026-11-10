@@ -22,29 +22,33 @@ export interface SummaryLine {
 /** "Dịch vụ & sản phẩm đã chọn": the lines of a preview or an order (layout of the Stitch checkout). */
 export function OrderLines({ lines }: { lines: readonly SummaryLine[] }) {
   return (
-    <Card>
-      <CardContent className="space-y-4">
+    <Card className="rounded-2xl border bg-card/80 shadow-2xs">
+      <CardContent className="space-y-4 p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3 border-b pb-4">
-          <h2 className="flex items-center gap-2 text-xl">
+          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold text-foreground">
             <PackageCheckIcon className="size-5 text-primary" aria-hidden="true" />
-            Dịch vụ &amp; sản phẩm đã chọn
+            1. Dịch vụ &amp; sản phẩm đã chọn
           </h2>
-          <Badge variant="secondary">{lines.length} mục</Badge>
+          <Badge variant="secondary" className="font-semibold text-primary">
+            {lines.length} mục
+          </Badge>
         </div>
-        <ul className="divide-y">
+        <ul className="divide-y divide-border/60">
           {lines.map((line) => (
-            <li key={line.key} className="flex items-start justify-between gap-4 py-3">
-              <div className="min-w-0 space-y-1">
-                <p className="font-heading text-lg">{line.name}</p>
-                <Badge variant="secondary">{line.type === 'package' ? 'Gói' : 'Dịch vụ'}</Badge>
+            <li key={line.key} className="flex items-start justify-between gap-4 py-3.5">
+              <div className="min-w-0 space-y-1.5">
+                <p className="font-heading text-lg font-semibold text-foreground">{line.name}</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs font-medium">
+                    {line.type === 'package' ? 'Gói liệu trình' : 'Dịch vụ lẻ'}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">Kèm quyền lợi bảo lưu</span>
+                </div>
               </div>
               <div className="shrink-0 text-right">
-                <p className="font-heading font-semibold">{formatCurrency(line.lineTotal)}</p>
-                {line.discountAmount > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {formatCurrency(line.unitPrice)} − {formatCurrency(line.discountAmount)}
-                  </p>
-                )}
+                <p className="font-heading text-lg font-bold text-primary">
+                  {formatCurrency(line.unitPrice)}
+                </p>
               </div>
             </li>
           ))}
@@ -192,18 +196,18 @@ function PaymentMethodOption({ method }: { method: PaymentMethod }) {
 /** "Phương thức thanh toán" (UC-SPA-11): VNPay is the only method that works today. */
 export function PaymentMethodCard() {
   return (
-    <Card>
-      <CardContent className="space-y-3">
-        <div className="space-y-1">
-          <h2 id="payment-methods" className="flex items-center gap-2 text-xl">
+    <Card className="rounded-2xl border bg-card/80 shadow-2xs">
+      <CardContent className="space-y-4 p-5 sm:p-6">
+        <div className="space-y-1 border-b pb-3.5">
+          <h2 id="payment-methods" className="flex items-center gap-2 font-heading text-lg font-semibold text-foreground">
             <CreditCardIcon className="size-5 text-primary" aria-hidden="true" />
-            Phương thức thanh toán
+            3. Phương thức thanh toán
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Hiện chỉ thanh toán được qua VNPay. Các phương thức khác sẽ được bổ sung sau.
+          <p className="text-xs text-muted-foreground">
+            Chọn phương thức thanh toán phù hợp. Giao dịch được mã hóa và bảo mật an toàn 100%.
           </p>
         </div>
-        <div role="radiogroup" aria-labelledby="payment-methods" className="space-y-2">
+        <div role="radiogroup" aria-labelledby="payment-methods" className="space-y-3">
           {paymentMethods.map((method) => (
             <PaymentMethodOption key={method.id} method={method} />
           ))}
@@ -213,12 +217,12 @@ export function PaymentMethodCard() {
   );
 }
 
-/** Green box at the top of the summary: how long the order is held. */
+/** Warm ambient box at the top of the summary: how long the order is held. */
 export function HoldNotice({ children }: { children: ReactNode }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl bg-status-success p-3 text-sm text-status-success-foreground">
-      <HourglassIcon className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-      <div>{children}</div>
+    <div className="flex items-start gap-3 rounded-2xl border border-amber-200/90 bg-amber-50/90 p-3.5 text-xs font-medium text-amber-950 shadow-2xs">
+      <HourglassIcon className="mt-0.5 size-4.5 shrink-0 text-amber-600 animate-pulse" aria-hidden="true" />
+      <div className="leading-relaxed">{children}</div>
     </div>
   );
 }

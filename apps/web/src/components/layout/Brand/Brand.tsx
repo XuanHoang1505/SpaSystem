@@ -1,27 +1,34 @@
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/images/logo.png';
 
-export function Brand({ className, compact = false }: { className?: string; compact?: boolean }) {
+export function Brand({
+  className,
+  imgClassName,
+  compact = false,
+}: {
+  className?: string;
+  imgClassName?: string;
+  compact?: boolean;
+}) {
   return (
     <Link
       to="/"
-      className={cn('flex items-center gap-3 rounded-md', className)}
+      className={cn(
+        'group flex items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+        className,
+      )}
       aria-label="Như Nguyệt Spa, về trang chủ"
     >
-      <span
-        className="grid size-10 shrink-0 place-items-center rounded-full border border-primary font-heading text-lg text-primary"
-        aria-hidden="true"
-      >
-        N
-      </span>
-      {!compact && (
-        <span className="flex flex-col leading-none">
-          <span className="font-heading text-xl">Như Nguyệt</span>
-          <span className="mt-1 text-[10px] tracking-[0.2em] text-muted-foreground">
-            SPA & CHĂM SÓC DA
-          </span>
-        </span>
-      )}
+      <img
+        src={logo}
+        alt="Như Nguyệt Spa"
+        className={cn(
+          'h-14 w-auto max-w-[190px] shrink-0 object-contain transition-transform duration-300 group-hover:scale-105 sm:h-[80px] sm:max-w-[270px]',
+          compact ? 'h-8 max-w-[80px] sm:h-8' : '',
+          imgClassName,
+        )}
+      />
     </Link>
   );
 }

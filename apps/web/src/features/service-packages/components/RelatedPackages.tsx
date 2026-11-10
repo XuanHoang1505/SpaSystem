@@ -1,6 +1,5 @@
-import { PackageIcon } from 'lucide-react';
-import { CatalogCard } from '@/features/services';
 import { usePackageSearch } from '../hooks/usePackageSearch';
+import { ServicePackageCard } from './ServicePackageCard';
 
 const LIMIT = 3;
 
@@ -18,23 +17,14 @@ export function RelatedPackages({ excludeId }: { excludeId: string }) {
     <section aria-labelledby="related-packages" className="space-y-5">
       <div>
         <p className="text-xs font-semibold tracking-[0.2em] text-primary uppercase">Gợi ý</p>
-        <h2 id="related-packages" className="text-2xl sm:text-3xl">
+        <h2 id="related-packages" className="font-heading text-2xl font-semibold sm:text-3xl">
           Gói liệu trình khác
         </h2>
       </div>
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
           <li key={item.id}>
-            <CatalogCard
-              to={`/packages/${item.id}`}
-              name={item.name}
-              description={item.shortDescription}
-              imageUrl={item.imageUrl}
-              fallbackIcon={PackageIcon}
-              status={item.status}
-              meta={`${item.totalSessions} buổi · Dùng trong ${item.validityDays} ngày`}
-              price={item.price}
-            />
+            <ServicePackageCard pkg={item} />
           </li>
         ))}
       </ul>

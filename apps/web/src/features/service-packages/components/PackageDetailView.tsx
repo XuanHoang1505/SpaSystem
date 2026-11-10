@@ -6,13 +6,12 @@ import {
   CreditCardIcon,
   FlowerIcon,
   PackageIcon,
+  SparklesIcon,
 } from 'lucide-react';
 import type { PackageDetail } from '@spa/shared-types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { DecorativeShapes } from '@/components/shared/DecorativeShapes/DecorativeShapes';
 import { ImageWithFallback } from '@/components/shared/ImageWithFallback/ImageWithFallback';
-import { InfoTile } from '@/components/shared/InfoTile/InfoTile';
 import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge';
 import {
   CatalogBreadcrumb,
@@ -78,62 +77,99 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
 
           <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-10">
             <div className="space-y-8">
-              <div className="relative">
-                <DecorativeShapes />
+              <div className="group relative overflow-hidden rounded-3xl border bg-muted/30 shadow-xs">
                 <ImageWithFallback
                   src={pkg.imageUrl}
                   alt={pkg.name}
                   fallbackIcon={PackageIcon}
-                  className="relative aspect-[16/9] w-full rounded-2xl border"
+                  className="aspect-[16/9] w-full object-cover transition-transform duration-500 group-hover:scale-102"
                 />
+                {saving > 0 && (
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-primary/95 px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-md backdrop-blur">
+                    <SparklesIcon className="size-3.5" aria-hidden="true" />
+                    <span>{`Tiết kiệm ${saving}% so với mua lẻ`}</span>
+                  </div>
+                )}
               </div>
+
               <div className="space-y-4">
                 {pkg.status === 'discontinued' && (
                   <StatusBadge {...catalogStatusBadge.discontinued} status={pkg.status} />
                 )}
-                <h1 className="text-3xl tracking-tight sm:text-4xl">{pkg.name}</h1>
+                <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                  {pkg.name}
+                </h1>
                 {pkg.shortDescription && (
-                  <p className="text-lg text-muted-foreground">{pkg.shortDescription}</p>
+                  <p className="text-base text-muted-foreground sm:text-lg leading-relaxed">
+                    {pkg.shortDescription}
+                  </p>
                 )}
-                <div className="grid grid-cols-3 gap-3">
-                  <InfoTile
-                    layout="stacked"
-                    tone="accent"
-                    icon={CalendarCheckIcon}
-                    label="Tổng số buổi"
-                    value={pkg.totalSessions}
-                  />
-                  <InfoTile
-                    layout="stacked"
-                    tone="secondary"
-                    icon={ClockIcon}
-                    label="Thời hạn sử dụng"
-                    value={`${pkg.validityDays} ngày`}
-                  />
-                  <InfoTile
-                    layout="stacked"
-                    tone="success"
-                    icon={FlowerIcon}
-                    label="Số dịch vụ"
-                    value={pkg.items.length}
-                  />
+
+                {/* Unified 3-column stats band */}
+                <div className="grid grid-cols-3 divide-x rounded-2xl border bg-card p-4 shadow-2xs">
+                  <div className="flex flex-col items-center justify-center p-2 text-center">
+                    <span className="mb-1.5 grid size-9 place-items-center rounded-full bg-primary/10 text-primary">
+                      <CalendarCheckIcon className="size-4.5" aria-hidden="true" />
+                    </span>
+                    <span className="font-heading text-2xl font-bold text-foreground">
+                      {pkg.totalSessions}
+                    </span>
+                    <span className="text-xs text-muted-foreground">Tổng số buổi</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-2 text-center">
+                    <span className="mb-1.5 grid size-9 place-items-center rounded-full bg-secondary text-secondary-foreground">
+                      <ClockIcon className="size-4.5 text-primary" aria-hidden="true" />
+                    </span>
+                    <span className="font-heading text-2xl font-bold text-foreground">
+                      {pkg.validityDays}
+                    </span>
+                    <span className="text-xs text-muted-foreground">Ngày sử dụng</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-2 text-center">
+                    <span className="mb-1.5 grid size-9 place-items-center rounded-full bg-accent text-accent-foreground">
+                      <FlowerIcon className="size-4.5 text-primary" aria-hidden="true" />
+                    </span>
+                    <span className="font-heading text-2xl font-bold text-foreground">
+                      {pkg.items.length}
+                    </span>
+                    <span className="text-xs text-muted-foreground">Dịch vụ phối hợp</span>
+                  </div>
                 </div>
               </div>
 
-              <Card>
-                <CardContent className="space-y-3">
-                  <h2 className="text-2xl">Giới thiệu</h2>
-                  <p className="whitespace-pre-line text-muted-foreground">
+              <Card className="rounded-2xl border bg-card/60">
+                <CardContent className="space-y-4 p-6 sm:p-7">
+                  <h2 className="font-heading text-xl font-semibold text-foreground">
+                    Giới thiệu &amp; Hiệu quả liệu trình
+                  </h2>
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground sm:text-base">
                     {pkg.description ?? 'Chưa có mô tả cho gói này.'}
                   </p>
+                  <div className="grid gap-3 pt-3 sm:grid-cols-2 border-t">
+                    <div className="flex items-start gap-2.5 text-xs text-muted-foreground">
+                      <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                      <span>Phác đồ chuyên sâu được cá nhân hóa theo từng tình trạng da</span>
+                    </div>
+                    <div className="flex items-start gap-2.5 text-xs text-muted-foreground">
+                      <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                      <span>Sử dụng 100% dòng dược mỹ phẩm chuẩn y khoa an toàn và lành tính</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="space-y-5">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h2 className="text-2xl">Trình tự liệu trình</h2>
-                    <span className="text-xs font-medium text-muted-foreground">
+              <Card className="rounded-2xl border bg-card/60">
+                <CardContent className="space-y-6 p-6 sm:p-7">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2 border-b pb-4">
+                    <div>
+                      <h2 className="font-heading text-xl font-semibold text-foreground">
+                        Trình tự liệu trình chi tiết
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        Thực hiện tuần tự các bước để tối ưu hóa hiệu quả nuôi dưỡng da
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold text-secondary-foreground">
                       {pkg.totalSessions} buổi · {pkg.items.length} dịch vụ
                     </span>
                   </div>
@@ -144,68 +180,86 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
               <PackageUsageSteps />
             </div>
 
-            <aside aria-label="Giá và đăng ký gói" className="lg:sticky lg:top-24">
-              <div className="space-y-5 rounded-xl border bg-card p-6 shadow-sm">
-                <div>
-                  <p className="text-sm text-muted-foreground">
+            <aside aria-label="Giá và đăng ký gói" className="lg:sticky lg:top-28">
+              <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                <div className="border-b bg-muted/40 p-5 sm:p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Chi phí trọn gói {pkg.totalSessions} buổi
                   </p>
                   {saving > 0 && (
-                    <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                      <span className="line-through">{formatCurrency(pkg.retailPrice)}</span>
-                      <Badge variant="secondary">{`Tiết kiệm ${saving}%`}</Badge>
-                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <span className="text-sm text-muted-foreground line-through">
+                        {formatCurrency(pkg.retailPrice)}
+                      </span>
+                      <Badge variant="secondary" className="font-semibold text-primary">
+                        {`Tiết kiệm ${saving}%`}
+                      </Badge>
+                    </div>
                   )}
-                  <p className="font-heading text-4xl font-semibold text-primary">
+                  <p className="font-heading text-3xl sm:text-4xl font-bold text-primary mt-1">
                     {formatCurrency(pkg.price)}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {`~${formatCurrency(pricePerSession(pkg.price, pkg.totalSessions))}/buổi`}
-                  </p>
+                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-3 py-1 text-xs font-semibold text-secondary-foreground">
+                    <SparklesIcon className="size-3 text-primary" aria-hidden="true" />
+                    <span>{`Chỉ ~${formatCurrency(pricePerSession(pkg.price, pkg.totalSessions))}/buổi`}</span>
+                  </div>
                   {saleText && (
-                    <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                      <CalendarIcon className="size-4" aria-hidden="true" />
+                    <p className="mt-2.5 flex items-center gap-2 text-xs text-muted-foreground">
+                      <CalendarIcon className="size-3.5 text-primary" aria-hidden="true" />
                       {saleText}
                     </p>
                   )}
                 </div>
-                <div className="rounded-lg border bg-muted/60 p-4 text-sm">
-                  <p className="flex items-center gap-2 font-medium">
-                    <ClockIcon className="size-4 text-primary" aria-hidden="true" />
-                    Thời hạn sử dụng gói
-                  </p>
-                  <p className="mt-1 text-muted-foreground">
-                    Dùng trong {pkg.validityDays} ngày kể từ ngày thanh toán.
-                  </p>
-                  {finish && (
-                    <p className="mt-1 text-muted-foreground">{`Hoàn thành sớm nhất sau ${finish}`}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold">Đặc quyền kèm gói</p>
-                  <ul className="space-y-2">
-                    {placeholderPackagePerks.map((perk) => (
-                      <li
-                        key={perk}
-                        className="flex items-start gap-2 text-sm text-muted-foreground"
-                      >
-                        <CheckCircle2Icon
-                          className="mt-0.5 size-4 shrink-0 text-primary"
-                          aria-hidden="true"
-                        />
-                        {perk}
+
+                <div className="space-y-5 p-5 sm:p-6">
+                  <div className="space-y-2.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Thời hạn sử dụng gói
+                    </p>
+                    <ul className="space-y-2">
+                      <li className="flex items-start gap-2.5 text-xs text-muted-foreground">
+                        <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                        <span>Dùng trong {pkg.validityDays} ngày kể từ ngày kích hoạt thanh toán</span>
                       </li>
-                    ))}
-                  </ul>
+                      {finish && (
+                        <li className="flex items-start gap-2.5 text-xs text-muted-foreground">
+                          <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                          <span>{`Hoàn thành sớm nhất sau ${finish}`}</span>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Đặc quyền kèm gói
+                    </p>
+                    <ul className="space-y-2">
+                      {placeholderPackagePerks.map((perk) => (
+                        <li key={perk} className="flex items-start gap-2.5 text-xs text-muted-foreground">
+                          <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                          <span>{perk}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="grid gap-2.5 pt-2">
+                    <BuyNowButton packageId={pkg.id} />
+                    <AddToCartButton product={{ type: 'package', id: pkg.id }} />
+                  </div>
+
+                  <div className="space-y-2 border-t pt-4 text-[11px] text-muted-foreground">
+                    <p className="flex items-center gap-2">
+                      <CreditCardIcon className="size-3.5 text-primary" aria-hidden="true" />
+                      Thanh toán an toàn qua cổng VNPay
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <CalendarCheckIcon className="size-3.5 text-primary" aria-hidden="true" />
+                      Hỗ trợ đổi lịch hẹn miễn phí trước 24 giờ
+                    </p>
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <BuyNowButton packageId={pkg.id} />
-                  <AddToCartButton product={{ type: 'package', id: pkg.id }} />
-                </div>
-                <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CreditCardIcon className="size-4" aria-hidden="true" />
-                  Thanh toán trực tuyến qua VNPay
-                </p>
               </div>
             </aside>
           </div>

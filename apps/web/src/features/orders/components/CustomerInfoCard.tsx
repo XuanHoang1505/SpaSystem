@@ -1,31 +1,36 @@
-import { UserIcon } from 'lucide-react';
+import { CheckCircle2Icon, MailIcon, ShieldCheckIcon, UserIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/stores/authStore';
 
-/** "Thông tin khách hàng": who the purchase is saved to (read from the session; the order takes no extra fields). */
+/** "Thông tin khách hàng": who the purchase is saved to. */
 export function CustomerInfoCard() {
   const user = useAuthStore((state) => state.user);
   if (!user) return null;
+  const initial = user.fullName ? user.fullName.trim().charAt(0).toUpperCase() : 'U';
+
   return (
-    <Card>
-      <CardContent className="space-y-3">
-        <h2 className="flex items-center gap-2 text-xl">
-          <UserIcon className="size-5 text-primary" aria-hidden="true" />
-          Thông tin khách hàng
-        </h2>
-        <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <div className="rounded-lg border bg-muted/40 p-3">
-            <dt className="text-xs text-muted-foreground">Họ và tên</dt>
-            <dd className="font-medium">{user.fullName}</dd>
+    <Card className="rounded-2xl border bg-card/80 shadow-2xs">
+      <CardContent className="space-y-4 p-5 sm:p-6">
+        <div className="flex items-center justify-between gap-2 border-b pb-3.5">
+          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold text-foreground">
+            <UserIcon className="size-5 text-primary" aria-hidden="true" />
+            2. Thông tin khách hàng
+          </h2>
+        </div>
+
+        <div className="flex items-center gap-4 rounded-xl border bg-muted/30 p-4">
+          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary/10 font-heading text-lg font-bold text-primary ring-2 ring-primary/20">
+            {initial}
+          </span>
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="font-heading text-base font-semibold text-foreground">{user.fullName}</p>
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground break-all">
+              <MailIcon className="size-3.5 shrink-0" aria-hidden="true" />
+              <span>{user.email}</span>
+            </p>
           </div>
-          <div className="rounded-lg border bg-muted/40 p-3">
-            <dt className="text-xs text-muted-foreground">Email</dt>
-            <dd className="font-medium break-all">{user.email}</dd>
-          </div>
-        </dl>
-        <p className="text-xs text-muted-foreground">
-          Dịch vụ và gói bạn mua được lưu vào tài khoản này để đặt lịch hẹn sau.
-        </p>
+        </div>
       </CardContent>
     </Card>
   );
