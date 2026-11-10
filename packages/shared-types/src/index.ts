@@ -52,3 +52,4 @@ export * from './purchases';
 export * from './treatments';
 export * from './users';
 export * from './aiAssistant';
+export * from './workSchedules';

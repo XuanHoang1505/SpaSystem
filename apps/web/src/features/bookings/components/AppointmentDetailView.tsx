@@ -1,6 +1,8 @@
 import {
+  CalendarClockIcon,
   CalendarDaysIcon,
   CalendarOffIcon,
+  CalendarX2Icon,
   ClockIcon,
   FileTextIcon,
   MapPinIcon,
@@ -229,12 +231,22 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
               {changeable && (
                 <div className="flex flex-wrap gap-2.5 pt-2">
                   {appointment.canReschedule && (
-                    <Button variant="outline" onClick={() => setRescheduling(true)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setRescheduling(true)}
+                      className="gap-1.5"
+                    >
+                      <CalendarClockIcon className="size-4 shrink-0" aria-hidden="true" />
                       Đổi giờ hẹn
                     </Button>
                   )}
                   {appointment.canCancel && (
-                    <Button variant="outline" onClick={() => setCancelling(true)}>
+                    <Button
+                      variant="outline"
+                      className="gap-1.5 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setCancelling(true)}
+                    >
+                      <CalendarX2Icon className="size-4 shrink-0" aria-hidden="true" />
                       Hủy lịch
                     </Button>
                   )}

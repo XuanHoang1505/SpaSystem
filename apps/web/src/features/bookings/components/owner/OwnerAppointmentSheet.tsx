@@ -20,6 +20,7 @@ import { durationMinutes, formatLongDate } from '@/lib/formatting/vietnamTime';
 import {
   allergySeverityBadge,
   appointmentStatusBadge,
+  ownerActionIcons,
   ownerActionLabels,
   ownerAppointmentActions,
   type OwnerAppointmentAction,
@@ -214,26 +215,30 @@ export function OwnerAppointmentSheet({
               if (actions.length === 0) return null;
               return (
                 <SheetFooter className="mt-4 flex flex-col gap-2 p-0 sm:flex-col">
-                  {actions.map((action) => (
-                    <Button
-                      key={action}
-                      variant={
-                        action === 'confirm'
-                          ? 'default'
-                          : action === 'cancel'
-                            ? 'outline'
-                            : 'outline'
-                      }
-                      className={
-                        action === 'cancel'
-                          ? 'border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive'
-                          : undefined
-                      }
-                      onClick={() => onAction(action, detail)}
-                    >
-                      {ownerActionLabels[action]}
-                    </Button>
-                  ))}
+                  {actions.map((action) => {
+                    const Icon = ownerActionIcons[action];
+                    return (
+                      <Button
+                        key={action}
+                        variant={
+                          action === 'confirm'
+                            ? 'default'
+                            : action === 'cancel'
+                              ? 'outline'
+                              : 'outline'
+                        }
+                        className={
+                          action === 'cancel'
+                            ? 'gap-2 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive'
+                            : 'gap-2'
+                        }
+                        onClick={() => onAction(action, detail)}
+                      >
+                        {Icon && <Icon className="size-4 shrink-0" aria-hidden="true" />}
+                        {ownerActionLabels[action]}
+                      </Button>
+                    );
+                  })}
                 </SheetFooter>
               );
             })()}
