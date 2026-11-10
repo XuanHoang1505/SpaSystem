@@ -208,3 +208,7 @@ export * from './catalog';
 export * from './availability';
 export * from './staff';
 export * from './orders';
+export * from './appointments';
+export * from './purchases';
+export * from './treatments';
+export * from './serviceHistory';

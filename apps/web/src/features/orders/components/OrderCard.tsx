@@ -113,43 +113,43 @@ export function OrderCard({
       <div className="flex items-center gap-4 px-4 py-3.5">
         <span
           aria-hidden="true"
-          className={cn('grid size-10 shrink-0 place-items-center rounded-lg', style.tile)}
+          className={cn('grid size-10 shrink-0 place-items-center rounded-xl shadow-2xs', style.tile)}
         >
           <Icon className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
           <ul className="space-y-0.5">
             {order.productNames.map((name) => (
-              <li key={name} className="text-base leading-snug font-medium">
+              <li key={name} className="font-heading text-base leading-snug font-semibold text-foreground">
                 {name}
               </li>
             ))}
           </ul>
-          {more > 0 && <p className="text-sm text-muted-foreground">và {more} sản phẩm khác</p>}
+          {more > 0 && <p className="text-xs text-muted-foreground">và {more} sản phẩm khác</p>}
           {unpaid && (
-            <p className="mt-0.5 text-sm text-status-warning-foreground">
+            <p className="mt-0.5 text-xs font-medium text-status-warning-foreground">
               Hạn thanh toán: {formatDateTimeUtc(order.paymentDueAtUtc)}
             </p>
           )}
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-lg font-semibold text-primary">{formatCurrency(order.grandTotal)}</p>
+          <p className="font-heading text-xl font-bold text-primary">{formatCurrency(order.grandTotal)}</p>
           <p className="text-xs text-muted-foreground">{order.itemCount} sản phẩm</p>
         </div>
       </div>
-      <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t px-4 py-2.5">
-        <p className={cn('text-sm font-medium', style.note)}>{statusNotes[order.status]}</p>
+      <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t px-4 py-2.5 bg-muted/20">
+        <p className={cn('text-xs font-medium', style.note)}>{statusNotes[order.status]}</p>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => onView(order)}>
+          <Button variant="outline" size="sm" onClick={() => onView(order)} className="font-medium shadow-2xs">
             Xem chi tiết
           </Button>
           {order.canCancel && (
-            <Button variant="outline" size="sm" onClick={() => onCancel(order)}>
+            <Button variant="outline" size="sm" onClick={() => onCancel(order)} className="font-medium">
               Hủy đơn
             </Button>
           )}
           {order.isPayable && (
-            <Button asChild size="sm">
+            <Button asChild size="sm" className="font-medium shadow-xs">
               <Link to={checkoutPath({ orderId: order.id })}>
                 <ShieldCheckIcon aria-hidden="true" />
                 Thanh toán ngay (VNPay)

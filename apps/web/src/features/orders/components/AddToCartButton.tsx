@@ -7,14 +7,12 @@ import { useAddToCart } from '../hooks/useAddToCart';
 import { useCart } from '../hooks/useCart';
 import { useCustomerAction } from './useCustomerAction';
 
-/** "Thêm vào giỏ" (UC-SPA-10): one product per line; a product already in the cart turns the button into a link. */
 export function AddToCartButton({
   product,
   iconOnly = false,
   productName = '',
 }: {
   product: { type: 'service' | 'package'; id: string };
-  /** Compact icon button for cards; `productName` then names it for assistive technology. */
   iconOnly?: boolean;
   productName?: string;
 }) {

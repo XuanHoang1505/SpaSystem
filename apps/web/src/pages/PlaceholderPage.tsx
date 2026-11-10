@@ -13,13 +13,24 @@ import {
 } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
 import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
+import { OrdersBreadcrumb } from '@/features/orders';
 
 export function PlaceholderPage({ title }: { title: string }) {
+  const trail =
+    title === 'Tài khoản'
+      ? [{ label: 'Trang chủ', to: '/' }, { label: 'Tài khoản' }]
+      : [
+          { label: 'Trang chủ', to: '/' },
+          { label: 'Tài khoản', to: '/account' },
+          { label: title },
+        ];
+
   return (
-    <section>
+    <section className="rounded-2xl border bg-card p-5 sm:p-6 lg:p-8 space-y-6 shadow-xs">
+      <OrdersBreadcrumb trail={trail} />
       <PageHeader
-        eyebrow="Spa Như Nguyệt · Foundation"
         title={title}
+        className="border-b pb-5"
         actions={
           <Dialog>
             <DialogTrigger asChild>
@@ -41,15 +52,13 @@ export function PlaceholderPage({ title }: { title: string }) {
           </Dialog>
         }
       />
-      <Card>
-        <CardContent>
-          <EmptyState
-            icon={HammerIcon}
-            title="Tính năng đang được phát triển"
-            description="Đây là trang placeholder. Chưa có dữ liệu hoặc thao tác nghiệp vụ."
-          />
-        </CardContent>
-      </Card>
+      <div className="py-6">
+        <EmptyState
+          icon={HammerIcon}
+          title="Tính năng đang được phát triển"
+          description="Đây là trang placeholder. Chưa có dữ liệu hoặc thao tác nghiệp vụ."
+        />
+      </div>
     </section>
   );
 }

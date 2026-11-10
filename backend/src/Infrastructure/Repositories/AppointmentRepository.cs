@@ -265,7 +265,11 @@ public sealed class AppointmentRepository : Repository<Appointment>, IAppointmen
                     row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.PackageName),
             row.Appointment.OrderItem == null
                 ? null
-                : new MyAppointmentOrderDto(row.Appointment.OrderItem.OrderId, row.Appointment.OrderItem.Order.Code, row.Appointment.OrderItem.Order.Status)),
+                : new MyAppointmentOrderDto(row.Appointment.OrderItem.OrderId, row.Appointment.OrderItem.Order.Code, row.Appointment.OrderItem.Order.Status),
+            // The note is the customer's while the visit is ahead; after it, staff remarks are appended to it, so it stays hidden.
+            row.Appointment.Status == AppointmentStatus.Completed || row.Appointment.Status == AppointmentStatus.NoShow
+                ? null
+                : row.Appointment.Note),
             new AppointmentChangeFacts(
                 row.Appointment.Status, row.Appointment.Date, row.Appointment.StartTime,
                 row.Appointment.TreatmentSession == null ? null : row.Appointment.TreatmentSession.TreatmentPlan.Status,

@@ -108,6 +108,7 @@ public sealed class CustomerBookingService : ICustomerBookingService
                         EndTime = slot.End,
                         Status = AppointmentStatus.Held,
                         HoldExpiresAtUtc = placed.PaymentDueAtUtc.Add(grace),
+                        Note = CleanNote(request.Note),
                         CreatedAtUtc = _clock.UtcNow,
                     }, innerToken), token);
             }, cancellationToken);
@@ -163,6 +164,7 @@ public sealed class CustomerBookingService : ICustomerBookingService
                 StartTime = start,
                 EndTime = slot.End,
                 Status = AppointmentStatus.Confirmed,
+                Note = CleanNote(request.Note),
                 CreatedAtUtc = _clock.UtcNow,
             };
             // Read again after the customer lock: a concurrent booking of the same source has committed by now.
@@ -190,6 +192,9 @@ public sealed class CustomerBookingService : ICustomerBookingService
 
     public async Task<OperationResult<MyAppointmentDto>> GetAsync(Guid id, CancellationToken cancellationToken) =>
         OperationResult<MyAppointmentDto>.Success(await _reader.GetAsync(id, CustomerId, cancellationToken));
+
+    /// <summary>The note written at booking: trimmed, empty means none.</summary>
+    private static string? CleanNote(string? note) => string.IsNullOrWhiteSpace(note) ? null : note.Trim();
 
     private async Task<SessionBookingFacts> SessionFactsAsync(Guid sessionId, Guid customerId, CancellationToken cancellationToken) =>
         await _purchases.GetSessionFactsAsync(sessionId, customerId, cancellationToken) ?? throw BookingErrors.TreatmentSessionNotFound();

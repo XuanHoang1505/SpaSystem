@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
-import { PackageIcon } from 'lucide-react';
 import type { PackageSearchParams } from '@spa/shared-types';
 import { Button } from '@/components/ui/button';
 import { PriceRangeFilter } from '@/components/shared/PriceRangeFilter/PriceRangeFilter';
 import {
-  CatalogCard,
   CatalogGrid,
   CatalogPageHeader,
   CatalogSearchBox,
@@ -13,8 +11,9 @@ import {
   useCatalogListParams,
 } from '@/features/services';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { formatLocalDate } from '@/lib/formatting/formatters';
 import { usePackageSearch } from '../hooks/usePackageSearch';
+import { ServicePackageCard } from './ServicePackageCard';
+import { PackageTrustStrip } from './PackageTrustStrip';
 
 /** SCR-W04 — Tìm kiếm gói dịch vụ (UC-SPA-06). Gói không có danh mục (RS-14): `categoryId` không gửi lên. */
 export function PackageSearch() {
@@ -28,11 +27,12 @@ export function PackageSearch() {
   const packages = usePackageSearch(query);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <CatalogPageHeader
-        eyebrow="Gói dịch vụ"
-        title="Gói liệu trình"
-        description="Các gói nhiều buổi được sắp sẵn theo trình tự, dùng trong thời hạn của gói."
+        band
+        breadcrumb="Gói dịch vụ"
+        title="Gói liệu trình chăm sóc chuyên sâu"
+        description="Các gói dịch vụ nhiều buổi được thiết kế theo lộ trình chuẩn y khoa, giúp bạn tiết kiệm chi phí và duy trì hiệu quả làm đẹp bền vững."
       >
         <CatalogSearchBox
           key={params.search}
@@ -43,25 +43,17 @@ export function PackageSearch() {
         />
       </CatalogPageHeader>
 
+      <PackageTrustStrip />
+
       <CatalogGrid
         query={packages}
         getKey={(item) => item.id}
-        renderItem={(item) => (
-          <CatalogCard
-            to={`/packages/${item.id}`}
-            name={item.name}
-            description={item.shortDescription}
-            imageUrl={item.imageUrl}
-            fallbackIcon={PackageIcon}
-            status={item.status}
-            meta={`${item.totalSessions} buổi · Dùng trong ${item.validityDays} ngày`}
-            price={item.price}
-            footnote={
-              item.saleEndDate ? `Mở bán đến ${formatLocalDate(item.saleEndDate)}` : undefined
-            }
-          />
+        renderItem={(item) => <ServicePackageCard pkg={item} />}
+        resultLabel={(count) => (
+          <>
+            Hiển thị <span className="font-semibold text-primary">{count}</span> gói liệu trình
+          </>
         )}
-        resultLabel={(count) => `${count} gói dịch vụ`}
         emptyTitle="Chưa có gói nào"
         emptyFilteredTitle="Không tìm thấy gói phù hợp"
         hasFilters={params.hasFilters}

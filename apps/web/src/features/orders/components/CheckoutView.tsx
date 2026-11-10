@@ -35,13 +35,22 @@ export function CheckoutView({ search }: { search: URLSearchParams }) {
   useDocumentTitle('Thanh toán');
   const params = parseCheckoutParams(search);
   return (
-    <div className="space-y-2">
-      <OrdersBreadcrumb trail={[{ label: 'Giỏ hàng', to: '/cart' }, { label: 'Thanh toán' }]} />
-      <CheckoutSteps current={2} />
-      <PageHeader
-        title="Xác nhận & thanh toán đơn hàng"
-        description="Kiểm tra đơn hàng trước khi thanh toán."
+    <div className="space-y-4">
+      <OrdersBreadcrumb
+        trail={[
+          { label: 'Trang chủ', to: '/' },
+          { label: 'Giỏ hàng', to: '/cart' },
+          { label: 'Thanh toán' },
+        ]}
       />
+      <div className="space-y-4 pb-2">
+        <CheckoutSteps current={2} />
+        <PageHeader
+          className="pb-0"
+          title="Xác nhận &amp; thanh toán đơn hàng"
+          description="Kiểm tra thông tin chi tiết trước khi tiến hành thanh toán qua cổng VNPay."
+        />
+      </div>
       {!params.ok ? (
         <EmptyState
           title="Liên kết thanh toán không hợp lệ"
@@ -169,13 +178,15 @@ function PrepareCheckout({ baseRequest }: { baseRequest: OrderRequest }) {
         <CustomerInfoCard />
         <PaymentMethodCard />
       </div>
-      <Card className="lg:sticky lg:top-24">
-        <CardContent className="space-y-4">
+      <div className="overflow-hidden rounded-2xl border bg-card shadow-sm lg:sticky lg:top-28">
+        <div className="border-b bg-muted/40 p-5 sm:p-6">
+          <h2 className="font-heading text-xl font-semibold text-foreground">Tóm tắt đơn hàng</h2>
+        </div>
+        <div className="space-y-4 p-5 sm:p-6">
           <HoldNotice>
             Đơn được giữ {catalogPolicies.paymentTimeoutMinutes} phút kể từ khi bạn xác nhận để hoàn
             tất thanh toán.
           </HoldNotice>
-          <h2 className="text-xl">Tóm tắt đơn hàng</h2>
           <PromotionField
             applied={data.promotion}
             error={data.promotionError}
@@ -201,19 +212,19 @@ function PrepareCheckout({ baseRequest }: { baseRequest: OrderRequest }) {
           )}
           <Button
             size="lg"
-            className="h-auto min-h-11 w-full py-2 whitespace-normal"
+            className="h-auto min-h-12 w-full py-2.5 font-medium whitespace-normal shadow-xs group"
             disabled={tooSmall}
             loading={createOrder.isPending || startPayment.isPending}
             onClick={() => void confirm()}
           >
-            <ShieldCheckIcon aria-hidden="true" />
+            <ShieldCheckIcon className="size-5 transition-transform group-hover:scale-110" aria-hidden="true" />
             Thanh toán VNPay ({formatCurrency(data.grandTotal)})
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Bạn sẽ được chuyển sang cổng VNPay để hoàn tất thanh toán.
+            Bạn sẽ được chuyển hướng bảo mật sang cổng VNPay để hoàn tất thanh toán.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
       <div
         aria-hidden="true"
         className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur lg:hidden"

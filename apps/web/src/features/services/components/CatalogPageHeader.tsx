@@ -55,7 +55,7 @@ export function CatalogPageHeader({
       {eyebrow && (
         <p className="text-xs font-semibold tracking-[0.2em] text-primary uppercase">{eyebrow}</p>
       )}
-      <h1 className="text-3xl tracking-tight sm:text-4xl">{title}</h1>
+      <h1 className="font-heading text-3xl font-medium tracking-tight sm:text-4xl">{title}</h1>
       <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">{description}</p>
       {children && <div className={cn(band && 'max-w-xl')}>{children}</div>}
     </header>

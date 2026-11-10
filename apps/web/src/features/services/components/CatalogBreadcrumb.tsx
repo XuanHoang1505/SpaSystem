@@ -23,6 +23,12 @@ export function CatalogBreadcrumb({
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
+            <Link to="/">Trang chủ</Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
             <Link to={parentTo}>{parentLabel}</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
