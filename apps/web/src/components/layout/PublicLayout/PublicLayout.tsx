@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { useSettleLogout } from '@/features/auth/hooks/useSettleLogout';
 import { useThemeScope } from '@/stores/themeScopeStore';
+import { AiChatWidget } from '@/features/ai-assistant';
 import { Header } from '../Header/Header';
 import { Footer } from '../Footer/Footer';
 import { SkipLink } from '../SkipLink/SkipLink';
@@ -20,6 +21,7 @@ export function PublicLayout() {
         <Outlet />
       </main>
       <Footer />
+      <AiChatWidget />
     </div>
   );
 }

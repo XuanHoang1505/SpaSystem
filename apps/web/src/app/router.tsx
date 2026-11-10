@@ -4,10 +4,14 @@ import { routes } from './routes';
 import { AuthLayout } from '@components/layout/AuthLayout/AuthLayout';
 import { PublicLayout } from '@components/layout/PublicLayout/PublicLayout';
 import { AccountLayout } from '@components/layout/AccountLayout/AccountLayout';
+import { AccountSideNav } from '@components/layout/AccountLayout/AccountSideNav';
 import { CheckoutLayout } from '@components/layout/CheckoutLayout/CheckoutLayout';
 import { CustomerLayout } from '@components/layout/CustomerLayout/CustomerLayout';
 import { StaffLayout } from '@components/layout/StaffLayout/StaffLayout';
 import { OwnerLayout } from '@components/layout/OwnerLayout/OwnerLayout';
+import { AccountPage } from '@/pages/customer/AccountPage';
+import { AiAssistantPage } from '@/pages/customer/AiAssistantPage';
+import { AiAssistantPublicPage } from '@/pages/public/AiAssistantPublicPage';
 import { CartPage } from '@/pages/customer/CartPage';
 import { CheckoutPage } from '@/pages/customer/CheckoutPage';
 import { BookingPage } from '@/pages/customer/BookingPage';
@@ -34,6 +38,44 @@ import { RouteGuard } from './RouteGuard';
 import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
+import { useAuthStore } from '@/stores/authStore';
+
+function AccountRoute() {
+  const user = useAuthStore((state) => state.user);
+  if (user?.role === 'customer') {
+    return (
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <AccountSideNav />
+        <div className="min-w-0">
+          <AccountPage />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="container max-w-4xl py-6 mx-auto">
+      <AccountPage />
+    </div>
+  );
+}
+
+function AiAssistantRoute() {
+  const user = useAuthStore((state) => state.user);
+  if (user?.role === 'staff' || user?.role === 'owner') {
+    return <ForbiddenPage />;
+  }
+  if (user?.role === 'customer') {
+    return (
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <AccountSideNav />
+        <div className="min-w-0">
+          <AiAssistantPage />
+        </div>
+      </div>
+    );
+  }
+  return <AiAssistantPublicPage />;
+}
 
 /** Public pages that are built; the other public routes still show the placeholder. */
 const publicPages: Record<string, ReactElement> = {
@@ -42,10 +84,12 @@ const publicPages: Record<string, ReactElement> = {
   '/services/:serviceId': <ServiceDetailPage />,
   '/packages': <PackagesPage />,
   '/packages/:packageId': <PackageDetailPage />,
+  '/ai-assistant': <AiAssistantRoute />,
 };
 
 /** Customer pages that are built; the other customer routes still show the placeholder. */
 const customerPages: Record<string, ReactElement> = {
+  '/account': <AccountPage />,
   '/cart': <CartPage />,
   '/booking/new': <BookingPage />,
   '/booking/success': <BookingSuccessPage />,
@@ -59,6 +103,7 @@ const customerPages: Record<string, ReactElement> = {
   '/my-history': <MyServiceHistoryPage />,
   '/my-packages': <MyPackagesPage />,
   '/my-packages/:packageId': <MyPackageDetailPage />,
+  '/ai-assistant': <AiAssistantRoute />,
 };
 
 /** Login, register, forgot-password: own split layout without the site header/footer, guests only. */
@@ -91,7 +136,12 @@ function customerRouteObjects(): RouteObject[] {
         {
           element: <AccountLayout />,
           children: entries
-            .filter(([path]) => !standalonePaths.has(path) && !focusedPaths.has(path))
+            .filter(
+              ([path]) =>
+                !standalonePaths.has(path) &&
+                !focusedPaths.has(path) &&
+                path !== '/account',
+            )
             .map(page),
         },
       ],
@@ -108,6 +158,19 @@ function customerRouteObjects(): RouteObject[] {
 }
 
 export const routeObjects: RouteObject[] = [
+  {
+    element: (
+      <RouteGuard>
+        <PublicLayout />
+      </RouteGuard>
+    ),
+    children: [
+      {
+        path: '/account',
+        element: <AccountRoute />,
+      },
+    ],
+  },
   {
     element: <PublicLayout />,
     children: [
