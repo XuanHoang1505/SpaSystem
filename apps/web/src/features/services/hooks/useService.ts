@@ -4,8 +4,10 @@ import { callCatalog } from '@/lib/api/catalog';
 import { catalogRetry } from './catalogRetry';
 import { useCatalogQueryEnabled } from './useCatalogQueryEnabled';
 
-export function useService(id: string) {
-  const enabled = useCatalogQueryEnabled();
+/** `wanted` = false skips the request (a caller that only sometimes needs the service). */
+export function useService(id: string, wanted = true) {
+  const sessionReady = useCatalogQueryEnabled();
+  const enabled = sessionReady && wanted;
   return useQuery({
     queryKey: catalogQueryKeys.service(id),
     queryFn: ({ signal }) => callCatalog((api) => api.getService(id, signal)),

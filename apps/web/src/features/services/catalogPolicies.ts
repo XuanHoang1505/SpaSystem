@@ -8,4 +8,13 @@
 export const catalogPolicies = {
   customerChangeCutoffHours: 24,
   paymentTimeoutMinutes: 15,
+  /** `Booking:MaxDaysAhead`: ngày xa nhất được đặt lịch. */
+  maxBookingDaysAhead: 60,
+  /** `Booking:SlotStepMinutes`. */
+  slotStepMinutes: 30,
+} as const;
+
+/** Thông tin liên hệ hiển thị cho khách. Số điện thoại là số mẫu của Stitch: thay số thật trước khi dùng. */
+export const siteContact = {
+  hotline: '1900 6886',
 } as const;
