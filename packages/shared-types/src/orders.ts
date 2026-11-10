@@ -1,3 +1,4 @@
+import type { OrderAppointment } from './bookings';
 import type { CatalogItemType } from './catalog';
 
 /** Cart, order and payment contracts (docs/specs/orders.md). Prices are whole VND, instants are ISO-8601 UTC. */
@@ -112,6 +113,8 @@ export interface OrderDetail {
   canCancel: boolean;
   cancelledAtUtc: string | null;
   cancellationReason: string | null;
+  /** The slot held by a book-now order (UC-SPA-15); null for other orders. */
+  appointment: OrderAppointment | null;
 }
 
 /** A row of `GET /me/orders` (UC-SPA-12). `isPayable` / `canCancel` come from the API; the client never recomputes them. */

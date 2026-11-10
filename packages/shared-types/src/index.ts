@@ -47,3 +47,6 @@ export * from './catalog';
 export * from './availability';
 export * from './staff';
 export * from './orders';
+export * from './bookings';
+export * from './purchases';
+export * from './treatments';
