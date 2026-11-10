@@ -16,5 +16,6 @@ public sealed class BookAppointmentRequestValidator : AbstractValidator<BookAppo
             .WithMessage("Chọn đúng một dịch vụ đã mua hoặc một buổi trong gói.");
         BookingSlotRules.Date(RuleFor(request => request.Date), clock, options.Value);
         BookingSlotRules.StartTime(RuleFor(request => request.StartTime), options.Value);
+        RuleFor(request => request.Note).MaximumLength(500).WithMessage("Ghi chú tối đa 500 ký tự.");
     }
 }

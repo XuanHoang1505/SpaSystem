@@ -21,7 +21,8 @@ public sealed record MyAppointmentDto(
     AppointmentBookingSource Source,
     Guid? ServiceEntitlementId,
     MyTreatmentSessionRefDto? TreatmentSession,
-    MyAppointmentOrderDto? Order)
+    MyAppointmentOrderDto? Order,
+    string? Note = null)
 {
     /// <summary>UC-SPA-16: the customer may still move the appointment (BR-BKG-07, BR-BKG-16); the command checks again.</summary>
     public bool CanReschedule { get; init; }
