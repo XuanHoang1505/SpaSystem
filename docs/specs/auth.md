@@ -575,6 +575,54 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 2. **Lệch tài liệu nhỏ.** Bảng API ghi `forgot-password/request-otp` trả `{ expiresAtUtc }`, nhưng DTO thực tế trả `{ email, expiresAtUtc }`. FE dùng kiểu `OtpSent` theo DTO.
 3. **Độ dài tối thiểu của mật khẩu** đọc từ `Account:PasswordMinLength`. FE viết cứng 8 theo mặc định; đổi cấu hình thì phải sửa schema FE.
 
+### SCR-W22 — Cập nhật thông tin tài khoản (UC-SPA-04)
+
+- **Route:** `/account` · Vai trò: `customer`, `staff`, `owner` (tất cả người dùng đã đăng nhập) · Layout: `AccountLayout` cho Customer; Staff/Owner truy cập được qua đường dẫn chia sẻ hoặc menu tài khoản.
+- **Mẫu bố cục:** Trang nội dung gồm hai khối thẻ: Thông tin cá nhân và Đổi mật khẩu.
+- **Khối 1 — Thông tin cá nhân (`ProfileCard`):**
+  - **Ảnh đại diện (`AvatarUploader`):** Kích thước 80x80px, hiển thị ảnh hiện tại hoặc chữ cái đầu của tên người dùng.
+    - Nút icon "Tải ảnh" (`UploadIcon`): Mở dialog chọn file ảnh (`accept="image/png,image/jpeg,image/webp"`), kiểm tra client ≤ 5MB. Chọn file hợp lệ → gọi `POST /api/v1/me/avatar` (multipart/form-data) → cập nhật `avatarUrl` trong `MeDto` và `authStore.user`.
+    - Nút icon "Xóa ảnh" (`Trash2Icon`): Hiện khi người dùng đã có `avatarUrl` → hộp thoại xác nhận xóa → gọi `DELETE /api/v1/me/avatar` → xóa avatar, toast "Đã xóa ảnh đại diện."
+  - **Trường thông tin:**
+    - "Họ và tên" (`fullName`, 1–100 ký tự, bắt buộc, Zod validate).
+    - "Email" (`email`, chỉ đọc `disabled`, kèm badge vai trò: `Khách hàng`, `Nhân viên`, `Chủ spa`).
+    - "Số điện thoại" (`phoneNumber`, chỉ đọc `disabled`, kèm chú thích "Số điện thoại dùng để đăng nhập, không thể thay đổi.").
+    - "Ngày sinh" (`dateOfBirth`, chọn ngày `yyyy-MM-dd`, không vượt quá ngày hiện tại, tùy chọn).
+    - "Giới tính" (`gender`, chọn `Nam` (`male`), `Nữ` (`female`), `Khác` (`other`), tùy chọn).
+    - "Ngày tham gia" (`createdAtUtc`, chỉ đọc, hiển thị `dd/MM/yyyy`).
+  - **Hành động "Lưu thông tin":** `useUpdateProfile` (`PUT /api/v1/me`).
+    - Gửi đủ 4 trường `{ fullName, phoneNumber: user.phoneNumber, dateOfBirth, gender }`.
+    - Thành công → Toast "Cập nhật thông tin thành công.", đồng bộ `authStore.user.fullName` để cập nhật ngay tên trên header và sidebar.
+- **Khối 2 — Đổi mật khẩu (`ChangePasswordCard`):**
+  - Dòng nhắc bảo mật: *"Đổi mật khẩu sẽ đăng xuất tất cả các phiên đăng nhập khác của bạn trên mọi thiết bị."* (BR-AUTH-16).
+  - "Mật khẩu hiện tại" (`currentPassword`, bắt buộc, có nút hiện/ẩn mật khẩu).
+  - "Mật khẩu mới" (`newPassword`, 8–128 ký tự, có chữ và số, bắt buộc, có nút hiện/ẩn mật khẩu).
+  - "Xác nhận mật khẩu mới" (`confirmPassword`, bắt buộc, phải khớp với mật khẩu mới).
+  - **Hành động "Đổi mật khẩu":** `useChangePassword` (`PUT /api/v1/me/password`).
+    - Thành công (204) → Form tự xóa trắng mật khẩu, toast "Đổi mật khẩu thành công. Các phiên đăng nhập khác đã được thu hồi."
+- **Mã lỗi:**
+
+| Mã / tình huống | Thao tác | Hành vi UI |
+| :--- | :--- | :--- |
+| `validation_error` | Sửa thông tin, đổi mật khẩu | Lỗi dưới trường theo `field` (`FullName`, `PhoneNumber`, `CurrentPassword`, `NewPassword`, `ConfirmPassword`) |
+| `phone_exists` | Sửa thông tin | Lỗi dưới ô Số điện thoại: "Số điện thoại đã được sử dụng bởi tài khoản khác." |
+| `password_mismatch` | Đổi mật khẩu | Lỗi dưới ô Mật khẩu hiện tại: "Mật khẩu hiện tại không chính xác." |
+| `password_same_as_current` | Đổi mật khẩu | Lỗi dưới ô Mật khẩu mới: "Mật khẩu mới không được trùng với mật khẩu hiện tại." |
+| `rate_limited` | Đổi mật khẩu | `Alert` cảnh báo: "Bạn đã thao tác quá nhiều lần, vui lòng thử lại sau ít phút." |
+| `invalid_file_type` / kích thước > 5MB | Tải ảnh avatar | Toast lỗi client: "Ảnh phải có định dạng PNG, JPG, WEBP và dung lượng không quá 5MB." |
+| `service_unavailable` (503) | Tải/xóa ảnh avatar | Toast lỗi: "Dịch vụ lưu trữ ảnh tạm thời không khả dụng, vui lòng thử lại sau." |
+| `status = 0`, 500 | Mọi thao tác | `Alert` hoặc Toast lỗi mạng theo quy ước chung |
+
+### Trạng thái, responsive, a11y (SCR-W22)
+
+- **Trạng thái:**
+  - Đang tải: `Skeleton` cho phần avatar và các ô input.
+  - Lỗi tải: `OrdersErrorState` với nút "Thử lại".
+  - Sẵn sàng: Form điền sẵn dữ liệu từ `MeDto`.
+  - Đang lưu: Nút "Lưu thông tin" / "Đổi mật khẩu" có spinner `loading`, các trường tạm khóa.
+- **320px:** Bố cục 1 cột dọc, các nút hành động chiếm trọn chiều rộng, nhãn trường nằm trên input.
+- **a11y:** Focus vào ô lỗi đầu tiên khi validation thất bại. Các nút chọn ảnh và xóa ảnh có `aria-label` rõ ràng.
+
 ### Kiểm thử giao diện
 
 | Mã          | Tình huống                                                                                                                                                    | Kết quả mong đợi                                                                                                                                                                      |
@@ -598,6 +646,13 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 | AUTH-UI-T17 | Khôi phục phiên khi mở app: `/auth/refresh` 200 / 401 / mất mạng; vào `/owner` trong lúc đang khôi phục                                                       | `authenticated` / `anonymous` không toast / `anonymous`; `RouteGuard` hiện `PageLoader`, không chuyển hướng sớm                                                                       |
 | AUTH-UI-T18 | Nút "Gửi lại mã" với `resendAvailableAtUtc` = now + 60 giây (đồng hồ giả)                                                                                     | `disabled`, hiện "Gửi lại mã sau 60 giây" rồi giảm dần; tới 0 thì bật lại; gửi lại thành công thì đếm lại từ đầu                                                                      |
 | AUTH-UI-T19 | `ApiClient` của web                                                                                                                                           | Mọi request có `credentials: 'include'` và header `X-Auth-Transport: cookie`; `refresh`/`logout` không gửi body chứa token                                                            |
+| AUTH-UI-T20 | `MeApi`: `getMe`, `updateMe`, `changePassword`, `uploadAvatar`, `deleteAvatar` gọi đúng endpoint, method và body                                              | Pass với mock API                                                                                                                                                                     |
+| AUTH-UI-T21 | Màn `/account`: Tải và hiển thị đúng thông tin người dùng từ `GET /me` (họ tên, email, SĐT, ngày sinh, giới tính, avatar, ngày tạo)                            | Pass 4 trạng thái: skeleton, hiển thị, form rỗng (ngày sinh/giới tính null), lỗi tải                                                                                                   |
+| AUTH-UI-T22 | Sửa thông tin cá nhân: validate Zod client (SĐT không đủ 10 số, họ tên rỗng), submit thành công `PUT /me`                                                     | Chặn submit khi sai client; thành công cập nhật store và hiển thị toast                                                                                                               |
+| AUTH-UI-T23 | Sửa thông tin: server trả `409 phone_exists`                                                                                                                  | Lỗi hiển thị dưới trường Số điện thoại                                                                                                                                                |
+| AUTH-UI-T24 | Đổi mật khẩu: validate client (mật khẩu mới quá ngắn, không có số, xác nhận không khớp); `PUT /me/password` thành công                                        | Chặn submit khi sai; thành công reset form và toast                                                                                                                                   |
+| AUTH-UI-T25 | Đổi mật khẩu: `400 password_mismatch`, `password_same_as_current`, `429 rate_limited`                                                                         | Hiển thị lỗi đúng trường hoặc alert tần suất                                                                                                                                         |
+| AUTH-UI-T26 | Tải ảnh đại diện: chọn file > 5MB / file không phải ảnh bị chặn; upload thành công cập nhật ảnh hiển thị; xóa ảnh đại diện thành công                         | Chặn file lỗi; upload/xóa thành công cập nhật UI                                                                                                                                      |
 
 ## Câu hỏi còn mở
 

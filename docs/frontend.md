@@ -125,6 +125,21 @@ Khách hàng không dùng sidebar admin. Mẫu Stitch "Khu Vực Khách Hàng (M
 
 Staff và chủ spa giữ `WorkspaceLayout` (sidebar). Không còn dải "Bản xem trước giao diện" ở khu khách. Menu không có mục "Hồ sơ da" và "Hội viên" như mẫu vì hệ thống không có.
 
+### Tài khoản và Trợ lý AI (10/11/2026)
+
+- **`features/users` (`SCR-W22` — `/account`, UC-SPA-04):**
+  - Quản lý thông tin tài khoản cho mọi vai trò đã đăng nhập (`customer`, `staff`, `owner`).
+  - `AvatarUploader`: Tải ảnh đại diện PNG/JPG/WEBP $\le$ 5MB qua `POST /api/v1/me/avatar` và xóa ảnh qua `DELETE /api/v1/me/avatar` kèm dialog xác nhận.
+  - `ProfileCard`: Xem/sửa họ tên, SĐT, ngày sinh, giới tính; email và vai trò hiển thị chỉ đọc; đồng bộ `fullName` tức thời lên header/sidebar.
+  - `ChangePasswordCard`: Đổi mật khẩu qua `PUT /api/v1/me/password` (cảnh báo thu hồi toàn bộ phiên khác, tự xóa trắng form khi thành công).
+- **`features/ai-assistant` (`SCR-W21` — `/ai-assistant` & Floating Widget, UC-SPA-32):**
+  - Khung chat AI tư vấn dịch vụ dành cho khách hàng đăng nhập và khách vãng lai (nhân viên/chủ cơ sở bị từ chối 403 theo Q-60).
+  - `AiChatWidget`: Nút icon nổi ở góc dưới bên phải màn hình (`fixed bottom-6 right-6`) nhúng tại layout công khai/khách hàng, cho phép bấm mở popup chat tiện lợi.
+  - `AiMedicalDisclaimer`: Banner cảnh báo y khoa cố định ở đầu khung chat (BR-AI-01).
+  - Tải lịch sử hỏi đáp của khách hàng (`GET /api/v1/me/ai/history`).
+  - Gợi ý sản phẩm (`AiProductSuggestionCard`) và đề xuất lịch hẹn (`AiBookingProposalCard` kèm nút điền sẵn thông tin đặt lịch).
+  - `ChatInputBar`: Ô nhập tự co giãn kèm bộ đếm ký tự (1–1000) và các câu hỏi gợi ý nhanh.
+
 ## Chạy và kiểm tra
 
 ```powershell

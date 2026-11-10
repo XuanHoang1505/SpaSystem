@@ -6,7 +6,10 @@ import { loginPathFor } from '@/features/auth/navigation';
 import { canAccessRole, useAuthStore } from '@/stores/authStore';
 
 /** Experience only, not a security boundary: the API checks every permission. */
-export function RouteGuard({ role, children }: PropsWithChildren<{ role: UserRole }>) {
+export function RouteGuard({
+  role,
+  children,
+}: PropsWithChildren<{ role?: UserRole | readonly UserRole[] }>) {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const endReason = useAuthStore((state) => state.endReason);
@@ -15,5 +18,9 @@ export function RouteGuard({ role, children }: PropsWithChildren<{ role: UserRol
   // Only while leaving after a logout (cleared by useSettleLogout once home is shown), go home instead of to the login page.
   if (status === 'anonymous')
     return <Navigate to={endReason === 'logout' ? '/' : loginPathFor(location)} replace />;
-  return canAccessRole(user, role) ? children : <Navigate to="/forbidden" replace />;
+  if (!role) return <>{children}</>;
+  if (typeof role !== 'string') {
+    return role.includes(user?.role as UserRole) ? <>{children}</> : <Navigate to="/forbidden" replace />;
+  }
+  return canAccessRole(user, role) ? <>{children}</> : <Navigate to="/forbidden" replace />;
 }

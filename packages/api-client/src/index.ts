@@ -115,17 +115,18 @@ export class ApiClient {
       )
       .join('&');
     let response: Response;
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
     try {
       response = await this.fetcher(`${this.baseUrl}${path}${query ? `?${query}` : ''}`, {
         method,
         signal: options.signal,
         headers: {
           Accept: 'application/json',
-          ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+          ...(body !== undefined && !isFormData ? { 'Content-Type': 'application/json' } : {}),
           ...(await this.options.headers?.()),
           ...options.headers,
         },
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: isFormData ? (body as FormData) : body === undefined ? undefined : JSON.stringify(body),
         ...(this.options.credentials ? { credentials: this.options.credentials } : {}),
       });
     } catch (cause) {
@@ -212,3 +213,5 @@ export * from './appointments';
 export * from './purchases';
 export * from './treatments';
 export * from './serviceHistory';
+export * from './users';
+export * from './aiAssistant';

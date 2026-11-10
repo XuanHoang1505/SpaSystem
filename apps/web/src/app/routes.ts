@@ -7,6 +7,7 @@ export const routes = {
     ['/packages/:packageId', 'Chi tiết gói dịch vụ'],
     ['/about', 'Giới thiệu'],
     ['/contact', 'Liên hệ'],
+    ['/ai-assistant', 'Trợ lý AI'],
     ['/login', 'Đăng nhập'],
     ['/register', 'Đăng ký'],
     ['/forgot-password', 'Quên mật khẩu'],
