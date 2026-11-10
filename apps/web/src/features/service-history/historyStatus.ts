@@ -5,7 +5,7 @@ type Badge = { label: string; tone: StatusTone };
 
 const statuses: Record<string, Badge> = {
   completed: { label: 'Đã hoàn thành', tone: 'success' },
-  no_show: { label: 'Vắng mặt', tone: 'danger' },
+  no_show: { label: 'Không đến', tone: 'danger' },
 };
 
 export const serviceHistoryStatusBadge = (status: AppointmentStatus): Badge =>
