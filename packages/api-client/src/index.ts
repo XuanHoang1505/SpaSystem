@@ -126,7 +126,11 @@ export class ApiClient {
           ...(await this.options.headers?.()),
           ...options.headers,
         },
-        body: isFormData ? (body as FormData) : body === undefined ? undefined : JSON.stringify(body),
+        body: isFormData
+          ? (body as FormData)
+          : body === undefined
+            ? undefined
+            : JSON.stringify(body),
         ...(this.options.credentials ? { credentials: this.options.credentials } : {}),
       });
     } catch (cause) {

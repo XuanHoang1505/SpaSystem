@@ -19,4 +19,6 @@ export class StaffApi {
 export const staffQueryKeys = {
   all: ['staff'] as const,
   publicByService: (spaServiceId: string) => ['staff', 'public', spaServiceId] as const,
+  /** Every working staff member, not filtered by service (owner filters, day calendar). */
+  working: () => ['staff', 'working'] as const,
 };
