@@ -50,3 +50,5 @@ export * from './orders';
 export * from './bookings';
 export * from './purchases';
 export * from './treatments';
+export * from './users';
+export * from './aiAssistant';
