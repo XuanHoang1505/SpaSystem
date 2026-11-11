@@ -1,4 +1,5 @@
 import type { AppointmentStatus } from './bookings';
+import type { PaginationParams } from './index';
 import type { CustomerPackageStatus, PurchaseOrderRef } from './purchases';
 
 /** `GET /me/treatments/{id}` for the customer (UC-SPA-19, read only). */
@@ -81,4 +82,125 @@ export interface MyTreatmentPlan {
   purchasedAtUtc: string;
   order: PurchaseOrderRef;
   sessions: readonly MyTreatmentSession[];
+}
+
+/** Skin type classification from skin assessment (UC-SPA-21 / SCR-W36). */
+export type SkinType = 'Normal' | 'Dry' | 'Oily' | 'Combination' | 'Sensitive';
+
+export interface TreatmentCustomerDto {
+  id: string;
+  fullName: string;
+  phoneNumber: string | null;
+}
+
+export interface TreatmentNextSessionDto {
+  id: string;
+  sequenceNumber: number;
+  serviceName: string;
+  status: TreatmentSessionStatus;
+  appointment: SessionAppointment | null;
+}
+
+export interface TreatmentPlanListItemDto {
+  id: string;
+  customer: TreatmentCustomerDto;
+  packageName: string;
+  status: TreatmentPlanStatus;
+  packageStatus: CustomerPackageStatus;
+  expiresAtUtc: string | null;
+  totalSessions: number;
+  usedSessions: number;
+  bookedSessions: number;
+  primaryStaff: StaffRef | null;
+  nextSession: TreatmentNextSessionDto | null;
+  purchasedAtUtc: string;
+}
+
+export interface TreatmentSkinProfileDto {
+  id: string;
+  appointmentId: string;
+  sequenceNumber: number;
+  assessedAtUtc: string;
+  skinType: SkinType;
+  mainConcerns: string | null;
+  careGoals: string | null;
+  recommendedTreatment: string | null;
+  assessedBy: StaffRef;
+}
+
+export interface CareHistoryEntryDto {
+  appointmentId: string;
+  sequenceNumber: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: AppointmentStatus;
+  staff: StaffRef;
+  result: string | null;
+  skinProfileId: string | null;
+}
+
+export interface TreatmentSessionDto {
+  id: string;
+  sequenceNumber: number;
+  spaServiceId: string;
+  serviceName: string;
+  durationMinutes: number;
+  status: TreatmentSessionStatus;
+  note: string | null;
+  completedAtUtc: string | null;
+  appointment: SessionAppointment | null;
+}
+
+export interface TreatmentPlanDto {
+  id: string;
+  customer: TreatmentCustomerDto;
+  packageName: string;
+  status: TreatmentPlanStatus;
+  packageStatus: CustomerPackageStatus;
+  expiresAtUtc: string | null;
+  totalSessions: number;
+  usedSessions: number;
+  bookedSessions: number;
+  primaryStaff: StaffRef | null;
+  nextSession: TreatmentNextSessionDto | null;
+  purchasedAtUtc: string;
+  customerPackageId: string;
+  goal: string | null;
+  note: string | null;
+  statusReason: string | null;
+  startDate: string | null;
+  expectedEndDate: string | null;
+  actualEndDate: string | null;
+  canEdit: boolean;
+  canManage: boolean;
+  hasAllergies: boolean;
+  sessions: readonly TreatmentSessionDto[];
+  skinProfiles: readonly TreatmentSkinProfileDto[];
+  careHistory: readonly CareHistoryEntryDto[];
+}
+
+export interface UpdateTreatmentPlanRequest {
+  goal?: string | null;
+  expectedEndDate?: string | null;
+  note?: string | null;
+}
+
+export interface UpdateTreatmentSessionRequest {
+  note?: string | null;
+}
+
+export interface AssignTreatmentStaffRequest {
+  staffMemberId?: string | null;
+}
+
+export interface TreatmentReasonRequest {
+  reason?: string | null;
+}
+
+export interface TreatmentSearchParams extends PaginationParams {
+  search?: string;
+  customerId?: string;
+  status?: TreatmentPlanStatus;
+  primaryStaffMemberId?: string;
 }
