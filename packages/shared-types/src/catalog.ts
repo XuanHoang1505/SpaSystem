@@ -98,8 +98,92 @@ export interface CatalogPriceSearchParams extends PaginationParams {
 export interface PackageSearchParams extends CatalogPriceSearchParams {
   /** Only packages containing this service. */
   serviceId?: string;
+  status?: CatalogStatus;
 }
 
 export interface ServiceSearchParams extends CatalogPriceSearchParams {
   categoryId?: string;
+  status?: CatalogStatus;
 }
+
+/** Owner catalog request DTOs (docs/specs/catalog.md, UC-SPA-09). */
+export interface ServiceStepRequest {
+  title: string;
+  description?: string | null;
+  durationMinutes?: number | null;
+}
+
+export interface CreateServiceRequest {
+  name: string;
+  categoryId: string;
+  description?: string | null;
+  shortDescription?: string | null;
+  durationMinutes: number;
+  price: number;
+  status?: CatalogStatus;
+  steps?: readonly ServiceStepRequest[];
+}
+
+export interface UpdateServiceRequest {
+  name: string;
+  categoryId: string;
+  description?: string | null;
+  shortDescription?: string | null;
+  durationMinutes: number;
+  price: number;
+  steps?: readonly ServiceStepRequest[];
+}
+
+export interface PackageItemRequest {
+  spaServiceId: string;
+  sessionCount: number;
+  sortOrder: number;
+  minDaysBetweenSessions: number;
+  note?: string | null;
+}
+
+export interface CreatePackageRequest {
+  name: string;
+  description?: string | null;
+  shortDescription?: string | null;
+  price: number;
+  validityDays: number;
+  saleStartDate?: string | null;
+  saleEndDate?: string | null;
+  status?: CatalogStatus;
+  items?: readonly PackageItemRequest[];
+}
+
+export interface UpdatePackageRequest {
+  name: string;
+  description?: string | null;
+  shortDescription?: string | null;
+  price: number;
+  validityDays: number;
+  saleStartDate?: string | null;
+  saleEndDate?: string | null;
+  items?: readonly PackageItemRequest[];
+}
+
+export interface ChangeCatalogStatusRequest {
+  status: CatalogStatus;
+}
+
+export interface CreateServiceCategoryRequest {
+  name: string;
+  description?: string | null;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export interface UpdateServiceCategoryRequest {
+  name: string;
+  description?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface CatalogImageUploadResponse {
+  imageUrl: string;
+}
+
