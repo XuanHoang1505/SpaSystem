@@ -1,5 +1,6 @@
 import type { OrderAppointment } from './bookings';
 import type { CatalogItemType } from './catalog';
+import type { SortDirection } from './index';
 
 /** Cart, order and payment contracts (docs/specs/orders.md). Prices are whole VND, instants are ISO-8601 UTC. */
 export type OrderStatus = 'pending_payment' | 'paid' | 'expired' | 'cancelled';
@@ -139,6 +140,61 @@ export interface OrderListParams {
   pageNumber?: number;
   pageSize?: number;
 }
+
+/** The customer of an order row (UC-SPA-13). */
+export interface OrderCustomerSummary {
+  id: string;
+  fullName: string;
+  phoneNumber: string;
+}
+
+/** The customer of an owner's order detail. */
+export interface OrderCustomer extends OrderCustomerSummary {
+  email: string;
+}
+
+/** A row of the owner's `GET /orders`; `latestPaymentStatus` is that of the newest attempt, if any. */
+export interface OrderListItem {
+  id: string;
+  code: string;
+  status: OrderStatus;
+  createdAtUtc: string;
+  paymentDueAtUtc: string;
+  grandTotal: number;
+  itemCount: number;
+  customer: OrderCustomerSummary;
+  paymentCount: number;
+  latestPaymentStatus: PaymentStatus | null;
+  promotionCode: string | null;
+}
+
+/** A payment attempt as the owner sees it, with the gateway references. */
+export interface OwnerOrderPayment {
+  id: string;
+  provider: string;
+  amount: number;
+  status: PaymentStatus;
+  requestCode: string;
+  providerTransactionId: string | null;
+  createdAtUtc: string;
+  expiresAtUtc: string;
+  paidAtUtc: string | null;
+}
+
+/** `GET /orders/{id}`: the customer's order detail plus the customer and gateway references. */
+export type OwnerOrderDetail = Omit<OrderDetail, 'payments'> & {
+  customer: OrderCustomer;
+  payments: readonly OwnerOrderPayment[];
+};
+
+export type OrderSortBy = 'createdAtUtc' | 'grandTotal';
+
+/** Filters of the owner's `GET /orders`: `search` is an order code or a customer's name/phone/email. */
+export type OrderSearchParams = OrderListParams & {
+  search?: string;
+  sortBy?: OrderSortBy;
+  sortDirection?: SortDirection;
+};
 
 export interface PaymentAttempt {
   paymentId: string;
