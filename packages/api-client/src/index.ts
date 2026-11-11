@@ -95,6 +95,77 @@ export class ApiClient {
   delete<T>(path: string, options?: RequestOptions): Promise<T> {
     return this.request<T>('DELETE', path, undefined, options);
   }
+  getBlob(path: string, options?: RequestOptions): Promise<Blob> {
+    return this.requestBlob('GET', path, options);
+  }
+
+  private async requestBlob(
+    method: string,
+    path: string,
+    options: RequestOptions = {},
+  ): Promise<Blob> {
+    if (!path.startsWith('/') || path.startsWith('//') || /[?#]/.test(path))
+      throw new ApiClientError(
+        'Use a relative API path starting with / and pass query separately.',
+        0,
+      );
+    const query = Object.entries(options.query ?? {})
+      .flatMap(([key, value]) =>
+        (Array.isArray(value) ? value : [value])
+          .filter((item) => item !== null && item !== undefined)
+          .map((item) => `${encodeURIComponent(key)}=${encodeURIComponent(String(item))}`),
+      )
+      .join('&');
+    let response: Response;
+    try {
+      response = await this.fetcher(`${this.baseUrl}${path}${query ? `?${query}` : ''}`, {
+        method,
+        signal: options.signal,
+        headers: {
+          Accept: '*/*',
+          ...(await this.options.headers?.()),
+          ...options.headers,
+        },
+        ...(this.options.credentials ? { credentials: this.options.credentials } : {}),
+      });
+    } catch (cause) {
+      if (options.signal?.aborted || (cause instanceof Error && cause.name === 'AbortError'))
+        throw cause;
+      throw new ApiClientError('Unable to connect to the API.', 0, [], undefined, cause);
+    }
+    if (!response.ok) {
+      let data: unknown;
+      try {
+        const raw = await response.text();
+        if (raw.trim()) {
+          data = JSON.parse(raw);
+        }
+      } catch {
+        // Ignored if non-JSON error
+      }
+      const error =
+        typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {};
+      throw new ApiClientError(
+        typeof error.message === 'string' ? error.message : `HTTP ${response.status}`,
+        response.status,
+        errorDetails(error.errors),
+        typeof error.traceId === 'string' ? error.traceId : undefined,
+      );
+    }
+    try {
+      return await response.blob();
+    } catch (cause) {
+      if (options.signal?.aborted || (cause instanceof Error && cause.name === 'AbortError'))
+        throw cause;
+      throw new ApiClientError(
+        'Unable to read the API response.',
+        response.status,
+        [],
+        undefined,
+        cause,
+      );
+    }
+  }
 
   private async request<T>(
     method: string,
@@ -221,3 +292,4 @@ export * from './users';
 export * from './aiAssistant';
 export * from './workSchedules';
 export * from './promotions';
+export * from './reports';
