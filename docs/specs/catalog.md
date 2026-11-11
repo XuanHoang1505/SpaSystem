@@ -549,6 +549,145 @@ Trang vượt quá `totalPages` (URL sửa tay, hoặc dữ liệu vừa giảm)
 | CAT-UI-T15 | `formatDuration`                                                                                                        | 45 → "45 phút", 60 → "1 giờ", 90 → "1 giờ 30 phút"                                                                                                    |
 | CAT-UI-T16 | Router                                                                                                                  | `/services`, `/services/:serviceId`, `/packages`, `/packages/:packageId` render trang thật, không còn placeholder                                     |
 
+---
+
+## Giao diện quản trị chủ spa (UC-SPA-09)
+
+Phạm vi: Quản lý dịch vụ và danh mục (`SCR-W31` — `/owner/services`) và Quản lý gói dịch vụ (`SCR-W32` — `/owner/packages`) cho chủ spa trên nền tảng web (`apps/web`). Cả hai màn hình chạy trong `OwnerLayout` (có thanh bên sidebar, breadcrumb, hỗ trợ theme sáng/tối).
+
+### SCR-W31 — Quản lý dịch vụ & danh mục
+
+- **Route:** `/owner/services` · **Vai trò:** Chủ spa (`role = owner`, quyền `catalog.manage`) · **Layout:** `OwnerLayout` · **Mẫu bố cục:** Danh sách quản trị (`DataTable` + thanh công cụ bộ lọc + phân trang server).
+- **Thanh tiêu đề (`PageHeader`):** Tiêu đề "Quản lý dịch vụ", mô tả "Thêm, chỉnh sửa thông tin, tải ảnh và quản lý danh mục dịch vụ của spa." Bên phải có 2 nút hành động:
+  - Nút phụ: "Danh mục dịch vụ" (icon `FolderTreeIcon`, variant `outline`) $\rightarrow$ mở `ServiceCategoriesDialog`.
+  - Nút chính: "Thêm dịch vụ" (icon `PlusIcon`, variant `default`) $\rightarrow$ mở `ServiceFormDialog` chế độ tạo mới.
+- **Thanh bộ lọc (`ServiceFilterToolbar`):**
+  - Ô tìm kiếm: Tìm theo tên dịch vụ hoặc mô tả (`search`), debounce 300 ms.
+  - Lọc theo danh mục: Dropdown `Select` ("Tất cả danh mục" + các danh mục lấy từ `useServiceCategories()`, gửi `categoryId`).
+  - Lọc theo trạng thái: Dropdown `Select` ("Tất cả trạng thái", "Đang bán" — `on_sale`, "Ngừng bán" — `discontinued`).
+  - Nút "Đặt lại bộ lọc" (icon `XIcon`, variant `ghost`) xuất hiện khi có bất kỳ bộ lọc nào đang áp dụng. Đổi bộ lọc tự động quay về trang 1.
+- **Bảng danh sách (`DataTable<ServiceListItem>`):**
+  - Cột `image`: Ảnh đại diện dịch vụ (kích thước 40×40 px bo góc `rounded-lg`, có ảnh dự phòng `SparklesIcon` khi `imageUrl = null`).
+  - Cột `name`: Tên dịch vụ (`font-medium text-foreground`), bên dưới là mô tả ngắn (`text-xs text-muted-foreground truncate`).
+  - Cột `category`: Tên danh mục dịch vụ (ẩn dưới `sm`).
+  - Cột `durationMinutes`: Thời lượng thực hiện (`formatDuration`, ví dụ "60 phút", ẩn dưới `md`).
+  - Cột `price`: Giá niêm yết (`formatCurrency`, ví dụ "350.000 đ", căn phải trên desktop).
+  - Cột `status`: `StatusBadge` (Đang bán: `tone="success"`, Ngừng bán: `tone="neutral"`).
+  - Menu thao tác dòng (`DataTableRowActions`):
+    - 👁️ "Xem chi tiết" (`EyeIcon`) $\rightarrow$ mở `ServiceDetailSheet`.
+    - ✏️ "Sửa thông tin" (`PencilIcon`) $\rightarrow$ mở `ServiceFormDialog` chế độ sửa.
+    - 🖼️ "Đổi ảnh đại diện" (`ImageIcon`) $\rightarrow$ mở `ServiceImageDialog`.
+    - 🔄 "Ngừng bán" hoặc "Mở bán lại" (`PowerIcon`, đổi màu theo trạng thái) $\rightarrow$ mở `ToggleServiceStatusDialog`.
+- **Sheet chi tiết dịch vụ (`ServiceDetailSheet`):**
+  - Drawer bên phải (`sm:max-w-md`), hiển thị ảnh lớn, tiêu đề tên dịch vụ, badge danh mục và badge trạng thái bán.
+  - Các khối thông tin: Thời lượng, Giá tiền, Mô tả ngắn, Mô tả chi tiết, Danh sách quy trình từng bước (`steps`: thứ tự, tiêu đề, thời lượng từng bước, mô tả bước).
+  - Mốc thời gian hệ thống: Ngày tạo (`createdAtUtc`), Ngày cập nhật (`updatedAtUtc`).
+  - Footer: Nút "Sửa thông tin", "Đổi ảnh", "Ngừng bán / Mở bán".
+- **Modal thêm/sửa dịch vụ (`ServiceFormDialog`):**
+  - Dialog form 2 cột responsive (`sm:max-w-2xl`):
+    - Tên dịch vụ (bắt buộc, 1–150 ký tự).
+    - Danh mục dịch vụ (bắt buộc, chọn từ danh sách `service-categories`).
+    - Thời lượng (phút, số nguyên 1–1440, gợi ý các mốc 30, 45, 60, 90, 120).
+    - Giá niêm yết (VND, số nguyên 0–999.999.999.999).
+    - Mô tả ngắn (tùy chọn, $\le$ 300 ký tự).
+    - Mô tả chi tiết (tùy chọn, $\le$ 4000 ký tự, `Textarea`).
+    - Quy trình từng bước (`steps`): Bảng danh sách các bước có thể thêm, sửa, xóa dòng và kéo/chuyển thứ tự bước (`sortOrder`, `title`, `durationMinutes`, `description`).
+    - Trạng thái ban đầu khi tạo mới: Mặc định `on_sale`.
+- **Modal quản lý ảnh (`ServiceImageDialog`):**
+  - Hiển thị ảnh hiện tại (hoặc placeholder nếu chưa có ảnh).
+  - Vùng kéo thả / chọn file ảnh từ máy (JPEG, PNG, WebP $\le$ 5 MB). Có xem trước (preview) trước khi bấm "Lưu ảnh".
+  - Nút "Tải ảnh lên" (gọi `POST /services/{id}/image`).
+  - Nút "Xóa ảnh" (gọi `DELETE /services/{id}/image`, chỉ hiện khi dịch vụ đã có ảnh).
+- **Modal quản lý danh mục (`ServiceCategoriesDialog`):**
+  - Quản lý danh mục dịch vụ của spa (`SCR-W31` modal phụ):
+    - Danh sách danh mục: Tên, Mô tả, Thứ tự hiển thị, Trạng thái kích hoạt (`isActive`), Số lượng dịch vụ đang gán (`serviceCount`).
+    - Thêm danh mục mới (`POST /service-categories`).
+    - Sửa tên, mô tả, thứ tự, trạng thái danh mục (`PUT /service-categories/{id}`).
+    - Xóa danh mục (`DELETE /service-categories/{id}`): Chỉ cho phép khi `serviceCount = 0` (BR-CAT-13). Nếu `serviceCount > 0` nút xóa bị vô hiệu hóa hoặc bấm vào hiển thị cảnh báo yêu cầu chuyển dịch vụ trước.
+
+---
+
+### SCR-W32 — Quản lý gói dịch vụ
+
+- **Route:** `/owner/packages` · **Vai trò:** Chủ spa (`role = owner`, quyền `catalog.manage`) · **Layout:** `OwnerLayout` · **Mẫu bố cục:** Danh sách quản trị (`DataTable` + thanh công cụ bộ lọc + phân trang server).
+- **Thanh tiêu đề (`PageHeader`):** Tiêu đề "Quản lý gói dịch vụ", mô tả "Tạo gói liệu trình, cấu hình các buổi thành phần và thời gian mở bán." Nút chính: "Tạo gói dịch vụ" (icon `PlusIcon`, variant `default`) $\rightarrow$ mở `PackageFormDialog` tạo mới.
+- **Thanh bộ lọc (`PackageFilterToolbar`):**
+  - Ô tìm kiếm: Tìm theo tên gói hoặc mô tả (`search`), debounce 300 ms.
+  - Lọc theo trạng thái: Dropdown `Select` ("Tất cả trạng thái", "Đang bán" — `on_sale`, "Ngừng bán" — `discontinued`).
+  - Nút "Đặt lại bộ lọc" khi có tìm kiếm hoặc lọc trạng thái.
+- **Bảng danh sách (`DataTable<PackageListItem>`):**
+  - Cột `image`: Ảnh đại diện gói (lấy ảnh gói hoặc fallback ảnh dịch vụ thành phần đầu tiên, 40×40 px).
+  - Cột `name`: Tên gói dịch vụ (`font-medium`), mô tả ngắn bên dưới.
+  - Cột `totalSessions`: Tổng số buổi (`totalSessions` buổi, ẩn dưới `sm`).
+  - Cột `validityDays`: Thời hạn hiệu lực (`validityDays` ngày, ẩn dưới `md`).
+  - Cột `pricing`: Giá gói (`formatCurrency(price)`), hiển thị kèm giá gốc `retailPrice` gạch ngang và huy hiệu % tiết kiệm nếu có.
+  - Cột `salePeriod`: Thời gian mở bán (từ `saleStartDate` đến `saleEndDate`, hoặc "Không giới hạn", ẩn dưới `lg`).
+  - Cột `status`: `StatusBadge` (Đang bán: `tone="success"`, Ngừng bán: `tone="neutral"`).
+  - Menu thao tác dòng (`DataTableRowActions`):
+    - 👁️ "Xem chi tiết" (`EyeIcon`) $\rightarrow$ mở `PackageDetailSheet`.
+    - ✏️ "Sửa gói dịch vụ" (`PencilIcon`) $\rightarrow$ mở `PackageFormDialog` chế độ sửa.
+    - 🖼️ "Đổi ảnh đại diện" (`ImageIcon`) $\rightarrow$ mở `PackageImageDialog`.
+    - 🔄 "Ngừng bán" hoặc "Mở bán lại" (`PowerIcon`) $\rightarrow$ mở `TogglePackageStatusDialog`.
+- **Sheet chi tiết gói (`PackageDetailSheet`):**
+  - Drawer bên phải (`sm:max-w-lg`), xem tổng quan gói (tổng buổi, thời hạn ngày, so sánh giá gói vs tổng giá lẻ, % tiết kiệm, thời hạn mở bán).
+  - Bảng danh sách các buổi dịch vụ thành phần (`items[]`): Thứ tự buổi (`sortOrder`), Tên dịch vụ thành phần, Giá lẻ của dịch vụ, Số buổi (`sessionCount`), Khoảng cách tối thiểu giữa các buổi (`minDaysBetweenSessions` ngày), Ghi chú từng buổi (`note`), Trạng thái của dịch vụ thành phần (nếu dịch vụ thành phần đã ngừng bán hiển thị badge cảnh báo `discontinued`).
+  - Footer: Nút "Sửa gói", "Đổi ảnh", "Ngừng bán / Mở bán".
+- **Modal thêm/sửa gói (`PackageFormDialog`):**
+  - Dialog form kích thước lớn (`sm:max-w-3xl`, cuộn dọc):
+    - Thông tin chung: Tên gói (1–150 ký tự), Mô tả ngắn, Mô tả chi tiết, Giá gói (VND), Thời hạn sử dụng gói (`validityDays`: 1–3650 ngày).
+    - Thời gian mở bán: `saleStartDate` và `saleEndDate` (tùy chọn, kiểu date picker `yyyy-MM-dd`, kiểm tra ngày kết thúc $\ge$ ngày bắt đầu).
+    - Cấu hình danh sách dịch vụ thành phần (`items`): Bảng động cho phép thêm từng dòng dịch vụ thành phần:
+      - Chọn dịch vụ (chỉ chọn từ các dịch vụ đang bán `on_sale`).
+      - Số buổi thực hiện (`sessionCount`: 1–100).
+      - Thứ tự thực hiện (`sortOrder`: 1–100, tự động đánh số tăng dần).
+      - Khoảng cách tối thiểu giữa các buổi (`minDaysBetweenSessions`: 0–365 ngày).
+      - Ghi chú hướng dẫn cho buổi (`note`: $\le$ 1000 ký tự).
+    - Tính toán tự động hiển thị ngay trên form: Tổng số buổi của gói, Tổng giá trị bán lẻ (`retailPrice`), Số tiền tiết kiệm và % giảm giá so với mua lẻ.
+- **Modal quản lý ảnh gói (`PackageImageDialog`):**
+  - Upload ảnh riêng cho gói (JPEG, PNG, WebP $\le$ 5 MB) hoặc xóa ảnh để hệ thống tự động fallback lấy ảnh của dịch vụ thành phần đầu tiên có ảnh (BR-CAT-07).
+
+---
+
+### Bảng mã lỗi và cách xử lý giao diện chủ spa
+
+| Mã lỗi backend | Ngữ cảnh | Cách xử lý trên giao diện |
+| --- | --- | --- |
+| `service_not_found` (404) | Sửa, đổi ảnh, ngừng bán dịch vụ | Toast lỗi "Không tìm thấy dịch vụ hoặc đã bị thay đổi.", đóng modal và làm mới bảng (`invalidateQueries`). |
+| `package_not_found` (404) | Sửa, đổi ảnh, ngừng bán gói | Toast lỗi "Không tìm thấy gói dịch vụ hoặc đã bị thay đổi.", đóng modal và làm mới bảng. |
+| `service_category_not_found` (404) | Sửa, xóa danh mục | Toast lỗi "Không tìm thấy danh mục dịch vụ.", làm mới danh sách danh mục. |
+| `service_category_exists` (409) | Tạo hoặc sửa danh mục trùng tên | Báo lỗi trực tiếp dưới ô nhập tên danh mục: "Tên danh mục này đã tồn tại trong hệ thống." |
+| `service_category_in_use` (409) | Xóa danh mục còn dịch vụ | Modal/Alert thông báo: "Không thể xóa danh mục này vì đang có dịch vụ phụ thuộc. Vui lòng chuyển các dịch vụ sang danh mục khác trước khi xóa." |
+| `package_service_not_found` (400) | Thêm/sửa gói có dịch vụ không tồn tại | Báo lỗi tại dòng dịch vụ tương ứng trong bảng thành phần gói. |
+| `package_service_discontinued` (400) | Thêm mới dịch vụ đã ngừng bán vào gói | Báo lỗi dưới ô chọn dịch vụ: "Dịch vụ đã ngừng bán, không thể thêm mới vào gói." (Dịch vụ cũ đã có từ trước vẫn được giữ lại theo BR-CAT-06). |
+| `validation_error` (400) | Form nhập sai quy tắc (tên trống, giá âm, ngày sai...) | Gắn lỗi cụ thể vào từng `FormField` tương ứng thông qua React Hook Form + Zod. |
+| `request_too_large` (413) | Tải file ảnh > 10 MB (giới hạn cứng) | Thông báo: "Dung lượng tệp vượt quá giới hạn tối đa cho phép (tối đa 5 MB)." |
+| `image_storage_unavailable` (503) | Lỗi kết nối Cloudinary | Toast lỗi: "Dịch vụ lưu trữ ảnh tạm thời không khả dụng. Vui lòng thử lại sau." Giữ nguyên ảnh cũ. |
+| `unauthorized` (401) / `forbidden` (403) | Hết phiên đăng nhập hoặc không phải chủ spa | Điều hướng về `/login` hoặc hiển thị trang báo quyền hạn. |
+
+---
+
+### Kiểm thử giao diện quản trị chủ spa (`CAT-OWN-UI-T01...T15`)
+
+| Mã | Tình huống kiểm thử | Kết quả mong đợi |
+| --- | --- | --- |
+| CAT-OWN-UI-T01 | Mở `/owner/services` lần đầu | Bảng hiển thị Skeleton khi đang tải, sau đó hiển thị danh sách dịch vụ với đầy đủ thumbnail ảnh, tên, danh mục, thời lượng, giá và badge trạng thái. |
+| CAT-OWN-UI-T02 | Lọc dịch vụ theo từ khóa, danh mục và trạng thái | Request `GET /services` mang đúng tham số `search`, `categoryId`, `status`; URL đồng bộ tham số; đổi bộ lọc quay về trang 1. |
+| CAT-OWN-UI-T03 | Bấm "Thêm dịch vụ" và nhập form hợp lệ | Gọi `POST /services`, đóng modal, toast thông báo thành công và bảng dịch vụ tự động tải lại với dịch vụ mới. |
+| CAT-OWN-UI-T04 | Form thêm dịch vụ validate lỗi (tên trống, giá < 0, thời lượng = 0) | Chặn gửi request, hiện thông báo lỗi tiếng Việt dưới từng ô nhập. |
+| CAT-OWN-UI-T05 | Mở "Sửa thông tin" dịch vụ | Form hiển thị sẵn thông tin dịch vụ và các bước quy trình hiện tại; gọi `PUT /services/{id}` thành công khi lưu. |
+| CAT-OWN-UI-T06 | Mở "Đổi ảnh đại diện" và upload file > 5MB hoặc sai định dạng | Chặn ở client kèm cảnh báo; chọn file ảnh hợp lệ gọi `POST /services/{id}/image` thành công và cập nhật thumbnail. |
+| CAT-OWN-UI-T07 | Bấm "Xóa ảnh" dịch vụ | Xác nhận và gọi `DELETE /services/{id}/image`, thumbnail chuyển về icon placeholder. |
+| CAT-OWN-UI-T08 | Bấm "Ngừng bán" / "Mở bán lại" dịch vụ | Mở dialog xác nhận, gọi `PATCH /services/{id}/status`, StatusBadge đổi tương ứng (`on_sale` $\leftrightarrow$ `discontinued`). |
+| CAT-OWN-UI-T09 | Mở modal "Danh mục dịch vụ" và thêm danh mục mới | Gọi `POST /service-categories`, danh sách danh mục cập nhật ngay lập tức; trùng tên báo lỗi 409 dưới ô nhập. |
+| CAT-OWN-UI-T10 | Xóa danh mục đang có dịch vụ liên kết | Gọi `DELETE /service-categories/{id}` nhận 409 `service_category_in_use`, hiển thị cảnh báo không thể xóa. |
+| CAT-OWN-UI-T11 | Mở `/owner/packages` và xem danh sách gói | Hiển thị bảng gói dịch vụ: ảnh, tên, tổng số buổi, thời hạn ngày, giá gói, giá gốc gạch ngang và thời gian mở bán. |
+| CAT-OWN-UI-T12 | Tạo gói dịch vụ mới có 2 dịch vụ thành phần | Tính toán đúng tổng buổi, giá lẻ và % tiết kiệm; gọi `POST /packages` thành công; đóng dialog và làm mới bảng. |
+| CAT-OWN-UI-T13 | Chọn dịch vụ đã ngừng bán khi thêm vào gói | Báo lỗi `package_service_discontinued` không cho phép chọn. |
+| CAT-OWN-UI-T14 | Sửa gói dịch vụ và thay đổi số buổi / khoảng cách ngày | Gọi `PUT /packages/{id}` gửi toàn bộ danh sách `items[]` mới, cập nhật thành công. |
+| CAT-OWN-UI-T15 | Bấm "Ngừng bán" / "Mở bán lại" gói dịch vụ | Gọi `PATCH /packages/{id}/status`, badge trạng thái gói cập nhật tức thì. |
+
+---
+
 ## Câu hỏi còn mở
 
 - Q-13 (mới): Có tách bảng danh mục dịch vụ (`service_categories` + `category_id`) không? Mặc định: **text tự do, chuẩn hóa khi lưu** (BR-CAT-04).

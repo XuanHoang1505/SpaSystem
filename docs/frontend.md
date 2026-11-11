@@ -168,6 +168,26 @@ Staff và chủ spa giữ `WorkspaceLayout` (sidebar). Không còn dải "Bản 
 - **Hooks & API:** `StaffApi` (mở rộng owner methods), `WorkSchedulesApi` (`@spa/api-client`), wrappers `callStaff`, `callWorkSchedules` (`apps/web/src/lib/api/`), hooks tại `features/staff/hooks/` (`useStaffList`, `useStaffDetail`, `useStaffMutations`, `useWorkSchedules`, `useWorkScheduleMutations`).
 - **Chính sách:** `catalogPolicies.maxShiftDaysAhead` (60 ngày), `maxBatchShifts` (500 ca), `maxWorkScheduleQueryRangeDays` (42 ngày).
 
+### Quản lý dịch vụ & gói dịch vụ (chủ spa, UC-SPA-09)
+
+- **Trang dịch vụ:** `/owner/services` (SCR-W31, `OwnerServicesPage`, `OwnerServicesView`), chạy trong `OwnerLayout` (sidebar, hỗ trợ theme sáng và tối).
+  - **Bộ lọc & Điều hướng:** `ServiceFilterToolbar` (tìm kiếm debounce 300ms theo tên dịch vụ, lọc theo danh mục `categoryId`, lọc theo trạng thái `on_sale`/`discontinued`, nút đặt lại, nút mở modal "Danh mục dịch vụ" và "Thêm dịch vụ").
+  - **Bảng danh sách:** `ServiceTable` (TanStack Table 8 với phân trang `useTableSearchParams`, ảnh đại diện 40×40 kèm fallback, tên dịch vụ & mô tả ngắn, danh mục, thời lượng, giá niêm yết `formatCurrency`, `StatusBadge` xanh/xám, menu thao tác từng dòng kèm icon).
+  - **Chi tiết:** `ServiceDetailSheet` xem ảnh, mô tả chi tiết, giá, thời lượng, danh sách các bước quy trình thực hiện (`steps[]` sắp theo `sortOrder`), ngày tạo/cập nhật, cùng các nút hành động sửa, đổi ảnh, ngừng bán/mở bán lại.
+  - **Modal tạo & sửa dịch vụ:** `ServiceFormDialog` (React Hook Form + Zod `serviceFormSchema`), nhập tên, danh mục, giá, thời lượng, mô tả ngắn, mô tả dài, trình quản lý động danh sách các bước quy trình thực hiện (thêm/sửa/xóa bước, thời lượng từng bước).
+  - **Modal quản lý ảnh dịch vụ:** `ServiceImageDialog` xem trước ảnh hiện tại, kéo thả hoặc chọn file ảnh mới (PNG/JPG/WEBP $\le$ 5MB), tải lên Cloudinary hoặc xóa ảnh trở về mặc định.
+  - **Modal quản lý danh mục dịch vụ:** `ServiceCategoriesDialog` liệt kê danh sách danh mục kèm số dịch vụ phụ thuộc (`serviceCount`), thêm mới danh mục, sửa thông tin & thứ tự sắp xếp, xóa danh mục (chặn và cảnh báo khi danh mục đang có dịch vụ liên kết).
+  - **Hộp thoại trạng thái:** `ToggleServiceStatusDialog` xác nhận chuyển đổi trạng thái giữa Đang mở bán và Ngừng bán.
+- **Trang gói dịch vụ:** `/owner/packages` (SCR-W32, `OwnerPackagesPage`, `OwnerPackagesView`), chạy trong `OwnerLayout`.
+  - **Bộ lọc & Điều hướng:** `PackageFilterToolbar` (tìm kiếm debounce 300ms theo tên gói, lọc trạng thái, nút đặt lại, nút "Tạo gói dịch vụ").
+  - **Bảng danh sách:** `PackageTable` (TanStack Table 8, ảnh đại diện có fallback sang ảnh của dịch vụ đầu tiên theo BR-CAT-07, tên & mô tả ngắn, số buổi, thời hạn ngày, giá bán & giá bán lẻ gạch ngang kèm % tiết kiệm, thời gian mở bán nếu có, `StatusBadge`, menu thao tác).
+  - **Chi tiết:** `PackageDetailSheet` xem ảnh gói, % tiết kiệm, hạn dùng, danh sách các buổi dịch vụ theo timeline (`items[]`: thứ tự, tên dịch vụ, số buổi, ngày cách tối thiểu giữa các buổi, ghi chú), thao tác sửa, đổi ảnh, đổi trạng thái.
+  - **Modal tạo & sửa gói dịch vụ:** `PackageFormDialog` (React Hook Form + Zod `packageFormSchema`), nhập tên gói, giá bán, thời hạn sử dụng, khoảng ngày mở bán (tùy chọn), trình quản lý các buổi dịch vụ (chọn dịch vụ đang mở bán `useServiceSearch({ status: 'on_sale' })`, số buổi, thứ tự, khoảng cách ngày tối thiểu), tự động tính toán tổng giá bán lẻ và mức tiết kiệm theo thời gian thực.
+  - **Modal ảnh gói dịch vụ:** `PackageImageDialog` tải ảnh lên hoặc xóa ảnh gói (ảnh sẽ tự động chuyển sang hiển thị ảnh của dịch vụ đầu tiên trong gói).
+  - **Hộp thoại trạng thái:** `TogglePackageStatusDialog` xác nhận chuyển đổi trạng thái giữa Đang mở bán và Ngừng bán.
+- **Hooks & API:** `CatalogApi` (mở rộng owner methods cho services, packages, categories), wrappers `callCatalog`, `callCatalogVoid` (`apps/web/src/lib/api/catalog.ts`), mutation hooks tại `features/services/hooks/useServiceMutations.ts` và `features/service-packages/hooks/usePackageMutations.ts`.
+- **Chính sách:** `catalogPolicies.maxImageSizeBytes` (5MB), `allowedImageMimeTypes` (`image/jpeg`, `image/png`, `image/webp`).
+
 ## Chạy và kiểm tra
 
 ```powershell
