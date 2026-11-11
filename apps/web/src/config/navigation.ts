@@ -55,6 +55,7 @@ const icons: Record<string, LucideIcon> = {
   '/staff': LayoutDashboardIcon,
   '/staff/schedule': CalendarDaysIcon,
   '/staff/bookings': CalendarCheckIcon,
+  '/staff/care-history': HistoryIcon,
   '/owner': LayoutDashboardIcon,
   '/owner/services': SparklesIcon,
   '/owner/packages': PackageIcon,
