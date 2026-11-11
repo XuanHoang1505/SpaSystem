@@ -3,6 +3,7 @@ using NhuNguyetSpa.Application.DTOs.Bookings;
 using NhuNguyetSpa.Application.DTOs.Care;
 using NhuNguyetSpa.Application.DTOs.Purchases;
 using NhuNguyetSpa.Application.DTOs.Staff;
+using NhuNguyetSpa.Application.DTOs.WorkSchedules;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
 
@@ -31,6 +32,20 @@ public interface IAppointmentRepository : IRepository<Appointment>
     /// </summary>
     Task<IReadOnlyList<AssignedAppointmentDto>> ListAssignedAsync(
         Guid staffMemberId, DateOnly from, DateOnly to, AppointmentStatus? status, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// UC-SPA-24: the staff member's appointments on <paramref name="date"/> overlapping [<paramref name="start"/>,
+    /// <paramref name="end"/>) with a status of <c>ShiftAppointments.ShownStatuses</c> (BR-STF-11), by start time.
+    /// </summary>
+    Task<IReadOnlyList<ShiftAppointmentDto>> ListInShiftAsync(
+        Guid staffMemberId, DateOnly date, TimeOnly start, TimeOnly end, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// UC-SPA-26 (BR-CARE-07): the staff member's <c>completed</c> appointments matching <paramref name="criteria"/>, newest first;
+    /// the search matches the customer's name ignoring case and accents, or part of the phone number.
+    /// </summary>
+    Task<PagedResult<CareHistoryItemDto>> SearchCareHistoryAsync(
+        Guid staffMemberId, CareHistoryCriteria criteria, CancellationToken cancellationToken);
 
     /// <summary>
     /// Locks the appointment row (<c>FOR UPDATE</c>, so call inside a transaction) and returns it tracked with its entitlement

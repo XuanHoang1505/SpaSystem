@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NhuNguyetSpa.Application.DTOs.WorkSchedules;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
+using NhuNguyetSpa.Application.UseCases.WorkSchedules;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
 using NhuNguyetSpa.Infrastructure.Persistence;
@@ -32,6 +33,25 @@ public sealed class WorkScheduleRepository : Repository<WorkSchedule>, IWorkSche
 
     public Task<WorkScheduleDto?> GetDtoAsync(Guid id, CancellationToken cancellationToken) =>
         Set.AsNoTracking().Where(shift => shift.Id == id).Select(ToDto).FirstOrDefaultAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<MyWorkScheduleDto>> ListMineAsync(
+        Guid staffMemberId, DateOnly fromDate, DateOnly toDate, WorkScheduleStatus? status, CancellationToken cancellationToken)
+    {
+        var shown = ShiftAppointments.ShownStatuses.ToArray();
+        var query = Set.AsNoTracking()
+            .Where(shift => shift.StaffMemberId == staffMemberId && shift.Date >= fromDate && shift.Date <= toDate);
+        if (status is { } wanted)
+            query = query.Where(shift => shift.Status == wanted);
+        return await query
+            .OrderBy(shift => shift.Date).ThenBy(shift => shift.StartTime).ThenBy(shift => shift.Id)
+            .Select(shift => new MyWorkScheduleDto(
+                shift.Id, shift.Date, shift.StartTime, shift.EndTime, shift.Status,
+                Context.Appointments.Count(appointment =>
+                    appointment.StaffMemberId == shift.StaffMemberId && appointment.Date == shift.Date &&
+                    appointment.StartTime < shift.EndTime && shift.StartTime < appointment.EndTime &&
+                    shown.Contains(appointment.Status))))
+            .ToListAsync(cancellationToken);
+    }
 
     public Task<bool> HasActiveOverlapAsync(
         Guid staffMemberId, DateOnly date, TimeOnly start, TimeOnly end, Guid? excludeId, CancellationToken cancellationToken) =>
