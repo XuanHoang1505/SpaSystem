@@ -26,6 +26,8 @@ import { MyTreatmentPlanDetailPage } from '@/pages/customer/MyTreatmentPlanDetai
 import { MyTreatmentPlansPage } from '@/pages/customer/MyTreatmentPlansPage';
 import { PaymentResultPage } from '@/pages/customer/PaymentResultPage';
 import { OwnerAppointmentsPage } from '@/pages/owner/OwnerAppointmentsPage';
+import { OwnerPackagesPage } from '@/pages/owner/OwnerPackagesPage';
+import { OwnerServicesPage } from '@/pages/owner/OwnerServicesPage';
 import { OwnerStaffPage } from '@/pages/owner/OwnerStaffPage';
 import { HomePage } from '@/pages/public/HomePage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
@@ -112,10 +114,12 @@ export const customerPages: Record<string, ReactElement> = {
 export const ownerPages: Record<string, ReactElement> = {
   '/owner/bookings': <OwnerAppointmentsPage />,
   '/owner/staff': <OwnerStaffPage />,
+  '/owner/services': <OwnerServicesPage />,
+  '/owner/packages': <OwnerPackagesPage />,
 };
 
 /** Login, register, forgot-password: own split layout without the site header/footer, guests only. */
-const guestPages: Record<string, ReactElement> = {
+export const guestPages: Record<string, ReactElement> = {
   '/login': <LoginPage />,
   '/register': <RegisterPage />,
   '/forgot-password': <ForgotPasswordPage />,
