@@ -5,8 +5,11 @@ import type {
   MyOrderListItem,
   OrderDetail,
   OrderListParams,
+  OrderListItem,
   OrderPreview,
   OrderRequest,
+  OrderSearchParams,
+  OwnerOrderDetail,
   PagedResponse,
   PaymentAttempt,
   PaymentClient,
@@ -98,10 +101,43 @@ export class OrdersApi {
   }
 }
 
+const managementBase = '/api/v1/orders';
+
+/** UC-SPA-13: the owner's order search, detail and cancellation (`order.manage`). */
+export class OrderManagementApi {
+  constructor(private readonly client: ApiClient) {}
+
+  listOrders(params: OrderSearchParams, signal?: AbortSignal) {
+    return this.client.get<ApiResponse<PagedResponse<OrderListItem>>>(managementBase, {
+      query: { ...params },
+      signal,
+    });
+  }
+
+  getOrder(id: string, signal?: AbortSignal) {
+    return this.client.get<ApiResponse<OwnerOrderDetail>>(
+      `${managementBase}/${encodeURIComponent(id)}`,
+      { signal },
+    );
+  }
+
+  /** Only a `pending_payment` order can be cancelled; the reason is required (1-500 characters, Q-43). */
+  cancelOrder(id: string, reason: string) {
+    return this.client.post<{ reason: string }, ApiResponse<OwnerOrderDetail>>(
+      `${managementBase}/${encodeURIComponent(id)}/cancel`,
+      { reason },
+    );
+  }
+}
+
 export const ordersQueryKeys = {
   all: ['orders'] as const,
   cart: ['orders', 'cart'] as const,
   list: (params: OrderListParams) => ['orders', 'list', params] as const,
   preview: (request: OrderRequest) => ['orders', 'preview', request] as const,
   order: (id: string) => ['orders', 'detail', id] as const,
+  /** Owner keys live under `['orders', 'manage']`, apart from the customer's order detail. */
+  managedLists: ['orders', 'manage', 'list'] as const,
+  managedList: (params: OrderSearchParams) => ['orders', 'manage', 'list', params] as const,
+  managedOrder: (id: string) => ['orders', 'manage', 'detail', id] as const,
 };
