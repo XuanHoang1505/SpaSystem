@@ -22,3 +22,4 @@ export { HoldNotice, OrderTotals } from './components/OrderSummary';
 export { OrdersBreadcrumb } from './components/OrdersBreadcrumb';
 export { PromotionField } from './components/PromotionField';
 export { useOrderPreview } from './hooks/useOrderPreview';
+export { OwnerOrdersView } from './components/owner/OwnerOrdersView';

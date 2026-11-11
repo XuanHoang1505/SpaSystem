@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { cn } from '@/lib/utils';
+import { useCancelOrder } from '../hooks/useCancelOrder';
 import { useMyOrders } from '../hooks/useMyOrders';
 import { orderStatusBadge } from '../orderStatus';
 import { CancelOrderDialog } from './CancelOrderDialog';
@@ -34,6 +35,7 @@ const parsePage = (value: string | null) => {
 /** SCR-W19 — Đơn hàng của tôi (UC-SPA-12): filter by status (server side, in the URL), detail, pay again, cancel. */
 export function MyOrdersView() {
   useDocumentTitle('Đơn hàng của tôi');
+  const cancelOrder = useCancelOrder();
   const [search, setSearch] = useSearchParams();
   const status = parseStatus(search.get('status'));
   const pageNumber = parsePage(search.get('page'));
@@ -186,7 +188,11 @@ export function MyOrdersView() {
       )}
 
       <OrderDetailSheet order={viewing} onClose={() => setViewing(null)} />
-      <CancelOrderDialog order={cancelling} onClose={() => setCancelling(null)} />
+      <CancelOrderDialog
+        order={cancelling}
+        onClose={() => setCancelling(null)}
+        cancel={cancelOrder}
+      />
     </section>
   );
 }

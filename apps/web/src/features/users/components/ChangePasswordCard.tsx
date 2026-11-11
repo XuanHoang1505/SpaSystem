@@ -101,7 +101,7 @@ export function ChangePasswordCard() {
   const isBusy = isSubmitting || changePasswordMutation.isPending;
 
   return (
-    <Card>
+    <Card id="doi-mat-khau" className="scroll-mt-24">
       <CardHeader>
         <CardTitle>Đổi mật khẩu</CardTitle>
         <CardDescription>Cập nhật mật khẩu để bảo vệ tài khoản của bạn.</CardDescription>

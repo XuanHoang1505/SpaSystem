@@ -632,31 +632,31 @@ Phạm vi: Quản lý chương trình khuyến mãi (`SCR-W35` — `/owner/promo
 
 ### Bảng mã lỗi và cách xử lý giao diện chủ spa (UC-SPA-14)
 
-| Mã lỗi backend | Ngữ cảnh | Cách xử lý trên giao diện |
-| --- | --- | --- |
-| `promotion_not_found` (404) | Sửa, đổi trạng thái | Toast lỗi "Không tìm thấy chương trình khuyến mãi hoặc đã bị xóa.", đóng modal và tải lại bảng (`invalidateQueries`). |
-| `promotion_code_exists` (409) | Tạo hoặc sửa mã trùng | Báo lỗi trực tiếp dưới ô nhập mã: "Mã khuyến mãi này đã tồn tại trong hệ thống." |
-| `promotion_in_use` (409) | Sửa mã/loại/giá trị khi đã có lượt dùng | Toast lỗi: "Chương trình đã có lượt dùng, không thể đổi mã, hình thức hay giá trị giảm." Form tự động khóa các trường này. |
-| `promotion_usage_limit_below_used` (400) | Giảm giới hạn nhỏ hơn lượt đã dùng | Báo lỗi dưới ô tổng số lượt: "Tổng số lượt không được nhỏ hơn số lượt đã dùng ({usedCount})." |
-| `validation_error` (400) | Form nhập sai quy tắc (giá trị âm, ngày sai...) | Gắn lỗi cụ thể vào từng `FormField` tương ứng thông qua React Hook Form + Zod. |
-| `unauthorized` (401) / `forbidden` (403) | Hết phiên hoặc không phải chủ spa | Điều hướng về `/login` hoặc hiển thị trang báo quyền hạn. |
+| Mã lỗi backend                           | Ngữ cảnh                                        | Cách xử lý trên giao diện                                                                                                  |
+| ---------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `promotion_not_found` (404)              | Sửa, đổi trạng thái                             | Toast lỗi "Không tìm thấy chương trình khuyến mãi hoặc đã bị xóa.", đóng modal và tải lại bảng (`invalidateQueries`).      |
+| `promotion_code_exists` (409)            | Tạo hoặc sửa mã trùng                           | Báo lỗi trực tiếp dưới ô nhập mã: "Mã khuyến mãi này đã tồn tại trong hệ thống."                                           |
+| `promotion_in_use` (409)                 | Sửa mã/loại/giá trị khi đã có lượt dùng         | Toast lỗi: "Chương trình đã có lượt dùng, không thể đổi mã, hình thức hay giá trị giảm." Form tự động khóa các trường này. |
+| `promotion_usage_limit_below_used` (400) | Giảm giới hạn nhỏ hơn lượt đã dùng              | Báo lỗi dưới ô tổng số lượt: "Tổng số lượt không được nhỏ hơn số lượt đã dùng ({usedCount})."                              |
+| `validation_error` (400)                 | Form nhập sai quy tắc (giá trị âm, ngày sai...) | Gắn lỗi cụ thể vào từng `FormField` tương ứng thông qua React Hook Form + Zod.                                             |
+| `unauthorized` (401) / `forbidden` (403) | Hết phiên hoặc không phải chủ spa               | Điều hướng về `/login` hoặc hiển thị trang báo quyền hạn.                                                                  |
 
 ### Kiểm thử giao diện quản trị khuyến mãi (`PRM-UI-T01...T12`)
 
-| Mã | Tình huống kiểm thử | Kết quả mong đợi |
-| --- | --- | --- |
-| PRM-UI-T01 | Mở `/owner/promotions` lần đầu | Bảng hiển thị Skeleton khi đang tải, sau đó hiển thị danh sách khuyến mãi với mã, mức giảm, đơn tối thiểu, thời gian, lượt dùng, badge trạng thái. |
-| PRM-UI-T02 | Lọc khuyến mãi theo trạng thái và khoảng ngày | Request `GET /promotions` mang đúng `status`, `fromDate`, `toDate`; URL đồng bộ tham số; đổi bộ lọc quay về trang 1. |
-| PRM-UI-T03 | Bấm "Tạo khuyến mãi" và nhập form hợp lệ | Gọi `POST /promotions`, tự động viết hoa mã, đóng modal, toast thông báo thành công và bảng khuyến mãi tự động tải lại. |
-| PRM-UI-T04 | Form tạo khuyến mãi validate lỗi (mã trống/sai regex, % giảm > 100, ngày kết thúc $\le$ bắt đầu) | Chặn gửi request, hiện thông báo lỗi tiếng Việt dưới từng ô nhập. |
-| PRM-UI-T05 | Tạo khuyến mãi với mã đã tồn tại (409) | Nhận mã lỗi `promotion_code_exists`, báo lỗi đỏ trực tiếp dưới ô nhập mã. |
-| PRM-UI-T06 | Mở "Sửa thông tin" khuyến mãi chưa có lượt dùng (`usedCount = 0`) | Cho phép sửa toàn bộ các trường; gọi `PUT /promotions/{id}` thành công khi lưu. |
-| PRM-UI-T07 | Mở "Sửa thông tin" khuyến mãi đã có lượt dùng (`usedCount > 0`) | Ô mã, hình thức giảm và giá trị giảm bị khóa (disabled) kèm ghi chú giải thích BR-PRM-06. |
-| PRM-UI-T08 | Nhập tổng lượt dùng mới nhỏ hơn số lượt đã dùng | Báo lỗi `promotion_usage_limit_below_used` dưới ô nhập tổng số lượt. |
-| PRM-UI-T09 | Chuyển hình thức giảm từ % sang tiền mặt cố định | Ô mức giảm tối đa tự động ẩn và giá trị đặt về `null`. |
-| PRM-UI-T10 | Bấm "Tạm dừng" / "Kích hoạt lại" khuyến mãi | Mở dialog xác nhận, gọi `PATCH /promotions/{id}/status`, `StatusBadge` đổi tương ứng (`active` $\leftrightarrow$ `stopped`). |
-| PRM-UI-T11 | Mở xem chi tiết khuyến mãi (`PromotionDetailSheet`) | Drawer hiển thị đầy đủ thông tin, điều kiện áp dụng, tỷ lệ đã dùng / tổng lượt, các nút hành động footer. |
-| PRM-UI-T12 | Router `/owner/promotions` | Render trang thật, không còn hiển thị `PlaceholderPage`. |
+| Mã         | Tình huống kiểm thử                                                                              | Kết quả mong đợi                                                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PRM-UI-T01 | Mở `/owner/promotions` lần đầu                                                                   | Bảng hiển thị Skeleton khi đang tải, sau đó hiển thị danh sách khuyến mãi với mã, mức giảm, đơn tối thiểu, thời gian, lượt dùng, badge trạng thái. |
+| PRM-UI-T02 | Lọc khuyến mãi theo trạng thái và khoảng ngày                                                    | Request `GET /promotions` mang đúng `status`, `fromDate`, `toDate`; URL đồng bộ tham số; đổi bộ lọc quay về trang 1.                               |
+| PRM-UI-T03 | Bấm "Tạo khuyến mãi" và nhập form hợp lệ                                                         | Gọi `POST /promotions`, tự động viết hoa mã, đóng modal, toast thông báo thành công và bảng khuyến mãi tự động tải lại.                            |
+| PRM-UI-T04 | Form tạo khuyến mãi validate lỗi (mã trống/sai regex, % giảm > 100, ngày kết thúc $\le$ bắt đầu) | Chặn gửi request, hiện thông báo lỗi tiếng Việt dưới từng ô nhập.                                                                                  |
+| PRM-UI-T05 | Tạo khuyến mãi với mã đã tồn tại (409)                                                           | Nhận mã lỗi `promotion_code_exists`, báo lỗi đỏ trực tiếp dưới ô nhập mã.                                                                          |
+| PRM-UI-T06 | Mở "Sửa thông tin" khuyến mãi chưa có lượt dùng (`usedCount = 0`)                                | Cho phép sửa toàn bộ các trường; gọi `PUT /promotions/{id}` thành công khi lưu.                                                                    |
+| PRM-UI-T07 | Mở "Sửa thông tin" khuyến mãi đã có lượt dùng (`usedCount > 0`)                                  | Ô mã, hình thức giảm và giá trị giảm bị khóa (disabled) kèm ghi chú giải thích BR-PRM-06.                                                          |
+| PRM-UI-T08 | Nhập tổng lượt dùng mới nhỏ hơn số lượt đã dùng                                                  | Báo lỗi `promotion_usage_limit_below_used` dưới ô nhập tổng số lượt.                                                                               |
+| PRM-UI-T09 | Chuyển hình thức giảm từ % sang tiền mặt cố định                                                 | Ô mức giảm tối đa tự động ẩn và giá trị đặt về `null`.                                                                                             |
+| PRM-UI-T10 | Bấm "Tạm dừng" / "Kích hoạt lại" khuyến mãi                                                      | Mở dialog xác nhận, gọi `PATCH /promotions/{id}/status`, `StatusBadge` đổi tương ứng (`active` $\leftrightarrow$ `stopped`).                       |
+| PRM-UI-T11 | Mở xem chi tiết khuyến mãi (`PromotionDetailSheet`)                                              | Drawer hiển thị đầy đủ thông tin, điều kiện áp dụng, tỷ lệ đã dùng / tổng lượt, các nút hành động footer.                                          |
+| PRM-UI-T12 | Router `/owner/promotions`                                                                       | Render trang thật, không còn hiển thị `PlaceholderPage`.                                                                                           |
 
 | Mã         | Kiểm tra                                                                                                                                                                                                                                                                                              |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -699,9 +699,114 @@ Mẫu tham chiếu bố cục (project web `9696885610900739659`): giỏ hàng `
 - **Dữ liệu:** `GET /me/orders` (`ordersQueryKeys.list`), `GET /me/orders/{id}` (chi tiết trong `Sheet`), `POST /me/orders/{id}/cancel`. `OrdersApi.listOrders`, `cancelOrder`; kiểu `MyOrderListItem`, `OrderListParams`.
 - **Lọc và phân trang:** chip một trạng thái (Tất cả, Chờ thanh toán, Đã thanh toán, Hết hạn, Đã hủy) gửi `status` lên server; `?status=`, `?page=` trên URL; trạng thái lạ trên URL bị bỏ qua; đổi bộ lọc thì về trang 1; 10 đơn/trang (`SimplePager`).
 - **Nút theo cờ API (không tự suy luận):** `isPayable` → "Thanh toán ngay (VNPay)" tới `/checkout?orderId=`; `canCancel` → "Hủy đơn"; "Xem chi tiết" luôn có.
-- **Hủy đơn:** hộp thoại "Hủy đơn hàng?" có ô "Lý do hủy" bắt buộc (cắt khoảng trắng, 1–500 ký tự, Q-43). Lỗi `409 order_not_cancellable` → "Đơn hàng không còn có thể hủy."; `409 order_payment_in_progress` → "Đơn hàng đang được thanh toán, chưa thể hủy."; cả hai tải lại danh sách. Thành công: toast "Đã hủy đơn {mã}", danh sách và chi tiết cập nhật.
+- **Hủy đơn:** hộp thoại "Hủy đơn hàng {mã}?" (từ 11/11/2026, dùng chung với UC-SPA-13) có ô "Lý do hủy" bắt buộc (cắt khoảng trắng, 1–500 ký tự, Q-43). Lỗi `409 order_not_cancellable` → "Đơn hàng không còn có thể hủy."; `409 order_payment_in_progress` → "Đơn hàng đang được thanh toán, chưa thể hủy."; cả hai tải lại danh sách. `404 order_not_found` → toast "Không tìm thấy đơn hàng." và đóng hộp thoại. Thành công: toast "Đã hủy đơn {mã}", danh sách và chi tiết cập nhật.
 - **Trạng thái:** đang tải (3 thẻ `Skeleton`), lỗi (`ErrorState` + "Thử lại"), rỗng không lọc ("Bạn chưa có đơn hàng nào" + "Khám phá dịch vụ"), rỗng có lọc ("Không có đơn hàng nào ở trạng thái này" + "Xem tất cả đơn"), có dữ liệu.
 - **Lọc theo ngày tạo (đã làm):** hai ô "Từ ngày", "Đến ngày" (`?fromDate=`, `?toDate=`, `yyyy-MM-dd`); ngày kết thúc trước ngày bắt đầu thì báo "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu." và không gửi.
 - **Theo mẫu Stitch:** khối đầu trang gộp tiêu đề "Đơn hàng của bạn", chip trạng thái và lọc ngày trong một thẻ; dải đầu mỗi thẻ đơn "Mã … · Ngày đặt", đơn chờ thanh toán có viền nổi và nhãn đếm ngược "Tự hủy sau mm:ss" (hạn `paymentDueAtUtc`); chân thẻ có dòng nói trạng thái (chưa thanh toán, đã lưu dịch vụ vào tài khoản, hết hạn, đã hủy).
 - **Chưa làm / thiếu từ backend:** số đơn theo từng trạng thái trên chip (API không trả), tên/ảnh sản phẩm đầy đủ (danh sách chỉ có `productNames` và `itemCount`), "Đặt lịch với quyền này" và "Xem hóa đơn" của mẫu (chưa có API/UC).
-- **Kiểm thử:** `MyOrdersView.test.tsx` (4 trạng thái, chip lọc và URL, trang, nút theo cờ, hủy đơn có lý do và các mã lỗi, chi tiết) và `orders.test.ts` của `api-client` (`listOrders`, `cancelOrder`).
+- **Kiểm thử:** ghi chú cũ nêu `MyOrdersView.test.tsx` và test `listOrders`/`cancelOrder` trong `api-client/orders.test.ts`, nhưng ngày 11/11/2026 repo không có hai test này. Hiện có `CancelOrderDialog.test.tsx` (hộp thoại hủy dùng chung với UC-SPA-13); test danh sách của khách còn thiếu.
+
+### Giao diện web: Quản lý đơn hàng (UC-SPA-13, SCR-W37, 11/11/2026)
+
+#### Phụ thuộc và lệch so với `data_screens.py`
+
+- Backend xong (`/orders`, `/orders/{id}`, `/orders/{id}/cancel`, quyền `order.manage`). Auth thật, `OwnerLayout`, `DataTable`, `useTableSearchParams` đã có. Không cần màn khác làm trước.
+- `SCR-W37` ghi route `/owner/orders (repo hiện là /owner/payments)`, đánh dấu đổi tên. Làm: **đổi** `/owner/payments` "Thanh toán" thành `/owner/orders` "Đơn hàng" trong `routes.ts`, `navigation.ts` (icon `ReceiptTextIcon`) và `docs/frontend.md`. Không giữ route cũ, không chuyển hướng (route cũ chỉ là placeholder).
+- `SCR-W37` có hai bộ lọc "Mã đơn" và "Khách" riêng. API chỉ có một ô `search` (mã đơn, hoặc tên/SĐT/email khách), nên giao diện dùng **một ô tìm kiếm**.
+- Danh sách (`OrderListItemDto`) **không có** `canCancel`, nên **chỉ hủy được trong Sheet chi tiết** (nút theo `canCancel` của `GET /orders/{id}`); dòng bảng không có thao tác hủy (đã duyệt 11/11/2026).
+
+#### Hợp đồng dùng chung (thêm, không đổi cái cũ)
+
+- `shared-types/orders.ts`: `OrderCustomerSummary { id, fullName, phoneNumber }`; `OrderListItem { id, code, status, createdAtUtc, paymentDueAtUtc, grandTotal, itemCount, customer: OrderCustomerSummary, paymentCount, latestPaymentStatus: PaymentStatus | null, promotionCode: string | null }`; `OrderCustomer` (thêm `email`); `OwnerOrderPayment { id, provider, amount, status, requestCode, providerTransactionId: string | null, createdAtUtc, expiresAtUtc, paidAtUtc: string | null }`; `OwnerOrderDetail` (các trường của `OrderDetail` trừ `payments`, thêm `customer: OrderCustomer`, `payments: OwnerOrderPayment[]`); `OrderSortBy = 'createdAtUtc' | 'grandTotal'`; `OrderSearchParams = OrderListParams & { search?, sortBy?, sortDirection?: 'asc' | 'desc' }`.
+- `api-client/orders.ts`: lớp mới `OrderManagementApi` (`listOrders`, `getOrder`, `cancelOrder` trên `/api/v1/orders`); thêm vào `ordersQueryKeys`: `managedList(params)` = `['orders', 'manage', 'list', params]`, `managedOrder(id)` = `['orders', 'manage', 'detail', id]` (tách khỏi key của khách để hai loại chi tiết không ghi đè nhau). `lib/api/orders.ts` thêm `callOrderManagement`.
+
+#### SCR-W37 — Quản lý đơn hàng
+
+- **Route:** `/owner/orders` · **Vai trò:** chủ spa (`order.manage`) · **Layout:** `OwnerLayout` (sáng/tối) · **Mẫu bố cục:** danh sách quản trị (`DataTable` + thanh lọc, phân trang server) + chi tiết trong `Sheet` + hộp thoại hủy (`Dialog` có ô lý do).
+- **Feature:** `features/orders/components/owner/` (`OwnerOrdersView`, `OrderFilterToolbar`, `OrderTable`, `OwnerOrderDetailSheet`); hooks `useManagedOrders`, `useManagedOrder`, `useCancelManagedOrder`. Trang `pages/owner/OwnerOrdersPage.tsx` chỉ ghép `OwnerOrdersView`.
+- **Đầu trang (`PageHeader`):** tiêu đề "Quản lý đơn hàng", mô tả "Tìm đơn theo mã hoặc khách hàng, xem các lần thanh toán và hủy đơn chưa thanh toán." Không có nút tạo (chủ spa không tạo đơn). Breadcrumb "Trang chủ / Quản trị spa / Đơn hàng" như trang khuyến mãi.
+
+**Dữ liệu:** `GET /orders` (`ordersQueryKeys.managedList(params)`), `GET /orders/{id}` (`managedOrder(id)`, chỉ gọi khi Sheet mở), `POST /orders/{id}/cancel`.
+
+**Bộ lọc, sắp xếp, phân trang** (gửi lên server, giữ trên URL bằng `useTableSearchParams`; đổi bộ lọc hoặc sắp xếp thì về trang 1):
+
+| Điều khiển                                     | Tham số API               | URL                       | Ghi chú                                                                                                                 |
+| ---------------------------------------------- | ------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Ô tìm "Tìm mã đơn, tên, SĐT hoặc email khách…" | `search`                  | `?search=`                | Chờ 300 ms sau khi gõ; cắt khoảng trắng; tối đa 100 ký tự (`maxLength`)                                                 |
+| `Select` trạng thái                            | `status`                  | `?status=`                | "Tất cả trạng thái", "Chờ thanh toán", "Đã thanh toán", "Hết hạn", "Đã hủy"; giá trị lạ trên URL bị bỏ qua              |
+| "Từ ngày", "Đến ngày" (`input type=date`)      | `fromDate`, `toDate`      | `?fromDate=`, `?toDate=`  | Ngày tạo theo giờ VN, gồm hai đầu. Đến < Từ → "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu." và không gửi khoảng ngày |
+| Tiêu đề cột "Ngày tạo", "Tổng thanh toán"      | `sortBy`, `sortDirection` | `?sortBy=&sortDirection=` | Mặc định `createdAtUtc desc`                                                                                            |
+| `DataTablePagination`                          | `pageNumber`, `pageSize`  | `?page=`, `?pageSize=`    | Mặc định 10/trang; trang vượt `totalPages` thì về trang cuối                                                            |
+| "Đặt lại bộ lọc" (ghost, `XIcon`)              | —                         | xóa các tham số trên      | Chỉ hiện khi có bộ lọc                                                                                                  |
+
+**Cột `DataTable<OrderListItem>`** (`getRowId = id`, caption "Danh sách đơn hàng", `onRowClick` mở Sheet):
+
+| Cột             | Nội dung                                                                                      | Ẩn dưới |
+| --------------- | --------------------------------------------------------------------------------------------- | ------- |
+| Mã đơn          | `code` (`font-mono font-medium`), dòng phụ "{itemCount} sản phẩm"                             | —       |
+| Khách hàng      | `customer.fullName`, dòng phụ `customer.phoneNumber`                                          | —       |
+| Ngày tạo        | `formatDateTimeUtc(createdAtUtc)` (sắp xếp được)                                              | `md`    |
+| Tổng thanh toán | `formatCurrency(grandTotal)`, căn phải (sắp xếp được); dòng phụ mã khuyến mãi nếu có          | —       |
+| Thanh toán      | `StatusBadge` của `latestPaymentStatus` + "{paymentCount} lần"; `null` → "Chưa thanh toán" mờ | `lg`    |
+| Trạng thái      | `StatusBadge` theo `orderStatusBadge` (đã có)                                                 | —       |
+
+Nhãn trạng thái dùng lại `orderStatusBadge` (Chờ thanh toán `warning`, Đã thanh toán `success`, Hết hạn `neutral`, Đã hủy `neutral`) và `paymentStatusBadge` (Đang xử lý `warning`, Thành công `success`, Thất bại `danger`, Hết hạn `neutral`). Không thêm màu.
+
+**Hành động dòng (`rowActions`):** chỉ "Xem chi tiết" (`EyeIcon`) → mở Sheet. Không có "Hủy đơn" trên dòng.
+
+**Sheet chi tiết `OwnerOrderDetailSheet`** (bên phải, `sm:max-w-lg`, cuộn dọc):
+
+> **Chỉnh theo yêu cầu (11/11/2026):** đầu Sheet có icon biên lai trong vòng tròn `bg-primary/10`. Thân Sheet chia 2 tab: **"Thông tin đơn"** (mặc định: khách hàng, hạn thanh toán/khuyến mãi, sản phẩm, lịch giữ chỗ; mỗi mục có icon) và **"Các lần thanh toán (n)"**. Sản phẩm là danh sách gọn (tên, nhãn loại, giá mỗi dòng; tạm tính, giảm giá, tổng cùng cỡ chữ thường, tổng màu `text-primary`), không dùng thẻ `OrderLines`/`OrderTotals` của trang thanh toán. Cảnh báo hoàn tiền và thông tin hủy nằm trên thanh tab.
+
+- Tiêu đề "Đơn {code}" + `StatusBadge`; mô tả "Tạo lúc {ngày giờ}".
+- **Khách hàng:** họ tên, số điện thoại (`tel:`), email (`mailto:`).
+- **Thông tin đơn:** hạn thanh toán (`paymentDueAtUtc`, chỉ khi `pending_payment`), mã khuyến mãi và số tiền giảm.
+- **Sản phẩm và tổng:** dùng lại `OrderLines`, `OrderTotals`.
+- **Lịch giữ chỗ** (khi `appointment` khác null): ngày, giờ bắt đầu–kết thúc (giờ VN, `formatLocalDate`/`formatLocalTime`, không đổi múi giờ), nhân viên, trạng thái lịch.
+- **Các lần thanh toán** (mới nhất trước, danh sách khối, không phải bảng): `StatusBadge`, số tiền, cổng (`provider`), tạo lúc, hết hạn lúc, thanh toán lúc; "Mã yêu cầu" `requestCode` và "Mã giao dịch" `providerTransactionId` (`font-mono`, "Chưa có" khi null). Không có lần nào → "Chưa có lần thanh toán nào."
+- **Cảnh báo hoàn tiền thủ công:** đơn `cancelled` hoặc `expired` có lần thanh toán `succeeded` → `Alert` "Đơn đã hủy (hoặc hết hạn) nhưng có lần thanh toán thành công. Cần hoàn tiền thủ công cho khách." (Q-20; chỉ hiển thị dữ kiện, không có thao tác).
+- **Thông tin hủy** (khi có `cancelledAtUtc`): "Hủy lúc …", "Lý do: …".
+- **Chân Sheet:** "Hủy đơn" (`variant="destructive"`) khi `canCancel` → mở hộp thoại hủy.
+
+**Hộp thoại hủy:** dùng lại `CancelOrderDialog` của UC-SPA-12, sửa để nhận mutation từ ngoài (khách hoặc chủ spa) thay vì gọi cứng `useCancelOrder`. Tiêu đề "Hủy đơn hàng {code}?", mô tả "Đơn sẽ chuyển sang Đã hủy, các lần thanh toán đang chờ hết hiệu lực và lịch giữ chỗ của đơn (nếu có) bị hủy. Thao tác không thể hoàn tác." Ô "Lý do hủy" bắt buộc (cắt khoảng trắng, 1–500 ký tự, `cancelOrderSchema` đã có), nút "Xác nhận hủy" có `loading`. Thành công: toast "Đã hủy đơn {code}", đóng hộp thoại, ghi dữ liệu trả về vào `managedOrder(id)`, làm mới `['orders', 'manage', 'list']`. Đóng hộp thoại thì focus về nút đã mở nó.
+
+**Mã lỗi → cách xử lý:**
+
+| Mã                            | Nơi              | Giao diện                                                                                              |
+| ----------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------ |
+| `order_not_found` (404)       | Sheet chi tiết   | `EmptyState` "Không tìm thấy đơn hàng" trong Sheet                                                     |
+| `order_not_found` (404)       | Hủy              | Toast "Không tìm thấy đơn hàng.", đóng hộp thoại, làm mới danh sách                                    |
+| `order_not_cancellable` (409) | Hủy              | `Alert` trong hộp thoại "Đơn hàng không còn có thể hủy.", làm mới danh sách và chi tiết                |
+| `validation_error` (400)      | Hủy              | Lỗi dưới ô lý do (khi `errors[].field = reason`), nếu không thì `Alert` thông điệp chung               |
+| `validation_error` (400)      | Danh sách        | Trạng thái lỗi của `DataTable` "Bộ lọc không hợp lệ." + "Đặt lại bộ lọc" (hiếm, vì client đã chặn)     |
+| 401 / 403                     | Mọi nơi          | Theo `RouteGuard` và `ApiClient` hiện có (`/login?redirect=` hoặc `/forbidden`)                        |
+| Lỗi mạng / 5xx                | Danh sách, Sheet | `DataTable` lỗi "Không tải được danh sách đơn hàng." + "Thử lại"; Sheet `OrdersErrorState` + "Thử lại" |
+
+**Trạng thái:** đang tải (skeleton dòng của `DataTable` lần đầu, chỉ báo `isFetching` khi đổi trang/lọc; Sheet dùng `Skeleton`); lỗi (như bảng trên, có "Thử lại"); rỗng không lọc ("Chưa có đơn hàng nào", "Đơn hàng khách tạo khi thanh toán sẽ hiện ở đây."); rỗng có lọc ("Không có đơn hàng phù hợp" + "Đặt lại bộ lọc"); có dữ liệu (bảng + phân trang).
+
+**Responsive và a11y:** dưới `md` ẩn "Ngày tạo", dưới `lg` ẩn "Thanh toán"; ở 320px còn Mã đơn, Khách, Tổng, Trạng thái và menu thao tác, bảng cuộn ngang trong khung của nó, trang không cuộn ngang. Thanh lọc xuống dòng (`flex-wrap`), ô tìm full width trên mobile. Ô tìm và `Select` có `aria-label`; nút menu dòng có `aria-label` "Thao tác cho đơn {code}". Sheet và Dialog giữ focus khi mở, trả focus khi đóng. Kiểm tra cả theme sáng và tối.
+
+**Thiếu từ backend (chỉ liệt kê, không sửa):**
+
+- `canCancel` trong `OrderListItemDto` (hiện suy từ `status`, đúng với BR-ORD-04 của chủ spa; nếu sau này thêm điều kiện thì cần cờ này).
+- Số đơn theo từng trạng thái, tổng tiền theo bộ lọc (không bắt buộc cho UC).
+- Tìm theo mã giao dịch VNPay (`providerTransactionId`) ở danh sách.
+
+#### Kiểm thử giao diện quản lý đơn hàng (`ORD-UI-T21…T34`)
+
+| Mã         | Kiểm tra                                                                                                                                                                                                                           |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ORD-UI-T21 | `OrderManagementApi`: `listOrders` gửi `GET /api/v1/orders` với `search`, `status`, `fromDate`, `toDate`, `sortBy`, `sortDirection`, `pageNumber`, `pageSize`; `getOrder`, `cancelOrder` đúng method, đường dẫn, body `{ reason }` |
+| ORD-UI-T22 | Danh sách: skeleton khi tải; lỗi có "Thử lại" gọi lại; rỗng không lọc đúng nội dung; có dữ liệu hiện mã, khách + SĐT, tổng `vi-VN` đ, badge trạng thái, lần thanh toán                                                             |
+| ORD-UI-T23 | Rỗng có lọc hiện "Không có đơn hàng phù hợp"; "Đặt lại bộ lọc" xóa tham số trên URL                                                                                                                                                |
+| ORD-UI-T24 | Tìm kiếm: gõ xong 300 ms mới gửi `search`, URL có `?search=`, về trang 1                                                                                                                                                           |
+| ORD-UI-T25 | Lọc trạng thái và khoảng ngày gửi đúng query, đồng bộ URL, về trang 1; `status` lạ trên URL bị bỏ qua                                                                                                                              |
+| ORD-UI-T26 | Đến ngày < Từ ngày: hiện lỗi, request không có `fromDate`/`toDate`                                                                                                                                                                 |
+| ORD-UI-T27 | Sắp xếp: mặc định `createdAtUtc desc`; bấm "Tổng thanh toán" gửi `sortBy=grandTotal`, URL đồng bộ                                                                                                                                  |
+| ORD-UI-T28 | Phân trang: đổi trang gửi `pageNumber`; đổi cỡ trang gửi `pageSize` và về trang 1                                                                                                                                                  |
+| ORD-UI-T29 | Menu dòng chỉ có "Xem chi tiết", không có "Hủy đơn" (kể cả đơn `pending_payment`)                                                                                                                                                  |
+| ORD-UI-T30 | Sheet: khách (tên, SĐT, email), dòng hàng, tổng, lịch giữ chỗ, các lần thanh toán có mã yêu cầu/mã giao dịch; `order_not_found` hiện "Không tìm thấy đơn hàng"                                                                     |
+| ORD-UI-T31 | Sheet: "Hủy đơn" theo `canCancel`; đơn `cancelled` có lý do và giờ hủy; đơn hủy/hết hạn có lần `succeeded` hiện cảnh báo hoàn tiền                                                                                                 |
+| ORD-UI-T32 | Hủy: lý do rỗng hoặc > 500 ký tự báo lỗi, không gọi API; hợp lệ gọi `POST /orders/{id}/cancel` với lý do đã cắt khoảng trắng, toast, đóng, danh sách tải lại                                                                       |
+| ORD-UI-T33 | Hủy lỗi `409 order_not_cancellable` hiện thông báo trong hộp thoại và làm mới danh sách; `404 order_not_found` toast và đóng                                                                                                       |
+| ORD-UI-T34 | Route `/owner/orders` render trang thật trong `OwnerLayout`, menu "Đơn hàng"; `/owner/payments` không còn                                                                                                                          |

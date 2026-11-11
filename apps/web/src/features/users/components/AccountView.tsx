@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
 import { ErrorState } from '@/components/shared/ErrorState/ErrorState';
@@ -9,6 +11,13 @@ import { ChangePasswordCard } from './ChangePasswordCard';
 export function AccountView() {
   useDocumentTitle('Thông tin tài khoản');
   const { data: user, isLoading, isError, refetch, isRefetching } = useMe();
+  const { hash } = useLocation();
+
+  // "Đổi mật khẩu" in the account menu links to /account#doi-mat-khau; scroll once the card is rendered.
+  useEffect(() => {
+    if (!user || !hash) return;
+    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [user, hash]);
 
   return (
     <div className="max-w-4xl space-y-6">
