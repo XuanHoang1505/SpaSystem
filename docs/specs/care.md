@@ -3,7 +3,9 @@
 - **Nhóm:** `Care` · **Sprint:** 2 · **Nguồn:** DA §2.2.3 (UC Lập và cập nhật hồ sơ da khách hàng, UC Xác nhận hoàn thành buổi chăm sóc), luồng `FL-03` / ĐX
 - **Entity:** `SkinProfile` (bảng `skin_profiles`), `CustomerAllergy` (bảng `customer_allergies`); ghi thêm `Appointment`, `ServiceEntitlement`, `TreatmentSession`, `TreatmentPlan`, `CustomerPackage` — xem [glossary](../domain/glossary.md), [data-model](../domain/data-model.md)
 - **Trạng thái triển khai:** UC-SPA-27, 28 duyệt và xong phần backend ngày 31/10/2026 theo [plan](../superpowers/plans/2026-10-31-uc-spa-25-27-28-care.md) — xem [progress.md](../progress.md)
-- **Đã đặc tả:** UC-SPA-27, 28 (chỉ backend), làm cùng UC-SPA-25 ([staff.md](staff.md)). **Chưa đặc tả:** UC-SPA-26 (lịch sử khách đã chăm sóc, `GET /me/care-history`) — CARE-LATER-01.
+- **Giao diện web:** SCR-W26, SCR-W27 xong ngày 11/11/2026 theo [plan](../superpowers/plans/2026-11-11-uc-spa-25-27-28-staff-care-web.md) (mục "Giao diện (web)" bên dưới).
+- **UC-SPA-26:** backend + web xong 11/11/2026 theo [plan](../superpowers/plans/2026-11-11-uc-spa-24-26-staff-schedule-care-history.md).
+- **Đã đặc tả:** UC-SPA-27, 28, làm cùng UC-SPA-25 ([staff.md](staff.md)). **Chưa đặc tả:** UC-SPA-26 (lịch sử khách đã chăm sóc, `GET /me/care-history`) — CARE-LATER-01.
 
 ## Use case
 
@@ -134,7 +136,136 @@ Tiền tố `/api/v1`, envelope chuẩn.
 
 ## Màn hình
 
-Chỉ backend lần này. Màn hình đích: SCR-W27 / SCR-M26 (chi tiết buổi chăm sóc: dị ứng nổi bật, form hồ sơ da, modal xác nhận hoàn thành).
+Màn hình đích: SCR-W26 / SCR-M25 (lịch được phân công), SCR-W27 / SCR-M26 (chi tiết buổi chăm sóc: dị ứng nổi bật, form hồ sơ da, modal xác nhận hoàn thành). Web: xem mục "Giao diện (web)" bên dưới. Mobile làm sau.
+
+## Giao diện (web): UC-SPA-25, 27, 28 — Lịch được phân công & buổi chăm sóc
+
+Phạm vi: hai màn của nhân viên trong `StaffLayout` (sidebar workspace, theme sáng và tối). Không làm lần này: mobile (SCR-M25, M26), trang tổng quan `/staff` và lịch làm việc cá nhân `/staff/schedule` (UC-SPA-24), lịch sử khách đã chăm sóc `/staff/care-history` (UC-SPA-26), chủ spa xem hồ sơ da trong `OwnerAppointmentSheet`.
+
+- Feature: `apps/web/src/features/care/` (tên theo glossary): `components/`, `hooks/`, `schemas.ts`, `careLabels.ts` (nhãn loại da), `errors.ts`, `index.ts`. Tái dùng `appointmentStatusBadge`, `allergySeverityBadge` của `features/bookings/appointmentStatus.ts` và các hàm ngày giờ của `lib/formatting` (`vietnamTime.ts`).
+- Trang: `pages/staff/StaffAppointmentsPage.tsx`, `pages/staff/StaffAppointmentDetailPage.tsx`; đăng ký trong `staffPages` của `app/router.tsx` (hiện `pages: {}`).
+- Gói chung: `packages/shared-types/src/care.ts` (`AssignedAppointment`, `AssignedAppointmentListParams`, `SkinProfile`, `SaveSkinProfileRequest`, `SaveAllergyRequest`, `CompleteAppointmentRequest`, `CompleteAppointmentResult`, `PackageProgress`); `packages/api-client/src/care.ts`: `CareApi` (`listAssigned`, `getAppointment` = `GET /appointments/{id}`, `getSkinProfile`, `createSkinProfile`, `updateSkinProfile`, `listAllergies`, `createAllergy`, `updateAllergy`, `deleteAllergy`, `complete`), `careQueryKeys`, `careErrorCodes`.
+- **Sửa kèm (chỉ FE):** `SkinType` trong `shared-types/src/treatments.ts` đang là `'Normal' | 'Dry' | …` trong khi backend trả snake_case (`normal`, `dry`, `oily`, `combination`, `sensitive`), nên `skinTypeLabels` của trang liệu trình chủ spa không bao giờ khớp. Chuyển `SkinType` sang `care.ts` với giá trị chữ thường và sửa `skinTypeLabels`.
+
+### Query key
+
+| Key                                        | Endpoint                              | Làm mới khi                                                  |
+| ------------------------------------------ | ------------------------------------- | ------------------------------------------------------------ |
+| `careQueryKeys.assigned(params)`           | `GET /me/assigned-appointments`       | hoàn thành buổi; lập hồ sơ da (`hasSkinProfile`); đổi dị ứng |
+| `careQueryKeys.appointment(id)`            | `GET /appointments/{id}`              | hoàn thành (ghi luôn `appointment` trả về); hồ sơ da; dị ứng |
+| `careQueryKeys.skinProfile(appointmentId)` | `GET /appointments/{id}/skin-profile` | lập/sửa hồ sơ (ghi luôn DTO trả về)                          |
+| `careQueryKeys.allergies(customerId)`      | `GET /customers/{id}/allergies`       | thêm/sửa/xóa dị ứng                                          |
+
+Gốc `careQueryKeys.all = ['care']`; mutation dị ứng và hoàn thành làm mới `['care', 'assigned']` (cờ `hasAllergies`, trạng thái).
+
+### SCR-W26 — Lịch hẹn được phân công (`/staff/bookings`)
+
+- **Vai trò:** nhân viên (`RouteGuard role="staff"` có sẵn). **Mẫu bố cục:** danh sách = `PageHeader` + `Tabs` + thanh lọc + `DataTable` dùng chung. Không phân trang (API trả cả danh sách, BR-STF-10), không sắp xếp phía client (server sắp `date, startTime`).
+- **PageHeader:** tiêu đề "Lịch hẹn được phân công", mô tả "Các buổi chăm sóc spa giao cho bạn. Chọn một lịch để xem khách, dị ứng và lập hồ sơ da."
+- **Tab (preset khoảng ngày, theo giờ Việt Nam):**
+
+| Tab                | `tab`      | `fromDate` → `toDate`        | `status` mặc định |
+| ------------------ | ---------- | ---------------------------- | ----------------- |
+| Hôm nay (mặc định) | `today`    | hôm nay → hôm nay            | tất cả            |
+| Sắp tới            | `upcoming` | ngày mai → hôm nay + 14 ngày | tất cả            |
+| Đã xong            | `done`     | hôm nay − 30 ngày → hôm nay  | `completed`       |
+
+- **Bộ lọc (đồng bộ URL):** `tab`, `from`, `to`, `status`. Đổi tab thì đặt lại `from`/`to`/`status` theo preset. "Từ ngày", "Đến ngày" (`Input type="date"`) và "Trạng thái" (`Select`: Tất cả, Chờ xác nhận, Đã xác nhận, Hoàn thành, Đã hủy, Không đến) sửa được ở mọi tab. Zod kiểm tra trước khi gọi: đủ hai ngày, `to ≥ from`, khoảng ≤ 42 ngày; sai thì hiện lỗi dưới ô và không gọi API. Nút "Xóa bộ lọc" (ghost) chỉ hiện khi khác preset.
+- **Cột `DataTable`** (`getRowId = id`, `caption` "Lịch hẹn được phân công"):
+
+| Cột        | Nội dung                                                                                                   | Ẩn ở |
+| ---------- | ---------------------------------------------------------------------------------------------------------- | ---- |
+| Ngày       | `formatLocalDate(date)` + thứ                                                                              | —    |
+| Giờ        | `startTime – endTime`                                                                                      | —    |
+| Khách      | `customer.fullName`, dòng phụ `phoneNumber`                                                                | —    |
+| Dịch vụ    | `service.name`; có `treatmentSession` thì dòng phụ "Buổi {sequenceNumber}/{totalSessions} · {packageName}" | `md` |
+| Lưu ý      | `StatusBadge` "Có dị ứng" (`warning`) khi `hasAllergies`; "Đã có hồ sơ da" (`info`) khi `hasSkinProfile`   | `sm` |
+| Trạng thái | `appointmentStatusBadge(status)`                                                                           | —    |
+
+- **Hành động:** `onRowClick` → điều hướng `/staff/bookings/{id}` (SCR-W27 là trang đầy đủ, route có sẵn trong `routes.ts`). Không có `rowActions`.
+- **Trạng thái:** đang tải → skeleton của `DataTable`; lỗi → trạng thái lỗi của `DataTable` + "Thử lại"; rỗng → "Chưa có lịch hẹn" + mô tả theo tab (Hôm nay: "Hôm nay bạn chưa được phân công buổi nào."; khác: "Không có lịch trong khoảng ngày đã chọn."); có dữ liệu.
+- **Lỗi:** `validation_error` (ít gặp vì Zod chặn trước) → trạng thái lỗi của bảng kèm thông điệp server.
+- **Responsive/a11y:** ở 320px chỉ còn Ngày, Giờ, Khách, Trạng thái; thanh lọc xếp dọc; `Tabs` cuộn ngang trong vùng riêng, không cuộn cả trang. Dòng bảng dùng được bằng bàn phím (Enter mở chi tiết, hành vi có sẵn của `DataTable`).
+
+### SCR-W27 — Chi tiết buổi chăm sóc (`/staff/bookings/:appointmentId`)
+
+- **Vai trò:** nhân viên được phân công. **Mẫu bố cục:** trang chi tiết (route có sẵn, đổi tên tham số `:bookingId` → `:appointmentId` theo glossary) gồm `PageHeader`, khối dị ứng nổi bật, `Tabs` 3 mục; tạo/sửa ngắn bằng `Dialog`, xóa bằng `AlertDialog`; form hồ sơ da nằm ngay trong tab (dài, 6 trường), không mở Dialog.
+- **Dữ liệu:** `careQueryKeys.appointment(id)` → `AppointmentDetail` (có sẵn trong `shared-types`). Khi `skinProfileId ≠ null` mới gọi `careQueryKeys.skinProfile(id)` (tránh 404). Dị ứng: dùng `allergies` trong chi tiết lịch để hiển thị nổi bật; danh sách quản lý ở tab 1 đọc `careQueryKeys.allergies(customer.id)`.
+- **PageHeader:** breadcrumb/nút quay lại "Lịch hẹn được phân công"; tiêu đề `service.name`; mô tả "{thứ, ngày} · {startTime – endTime}" + `appointmentStatusBadge`; action "Xác nhận hoàn thành" (chỉ khi `status = confirmed`).
+- **Dị ứng nổi bật (luôn trên cùng, ngoài tab):** có dị ứng → `Alert` (biến thể `destructive` nếu có mức `severe`, ngược lại mặc định) tiêu đề "Khách có {n} dị ứng cần lưu ý", liệt kê `allergen` + `allergySeverityBadge`, sắp như server trả (BR-CARE-02). Không có → không hiện khối.
+- **Tab 1 "Khách & dị ứng"** (`?tab=customer`, mặc định):
+  - Thông tin (`InfoTile`): Khách (`fullName`), Số điện thoại (link `tel:`), Dịch vụ, Buổi gói "Buổi x/y · {packageName}" (nếu có), Ngày giờ, Ghi chú lịch hẹn (`note`, nếu có).
+  - "Dị ứng của khách": danh sách thẻ (không phải bảng: ≤ vài mục, mỗi mục có ghi chú dài) gồm `allergen`, mức độ, `note`, "Ghi nhận {formatDateTimeUtc(recordedAtUtc)}"; nút "Thêm dị ứng"; mỗi thẻ có nút icon "Sửa" (`aria-label="Sửa dị ứng {allergen}"`) và "Xóa".
+  - `AllergyDialog` (thêm/sửa): "Tác nhân" (`Input`, 1–255, bắt buộc), "Mức độ" (`RadioGroup` Nhẹ/Vừa/Nặng, bắt buộc), "Ghi chú" (`Textarea`, ≤ 1000). Nút "Lưu".
+  - `DeleteAllergyDialog` (`AlertDialog`): "Xóa dị ứng {allergen}? Chỉ xóa khi ghi nhầm." Nút "Xóa" (destructive).
+- **Tab 2 "Hồ sơ da"** (`?tab=skin-profile`):
+  - Chưa có hồ sơ: `EmptyState` "Chưa có hồ sơ da cho buổi này" + CTA "Lập hồ sơ da" (CTA chỉ khi `status ∈ confirmed, completed`; trạng thái khác hiện "Lịch ở trạng thái {nhãn} nên không lập hồ sơ da được.").
+  - Đã có: bảng định nghĩa (`dl`) Loại da, Vấn đề chính, Sản phẩm đang dùng, Mục tiêu chăm sóc, Liệu trình đề xuất, Ghi chú; dòng phụ "Đánh giá bởi {assessedBy.fullName} lúc {assessedAtUtc}", "Cập nhật lúc {updatedAtUtc}" (nếu có). Nút "Cập nhật hồ sơ" (cùng điều kiện trạng thái).
+  - `SkinProfileForm` (chế độ tạo hoặc sửa, thay chỗ phần xem): "Loại da" (`Select` bắt buộc: Da thường, Da khô, Da dầu, Da hỗn hợp, Da nhạy cảm), "Vấn đề chính", "Sản phẩm đang dùng", "Mục tiêu chăm sóc", "Liệu trình đề xuất", "Ghi chú" (`Textarea`, mỗi trường ≤ 2000, có đếm ký tự). Nút "Lưu hồ sơ" / "Hủy". Tạo → `POST /appointments/{id}/skin-profile`; sửa → `PUT /skin-profiles/{skinProfileId}` (gửi đủ mọi trường, trường để trống gửi `null`).
+  - Câu nhắc cố định dưới form: "Hồ sơ da ghi nhận tình trạng da để chăm sóc spa, không phải chẩn đoán y khoa."
+- **Tab 3 "Kết quả buổi"** (`?tab=result`):
+  - `confirmed`: "Buổi chưa hoàn thành." + nút "Xác nhận hoàn thành" (mở cùng Dialog với PageHeader).
+  - `completed`: "Ghi chú và kết quả" = `note` (với dịch vụ lẻ, server nối kết quả vào `note`); với buổi gói hiện "Kết quả được lưu trong liệu trình của khách." (xem "Thiếu từ backend").
+  - `cancelled`: "Đã hủy lúc {cancelledAtUtc}" + lý do. `no_show`, `pending_confirmation`: một dòng giải thích theo nhãn trạng thái.
+- **`CompleteAppointmentDialog`:** tiêu đề "Xác nhận hoàn thành buổi chăm sóc"; mô tả "Sau khi xác nhận, buổi này được tính là đã sử dụng và không hoàn tác được."; nếu `hasSkinProfile = false` thêm dòng nhắc (không chặn, Q-35) "Buổi này chưa có hồ sơ da."; "Kết quả chăm sóc" (`Textarea`, tùy chọn, ≤ 2000). Nút "Xác nhận hoàn thành" (`loading`). Thành công: ghi `appointment` trả về vào cache chi tiết, toast "Đã ghi nhận buổi chăm sóc hoàn thành."; có `packageProgress` thì thêm "Gói {packageName}: đã dùng {usedSessions}/{totalSessions} buổi." và nếu `status = completed` thì "Gói đã hoàn thành.".
+- **Trạng thái trang:** đang tải → `PageLoader`/skeleton; lỗi → `ErrorState` + "Thử lại" (404 `appointment_not_found` → "Không tìm thấy lịch hẹn" + nút về danh sách; 403 `appointment_not_assigned` → "Lịch này không được phân công cho bạn" + nút về danh sách); có dữ liệu. Tab hồ sơ da có trạng thái tải/lỗi riêng; danh sách dị ứng có tải/lỗi/rỗng ("Chưa ghi nhận dị ứng nào.").
+
+### Mã lỗi → xử lý
+
+| Mã                           | Ở đâu                   | Xử lý                                                                                              |
+| ---------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------- |
+| `validation_error`           | mọi form                | gắn `errors[].field` vào `FormField` tương ứng; không có field → toast thông điệp                  |
+| `appointment_not_found`      | trang chi tiết          | `ErrorState` "Không tìm thấy lịch hẹn" + về danh sách                                              |
+| `appointment_not_assigned`   | trang chi tiết, mọi ghi | `ErrorState` "Lịch này không được phân công cho bạn" (khi tải); toast + làm mới chi tiết (khi ghi) |
+| `skin_profile_too_early`     | lập/sửa hồ sơ           | toast "Chỉ lập hồ sơ da từ ngày hẹn." giữ form                                                     |
+| `skin_profile_locked`        | lập/sửa hồ sơ           | toast "Đã quá thời hạn sửa hồ sơ da." đóng form, ẩn nút "Cập nhật hồ sơ" cho tới khi tải lại trang |
+| `skin_profile_exists`        | lập hồ sơ               | toast "Buổi này đã có hồ sơ da." làm mới chi tiết + hồ sơ, chuyển sang chế độ xem                  |
+| `skin_profile_not_found`     | sửa hồ sơ, xem hồ sơ    | làm mới chi tiết (hồ sơ có thể chưa tồn tại)                                                       |
+| `appointment_status_invalid` | hồ sơ, hoàn thành       | toast thông điệp server (nêu trạng thái) + làm mới chi tiết và danh sách                           |
+| `complete_too_early`         | hoàn thành              | toast "Chưa tới giờ bắt đầu, chưa xác nhận hoàn thành được." giữ Dialog mở                         |
+| `entitlement_state_invalid`  | hoàn thành              | toast thông điệp server, đóng Dialog, làm mới chi tiết                                             |
+| `skin_profile_required`      | hoàn thành              | toast "Cần lập hồ sơ da trước khi hoàn thành." đóng Dialog, chuyển sang tab "Hồ sơ da"             |
+| `allergy_exists`             | thêm/sửa dị ứng         | lỗi dưới ô "Tác nhân": "Khách đã có dị ứng này."                                                   |
+| `allergy_not_found`          | sửa/xóa dị ứng          | toast + làm mới danh sách dị ứng, đóng Dialog                                                      |
+| `customer_not_in_care`       | dị ứng                  | toast "Bạn chưa chăm sóc khách này nên không xem/sửa được dị ứng."; ẩn nút ghi                     |
+| `customer_not_found`         | dị ứng                  | toast + làm mới chi tiết                                                                           |
+| `401`                        | mọi nơi                 | luồng làm mới phiên có sẵn của `ApiClient`/`authStore`                                             |
+
+### Không suy luận lại rule
+
+Backend không trả cờ cho các hành động này (xem "Thiếu từ backend"), nên FE chỉ dựa vào `status` do server trả: "Xác nhận hoàn thành" khi `confirmed`; "Lập/Cập nhật hồ sơ da" khi `confirmed` hoặc `completed`; nút ghi dị ứng luôn hiện cho nhân viên. Điều kiện thời gian (chưa tới giờ, quá hạn 7 ngày) và "khách đang chăm sóc" để server quyết định qua mã lỗi ở bảng trên. FE không tự so giờ hiện tại với giờ hẹn.
+
+### Thiếu từ backend (không sửa trong task này)
+
+| Thiếu                                                                                                | Ảnh hưởng FE                                                                                                                |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Cờ `canComplete`, `canEditSkinProfile` (+ `skinProfileEditableUntil`) trong `GET /appointments/{id}` | Nút hiện theo trạng thái, bấm sớm/muộn mới biết qua `complete_too_early` / `skin_profile_too_early` / `skin_profile_locked` |
+| Kết quả buổi gói (`treatment_sessions.note`) không có trong `AppointmentDetailDto`                   | Tab "Kết quả buổi" của buổi gói đã hoàn thành không hiện được kết quả, chỉ hiện câu dẫn                                     |
+| Cờ cho phép ghi dị ứng (`canEditAllergies`)                                                          | Nút ghi dị ứng luôn hiện; lịch `cancelled`/`no_show` có thể gặp `customer_not_in_care`                                      |
+
+### Kiểm thử giao diện
+
+Vitest + Testing Library, `fetch` giả, test đặt cạnh file.
+
+| Mã          | Tình huống                                                                                                          | Kết quả mong đợi                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| CARE-UI-T01 | `CareApi`: đường dẫn, query `fromDate/toDate/status`, body POST/PUT, DELETE 204, `complete` không body vẫn gửi `{}` | Đúng URL, method, body                                                                                                   |
+| CARE-UI-T02 | SCR-W26 mở mặc định                                                                                                 | Gọi `fromDate = toDate = hôm nay (VN)`, không `status`; tab "Hôm nay" chọn                                               |
+| CARE-UI-T03 | Chuyển tab "Sắp tới" / "Đã xong"                                                                                    | Query đúng preset; "Đã xong" gửi `status=completed`; URL cập nhật                                                        |
+| CARE-UI-T04 | Nhập `to < from`; khoảng 43 ngày                                                                                    | Lỗi dưới ô, không gọi API                                                                                                |
+| CARE-UI-T05 | SCR-W26 tải / lỗi (+ Thử lại gọi lại) / rỗng / có dữ liệu                                                           | Skeleton; thông báo lỗi; "Chưa có lịch hẹn"; dòng có "Buổi 2/5 · {gói}", badge "Có dị ứng", "Đã có hồ sơ da", trạng thái |
+| CARE-UI-T06 | Bấm một dòng                                                                                                        | Điều hướng `/staff/bookings/{id}`                                                                                        |
+| CARE-UI-T07 | SCR-W27 tải / 404 / 403 `appointment_not_assigned` / có dữ liệu                                                     | Loader; "Không tìm thấy lịch hẹn"; "Lịch này không được phân công cho bạn"; thông tin khách và dịch vụ                   |
+| CARE-UI-T08 | Có dị ứng `severe`; không có dị ứng                                                                                 | `Alert` destructive "Khách có n dị ứng cần lưu ý"; không có khối                                                         |
+| CARE-UI-T09 | Nút "Xác nhận hoàn thành" với `confirmed` / `completed` / `cancelled`                                               | Hiện / ẩn / ẩn                                                                                                           |
+| CARE-UI-T10 | Hoàn thành thành công dịch vụ lẻ; buổi gói cuối (`packageProgress.status = completed`)                              | Body `{ result }`; toast; trạng thái "Hoàn thành"; toast có "đã dùng 3/3 buổi", "Gói đã hoàn thành"                      |
+| CARE-UI-T11 | Hoàn thành gặp `complete_too_early`; `skin_profile_required`; `appointment_status_invalid`                          | Dialog còn mở + toast; chuyển tab "Hồ sơ da"; toast + gọi lại chi tiết                                                   |
+| CARE-UI-T12 | Kết quả 2001 ký tự                                                                                                  | Lỗi dưới ô, không gọi API                                                                                                |
+| CARE-UI-T13 | Hồ sơ da: `skinProfileId = null` → EmptyState + CTA; lịch `pending_confirmation` → không CTA                        | Không gọi `GET skin-profile`; đúng CTA                                                                                   |
+| CARE-UI-T14 | Lập hồ sơ thiếu loại da; lập thành công; sửa thành công (gửi `null` cho trường trống)                               | Lỗi "Chọn loại da"; POST đúng body, hiện chế độ xem; PUT `/skin-profiles/{id}`                                           |
+| CARE-UI-T15 | Lập/sửa gặp `skin_profile_too_early`, `skin_profile_locked`, `skin_profile_exists`                                  | Toast tương ứng; `locked` ẩn nút cập nhật; `exists` chuyển chế độ xem                                                    |
+| CARE-UI-T16 | Dị ứng: thêm hợp lệ; thêm trùng (`allergy_exists`); sửa; xóa qua `AlertDialog`; `customer_not_in_care`              | POST/PUT/DELETE đúng; lỗi dưới "Tác nhân"; danh sách và chi tiết được làm mới; toast + ẩn nút ghi                        |
+| CARE-UI-T17 | Nhãn loại da                                                                                                        | `normal → Da thường` … ; trang liệu trình chủ spa hiển thị đúng nhãn (hồi quy `SkinType`)                                |
 
 ## Cấu hình
 
@@ -187,8 +318,88 @@ Unit test (NSubstitute, đồng hồ giả) cho chuyển trạng thái Domain (`
 
 ## Việc để sau
 
-| Mã            | Việc                                                                                                                         | Làm cùng  |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------- |
-| CARE-LATER-01 | UC-SPA-26: `GET /me/care-history` (lịch sử khách đã chăm sóc, tìm theo tên/SĐT, khoảng ngày) và các hồ sơ da trước của khách | UC-SPA-26 |
-| CARE-LATER-02 | Thông báo cho khách khi buổi hoàn thành, mời đánh giá (BR-NTF-01)                                                            | UC-SPA-34 |
-| CARE-LATER-03 | Gói có buổi `skipped` (Q-07 bật): quy tắc kết thúc gói, chủ spa đóng liệu trình                                              | UC-SPA-21 |
+| Mã            | Việc                                                                                                                                     | Làm cùng                   |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| CARE-LATER-01 | UC-SPA-26: `GET /me/care-history` (lịch sử khách đã chăm sóc, tìm theo tên/SĐT, khoảng ngày) và các hồ sơ da trước của khách             | UC-SPA-26                  |
+| CARE-LATER-02 | Thông báo cho khách khi buổi hoàn thành, mời đánh giá (BR-NTF-01)                                                                        | UC-SPA-34                  |
+| CARE-LATER-03 | Gói có buổi `skipped` (Q-07 bật): quy tắc kết thúc gói, chủ spa đóng liệu trình                                                          | UC-SPA-21                  |
+| CARE-LATER-04 | `GET /customers/{id}/care-history` (dòng 088 `data_api.py`): mọi lần chăm sóc của một khách cho chủ spa và nhân viên đang chăm sóc khách | Màn khách hàng của chủ spa |
+
+## UC-SPA-26 — Xem lịch sử các khách hàng đã chăm sóc (backend + web)
+
+Đặc tả và triển khai cùng UC-SPA-24 ([staff.md](staff.md)) ngày 11/11/2026; thay cho CARE-LATER-01. Không làm lần này: mobile (SCR-M27), CARE-LATER-04.
+
+| Mục            | Nội dung                                                                                            |
+| -------------- | --------------------------------------------------------------------------------------------------- |
+| Actor          | Nhân viên                                                                                           |
+| Mô tả          | Nhân viên xem các lần chăm sóc mình đã thực hiện, tìm theo khách và khoảng ngày, mở hồ sơ liên quan |
+| Tiền điều kiện | Đã đăng nhập, `role = staff` (quyền `care.write`, theo RBAC sheet 21 dòng `care.write` UC-SPA-26)   |
+| Input          | Tên/SĐT khách, khoảng ngày, khách được chọn; lần chăm sóc được chọn                                 |
+| Output         | Danh sách lần chăm sóc (phân trang); chi tiết lần chăm sóc với hồ sơ da và các lần khác của khách   |
+
+**Luồng chính**
+
+1. Nhân viên mở "Lịch sử khách đã chăm sóc"; client gọi `GET /me/care-history` (trang 1, 10 dòng).
+2. Nhân viên nhập tên/SĐT, khoảng ngày; hệ thống trả các lịch `completed` có `staff_member_id` = người gọi khớp điều kiện, mới nhất trước (BR-CARE-07).
+3. Nhân viên chọn một lần; client dùng `GET /appointments/{id}` và `GET /appointments/{id}/skin-profile` (có sẵn) và `GET /me/care-history?customerId=` (các lần khác với khách đó).
+
+**Luồng rẽ nhánh**
+
+- A1. Không có kết quả → `200` trang rỗng, client hiện "Chưa có lần chăm sóc nào" (kèm "Xóa bộ lọc" khi đang lọc).
+- A2. Lập/cập nhật hồ sơ da (UC-SPA-27): mở buổi chăm sóc `/staff/bookings/{id}?tab=skin-profile`, dùng lại form đã có; hạn sửa 7 ngày do server kiểm tra (BR-CARE-04).
+
+**Ngoại lệ**
+
+- E1. `search` > 200 ký tự (giới hạn chung của `PagedQuery`), `toDate < fromDate`, ngày sai định dạng, `customerId` không phải Guid → `400 validation_error`. `pageNumber`/`pageSize` ngoài biên được kẹp như mọi `PagedQuery` (1, 1–100).
+- E2. Chưa đăng nhập → `401`; chủ spa, khách hàng → `403`.
+
+**Business rules**
+
+| Mã         | Quy tắc                                                                                                                                                                                                                                                                                                                                         | Enforce ở đâu       | Nguồn          |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | -------------- |
+| BR-CARE-07 | "Lần chăm sóc của tôi" = lịch hẹn `completed` có `staff_member_id` = người gọi (Q-73: không gồm `no_show`, `cancelled`). `search` (trim, rỗng = không lọc) khớp một phần tên khách không phân biệt hoa thường và dấu (`f_unaccent`) hoặc một phần SĐT. `fromDate`/`toDate` tùy chọn, bao gồm hai đầu. Sắp `date` giảm dần, `startTime` giảm dần | Application + Query | DA + ĐX (Q-73) |
+
+**API** (policy `care.write`, controller mới `MyCareHistoryController`)
+
+| Method | Đường dẫn          | Request                                                                 | Response                                                                                                                                                                                           | Lỗi           |
+| ------ | ------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| GET    | `/me/care-history` | `?search&fromDate&toDate&customerId&pageNumber&pageSize` (đều tùy chọn) | 200 `PagedResult<CareHistoryItemDto { appointmentId, date, startTime, endTime, customer: { id, fullName, phoneNumber }, service: { id, name }, treatmentSession?, hasAllergies, skinProfileId? }>` | 400, 401, 403 |
+
+- `treatmentSession` dùng lại `TreatmentSessionRefDto`. Tên DTO `CareHistoryItemDto` (thư mục `DTOs/Care`) khác `CareHistoryEntryDto` của liệu trình.
+- Sửa tại chỗ dòng 104 trong `data_api.py`. Không migration.
+
+**Kiểm thử bắt buộc**
+
+| Mã       | Tình huống                                                                                                 | Kết quả mong đợi                                                          |
+| -------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| CARE-T30 | Nhân viên A có lịch `completed` ×3 (2 khách), `confirmed`, `no_show`, `cancelled`; B có 1 lịch `completed` | 200 đúng 3 lịch của A, mới nhất trước, `totalCount = 3`                   |
+| CARE-T31 | `search` "lan" khớp "Nguyễn Thị Lan" / "LÂN"; `search` theo 4 số cuối SĐT; `search` "%"                    | Khớp không dấu; khớp SĐT; "%" là ký tự thường (không khớp tất cả)         |
+| CARE-T32 | `fromDate`/`toDate` bao gồm hai đầu; `customerId` chỉ lấy khách đó                                         | Đúng dòng                                                                 |
+| CARE-T33 | Lịch có hồ sơ da, khách có dị ứng, buổi gói 2/5                                                            | `skinProfileId` đúng, `hasAllergies = true`, `treatmentSession` đủ trường |
+| CARE-T34 | Phân trang `pageSize=2` trang 2                                                                            | 1 dòng, `totalCount = 3`, `totalPages = 2`                                |
+| CARE-T35 | `search` 201 ký tự; `toDate < fromDate`                                                                    | `400 validation_error` ×2                                                 |
+| CARE-T36 | Chủ spa / khách hàng / không Bearer                                                                        | `403` / `403` / `401`                                                     |
+| CARE-T37 | Hồi quy                                                                                                    | Toàn bộ test hiện có vẫn pass                                             |
+
+### Giao diện (web): SCR-W28 — Lịch sử khách đã chăm sóc (`/staff/care-history`)
+
+- **Vai trò:** nhân viên, `StaffLayout`. **Mẫu bố cục:** danh sách = `PageHeader` + thanh lọc + `DataTable` phân trang server; chi tiết = `Sheet` (SCR-W28 "Drawer hồ sơ"). Thêm route `/staff/care-history` vào `routes.ts` (sidebar, icon `HistoryIcon`).
+- **Code:** `features/care/components/history/`: `CareHistoryView`, `CareHistoryFilters`, `CareHistoryTable`, `CareVisitSheet`; dùng lại `SkinProfileView`, `AllergyHighlight`. `CareApi.listHistory(params)` + `careQueryKeys.history(params)`; kiểu `CareHistoryItem`, `CareHistoryParams` trong `shared-types/src/care.ts`.
+- **PageHeader:** "Lịch sử khách đã chăm sóc", mô tả "Các buổi chăm sóc bạn đã hoàn thành. Chọn một buổi để xem hồ sơ da và các lần trước của khách."
+- **Bộ lọc (URL qua `useTableSearchParams`):** "Tìm theo tên hoặc số điện thoại khách" (`search`, debounce 300 ms, tối đa 200 ký tự), "Từ ngày", "Đến ngày" (`fromDate`, `toDate`; `to < from` → lỗi dưới ô, không gọi API), "Xóa bộ lọc". Đổi bộ lọc về trang 1. Trang và cỡ trang trên URL.
+- **Cột `DataTable`** (`getRowId = appointmentId`): Ngày (ngày + giờ), Khách (tên + SĐT), Dịch vụ (+ "Buổi x/y · gói", ẩn dưới `md`), Hồ sơ da (`StatusBadge` "Đã có" `success` / "Chưa có" `neutral`, ẩn dưới `sm`), Dị ứng ("Có dị ứng" `warning`, ẩn dưới `sm`). `onRowClick` → mở Sheet (giữ trong state của trang, không đưa lên URL để không tính là bộ lọc).
+- **Sheet "Buổi chăm sóc":**
+  - Đầu: tên dịch vụ, ngày giờ, khách (tên, `tel:`), buổi gói nếu có; `AllergyHighlight` từ `GET /appointments/{id}`.
+  - "Hồ sơ da": có `skinProfileId` → `SkinProfileView`; không → "Buổi này chưa có hồ sơ da.".
+  - Nút "Lập/cập nhật hồ sơ da" → `/staff/bookings/{id}?tab=skin-profile` (server quyết định còn sửa được không).
+  - "Các lần khác với khách này": `GET /me/care-history?customerId=&pageSize=5`, bỏ chính buổi đang xem; mỗi dòng ngày + dịch vụ + "Đã có hồ sơ da", bấm để chuyển Sheet sang buổi đó. Rỗng: "Đây là lần đầu bạn chăm sóc khách này."
+- **Trạng thái:** bảng: skeleton / lỗi + Thử lại / rỗng "Chưa có lần chăm sóc nào" (đang lọc: "Không có lần chăm sóc nào khớp bộ lọc" + "Xóa bộ lọc") / dữ liệu. Sheet: skeleton, `ErrorState` (`appointment_not_assigned` → "Lịch này không còn được phân công cho bạn"), dữ liệu.
+- **Responsive:** 320px còn Ngày, Khách; thanh lọc xếp dọc.
+
+| Mã          | Tình huống                                                                                      | Kết quả mong đợi                                                                       |
+| ----------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| CARE-UI-T30 | `CareApi.listHistory`: query `search/fromDate/toDate/customerId/pageNumber/pageSize`            | Đúng URL                                                                               |
+| CARE-UI-T31 | Mở trang: tải / lỗi + Thử lại / rỗng / có dữ liệu (badge hồ sơ da, dị ứng, buổi gói)            | Đúng 4 trạng thái                                                                      |
+| CARE-UI-T32 | Gõ tìm kiếm (debounce) / đổi ngày / `to < from`                                                 | Gửi `search` và về `pageNumber=1`; gửi ngày; lỗi dưới ô, không gọi API                 |
+| CARE-UI-T33 | Bấm dòng → Sheet: hồ sơ da, dị ứng, các lần khác (bỏ buổi đang xem), link lập/cập nhật hồ sơ da | Đúng nội dung; link `/staff/bookings/{id}?tab=skin-profile`                            |
+| CARE-UI-T34 | Buổi chưa có hồ sơ; khách mới chăm sóc lần đầu; bấm một lần khác                                | "Buổi này chưa có hồ sơ da."; "Đây là lần đầu bạn chăm sóc khách này."; Sheet đổi buổi |

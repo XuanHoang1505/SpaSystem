@@ -36,9 +36,10 @@ React + Vite + TypeScript strict, UI bằng Tailwind CSS v4 + shadcn/ui ([ADR-00
 ### staff
 
 - `/staff` — Tổng quan nhân viên
-- `/staff/schedule` — Lịch làm việc
-- `/staff/bookings` — Lịch hẹn được phân công
-- `/staff/bookings/:bookingId` — Chi tiết buổi chăm sóc
+- `/staff/schedule` — Lịch làm việc (SCR-W25, `features/staff/components/my-schedule`: lưới tuần/tháng, `?view=week|month&date=`, Sheet chi tiết ca)
+- `/staff/bookings` — Lịch hẹn được phân công (SCR-W26, `features/care`: tab Hôm nay/Sắp tới/Đã xong, lọc khoảng ngày ≤ 42 ngày và trạng thái trên URL)
+- `/staff/bookings/:appointmentId` — Chi tiết buổi chăm sóc (SCR-W27: dị ứng nổi bật, tab Khách & dị ứng / Hồ sơ da / Kết quả buổi, xác nhận hoàn thành)
+- `/staff/care-history` — Lịch sử khách đã chăm sóc (SCR-W28, `features/care/components/history`: DataTable phân trang server, tìm tên/SĐT, khoảng ngày, Sheet buổi chăm sóc)
 
 ### owner
 
