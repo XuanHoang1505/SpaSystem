@@ -3,6 +3,9 @@ import type {
   ChangeWorkScheduleStatusRequest,
   CreateWorkScheduleBatchRequest,
   CreateWorkScheduleRequest,
+  MyWorkSchedule,
+  MyWorkScheduleDetail,
+  MyWorkScheduleParams,
   UpdateWorkScheduleRequest,
   WorkScheduleBatchResult,
   WorkScheduleItem,
@@ -74,4 +77,29 @@ export const workSchedulesQueryKeys = {
   list: (params?: WorkScheduleQueryParams) => ['workSchedules', 'list', params] as const,
   weekly: (fromDate: string, toDate: string, staffMemberId?: string) =>
     ['workSchedules', 'weekly', { fromDate, toDate, staffMemberId }] as const,
+};
+
+/** UC-SPA-24: the signed-in staff member's own shifts. */
+export class MyWorkSchedulesApi {
+  constructor(private readonly client: ApiClient) {}
+
+  list(params: MyWorkScheduleParams, signal?: AbortSignal) {
+    return this.client.get<ApiResponse<readonly MyWorkSchedule[]>>('/api/v1/me/work-schedules', {
+      query: { ...params },
+      signal,
+    });
+  }
+
+  get(id: string, signal?: AbortSignal) {
+    return this.client.get<ApiResponse<MyWorkScheduleDetail>>(
+      `/api/v1/me/work-schedules/${encodeURIComponent(id)}`,
+      { signal },
+    );
+  }
+}
+
+export const myWorkSchedulesQueryKeys = {
+  all: ['myWorkSchedules'] as const,
+  list: (params: MyWorkScheduleParams) => ['myWorkSchedules', 'list', params] as const,
+  detail: (id: string) => ['myWorkSchedules', 'detail', id] as const,
 };
