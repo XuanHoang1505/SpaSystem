@@ -37,7 +37,7 @@ export const routes = {
     ['/staff/bookings/:bookingId', 'Chi tiết buổi chăm sóc'],
   ],
   owner: [
-    ['/owner', 'Tổng quan quản lý'],
+    ['/owner', 'Tổng quan'],
     ['/owner/services', 'Quản lý dịch vụ'],
     ['/owner/packages', 'Quản lý gói dịch vụ'],
     ['/owner/staff', 'Nhân viên'],

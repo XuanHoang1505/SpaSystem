@@ -29,3 +29,16 @@ export async function callVoidApi<TApi>(
   if (!client) throw new ApiConfigurationError(error ?? 'Configuration Error');
   await call(create(client));
 }
+
+/**
+ * Runs one call on a feature API that returns a Blob (e.g. binary file download/export).
+ */
+export async function callBlobApi<TApi>(
+  create: (client: ApiClient) => TApi,
+  call: (api: TApi) => Promise<Blob>,
+): Promise<Blob> {
+  const { client, error } = getApiClient();
+  if (!client) throw new ApiConfigurationError(error ?? 'Configuration Error');
+  return await call(create(client));
+}
+

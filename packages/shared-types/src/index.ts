@@ -54,3 +54,4 @@ export * from './users';
 export * from './aiAssistant';
 export * from './workSchedules';
 export * from './promotions';
+export * from './reports';

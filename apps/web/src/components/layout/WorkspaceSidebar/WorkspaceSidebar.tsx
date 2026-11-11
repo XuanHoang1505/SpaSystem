@@ -36,7 +36,11 @@ export function WorkspaceSidebar({ workspace }: { workspace: Exclude<Workspace, 
             <SidebarMenu id="workspace-nav" aria-label="Menu không gian">
               {navigation[workspace].map(({ path, title, icon: Icon }) => (
                 <SidebarMenuItem key={path}>
-                  <SidebarMenuButton asChild isActive={pathname === path} tooltip={title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === path || (path === '/owner' && pathname === '/owner/reports')}
+                    tooltip={title}
+                  >
                     <NavLink to={path} end onClick={() => setOpenMobile(false)}>
                       <Icon aria-hidden="true" />
                       <span>{title}</span>

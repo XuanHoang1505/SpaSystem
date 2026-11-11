@@ -32,6 +32,7 @@ import { OwnerPromotionsPage } from '@/pages/owner/OwnerPromotionsPage';
 import { OwnerServicesPage } from '@/pages/owner/OwnerServicesPage';
 import { OwnerStaffPage } from '@/pages/owner/OwnerStaffPage';
 import { OwnerTreatmentsPage } from '@/pages/owner/OwnerTreatmentsPage';
+import { OwnerReportsPage } from '@/pages/owner/OwnerReportsPage';
 import { HomePage } from '@/pages/public/HomePage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@/pages/public/LoginPage';
@@ -115,6 +116,7 @@ export const customerPages: Record<string, ReactElement> = {
 
 /** Owner pages that are built; the other owner routes still show the placeholder. */
 export const ownerPages: Record<string, ReactElement> = {
+  '/owner': <OwnerReportsPage />,
   '/owner/bookings': <OwnerAppointmentsPage />,
   '/owner/staff': <OwnerStaffPage />,
   '/owner/services': <OwnerServicesPage />,
@@ -122,6 +124,7 @@ export const ownerPages: Record<string, ReactElement> = {
   '/owner/promotions': <OwnerPromotionsPage />,
   '/owner/orders': <OwnerOrdersPage />,
   '/owner/treatments': <OwnerTreatmentsPage />,
+  '/owner/reports': <OwnerReportsPage />,
 };
 
 /** Login, register, forgot-password: own split layout without the site header/footer, guests only. */

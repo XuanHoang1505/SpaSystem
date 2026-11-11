@@ -238,6 +238,19 @@ Staff và chủ spa giữ `WorkspaceLayout` (sidebar). Không còn dải "Bản 
   - `UpdateSessionNoteDialog`: Cập nhật ghi chú buổi chăm sóc (`PUT /api/v1/treatments/{id}/sessions/{sessionId}`).
 - **Hooks & API:** `OwnerTreatmentsApi` (`@spa/api-client`), wrappers `callOwnerTreatments`, `callOwnerTreatmentsVoid` (`apps/web/src/lib/api/treatments.ts`), query & mutation hooks tại `features/treatments/hooks/` (`useOwnerTreatmentSearch`, `useOwnerTreatment`, `useUpdateTreatment`, `useAssignTreatmentStaff`, `usePauseTreatment`, `useResumeTreatment`, `useCancelTreatment`, `useCompleteTreatment`, `useUpdateSessionNote`).
 
+## Báo cáo doanh thu cho chủ spa (UC-SPA-33)
+
+- **Trang:** `/owner/reports` (`SCR-W38`), vai trò `owner` (chủ spa), nằm trong `OwnerLayout`.
+- **Đặc tả & Plan:** [docs/specs/reports.md](specs/reports.md), [plan](../superpowers/plans/2026-11-11-uc-spa-33-owner-reports-web.md).
+- **Tính năng chính:**
+  - `PageHeader`: Tiêu đề "Báo cáo doanh thu", phụ đề khoảng thời gian lọc, nút "Xuất Excel" tải trực tiếp file `.xlsx` (`GET /api/v1/reports/revenue/export`, BR-RPT-05).
+  - `RevenueFilterToolbar`: Chọn khoảng ngày (`fromDate`, `toDate`), các phím tắt chọn nhanh ("Năm nay", "Năm trước", "Quý này", "Tháng này", "30 ngày qua"), nhóm theo kỳ (`groupBy`: tháng, quý, năm), tiêu chí sản phẩm (`productType`: tất cả, dịch vụ lẻ, gói dịch vụ), số lượng top sản phẩm (`top`: 10, 20, 50), nút đặt lại bộ lọc. Đồng bộ toàn bộ tham số lên URL Search Params.
+  - `UnrecognizedPaymentsAlert`: Hộp cảnh báo màu vàng hổ phách hiển thị khi có khoản thanh toán thành công chưa ghi nhận doanh thu (`unrecognizedPayments.count > 0`, trên đơn hủy/hết hạn hoặc thanh toán lần hai, BR-RPT-02) để chủ spa rà soát hoàn tiền thủ công.
+  - `RevenueSummaryCards`: 4 thẻ chỉ số tổng quan gồm Tổng doanh thu, Doanh thu dịch vụ lẻ (kèm % tỷ trọng), Doanh thu gói dịch vụ (kèm % tỷ trọng), Số đơn hàng thành công.
+  - `RevenuePeriodChart` & `RevenuePeriodTable`: Biểu đồ cột SVG/CSS nhẹ nhàng phân tách tỷ lệ dịch vụ vs gói theo từng kỳ kèm tooltip chi tiết, bảng số liệu chi tiết các kỳ dựng bằng `DataTable` chuẩn.
+  - `RevenueByProductTable`: Bảng `DataTable` xếp hạng top sản phẩm theo doanh thu thực tế, phân loại bằng `StatusBadge` (dịch vụ lẻ/gói dịch vụ), số lượng bán và thanh tỷ trọng % mini.
+- **Hooks & API:** `ReportsApi` (`@spa/api-client`), wrappers `callReports`, `callReportsBlob` (`apps/web/src/lib/api/reports.ts`), hooks `useRevenueReport`, `useRevenueByProduct`, `useExportRevenueReport` (`features/reports/hooks/`).
+
 ## Chạy và kiểm tra
 
 ```powershell
