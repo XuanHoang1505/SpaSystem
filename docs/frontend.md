@@ -49,7 +49,7 @@ React + Vite + TypeScript strict, UI bằng Tailwind CSS v4 + shadcn/ui ([ADR-00
 - `/owner/bookings` — Lịch hẹn
 - `/owner/promotions` — Khuyến mãi
 - `/owner/treatments` — Liệu trình
-- `/owner/payments` — Thanh toán
+- `/owner/orders` — Đơn hàng (UC-SPA-13; thay route placeholder `/owner/payments`)
 - `/owner/reports` — Báo cáo
 
 - `/forbidden` — Không có quyền truy cập.
@@ -103,6 +103,7 @@ Semantic header/nav/main/footer, skip link, focus visible, label/input error ass
 - **Hằng chép tay từ backend:** hạn giữ đơn 15 phút (`catalogPolicies.paymentTimeoutMinutes`) và mức tối thiểu 5.000 đ (`MIN_PAYMENT_AMOUNT`), giữ đồng bộ `appsettings.json`.
 
 - **Đơn hàng của tôi (UC-SPA-12, 08/11/2026):** `/my-orders` (`features/orders`: `MyOrdersView`, `OrderCard`, `OrderDetailSheet`, `CancelOrderDialog`; hooks `useMyOrders`, `useCancelOrder`). Danh sách thẻ (không dùng `DataTable` vì là thẻ, như giỏ hàng), lọc theo một trạng thái và phân trang ở server, `?status=`/`?page=` trên URL, đổi bộ lọc thì về trang 1. Nút theo cờ API: `isPayable` → "Thanh toán ngay" (`/checkout?orderId=`), `canCancel` → "Hủy đơn" (bắt buộc lý do 1–500 ký tự, `order_not_cancellable` / `order_payment_in_progress` hiện thông báo và tải lại danh sách). "Xem chi tiết" mở `Sheet` với dòng hàng, tổng, các lần thanh toán và lý do hủy. Chưa có lọc theo khoảng ngày, tìm theo mã, đếm số đơn theo trạng thái (API chưa trả).
+- **Quản lý đơn hàng (UC-SPA-13, 11/11/2026):** `/owner/orders` (SCR-W37, `OwnerLayout`; `features/orders/components/owner`: `OwnerOrdersView`, `OrderFilterToolbar`, `OrderTable`, `OwnerOrderDetailSheet`, `OwnerPaymentList`; hooks `useManagedOrders`, `useManagedOrder`, `useCancelManagedOrder`). `DataTable` với tìm kiếm (mã đơn hoặc tên/SĐT/email khách, chờ 300 ms), trạng thái, khoảng ngày tạo, sắp theo ngày tạo (mặc định mới nhất) hoặc tổng thanh toán, phân trang; tất cả ở server và trên URL (`?search`, `?status`, `?fromDate`, `?toDate`, `?sortBy`, `?sortDirection`, `?page`, `?pageSize`). Menu dòng chỉ có "Xem chi tiết"; **hủy chỉ trong Sheet chi tiết**, nút theo `canCancel`, dùng chung `CancelOrderDialog` (nhận mutation từ ngoài). Sheet hiện khách, sản phẩm, lịch giữ chỗ, các lần thanh toán (mã yêu cầu, mã giao dịch) và cảnh báo hoàn tiền thủ công khi đơn hủy/hết hạn có lần thanh toán thành công. `OrderManagementApi` + `ordersQueryKeys.managedList/managedOrder` (`['orders','manage',…]`), `lib/api/orders.ts` (`callOrderManagement`).
 
 ## Đặt lịch, lịch hẹn và gói của tôi (UC-SPA-15/16/18, 09/11/2026)
 
