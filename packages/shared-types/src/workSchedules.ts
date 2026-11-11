@@ -3,6 +3,13 @@
  * Stored and transmitted with Vietnam local date/time (ADR-0003).
  */
 
+import type {
+  AppointmentCustomer,
+  AppointmentService,
+  AppointmentStatus,
+  TreatmentSessionRef,
+} from './bookings';
+
 export type WorkScheduleStatus = 'active' | 'cancelled';
 
 export interface WorkScheduleItem {
@@ -58,4 +65,38 @@ export interface UpdateWorkScheduleRequest {
 
 export interface ChangeWorkScheduleStatusRequest {
   status: WorkScheduleStatus;
+}
+
+/** A row of `GET /me/work-schedules` (UC-SPA-24): the caller's own shift, cancelled ones included. */
+export interface MyWorkSchedule {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: WorkScheduleStatus;
+  /** Appointments inside the shift (pending, confirmed, completed, no-show; BR-STF-11). */
+  appointmentCount: number;
+}
+
+/** An appointment inside a shift. */
+export interface ShiftAppointment {
+  id: string;
+  startTime: string;
+  endTime: string;
+  status: AppointmentStatus;
+  customer: AppointmentCustomer;
+  service: AppointmentService;
+  treatmentSession: TreatmentSessionRef | null;
+}
+
+/** `GET /me/work-schedules/{id}`. */
+export interface MyWorkScheduleDetail extends Omit<MyWorkSchedule, 'appointmentCount'> {
+  appointments: readonly ShiftAppointment[];
+}
+
+/** Both dates required and inclusive, at most 42 days apart. */
+export interface MyWorkScheduleParams {
+  fromDate: string;
+  toDate: string;
+  status?: WorkScheduleStatus;
 }
