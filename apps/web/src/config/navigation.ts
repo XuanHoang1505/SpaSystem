@@ -84,5 +84,6 @@ export const navigation: Record<Workspace, readonly NavigationItem[]> = {
       !['/cart', '/checkout', '/payment/result', '/booking/new', '/booking/success'].includes(path),
   ),
   staff: links(routes.staff),
-  owner: links(routes.owner),
+  // Báo cáo doanh thu & KPI được đưa lên làm Dashboard chính tại `/owner`.
+  owner: links(routes.owner).filter(({ path }) => path !== '/owner/reports'),
 };
