@@ -135,5 +135,109 @@ Xem [open-questions.md](../decisions/open-questions.md) (thêm Q-46…Q-49 khi s
 ## Việc để sau
 
 - RPT-LATER-02: KPI tổng quan SCR-W30 (số lịch hẹn theo kỳ).
-- RPT-LATER-03: web SCR-W38, mobile SCR-M32 (`ReportsApi`, query keys trong `packages/api-client`).
+- RPT-LATER-03: mobile SCR-M32 (`ReportsApi`, query keys trong `packages/api-client`).
 - RPT-LATER-04: hoàn tiền (bảng/trạng thái riêng) để doanh thu trừ hoàn (BR-RPT-02, RS-21).
+
+## Giao diện (web): Thống kê & báo cáo doanh thu (UC-SPA-33, SCR-W38)
+
+- **Mã và route:** `SCR-W38` (theo `data_screens.py`), đường dẫn `/owner/reports`, chạy trong `OwnerLayout` (vai trò `owner`, chủ spa).
+- **Quyền truy cập:** Quyền `report.view` (vai trò `owner`). Khi truy cập mà chưa đăng nhập $\rightarrow$ `/login?redirect=/owner/reports`; sai vai trò (khách hàng, nhân viên) $\rightarrow$ `/forbidden` qua `RouteGuard`.
+- **Mẫu bố cục:** Màn hình phân tích & thống kê chuyên sâu (Analytics Dashboard):
+  - **Đầu trang (`PageHeader`):** Tiêu đề "Báo cáo doanh thu", phụ đề mô tả khoảng thời gian đang lọc, nút hành động "Xuất Excel" (`GET /api/v1/reports/revenue/export`).
+  - **Thanh bộ lọc thời gian & tiêu chí (`RevenueFilterToolbar`):**
+    - Khoảng ngày (`fromDate`, `toDate`): 2 ô nhập ngày chuẩn HTML5 `date` (`YYYY-MM-DD`). Giá trị mặc định: từ ngày 01/01 của năm hiện tại đến ngày hiện tại giờ VN.
+    - Nhóm theo kỳ (`groupBy`): Chọn giữa `Tháng` (`month`), `Quý` (`quarter`), `Năm` (`year`) qua dropdown `Select` (mặc định `month`).
+    - Phân loại sản phẩm (`productType`): Chọn giữa `Tất cả` (`all`), `Dịch vụ lẻ` (`service`), `Gói dịch vụ` (`package`) (mặc định `all`).
+    - Số lượng sản phẩm top (`top`): Chọn `10`, `20`, hoặc `50` (mặc định `10`).
+    - Các nút chọn nhanh (Quick presets): "Năm nay" (mặc định), "Năm trước", "Quý này", "Tháng này", "30 ngày qua".
+    - Nút "Đặt lại": Trả toàn bộ tham số lọc về mặc định ban đầu.
+  - **Cảnh báo khoản thu chưa ghi nhận doanh thu (`UnrecognizedPaymentsAlert`):**
+    - Xuất hiện cảnh báo màu hổ phách/vàng (`warning`) khi `unrecognizedPayments.count > 0` (theo BR-RPT-02, Q-46): thông báo số lượng giao dịch và tổng số tiền thanh toán thành công trên các đơn bị hủy/hết hạn hoặc thanh toán thừa cần chủ spa rà soát hoàn tiền thủ công.
+  - **Thẻ chỉ số tổng quan (KPI Summary Cards):**
+    - **Tổng doanh thu:** Giá trị `totalRevenue` (định dạng `vi-VN` đ). Phụ đề thể hiện tiêu chí đang lọc.
+    - **Doanh thu dịch vụ lẻ:** Giá trị `serviceRevenue` (định dạng `vi-VN` đ), kèm tỷ lệ % đóng góp trên tổng doanh thu.
+    - **Doanh thu gói dịch vụ:** Giá trị `packageRevenue` (định dạng `vi-VN` đ), kèm tỷ lệ % đóng góp trên tổng doanh thu.
+    - **Tổng số đơn hàng:** Giá trị `orderCount` (đơn vị: đơn).
+  - **Biểu đồ & Bảng chi tiết doanh thu theo kỳ (`RevenuePeriodChart` & `RevenuePeriodTable`):**
+    - Biểu đồ cột SVG + CSS/Tailwind nhẹ nhàng, tương thích theme sáng/tối:
+      - Trục hoành hiển thị các kỳ (`label`: `MM/yyyy`, `Qn/yyyy`, `yyyy`).
+      - Cột chồng hoặc cột đơn thể hiện doanh thu dịch vụ và doanh thu gói.
+      - Hover/focus tooltip hiển thị chi tiết số tiền dịch vụ, gói, tổng doanh thu và số đơn của kỳ đó.
+    - Chế độ xem hoặc bảng chi tiết đặt phía dưới: Hiển thị bảng số liệu theo kỳ gồm các cột: Kỳ báo cáo, Từ ngày, Đến ngày, Doanh thu dịch vụ, Doanh thu gói, Tổng doanh thu, Số đơn hàng. Dòng tổng cộng (footer) chốt tổng toàn bộ các kỳ.
+  - **Bảng xếp hạng doanh thu theo sản phẩm (`RevenueByProductTable`):**
+    - Dựng bằng `DataTable` chuẩn của hệ thống (`@components/shared/DataTable`).
+    - Các cột:
+      1. Thứ hạng (#): 1, 2, 3...
+      2. Tên sản phẩm: Tên dịch vụ hoặc gói dịch vụ.
+      3. Loại sản phẩm: `StatusBadge` ("Dịch vụ lẻ" - `tone="info"`, "Gói dịch vụ" - `tone="primary"`).
+      4. Số lượng bán: Số dòng đơn hàng tương ứng (`quantity`).
+      5. Doanh thu: Số tiền thu được (`revenue`, định dạng `vi-VN` đ).
+      6. Tỷ trọng (%): `sharePercent` kèm thanh progress bar mini trực quan.
+
+### Dữ liệu & Hợp đồng API (UC-SPA-33)
+
+- **Endpoints:**
+  - `GET /api/v1/reports/revenue?fromDate=&toDate=&groupBy=&productType=`
+    - Hook: `useRevenueReport(params)`
+    - Query key: `reportsQueryKeys.revenue(params)`
+    - Response: `RevenueReportDto` (`fromDate`, `toDate`, `groupBy`, `productType`, `totalRevenue`, `serviceRevenue`, `packageRevenue`, `orderCount`, `periods: RevenuePeriodDto[]`, `unrecognizedPayments: UnrecognizedPaymentsDto`)
+  - `GET /api/v1/reports/revenue/by-product?fromDate=&toDate=&productType=&top=`
+    - Hook: `useRevenueByProduct(params)`
+    - Query key: `reportsQueryKeys.byProduct(params)`
+    - Response: `RevenueByProductDto` (`fromDate`, `toDate`, `productType`, `items: ProductRevenueDto[]`)
+  - `GET /api/v1/reports/revenue/export?fromDate=&toDate=&groupBy=&productType=`
+    - Function: `reportsApi.exportRevenue(params)`
+    - Response: Blob binary (`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`)
+    - Tải xuống trực tiếp file: `doanh-thu_<fromDate>_<toDate>.xlsx` (BR-RPT-05).
+
+- **Đồng bộ URL:**
+  - Tham số lọc được lưu trên URL Search Params: `?fromDate=...&toDate=...&groupBy=...&productType=...&top=...`.
+  - Thay đổi bộ lọc tự động cập nhật URL và kích hoạt query mới.
+
+### Bảng mã lỗi và cách xử lý giao diện
+
+| Mã lỗi backend | Ngữ cảnh | Cách xử lý trên giao diện |
+| --- | --- | --- |
+| `validation_error` (400) | `fromDate > toDate`, khoảng thời gian > 5 năm, năm ngoài 2000–2100, `top` ngoài 1..50 | Hiển thị thông báo lỗi dưới trường tương ứng trong bộ lọc và toast thông báo tiếng Việt ("Khoảng thời gian không hợp lệ", "Khoảng thời gian tối đa là 5 năm"...). |
+| `unauthorized` (401) | Hết hạn phiên hoặc chưa đăng nhập | Tự động chuyển hướng về trang đăng nhập `/login?redirect=/owner/reports`. |
+| `forbidden` (403) | Người dùng không có vai trò chủ spa (`owner`) | Chuyển hướng về `/forbidden` (hoặc hiển thị màn hình thông báo không có quyền). |
+| `network_error` / 500 | Lỗi kết nối mạng hoặc lỗi máy chủ nội bộ | Hiển thị component `ErrorState` kèm nút "Thử lại" gọi `refetch()`. |
+
+### Trạng thái màn hình
+
+1. **Đang tải (Loading):** Hiển thị `Skeleton` cho thẻ KPI, khung biểu đồ và bảng dữ liệu.
+2. **Lỗi (Error):** Hiển thị component `ErrorState` với thông báo thân thiện và nút "Thử lại".
+3. **Rỗng (Empty):** Khi `totalRevenue = 0` và không có sản phẩm nào có doanh thu trong khoảng chọn:
+   - Các thẻ KPI hiển thị `0 đ` và `0 đơn`.
+   - Biểu đồ vẫn vẽ các mốc kỳ đầy đủ với cột chiều cao 0 theo đúng danh sách kỳ backend trả về (theo A1).
+   - Bảng sản phẩm hiển thị `EmptyState` ("Không có dữ liệu sản phẩm trong khoảng thời gian này").
+4. **Có dữ liệu:** Hiển thị trọn vẹn số liệu thống kê, thanh biểu đồ trực quan, bảng chi tiết theo kỳ và top sản phẩm có doanh thu cao nhất.
+
+### Responsive và Accessibility (a11y)
+
+- **Desktop (>= 1024px):** Lưới KPI 4 cột, biểu đồ rộng rãi, thanh bộ lọc dàn 2 hàng tinh gọn, bảng dữ liệu hiển thị toàn bộ cột.
+- **Tablet (768px – 1023px):** Lưới KPI 2x2 cột, biểu đồ tự co giãn hoặc hỗ trợ cuộn ngang nếu chọn chuỗi tháng dài, bảng sản phẩm cuộn ngang (`overflow-x-auto`).
+- **Mobile (< 768px):** Lưới KPI 1–2 cột, thanh bộ lọc dạng dọc; biểu đồ có thanh cuộn ngang mượt mà, cho phép chạm (tap) để xem tooltip số liệu; bảng sản phẩm cuộn ngang rõ ràng.
+- **Accessibility:** Các nút xuất Excel, chuyển đổi chế độ xem có đầy đủ `aria-label`; các thanh cột biểu đồ hỗ trợ focus bàn phím và nhãn `aria-label` mô tả chi tiết kỳ và doanh thu; màu sắc tương phản tuân thủ design token của hệ thống.
+
+### Thiếu từ backend
+
+- Không có (Backend API đã hoàn thiện đầy đủ theo đúng thiết kế BR-RPT-01..05 và SPA-API-107/108/109).
+
+---
+
+### Bảng kiểm thử giao diện báo cáo doanh thu (`RPT-UI-T01...T10`)
+
+| Mã | Tình huống kiểm thử | Kết quả mong đợi |
+| --- | --- | --- |
+| RPT-UI-T01 | Truy cập `/owner/reports` lần đầu với tham số mặc định | Hiển thị Skeleton loading; sau đó load dữ liệu từ 01/01 năm hiện tại đến ngày hiện tại, nhóm theo tháng, tất cả sản phẩm; các thẻ KPI hiển thị đúng tổng doanh thu, doanh thu dịch vụ, doanh thu gói và số đơn hàng. |
+| RPT-UI-T02 | Thay đổi bộ lọc thời gian, cách nhóm (`quarter`, `year`) và loại sản phẩm | URL Search Params cập nhật tương ứng; TanStack Query gọi lại API với đúng tham số; biểu đồ và các thẻ KPI cập nhật lại số liệu. |
+| RPT-UI-T03 | Chọn các phím tắt kỳ nhanh ("Năm nay", "Quý này", "Tháng này"...) | Các ô ngày `fromDate`, `toDate` tự động điền mốc ngày tương ứng và kích hoạt tải dữ liệu mới. |
+| RPT-UI-T04 | Nhập khoảng ngày không hợp lệ (`fromDate > toDate` hoặc > 5 năm) | Form bắt lỗi client hoặc hiển thị thông báo lỗi `validation_error` từ backend, không gửi request lỗi hoặc hiển thị toast cảnh báo rõ ràng. |
+| RPT-UI-T05 | Khoảng thời gian không có doanh thu (`totalRevenue = 0`) | Hiển thị trạng thái rỗng thân thiện; các thẻ KPI hiển thị `0 đ`; biểu đồ vẫn hiển thị danh sách các kỳ với giá trị 0; bảng sản phẩm hiển thị `EmptyState`. |
+| RPT-UI-T06 | Phát hiện khoản thanh toán chưa ghi nhận (`unrecognizedPayments.count > 0`) | Xuất hiện hộp cảnh báo `UnrecognizedPaymentsAlert` màu vàng hổ phách nêu rõ số lượng và tổng số tiền cần rà soát hoàn thủ công. |
+| RPT-UI-T07 | Bảng top sản phẩm theo doanh thu | Hiển thị đúng số lượng dòng theo `top` (10/20/50); sắp xếp giảm dần theo doanh thu; cột loại có badge phân biệt dịch vụ/gói; thanh progress bar tỷ trọng tính đúng %. |
+| RPT-UI-T08 | Nhấn nút "Xuất Excel" | Nút chuyển sang trạng thái loading; gọi endpoint `GET /reports/revenue/export`; kích hoạt tải file `.xlsx` về trình duyệt với tên chuẩn `doanh-thu_<fromDate>_<toDate>.xlsx`; sau khi hoàn tất nút trở lại bình thường. |
+| RPT-UI-T09 | Xử lý lỗi API (lỗi mạng hoặc 500) | Hiển thị component `ErrorState` với thông báo lỗi tiếng Việt và nút "Thử lại"; nhấn "Thử lại" kích hoạt `refetch()`. |
+| RPT-UI-T10 | Kiểm tra phân quyền truy cập | Người dùng chưa đăng nhập truy cập `/owner/reports` chuyển hướng về `/login?redirect=/owner/reports`; vai trò nhân viên hoặc khách hàng bị từ chối chuyển sang `/forbidden`; menu sidebar "Báo cáo" hiển thị trạng thái active. |
+
