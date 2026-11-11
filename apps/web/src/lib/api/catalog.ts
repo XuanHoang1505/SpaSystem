@@ -1,20 +1,13 @@
 import { CatalogApi } from '@spa/api-client';
 import type { ApiResponse } from '@spa/shared-types';
-import { ApiConfigurationError } from '@/lib/errors/ApiConfigurationError';
-import { getApiClient } from './session';
+import { callApi, callVoidApi } from './call';
 
 /** Shared client: an owner's Bearer makes the API include discontinued items (BR-CAT-01). */
-function catalogApi(): CatalogApi {
-  const { client, error } = getApiClient();
-  if (!client) throw new ApiConfigurationError(error ?? 'Configuration Error');
-  return new CatalogApi(client);
+export function callCatalog<T>(call: (api: CatalogApi) => Promise<ApiResponse<T>>): Promise<T> {
+  return callApi((client) => new CatalogApi(client), call);
 }
 
-/** Runs one CatalogApi call and returns the envelope's data (a missing body is an error). */
-export async function callCatalog<T>(
-  call: (api: CatalogApi) => Promise<ApiResponse<T>>,
-): Promise<T> {
-  const response = await call(catalogApi());
-  if (response.data === null || response.data === undefined) throw new Error('Empty API response.');
-  return response.data;
+/** Runs one CatalogApi call that returns void (e.g. 204 No Content). */
+export function callCatalogVoid(call: (api: CatalogApi) => Promise<unknown>): Promise<void> {
+  return callVoidApi((client) => new CatalogApi(client), (api) => call(api) as Promise<void>);
 }

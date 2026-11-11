@@ -25,7 +25,13 @@ export const catalogPolicies = {
   maxWorkScheduleQueryRangeDays: 42,
   /** `WorkSchedule:MaxBatchShifts`: số ca tối đa tạo trong 1 lần phân ca hàng loạt. */
   maxBatchShifts: 500,
+  /** Giới hạn dung lượng ảnh dịch vụ / gói dịch vụ tải lên (5 MB). */
+  maxImageSizeBytes: 5 * 1024 * 1024,
+  /** Định dạng ảnh dịch vụ / gói dịch vụ được chấp nhận. */
+  allowedImageMimeTypes: ['image/jpeg', 'image/png', 'image/webp'] as const,
 } as const;
+
+export const allowedImageMimeTypes = catalogPolicies.allowedImageMimeTypes;
 
 /** Thông tin liên hệ hiển thị cho khách. Số điện thoại là số mẫu của Stitch: thay số thật trước khi dùng. */
 export const siteContact = {
