@@ -27,6 +27,7 @@ import { MyTreatmentPlansPage } from '@/pages/customer/MyTreatmentPlansPage';
 import { PaymentResultPage } from '@/pages/customer/PaymentResultPage';
 import { OwnerAppointmentsPage } from '@/pages/owner/OwnerAppointmentsPage';
 import { OwnerPackagesPage } from '@/pages/owner/OwnerPackagesPage';
+import { OwnerOrdersPage } from '@/pages/owner/OwnerOrdersPage';
 import { OwnerPromotionsPage } from '@/pages/owner/OwnerPromotionsPage';
 import { OwnerServicesPage } from '@/pages/owner/OwnerServicesPage';
 import { OwnerStaffPage } from '@/pages/owner/OwnerStaffPage';
@@ -119,6 +120,7 @@ export const ownerPages: Record<string, ReactElement> = {
   '/owner/services': <OwnerServicesPage />,
   '/owner/packages': <OwnerPackagesPage />,
   '/owner/promotions': <OwnerPromotionsPage />,
+  '/owner/orders': <OwnerOrdersPage />,
   '/owner/treatments': <OwnerTreatmentsPage />,
 };
 

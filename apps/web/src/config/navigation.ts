@@ -4,7 +4,6 @@ import {
   CalendarCheckIcon,
   CalendarClockIcon,
   CalendarDaysIcon,
-  CreditCardIcon,
   HistoryIcon,
   HomeIcon,
   InfoIcon,
@@ -63,7 +62,7 @@ const icons: Record<string, LucideIcon> = {
   '/owner/bookings': CalendarCheckIcon,
   '/owner/promotions': TagIcon,
   '/owner/treatments': CalendarClockIcon,
-  '/owner/payments': CreditCardIcon,
+  '/owner/orders': ReceiptTextIcon,
   '/owner/reports': BarChart3Icon,
 };
 
