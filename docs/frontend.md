@@ -188,6 +188,28 @@ Staff và chủ spa giữ `WorkspaceLayout` (sidebar). Không còn dải "Bản 
 - **Hooks & API:** `CatalogApi` (mở rộng owner methods cho services, packages, categories), wrappers `callCatalog`, `callCatalogVoid` (`apps/web/src/lib/api/catalog.ts`), mutation hooks tại `features/services/hooks/useServiceMutations.ts` và `features/service-packages/hooks/usePackageMutations.ts`.
 - **Chính sách:** `catalogPolicies.maxImageSizeBytes` (5MB), `allowedImageMimeTypes` (`image/jpeg`, `image/png`, `image/webp`).
 
+### Quản lý chương trình khuyến mãi (chủ spa, UC-SPA-14)
+
+- **Trang:** `/owner/promotions` (SCR-W35, `OwnerPromotionsPage`, `OwnerPromotionsView`), chạy trong `OwnerLayout` (sidebar, hỗ trợ theme sáng và tối).
+- **Bộ lọc & Điều hướng:** `PromotionFilterToolbar` (tìm kiếm theo mã khuyến mãi, lọc trạng thái `all`/`active`/`stopped`, lọc khoảng ngày áp dụng `fromDate`/`toDate`, nút đặt lại bộ lọc, nút CTA "+ Tạo khuyến mãi").
+- **Bảng danh sách:** `PromotionTable` (`DataTable<PromotionDto>` với phân trang qua URL `useTableSearchParams`):
+  - Mã khuyến mãi (badge font monospace, nút sao chép mã nhanh)
+  - Mức giảm giá (hiển thị % kèm mức giảm tối đa nếu có, hoặc số tiền cố định `formatCurrency`)
+  - Đơn tối thiểu áp dụng
+  - Thời hạn áp dụng (`startsAtUtc` đến `endsAtUtc`, gắn nhãn cảnh báo "Đã hết hạn" nếu quá hạn)
+  - Thống kê lượt dùng (`usedCount` / `usageLimit`) và giới hạn mỗi khách (`perCustomerLimit`)
+  - Trạng thái `StatusBadge` (Xanh "Đang áp dụng" / Xám "Tạm dừng")
+  - Menu thao tác dòng với icons (`EyeIcon` Xem chi tiết, `PencilIcon` Sửa thông tin, `PowerIcon` Tạm dừng / Kích hoạt lại).
+- **Chi tiết:** `PromotionDetailSheet` mở drawer xem toàn bộ thông tin mã, loại giảm giá, điều kiện áp dụng đơn tối thiểu, mức giảm tối đa, giới hạn lượt dùng, thanh tiến độ sử dụng, các nút hành động sửa và chuyển trạng thái ở chân sheet.
+- **Modal tạo & sửa khuyến mãi:** `PromotionFormDialog` (React Hook Form + Zod `promotionFormSchema`):
+  - Tự động chuyển mã sang chữ hoa (`UPPERCASE`), ràng buộc 3–50 ký tự `^[A-Za-z0-9_-]{3,50}$`.
+  - Chọn hình thức giảm: Theo phần trăm (0.01% – 100%) hoặc Số tiền cố định.
+  - Tuân thủ quy tắc nghiệp vụ BR-PRM-06: Khi khuyến mãi đã có lượt dùng (`usedCount > 0`), hệ thống tự động vô hiệu hóa (disabled) các trường mã code, loại giảm giá, và mức giảm giá kèm thông báo hướng dẫn rõ ràng.
+  - Ràng buộc tổng lượt dùng không được nhỏ hơn số lượt đã dùng (`usageLimit >= usedCount`).
+  - Tự động focus ô nhập mã khi mở modal.
+- **Hộp thoại trạng thái:** `TogglePromotionStatusDialog` xác nhận kích hoạt lại hoặc tạm dừng chương trình khuyến mãi.
+- **Hooks & API:** `PromotionsApi` (`@spa/api-client`), wrappers `callPromotions`, `callPromotionsVoid` (`apps/web/src/lib/api/promotions.ts`), query & mutation hooks tại `features/promotions/hooks/` (`usePromotionSearch`, `usePromotion`, `useCreatePromotion`, `useUpdatePromotion`, `useChangePromotionStatus`).
+
 ## Chạy và kiểm tra
 
 ```powershell

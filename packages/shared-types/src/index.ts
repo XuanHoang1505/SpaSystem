@@ -53,3 +53,4 @@ export * from './treatments';
 export * from './users';
 export * from './aiAssistant';
 export * from './workSchedules';
+export * from './promotions';

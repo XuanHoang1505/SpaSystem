@@ -582,9 +582,81 @@ Nút `loading` suốt hai request liên tiếp và vô hiệu để chống bấ
 | `CartItemDto` không có thời lượng hay số buổi                                        | Dòng giỏ chỉ có tên, loại, giá, ảnh | Không gọi thêm API chỉ để làm đẹp                               |
 | Thời hạn giữ đơn (15 phút) và `Vnpay:MinAmount` (5.000 đ) không có endpoint cấu hình | Văn bản trên trang thanh toán       | Hằng trong `catalogPolicies.ts`, giữ đồng bộ `appsettings.json` |
 
-### Kiểm thử giao diện
+### Giao diện web: Quản lý chương trình khuyến mãi (UC-SPA-14, SCR-W35, 11/11/2026)
 
-Vitest + Testing Library, `fetch` giả theo `src/test/mockApi.tsx`, test đặt cạnh file; thêm test `OrdersApi` trong `packages/api-client`.
+Phạm vi: Quản lý chương trình khuyến mãi (`SCR-W35` — `/owner/promotions`) cho chủ spa trên nền tảng web (`apps/web`). Chạy trong `OwnerLayout` (có thanh bên sidebar, breadcrumb, hỗ trợ theme sáng/tối).
+
+- **Route:** `/owner/promotions` · **Vai trò:** Chủ spa (`role = owner`, quyền `promotion.manage`) · **Layout:** `OwnerLayout` · **Mẫu bố cục:** Danh sách quản trị (`DataTable` + thanh công cụ bộ lọc + phân trang server).
+- **Thanh tiêu đề (`PageHeader`):** Tiêu đề "Quản lý khuyến mãi", mô tả "Tạo mã giảm giá, thiết lập điều kiện áp dụng, giới hạn lượt dùng và theo dõi hiệu quả khuyến mãi." Nút chính: "Tạo khuyến mãi" (icon `PlusIcon`, variant `default`) $\rightarrow$ mở `PromotionFormDialog` chế độ tạo mới.
+- **Thanh bộ lọc (`PromotionFilterToolbar`):**
+  - Lọc theo trạng thái: Dropdown `Select` ("Tất cả trạng thái", "Đang áp dụng" — `active`, "Tạm dừng" — `stopped`).
+  - Lọc theo khoảng ngày áp dụng: Hai ô chọn ngày "Từ ngày" (`fromDate`) và "Đến ngày` (`toDate`) định dạng `yyyy-MM-dd`. Ngày kết thúc trước ngày bắt đầu thì báo lỗi và không gửi request.
+  - Nút "Đặt lại bộ lọc" (icon `XIcon`, variant `ghost`) xuất hiện khi có bất kỳ bộ lọc nào đang áp dụng. Đổi bộ lọc tự động quay về trang 1.
+  - Đồng bộ URL: `?status=`, `?fromDate=`, `?toDate=`, `?page=`, `?pageSize=`.
+- **Bảng danh sách (`DataTable<PromotionDto>`):**
+  - Cột `code`: Mã khuyến mãi in hoa đậm kèm nhãn copy nhanh (`font-mono font-semibold text-primary`).
+  - Cột `discount`: Mức giảm giá:
+    - Nếu `percentage`: "{discountValue}%" (nếu có mức giảm tối đa: kèm dòng phụ `text-xs text-muted-foreground` "Tối đa {maxDiscountAmount} đ").
+    - Nếu `fixed_amount`: "Giảm {formatCurrency(discountValue)}".
+  - Cột `minOrderAmount`: Đơn tối thiểu (`formatCurrency(minOrderAmount)`, ví dụ "500.000 đ", ẩn dưới `sm`).
+  - Cột `period`: Thời gian áp dụng (từ `formatLocalDate(startsAtUtc)` đến `formatLocalDate(endsAtUtc)`, ẩn dưới `md`). Nếu đã qua ngày kết thúc, hiển thị thêm badge nhỏ "Đã hết hạn".
+  - Cột `usage`: Lượt sử dụng ("{usedCount} / {usageLimit ?? 'Không giới hạn'}", ẩn dưới `lg`).
+  - Cột `perCustomerLimit`: Giới hạn/khách ("{perCustomerLimit ?? 'Không giới hạn'} lần", ẩn dưới `xl`).
+  - Cột `status`: `StatusBadge` (Đang áp dụng: `tone="success"`, Tạm dừng: `tone="neutral"`).
+  - Menu thao tác dòng (`DataTableRowActions`):
+    - 👁️ "Xem chi tiết" (`EyeIcon`) $\rightarrow$ mở `PromotionDetailSheet`.
+    - ✏️ "Sửa thông tin" (`PencilIcon`) $\rightarrow$ mở `PromotionFormDialog` chế độ sửa.
+    - 🔄 "Tạm dừng" hoặc "Kích hoạt lại" (`PowerIcon`) $\rightarrow$ mở `TogglePromotionStatusDialog`.
+- **Sheet chi tiết khuyến mãi (`PromotionDetailSheet`):**
+  - Drawer bên phải (`sm:max-w-md`), hiển thị mã khuyến mãi lớn, mô tả chương trình, hình thức và giá trị giảm.
+  - Bảng tổng kết điều kiện: Đơn hàng tối thiểu, Mức giảm tối đa (với % giảm), Số lượt đã dùng (`usedCount`), Tổng giới hạn lượt dùng (`usageLimit`), Giới hạn mỗi khách hàng (`perCustomerLimit`).
+  - Khoảng thời gian hiệu lực: Ngày bắt đầu, Ngày kết thúc, Trạng thái (kèm cảnh báo nếu đã quá hạn áp dụng).
+  - Footer: Nút "Sửa thông tin", Nút "Tạm dừng / Kích hoạt lại".
+- **Modal tạo & sửa khuyến mãi (`PromotionFormDialog`):**
+  - Dialog form responsive (`sm:max-w-xl`):
+    - Mã khuyến mãi (`code`): Bắt buộc, 3–50 ký tự không dấu, tự động viết hoa khi nhập, regex `^[A-Z0-9_-]{3,50}$`. Khóa (disabled) khi sửa chương trình đã có lượt dùng (`usedCount > 0`, BR-PRM-06).
+    - Mô tả chương trình (`description`): Tùy chọn, tối đa 1000 ký tự (`Textarea`).
+    - Hình thức giảm (`discountType`): Radio / Select chọn "Theo phần trăm (%)" hoặc "Số tiền cố định (VNĐ)". Khóa khi `usedCount > 0`.
+    - Giá trị giảm (`discountValue`):
+      - Nếu theo %: Số thực từ 0.01 đến 100, tối đa 2 chữ số thập phân.
+      - Nếu số tiền: Số nguyên từ 1 đến 999.999.999 đ.
+      - Khóa khi `usedCount > 0`.
+    - Mức giảm tối đa (`maxDiscountAmount`): Chỉ hiển thị và cho phép nhập khi hình thức giảm là "Theo phần trăm". Tùy chọn, số nguyên $\ge 1$ đ. Tự động xóa về `null` khi chuyển sang giảm số tiền cố định.
+    - Đơn hàng tối thiểu (`minOrderAmount`): Bắt buộc, số nguyên từ 0 đến 999.999.999.999 đ (mặc định 0 đ).
+    - Thời gian áp dụng: Ngày & giờ bắt đầu (`startsAtUtc`) và kết thúc (`endsAtUtc`), kiểm tra ngày kết thúc phải sau ngày bắt đầu.
+    - Giới hạn mỗi khách (`perCustomerLimit`): Tùy chọn, số nguyên 1–1.000 lần (để trống là không giới hạn).
+    - Tổng số lượt dùng tối đa (`usageLimit`): Tùy chọn, số nguyên 1–1.000.000 lượt (để trống là không giới hạn). Khi sửa, không được phép đặt nhỏ hơn số lượt đã dùng (`usedCount`, BR-PRM-06).
+- **Hộp thoại chuyển đổi trạng thái (`TogglePromotionStatusDialog`):**
+  - Xác nhận tạm dừng khuyến mãi (giải thích mã sẽ không còn áp dụng được cho các đơn hàng mới, các đơn đang chờ thanh toán đã áp mã vẫn được bảo lưu).
+  - Xác nhận kích hoạt lại khuyến mãi (nếu khuyến mãi đã hết hạn thì cảnh báo cần gia hạn ngày kết thúc trước).
+
+### Bảng mã lỗi và cách xử lý giao diện chủ spa (UC-SPA-14)
+
+| Mã lỗi backend | Ngữ cảnh | Cách xử lý trên giao diện |
+| --- | --- | --- |
+| `promotion_not_found` (404) | Sửa, đổi trạng thái | Toast lỗi "Không tìm thấy chương trình khuyến mãi hoặc đã bị xóa.", đóng modal và tải lại bảng (`invalidateQueries`). |
+| `promotion_code_exists` (409) | Tạo hoặc sửa mã trùng | Báo lỗi trực tiếp dưới ô nhập mã: "Mã khuyến mãi này đã tồn tại trong hệ thống." |
+| `promotion_in_use` (409) | Sửa mã/loại/giá trị khi đã có lượt dùng | Toast lỗi: "Chương trình đã có lượt dùng, không thể đổi mã, hình thức hay giá trị giảm." Form tự động khóa các trường này. |
+| `promotion_usage_limit_below_used` (400) | Giảm giới hạn nhỏ hơn lượt đã dùng | Báo lỗi dưới ô tổng số lượt: "Tổng số lượt không được nhỏ hơn số lượt đã dùng ({usedCount})." |
+| `validation_error` (400) | Form nhập sai quy tắc (giá trị âm, ngày sai...) | Gắn lỗi cụ thể vào từng `FormField` tương ứng thông qua React Hook Form + Zod. |
+| `unauthorized` (401) / `forbidden` (403) | Hết phiên hoặc không phải chủ spa | Điều hướng về `/login` hoặc hiển thị trang báo quyền hạn. |
+
+### Kiểm thử giao diện quản trị khuyến mãi (`PRM-UI-T01...T12`)
+
+| Mã | Tình huống kiểm thử | Kết quả mong đợi |
+| --- | --- | --- |
+| PRM-UI-T01 | Mở `/owner/promotions` lần đầu | Bảng hiển thị Skeleton khi đang tải, sau đó hiển thị danh sách khuyến mãi với mã, mức giảm, đơn tối thiểu, thời gian, lượt dùng, badge trạng thái. |
+| PRM-UI-T02 | Lọc khuyến mãi theo trạng thái và khoảng ngày | Request `GET /promotions` mang đúng `status`, `fromDate`, `toDate`; URL đồng bộ tham số; đổi bộ lọc quay về trang 1. |
+| PRM-UI-T03 | Bấm "Tạo khuyến mãi" và nhập form hợp lệ | Gọi `POST /promotions`, tự động viết hoa mã, đóng modal, toast thông báo thành công và bảng khuyến mãi tự động tải lại. |
+| PRM-UI-T04 | Form tạo khuyến mãi validate lỗi (mã trống/sai regex, % giảm > 100, ngày kết thúc $\le$ bắt đầu) | Chặn gửi request, hiện thông báo lỗi tiếng Việt dưới từng ô nhập. |
+| PRM-UI-T05 | Tạo khuyến mãi với mã đã tồn tại (409) | Nhận mã lỗi `promotion_code_exists`, báo lỗi đỏ trực tiếp dưới ô nhập mã. |
+| PRM-UI-T06 | Mở "Sửa thông tin" khuyến mãi chưa có lượt dùng (`usedCount = 0`) | Cho phép sửa toàn bộ các trường; gọi `PUT /promotions/{id}` thành công khi lưu. |
+| PRM-UI-T07 | Mở "Sửa thông tin" khuyến mãi đã có lượt dùng (`usedCount > 0`) | Ô mã, hình thức giảm và giá trị giảm bị khóa (disabled) kèm ghi chú giải thích BR-PRM-06. |
+| PRM-UI-T08 | Nhập tổng lượt dùng mới nhỏ hơn số lượt đã dùng | Báo lỗi `promotion_usage_limit_below_used` dưới ô nhập tổng số lượt. |
+| PRM-UI-T09 | Chuyển hình thức giảm từ % sang tiền mặt cố định | Ô mức giảm tối đa tự động ẩn và giá trị đặt về `null`. |
+| PRM-UI-T10 | Bấm "Tạm dừng" / "Kích hoạt lại" khuyến mãi | Mở dialog xác nhận, gọi `PATCH /promotions/{id}/status`, `StatusBadge` đổi tương ứng (`active` $\leftrightarrow$ `stopped`). |
+| PRM-UI-T11 | Mở xem chi tiết khuyến mãi (`PromotionDetailSheet`) | Drawer hiển thị đầy đủ thông tin, điều kiện áp dụng, tỷ lệ đã dùng / tổng lượt, các nút hành động footer. |
+| PRM-UI-T12 | Router `/owner/promotions` | Render trang thật, không còn hiển thị `PlaceholderPage`. |
 
 | Mã         | Kiểm tra                                                                                                                                                                                                                                                                                              |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
