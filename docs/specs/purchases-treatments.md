@@ -580,3 +580,144 @@ Không có Stitch MCP: Dựng trực tiếp bằng `DataTable` chuẩn của h�
 | HIS-UI-T06 | SCR-W18  | Drawer chi tiết: Bấm "Xem chi tiết" mở `ServiceHistoryDetailSheet`, gọi `GET /me/service-history/{appointmentId}`, hiển thị đầy đủ thời lượng, kỹ thuật viên, nguồn và kết quả chăm sóc `result`.      |
 | HIS-UI-T07 | SCR-W18  | Trạng thái `no_show`: Hiển thị badge màu đỏ "Không đến", trong sheet chi tiết thông báo khách không đến, không có kết quả chăm sóc.                                                                    |
 | HIS-UI-T08 | SCR-W18  | Điều hướng bảo vệ: Truy cập `/my-treatment-plans` hoặc `/my-history` khi chưa đăng nhập chuyển hướng sang `/login?redirect=...`; menu bên trái active đúng mục.                                        |
+
+---
+
+## Giao diện (web): Quản lý liệu trình của khách hàng (UC-SPA-21, SCR-W36)
+
+- **Mã và route:** `SCR-W36` (theo `data_screens.py`), đường dẫn `/owner/treatments`, chạy trong `OwnerLayout` (hỗ trợ theme sáng và tối).
+- **Quyền truy cập:** `role = owner` (chủ spa) và `staff` (kỹ thuật viên, theo phạm vi BR-TRT-06). Khi truy cập chưa đăng nhập $\rightarrow$ `/login?redirect=/owner/treatments`; sai vai trò $\rightarrow$ `/forbidden`.
+- **Mẫu bố cục:**
+  - Danh sách `DataTable` kết hợp bộ lọc trên đầu (`TreatmentFilterToolbar`).
+  - Drawer chi tiết liệu trình trượt từ bên phải (`TreatmentDetailSheet`).
+  - Modal cập nhật mục tiêu & phác đồ điều trị (`UpdateTreatmentDialog`).
+  - Modal phân công / đổi kỹ thuật viên phụ trách (`AssignTreatmentStaffDialog`).
+  - Modal cập nhật trạng thái liệu trình (`ChangeTreatmentStatusDialog` hỗ trợ Tạm dừng, Tiếp tục, Hủy, Đóng/Hoàn tất).
+  - Modal cập nhật ghi chú buổi chăm sóc (`UpdateSessionNoteDialog`).
+
+### Dữ liệu & Ánh xạ trạng thái
+
+- **Endpoint chính:**
+  - Danh sách: `GET /api/v1/treatments?search=&status=&primaryStaffMemberId=&pageNumber=&pageSize=` (`treatmentManageQueryKeys.list(params)`), trả `PagedResult<TreatmentPlanListItemDto>`.
+  - Chi tiết: `GET /api/v1/treatments/{id}` (`treatmentManageQueryKeys.detail(id)`), trả `TreatmentPlanDto`.
+  - Cập nhật mục tiêu: `PUT /api/v1/treatments/{id}` body `{ goal, expectedEndDate, note }`.
+  - Ghi chú buổi: `PUT /api/v1/treatments/{id}/sessions/{sessionId}` body `{ note }`.
+  - Đổi nhân viên phụ trách: `POST /api/v1/treatments/{id}/assign-staff` body `{ staffMemberId }` (null = bỏ phụ trách).
+  - Tạm dừng: `POST /api/v1/treatments/{id}/pause` body `{ reason }`.
+  - Tiếp tục: `POST /api/v1/treatments/{id}/resume`.
+  - Hủy liệu trình: `POST /api/v1/treatments/{id}/cancel` body `{ reason }`.
+  - Đóng hoàn thành: `POST /api/v1/treatments/{id}/complete`.
+- **Trạng thái liệu trình (`TreatmentPlanStatus`):**
+  - `not_started`: "Chưa bắt đầu" (`tone="neutral"`).
+  - `in_progress`: "Đang thực hiện" (`tone="success"`).
+  - `completed`: "Đã hoàn thành" (`tone="info"`).
+  - `paused`: "Tạm dừng" (`tone="warning"`).
+  - `cancelled`: "Đã hủy" (`tone="danger"`).
+- **Trạng thái buổi chăm sóc (`TreatmentSessionStatus`):**
+  - `not_booked`: "Chưa đặt lịch" (`neutral`).
+  - `booked`: "Đã đặt lịch" (`info`).
+  - `completed`: "Đã hoàn thành" (`success`).
+  - `skipped`: "Bỏ qua" (`muted`).
+- **Phân loại da (`SkinType`):**
+  - `Normal`: "Da thường", `Dry`: "Da khô", `Oily`: "Da dầu", `Combination`: "Da hỗn hợp", `Sensitive`: "Da nhạy cảm".
+
+### Thành phần giao diện SCR-W36
+
+1. **Thanh công cụ lọc (`TreatmentFilterToolbar`):**
+   - Ô tìm kiếm (`Input` debounce 300ms): Tìm theo tên hoặc số điện thoại khách hàng không dấu (`search`).
+   - Chọn trạng thái (`Select`): Tất cả trạng thái / Chưa bắt đầu / Đang thực hiện / Tạm dừng / Đã hoàn thành / Đã hủy.
+   - Chọn nhân viên phụ trách (`Select`): Tất cả nhân viên / Lấy danh sách nhân viên đang làm từ `useWorkingStaff()`.
+   - Nút "Đặt lại" (`RotateCcwIcon`): Đưa mọi bộ lọc về mặc định (chỉ hiện khi đang có bộ lọc).
+   - Tự động đồng bộ các tham số lên URL (`useTableSearchParams`) và chuyển về trang 1 khi thay đổi bộ lọc.
+
+2. **Bảng danh sách liệu trình (`TreatmentTable`):**
+   - Bảng sử dụng component chuẩn `DataTable<TreatmentPlanListItemDto>`:
+     - Cột `customer`: Họ tên và số điện thoại khách hàng (kèm avatar ký tự viết tắt).
+     - Cột `package`: Tên gói dịch vụ nguồn, trạng thái gói `packageStatus`.
+     - Cột `progress`: Tiến độ số buổi đã hoàn thành `{usedSessions} / {totalSessions}` (kèm thanh progress bar nhỏ và số buổi đã đặt `{bookedSessions}`).
+     - Cột `nextSession`: Buổi tiếp theo cần thực hiện ("Buổi {seq}: {serviceName}", hoặc lịch hẹn cụ thể nếu đã đặt, ẩn dưới `md`).
+     - Cột `primaryStaff`: Tên nhân viên phụ trách (hoặc "Chưa phân công", ẩn dưới `lg`).
+     - Cột `expiresAt`: Hạn sử dụng gói (`formatLocalDate`, gắn nhãn cảnh báo nếu đã hết hạn, ẩn dưới `xl`).
+     - Cột `status`: `StatusBadge` liệu trình.
+     - Cột thao tác (`DataTableRowActions`):
+       - 👁️ "Xem chi tiết" (`EyeIcon`) $\rightarrow$ mở `TreatmentDetailSheet`.
+       - ✏️ "Cập nhật mục tiêu" (`PencilIcon`) $\rightarrow$ mở `UpdateTreatmentDialog` (khi `canEdit = true` và trạng thái khác `completed`/`cancelled`).
+       - 👤 "Đổi nhân viên phụ trách" (`UserCheckIcon`) $\rightarrow$ mở `AssignTreatmentStaffDialog` (khi `canManage = true` và trạng thái khác `completed`/`cancelled`).
+       - ⚡ "Chuyển trạng thái" (`PowerIcon` / `PauseIcon` / `CheckCircleIcon`) $\rightarrow$ mở `ChangeTreatmentStatusDialog` (khi `canManage = true`).
+
+3. **Drawer chi tiết liệu trình (`TreatmentDetailSheet`):**
+   - Trượt từ bên phải (`sm:max-w-xl`), hiển thị toàn diện hồ sơ điều trị:
+     - Header: Tên gói, khách hàng, số điện thoại, ngày mua, `StatusBadge` trạng thái liệu trình.
+     - Cảnh báo: Nếu có `statusReason` (khi tạm dừng hoặc hủy) hiển thị hộp cảnh báo màu vàng/đỏ nổi bật; nếu khách có dị ứng (`hasAllergies = true`), gắn badge đỏ cảnh báo dị ứng.
+     - Khối thông tin phác đồ:
+       - Mục tiêu điều trị (`goal`), Ghi chú nội bộ (`note`).
+       - Ngày bắt đầu thực tế (`startDate`), Ngày dự kiến kết thúc (`expectedEndDate`), Ngày kết thúc thực tế (`actualEndDate`).
+       - Kỹ thuật viên phụ trách hiện tại (`primaryStaff`).
+     - Khối danh sách các buổi chăm sóc (Timeline Sessions):
+       - Liệt kê theo thứ tự buổi 1, 2, ...
+       - Hiển thị tên dịch vụ, thời lượng, trạng thái buổi (`TreatmentSessionStatus`).
+       - Thông tin lịch hẹn gắn kèm nếu có (ngày, giờ, kỹ thuật viên làm buổi đó).
+       - Nút ✏️ sửa ghi chú buổi trị liệu (`UpdateSessionNoteDialog`).
+     - Khối hồ sơ da đã lập (`SkinProfiles`):
+       - Hiển thị các lần lập hồ sơ da theo từng buổi hẹn: Ngày đánh giá, Kỹ thuật viên đánh giá, Loại da (`SkinType`), Vấn đề da chính (`mainConcerns`), Mục tiêu chăm sóc (`careGoals`), Liệu trình đề xuất (`recommendedTreatment`).
+     - Khối lịch sử chăm sóc (`CareHistory`):
+       - Danh sách các lần khách đến chăm sóc: Ngày giờ, Trạng thái (`completed` / `no_show`), Kỹ thuật viên thực hiện, Ghi chú kết quả chăm sóc.
+     - Chân Sheet:
+       - Nút "Sửa phác đồ" (khi `canEdit`).
+       - Nút "Đổi nhân viên" (khi `canManage`).
+       - Nút "Thao tác trạng thái" (Tạm dừng / Tiếp tục / Hủy / Đóng liệu trình).
+
+4. **Modal cập nhật phác đồ (`UpdateTreatmentDialog`):**
+   - Form cập nhật (`PUT /api/v1/treatments/{id}`):
+     - Mục tiêu điều trị (`goal`, Textarea $\le$ 2000 ký tự).
+     - Ngày dự kiến kết thúc (`expectedEndDate`, Date picker, phải $\ge$ ngày bắt đầu `startDate` nếu đã bắt đầu).
+     - Ghi chú nội bộ (`note`, Textarea $\le$ 2000 ký tự).
+
+5. **Modal phân công kỹ thuật viên (`AssignTreatmentStaffDialog`):**
+   - Form chọn nhân viên (`POST /api/v1/treatments/{id}/assign-staff`):
+     - Select chọn nhân viên từ danh sách nhân viên đang làm việc (`useWorkingStaff()`).
+     - Tùy chọn "Bỏ người phụ trách (để trống)" gửi `{ staffMemberId: null }`.
+
+6. **Modal chuyển đổi trạng thái (`ChangeTreatmentStatusDialog`):**
+   - Hộp thoại đa năng xử lý các luồng chuyển trạng thái (BR-TRT-08):
+     - **Tạm dừng (`pause`):** Yêu cầu nhập lý do bắt buộc (1–500 ký tự). Cảnh báo: Các buổi hẹn đã đặt trước vẫn diễn ra bình thường, nhưng khách hàng sẽ không thể đặt thêm buổi mới.
+     - **Tiếp tục (`resume`):** Xác nhận mở lại liệu trình (chuyển sang `in_progress` nếu đã có buổi hoàn thành, ngược lại về `not_started`).
+     - **Hủy liệu trình (`cancel`):** Yêu cầu nhập lý do bắt buộc (1–500 ký tự). Kiểm tra tiền điều kiện: Nếu còn buổi đang ở trạng thái `booked` (đã đặt lịch), hệ thống khóa nút xác nhận và hiển thị cảnh báo đỏ yêu cầu chủ spa hủy các lịch hẹn trước (E5).
+     - **Đóng hoàn tất (`complete`):** Chỉ cho phép khi không còn buổi nào `not_booked` hoặc `booked` (toàn bộ các buổi trong liệu trình đã `completed` hoặc `skipped`).
+
+7. **Modal cập nhật ghi chú buổi (`UpdateSessionNoteDialog`):**
+   - Cập nhật ghi chú buổi (`PUT /api/v1/treatments/{id}/sessions/{sessionId}`):
+     - Textarea ghi chú buổi / kết quả buổi chăm sóc ($\le$ 2000 ký tự).
+
+### Bảng mã lỗi và cách xử lý giao diện chủ spa (UC-SPA-21)
+
+| Mã lỗi backend | Ngữ cảnh | Cách xử lý trên giao diện |
+| --- | --- | --- |
+| `treatment_plan_not_found` (404) | Xem chi tiết, sửa, chuyển trạng thái | Toast lỗi "Không tìm thấy liệu trình hoặc liệu trình không thuộc phạm vi.", đóng modal/sheet và làm mới bảng. |
+| `treatment_session_not_found` (404) | Cập nhật ghi chú buổi | Toast lỗi "Không tìm thấy buổi chăm sóc trong liệu trình.", đóng modal. |
+| `treatment_not_in_charge` (403) | Nhân viên không phụ trách cố sửa | Toast lỗi: "Bạn không được phân công phụ trách liệu trình này." |
+| `treatment_status_invalid` (409) | Sửa liệu trình đã đóng/hủy hoặc chuyển trạng thái sai | Toast lỗi: "Trạng thái liệu trình không hợp lệ để thực hiện thao tác này.", làm mới dữ liệu (`invalidateQueries`). |
+| `treatment_has_booked_sessions` (409) | Hủy liệu trình còn buổi `booked` | Hiển thị cảnh báo trực tiếp trong dialog: "Không thể hủy liệu trình khi còn lịch hẹn đã đặt. Vui lòng hủy các lịch hẹn của liệu trình này trước." |
+| `treatment_sessions_remaining` (409) | Đóng liệu trình còn buổi chưa xong | Hiển thị cảnh báo trực tiếp trong dialog: "Liệu trình vẫn còn buổi chưa thực hiện hoặc chưa đặt lịch. Chỉ có thể đóng khi tất cả các buổi đã hoàn thành hoặc bỏ qua." |
+| `treatment_session_completed` (409) | Nhân viên sửa ghi chú buổi đã xong | Toast cảnh báo: "Chỉ chủ spa mới có quyền chỉnh sửa ghi chú của buổi đã hoàn thành." |
+| `staff_not_found` (404) / `staff_resigned` (400) | Gán nhân viên đã nghỉ | Báo lỗi dưới ô chọn nhân viên: "Nhân viên không tồn tại hoặc đã nghỉ việc." |
+| `validation_error` (400) | Dữ liệu form nhập sai | Gắn lỗi cụ thể vào từng `FormField` qua React Hook Form + Zod (mục tiêu quá dài, ngày kết thúc nhỏ hơn ngày bắt đầu...). |
+
+---
+
+### Bảng kiểm thử giao diện quản trị liệu trình (`TRT-MNG-UI-T01...T12`)
+
+| Mã | Tình huống kiểm thử | Kết quả mong đợi |
+| --- | --- | --- |
+| TRT-MNG-UI-T01 | Mở `/owner/treatments` lần đầu | Bảng hiển thị Skeleton khi đang tải, sau đó hiển thị danh sách liệu trình gồm khách, gói, tiến độ, buổi tiếp theo, nhân viên phụ trách, hạn dùng, badge trạng thái. |
+| TRT-MNG-UI-T02 | Lọc liệu trình theo trạng thái, nhân viên và từ khóa tìm kiếm | Request `GET /treatments` mang đúng `status`, `primaryStaffMemberId`, `search`; URL đồng bộ query params; đổi bộ lọc quay về trang 1. |
+| TRT-MNG-UI-T03 | Mở xem chi tiết liệu trình (`TreatmentDetailSheet`) | Drawer hiển thị đầy đủ thông tin khách, cảnh báo dị ứng nếu có, mục tiêu điều trị, timeline các buổi kèm lịch hẹn, danh sách hồ sơ da và lịch sử các lần chăm sóc. |
+| TRT-MNG-UI-T04 | Sửa mục tiêu và phác đồ điều trị (`UpdateTreatmentDialog`) | Form kiểm tra `expectedEndDate >= startDate`; gọi `PUT /treatments/{id}` thành công, toast thông báo và cập nhật dữ liệu. |
+| TRT-MNG-UI-T05 | Đổi nhân viên phụ trách (`AssignTreatmentStaffDialog`) | Danh sách nhân viên lấy từ nhân viên đang làm việc; hỗ trợ chọn nhân viên mới hoặc bỏ phụ trách; gọi `POST /treatments/{id}/assign-staff` thành công. |
+| TRT-MNG-UI-T06 | Tạm dừng liệu trình đang thực hiện | Mở dialog, bắt buộc nhập lý do (1–500 ký tự); gọi `POST /treatments/{id}/pause`; `StatusBadge` đổi sang "Tạm dừng" (`warning`), hiển thị hộp cảnh báo lý do. |
+| TRT-MNG-UI-T07 | Tiếp tục liệu trình đang tạm dừng | Mở dialog xác nhận; gọi `POST /treatments/{id}/resume`; `StatusBadge` chuyển lại "Đang thực hiện" (hoặc "Chưa bắt đầu"), xóa cảnh báo lý do tạm dừng. |
+| TRT-MNG-UI-T08 | Hủy liệu trình khi còn buổi đã đặt lịch (`bookedSessions > 0`) | Dialog hủy cảnh báo đỏ, khóa nút xác nhận; nếu gọi API trả lỗi `409 treatment_has_booked_sessions`, hiển thị thông báo yêu cầu hủy lịch hẹn trước. |
+| TRT-MNG-UI-T09 | Hủy liệu trình hợp lệ khi không còn lịch hẹn đã đặt | Yêu cầu nhập lý do hủy; gọi `POST /treatments/{id}/cancel` thành công; `StatusBadge` chuyển sang "Đã hủy" (`danger`). |
+| TRT-MNG-UI-T10 | Đóng hoàn tất liệu trình khi còn buổi chưa xong | Trả lỗi `409 treatment_sessions_remaining`, hiển thị thông báo giải thích chỉ được đóng khi tất cả các buổi đã hoàn thành hoặc bỏ qua. |
+| TRT-MNG-UI-T11 | Cập nhật ghi chú buổi trị liệu (`UpdateSessionNoteDialog`) | Cho phép sửa ghi chú buổi; gọi `PUT /treatments/{id}/sessions/{sessionId}` thành công và cập nhật timeline buổi. |
+| TRT-MNG-UI-T12 | Kiểm tra phân quyền và điều hướng bảo vệ | Khách vãng lai truy cập `/owner/treatments` chuyển hướng `/login`; khách hàng thông thường truy cập nhận `/forbidden`; menu sidebar "Liệu trình" active. |
