@@ -14,7 +14,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { SidebarAccount } from '@/features/auth/components/SidebarAccount';
+import { WorkspaceSidebarAccountMenu } from '@/features/auth/components/WorkspaceAccountMenu';
 import { Brand } from '../Brand/Brand';
 
 export function WorkspaceSidebar({ workspace }: { workspace: Exclude<Workspace, 'public'> }) {
@@ -48,8 +48,8 @@ export function WorkspaceSidebar({ workspace }: { workspace: Exclude<Workspace, 
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t px-3 py-2">
-        <SidebarAccount />
+      <SidebarFooter className="border-t">
+        <WorkspaceSidebarAccountMenu />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
