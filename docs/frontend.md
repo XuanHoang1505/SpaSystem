@@ -210,6 +210,33 @@ Staff và chủ spa giữ `WorkspaceLayout` (sidebar). Không còn dải "Bản 
 - **Hộp thoại trạng thái:** `TogglePromotionStatusDialog` xác nhận kích hoạt lại hoặc tạm dừng chương trình khuyến mãi.
 - **Hooks & API:** `PromotionsApi` (`@spa/api-client`), wrappers `callPromotions`, `callPromotionsVoid` (`apps/web/src/lib/api/promotions.ts`), query & mutation hooks tại `features/promotions/hooks/` (`usePromotionSearch`, `usePromotion`, `useCreatePromotion`, `useUpdatePromotion`, `useChangePromotionStatus`).
 
+### Quản lý liệu trình của khách hàng (chủ spa, UC-SPA-21)
+
+- **Trang:** `/owner/treatments` (SCR-W36, `OwnerTreatmentsPage`, `OwnerTreatmentsView`), chạy trong `OwnerLayout` (sidebar, hỗ trợ theme sáng và tối).
+- **Bộ lọc & Điều hướng:** `TreatmentFilterToolbar` (tìm kiếm debounce 300ms theo tên/SĐT khách hàng không dấu, lọc theo trạng thái liệu trình `not_started`/`in_progress`/`paused`/`completed`/`cancelled`, lọc theo kỹ thuật viên phụ trách từ danh sách nhân viên đang làm việc, nút đặt lại bộ lọc).
+- **Bảng danh sách:** `TreatmentTable` (`DataTable<TreatmentPlanListItemDto>` với phân trang qua URL `useTableSearchParams`):
+  - Khách hàng (họ tên, SĐT, avatar viết tắt)
+  - Gói nguồn (tên gói dịch vụ, badge trạng thái gói `packageStatus`)
+  - Tiến độ số buổi (`{used}/{total}` kèm thanh progress bar và số buổi đã đặt `{booked}`)
+  - Buổi tiếp theo (thứ tự buổi, tên dịch vụ, badge trạng thái buổi, ngày giờ lịch hẹn nếu đã đặt)
+  - Kỹ thuật viên phụ trách (họ tên hoặc "Chưa phân công")
+  - Hạn sử dụng gói (`formatLocalDate`, cảnh báo nếu đã quá hạn)
+  - Trạng thái `StatusBadge` (Chưa bắt đầu, Đang thực hiện, Tạm dừng, Đã hoàn thành, Đã hủy)
+  - Menu thao tác dòng với icons (`EyeIcon` Xem chi tiết, `PencilIcon` Cập nhật phác đồ, `UserCheckIcon` Đổi nhân viên phụ trách, `PowerIcon` Chuyển trạng thái).
+- **Chi tiết:** `TreatmentDetailSheet` mở drawer bên phải xem toàn bộ hồ sơ điều trị:
+  - Header & Cảnh báo: Thông tin khách hàng, ngày mua gói, cảnh báo dị ứng nổi bật (`hasAllergies = true`), cảnh báo lý do tạm dừng/hủy (`statusReason`).
+  - Khối phác đồ: Mục tiêu điều trị (`goal`), ghi chú nội bộ (`note`), ngày bắt đầu, ngày dự kiến kết thúc, ngày kết thúc thực tế, kỹ thuật viên phụ trách.
+  - Timeline các buổi chăm sóc: Thứ tự, tên dịch vụ, thời lượng, trạng thái buổi, thông tin lịch hẹn liên kết, kết quả/ghi chú buổi, nút sửa ghi chú buổi.
+  - Khối hồ sơ da (`SkinProfiles`): Lịch sử đánh giá da theo từng buổi (ngày khám, kỹ thuật viên, loại da `SkinType`, vấn đề da, mục tiêu chăm sóc, phác đồ đề xuất).
+  - Khối lịch sử chăm sóc (`CareHistory`): Lịch sử các lần đến spa (ngày giờ, trạng thái hoàn thành / không đến, kỹ thuật viên, kết quả chăm sóc).
+  - Footer actions: "Sửa phác đồ", "Đổi nhân viên", "Chuyển trạng thái".
+- **Các modal thao tác:**
+  - `UpdateTreatmentDialog`: Cập nhật mục tiêu điều trị, ngày dự kiến kết thúc ($\ge$ ngày bắt đầu), ghi chú nội bộ (`PUT /api/v1/treatments/{id}`).
+  - `AssignTreatmentStaffDialog`: Phân công hoặc đổi kỹ thuật viên phụ trách từ danh sách đang làm việc, hoặc chọn bỏ phụ trách (`POST /api/v1/treatments/{id}/assign-staff`).
+  - `ChangeTreatmentStatusDialog`: Hộp thoại chuyển trạng thái (Tạm dừng `pause` kèm lý do 1–500 ký tự; Tiếp tục `resume`; Hủy `cancel` kèm lý do và kiểm tra ràng buộc không còn buổi `booked`; Đóng/Hoàn tất `complete` khi tất cả các buổi đã hoàn thành hoặc bỏ qua).
+  - `UpdateSessionNoteDialog`: Cập nhật ghi chú buổi chăm sóc (`PUT /api/v1/treatments/{id}/sessions/{sessionId}`).
+- **Hooks & API:** `OwnerTreatmentsApi` (`@spa/api-client`), wrappers `callOwnerTreatments`, `callOwnerTreatmentsVoid` (`apps/web/src/lib/api/treatments.ts`), query & mutation hooks tại `features/treatments/hooks/` (`useOwnerTreatmentSearch`, `useOwnerTreatment`, `useUpdateTreatment`, `useAssignTreatmentStaff`, `usePauseTreatment`, `useResumeTreatment`, `useCancelTreatment`, `useCompleteTreatment`, `useUpdateSessionNote`).
+
 ## Chạy và kiểm tra
 
 ```powershell

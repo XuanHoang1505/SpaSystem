@@ -30,6 +30,7 @@ import { OwnerPackagesPage } from '@/pages/owner/OwnerPackagesPage';
 import { OwnerPromotionsPage } from '@/pages/owner/OwnerPromotionsPage';
 import { OwnerServicesPage } from '@/pages/owner/OwnerServicesPage';
 import { OwnerStaffPage } from '@/pages/owner/OwnerStaffPage';
+import { OwnerTreatmentsPage } from '@/pages/owner/OwnerTreatmentsPage';
 import { HomePage } from '@/pages/public/HomePage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@/pages/public/LoginPage';
@@ -118,6 +119,7 @@ export const ownerPages: Record<string, ReactElement> = {
   '/owner/services': <OwnerServicesPage />,
   '/owner/packages': <OwnerPackagesPage />,
   '/owner/promotions': <OwnerPromotionsPage />,
+  '/owner/treatments': <OwnerTreatmentsPage />,
 };
 
 /** Login, register, forgot-password: own split layout without the site header/footer, guests only. */
