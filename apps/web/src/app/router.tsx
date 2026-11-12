@@ -31,6 +31,10 @@ import { OwnerOrdersPage } from '@/pages/owner/OwnerOrdersPage';
 import { OwnerPromotionsPage } from '@/pages/owner/OwnerPromotionsPage';
 import { OwnerServicesPage } from '@/pages/owner/OwnerServicesPage';
 import { OwnerStaffPage } from '@/pages/owner/OwnerStaffPage';
+import { StaffAppointmentDetailPage } from '@/pages/staff/StaffAppointmentDetailPage';
+import { StaffAppointmentsPage } from '@/pages/staff/StaffAppointmentsPage';
+import { StaffCareHistoryPage } from '@/pages/staff/StaffCareHistoryPage';
+import { StaffSchedulePage } from '@/pages/staff/StaffSchedulePage';
 import { OwnerTreatmentsPage } from '@/pages/owner/OwnerTreatmentsPage';
 import { OwnerReportsPage } from '@/pages/owner/OwnerReportsPage';
 import { HomePage } from '@/pages/public/HomePage';
@@ -112,6 +116,14 @@ export const customerPages: Record<string, ReactElement> = {
   '/my-packages': <MyPackagesPage />,
   '/my-packages/:packageId': <MyPackageDetailPage />,
   '/ai-assistant': <AiAssistantRoute />,
+};
+
+/** Staff pages that are built; the other staff routes still show the placeholder. */
+export const staffPages: Record<string, ReactElement> = {
+  '/staff/schedule': <StaffSchedulePage />,
+  '/staff/bookings': <StaffAppointmentsPage />,
+  '/staff/bookings/:appointmentId': <StaffAppointmentDetailPage />,
+  '/staff/care-history': <StaffCareHistoryPage />,
 };
 
 /** Owner pages that are built; the other owner routes still show the placeholder. */
@@ -213,7 +225,7 @@ export const routeObjects: RouteObject[] = [
   ...customerRouteObjects(),
   ...(
     [
-      { group: 'staff', element: <StaffLayout />, pages: {} as Record<string, ReactElement> },
+      { group: 'staff', element: <StaffLayout />, pages: staffPages },
       { group: 'owner', element: <OwnerLayout />, pages: ownerPages },
     ] as const
   ).map(({ group, element, pages }) => ({

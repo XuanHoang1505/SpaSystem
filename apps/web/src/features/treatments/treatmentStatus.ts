@@ -1,8 +1,4 @@
-import type {
-  SkinType,
-  TreatmentPlanStatus,
-  TreatmentSessionStatus,
-} from '@spa/shared-types';
+import type { SkinType, TreatmentPlanStatus, TreatmentSessionStatus } from '@spa/shared-types';
 import type { StatusTone } from '@/components/shared/StatusBadge/StatusBadge';
 
 export type StatusBadgeTone = StatusTone;
@@ -41,9 +37,9 @@ export const treatmentSessionStatusBadge: TreatmentStatusBadgeResolver<Treatment
   });
 
 export const skinTypeLabels: Record<SkinType, string> = {
-  Normal: 'Da thường',
-  Dry: 'Da khô',
-  Oily: 'Da dầu',
-  Combination: 'Da hỗn hợp',
-  Sensitive: 'Da nhạy cảm',
+  normal: 'Da thường',
+  dry: 'Da khô',
+  oily: 'Da dầu',
+  combination: 'Da hỗn hợp',
+  sensitive: 'Da nhạy cảm',
 };

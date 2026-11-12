@@ -1,3 +1,4 @@
+import type { SkinType } from './care';
 import type { AppointmentStatus } from './bookings';
 import type { PaginationParams } from './index';
 import type { CustomerPackageStatus, PurchaseOrderRef } from './purchases';
@@ -83,9 +84,6 @@ export interface MyTreatmentPlan {
   order: PurchaseOrderRef;
   sessions: readonly MyTreatmentSession[];
 }
-
-/** Skin type classification from skin assessment (UC-SPA-21 / SCR-W36). */
-export type SkinType = 'Normal' | 'Dry' | 'Oily' | 'Combination' | 'Sensitive';
 
 export interface TreatmentCustomerDto {
   id: string;

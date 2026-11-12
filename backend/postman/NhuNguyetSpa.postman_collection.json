@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "61946715-beb7-4345-a296-df3e2790a433",
+    "_postman_id": "87e29b46-0ebe-48ed-882a-80f9da7cc9ff",
     "name": "Nhu Nguyet Spa API",
     "description": "Collection thử API backend Spa Như Nguyệt.\n\n**Chuẩn bị:** `npm run db:up`, `npm run db:migrate`, `npm run db:seed`, rồi chạy API (`dotnet run --project backend/src/API --launch-profile http`, hoặc `--launch-profile https` cho cổng 7001).\n\n**Environment:** chọn `Spa – Local HTTP` (cổng 5000) hoặc `Spa – Local HTTPS` (cổng 7001). Điền **Current value** của `loginPassword` bằng `SEED_OWNER_PASSWORD` trong `backend/src/API/.env` (không lưu vào Initial value để mật khẩu không bị chia sẻ).\n\n**Thứ tự gợi ý:** Auth › Đăng nhập (email) → Làm mới phiên → Đăng xuất. Các request đăng nhập/làm mới tự lưu `accessToken`, `refreshToken` vào environment. Có thể chạy cả folder bằng Collection Runner.\n\n**Đăng ký / Quên mật khẩu (OTP email):** gửi mail thật qua Gmail — cần `MAIL_SETTINGS_*` trong `backend/src/API/.env`. Sau bước gửi OTP, mở hộp thư và dán mã 6 số vào biến `otp`. Mật khẩu (`registerPassword`, `newPassword`): 8–128 ký tự, có chữ và số.\n\n**Catalog (UC-SPA-06, 07, 09):** chạy `Catalog › Đăng nhập chủ spa` trước (lưu `ownerAccessToken`), rồi theo thứ tự trong folder: tạo dịch vụ lưu `serviceId`, tạo gói lưu `packageId`. Request tải ảnh dùng form-data: ở field `file` bấm **Select Files** chọn ảnh JPEG/PNG/WebP ≤ 5 MB. Ảnh cần `CLOUDINARY_*` trong `backend/src/API/.env`, thiếu thì trả 503 `image_storage_unavailable`. Spec: `docs/specs/catalog.md`.\n\n**Staff (UC-SPA-22, 23):** chạy `Catalog › Đăng nhập chủ spa` và `Catalog › Thêm dịch vụ` trước (cần `ownerAccessToken`, `serviceId`). `Thêm nhân viên` gửi mật khẩu tạm qua mail thật (cần `MAIL_SETTINGS_*`); điền `staffEmail` trong environment để nhận mail, bỏ trống thì dùng địa chỉ `@example.com` ngẫu nhiên. Phản hồi không chứa mật khẩu. Ngày ca làm tự tính theo giờ Việt Nam (ngày mai). `Ghi nhận nghỉ việc` để cuối folder vì mỗi nhân viên chỉ ghi được một lần. Spec: `docs/specs/staff.md`.\n\n**Lưu ý:** mọi endpoint `/auth/*` ẩn danh dùng chung giới hạn 10 yêu cầu/phút/IP (429 `rate_limited`). Chạy cả collection bằng Collection Runner thì đặt **Delay = 6500 ms**. Request 'E5 – Dùng lại refresh token cũ' thu hồi mọi phiên → đăng nhập lại sau khi chạy. Spec: `docs/specs/auth.md`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -17,8 +17,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/system/ping",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "system", "ping"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system",
+                "ping"
+              ]
             },
             "description": "",
             "auth": {
@@ -45,8 +52,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health/live",
-              "host": ["{{baseUrl}}"],
-              "path": ["health", "live"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "live"
+              ]
             },
             "description": "Chỉ kiểm tra tiến trình API, không kiểm tra CSDL.",
             "auth": {
@@ -58,7 +70,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 200', () => pm.response.to.have.status(200));"]
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
               }
             }
           ]
@@ -70,8 +84,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health/ready",
-              "host": ["{{baseUrl}}"],
-              "path": ["health", "ready"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ]
             },
             "description": "Trả 503 `Unhealthy` nếu không kết nối được PostgreSQL (`npm run db:up`).",
             "auth": {
@@ -109,8 +128,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "Lưu `accessToken`, `refreshToken`, `userId`, `userRole` vào environment.",
             "auth": {
@@ -164,8 +190,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "",
             "auth": {
@@ -219,8 +252,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "Email không phân biệt hoa thường; khoảng trắng hai đầu được bỏ.",
             "auth": {
@@ -283,8 +323,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Thu hồi refresh token hiện tại, phát cặp token mới. Token cũ lưu vào `previousRefreshToken` để thử 'E5 – Dùng lại refresh token cũ'.",
             "auth": {
@@ -348,8 +395,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
             },
             "description": "Cần Bearer `{{accessToken}}`. Sau khi đăng xuất, refresh token này không dùng được nữa.",
             "auth": {
@@ -377,7 +431,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -404,8 +460,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "Lưu `accessToken`; refresh token chỉ có trong cookie.",
             "auth": {
@@ -449,8 +512,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Không có body; token lấy từ cookie, cookie mới thay cookie cũ. Không có cookie → 401 `invalid_refresh_token`.",
             "auth": {
@@ -484,8 +554,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
             },
             "description": "Không cần Bearer (Q-69). Thu hồi token trong cookie và xóa cookie.",
             "auth": {
@@ -497,7 +574,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -520,8 +599,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register/request-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register", "request-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                "request-otp"
+              ]
             },
             "description": "202 rồi kiểm tra hộp thư. 409 `email_exists`/`phone_exists` nếu đã có tài khoản; 429 nếu gửi lại trong 60 giây; 503 `email_send_failed` nếu chưa cấu hình `MAIL_SETTINGS_*`.",
             "auth": {
@@ -580,8 +667,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register/verify-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register", "verify-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                "verify-otp"
+              ]
             },
             "description": "Tạo tài khoản khách hàng. Thành công thì `loginEmail`/`loginPhone`/`loginPassword` chuyển sang tài khoản mới để thử 'Đăng nhập'. Lỗi: `otp_invalid` (sai), `otp_expired` (quá 5 phút), `otp_too_many_attempts` (sai 5 lần → gửi mã mới).",
             "auth": {
@@ -645,8 +740,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/forgot-password/request-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "forgot-password", "request-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password",
+                "request-otp"
+              ]
             },
             "description": "Luôn trả 202 cùng nội dung dù email có tài khoản hay không; chỉ tài khoản active nhận mail. Gửi lại trong 60 giây: vẫn 202 nhưng không gửi mail.",
             "auth": {
@@ -696,8 +799,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/forgot-password/verify-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "forgot-password", "verify-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password",
+                "verify-otp"
+              ]
             },
             "description": "",
             "auth": {
@@ -752,8 +863,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/forgot-password/reset",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "forgot-password", "reset"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password",
+                "reset"
+              ]
             },
             "description": "Thu hồi mọi refresh token của tài khoản. Nếu `forgotEmail` trùng `loginEmail` thì `loginPassword` chuyển sang mật khẩu mới. Gửi lại cùng `resetToken` → 400 `invalid_reset_token`.",
             "auth": {
@@ -811,8 +930,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register/request-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register", "request-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                "request-otp"
+              ]
             },
             "description": "Dùng `loginEmail` (tài khoản đã có).",
             "auth": {
@@ -865,8 +992,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register/request-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register", "request-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                "request-otp"
+              ]
             },
             "description": "Dùng `loginPhone` (SĐT đã có).",
             "auth": {
@@ -919,8 +1054,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register/request-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register", "request-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                "request-otp"
+              ]
             },
             "description": "Mật khẩu 8–128 ký tự, có ít nhất 1 chữ cái và 1 chữ số.",
             "auth": {
@@ -973,8 +1116,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register/request-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register", "request-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                "request-otp"
+              ]
             },
             "description": "",
             "auth": {
@@ -1027,8 +1178,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register/request-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register", "request-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                "request-otp"
+              ]
             },
             "description": "SĐT phải là 0 + 9 chữ số.",
             "auth": {
@@ -1081,8 +1240,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register/request-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register", "request-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                "request-otp"
+              ]
             },
             "description": "",
             "auth": {
@@ -1135,8 +1302,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register/verify-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register", "verify-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                "verify-otp"
+              ]
             },
             "description": "Sai định dạng không tính vào số lần nhập sai.",
             "auth": {
@@ -1189,8 +1364,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register/verify-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register", "verify-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register",
+                "verify-otp"
+              ]
             },
             "description": "",
             "auth": {
@@ -1243,8 +1426,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/forgot-password/request-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "forgot-password", "request-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password",
+                "request-otp"
+              ]
             },
             "description": "Chống dò tài khoản: cùng phản hồi, không gửi mail.",
             "auth": {
@@ -1294,8 +1485,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/forgot-password/verify-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "forgot-password", "verify-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password",
+                "verify-otp"
+              ]
             },
             "description": "Ở quên mật khẩu, mọi lỗi OTP (sai, hết hạn, quá số lần) đều là `otp_invalid` để không lộ email có tài khoản.",
             "auth": {
@@ -1348,8 +1547,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/forgot-password/reset",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "forgot-password", "reset"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password",
+                "reset"
+              ]
             },
             "description": "",
             "auth": {
@@ -1392,8 +1599,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/forgot-password/reset",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "forgot-password", "reset"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password",
+                "reset"
+              ]
             },
             "description": "Chạy sau 'Đăng nhập'. Access token có audience khác nên bị từ chối.",
             "auth": {
@@ -1451,8 +1666,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "",
             "auth": {
@@ -1495,8 +1717,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "Cùng mã và thông điệp với 'Sai mật khẩu': không tiết lộ tài khoản có tồn tại.",
             "auth": {
@@ -1539,8 +1768,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "",
             "auth": {
@@ -1586,8 +1822,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
             },
             "description": "",
             "auth": {
@@ -1630,8 +1873,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Chạy sau 'Làm mới phiên'. Token đã bị thu hồi mà được gửi lại → thu hồi mọi refresh token của người dùng; phải đăng nhập lại.",
             "auth": {
@@ -1674,8 +1924,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
             },
             "description": "",
             "auth": {
@@ -1718,8 +1975,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
             },
             "description": "",
             "auth": {
@@ -1780,8 +2044,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "Lưu `ownerAccessToken` cho các request quản lý. `loginEmail` phải là tài khoản owner (seed).",
             "auth": {
@@ -1824,8 +2095,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services"
+              ]
             },
             "description": "`category` được chuẩn hóa khoảng trắng và dùng lại cách viết đã có (BR-CAT-04).",
             "auth": {
@@ -1877,8 +2154,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services", "{{serviceId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services",
+                "{{serviceId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -1923,8 +2207,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}/image",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services", "{{serviceId}}", "image"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services",
+                "{{serviceId}}",
+                "image"
+              ]
             },
             "description": "Chọn file ở field `file`. Gọi lại để thay ảnh: cùng public_id, URL có version mới.",
             "auth": {
@@ -1970,8 +2262,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services?search=cham soc da&sortBy=name&sortDirection=asc&pageNumber=1&pageSize=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -2037,8 +2335,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services?status=discontinued&pageSize=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services"
+              ],
               "query": [
                 {
                   "key": "status",
@@ -2083,8 +2387,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services", "{{serviceId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services",
+                "{{serviceId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -2112,8 +2423,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/service-categories",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "service-categories"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "service-categories"
+              ]
             },
             "description": "",
             "auth": {
@@ -2142,8 +2459,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/catalog/suggestions?search=ch",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "catalog", "suggestions"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalog",
+                "suggestions"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -2183,8 +2507,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/packages",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "packages"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages"
+              ]
             },
             "description": "",
             "auth": {
@@ -2235,8 +2565,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/packages/{{packageId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "packages", "{{packageId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages",
+                "{{packageId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -2281,8 +2618,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/packages?search=tre hoa&sortBy=price&sortDirection=desc",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "packages"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -2334,8 +2677,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/packages/{{packageId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "packages", "{{packageId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages",
+                "{{packageId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -2364,8 +2714,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/packages/{{packageId}}/image",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "packages", "{{packageId}}", "image"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages",
+                "{{packageId}}",
+                "image"
+              ]
             },
             "description": "",
             "auth": {
@@ -2411,8 +2769,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/packages/{{packageId}}/image",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "packages", "{{packageId}}", "image"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages",
+                "{{packageId}}",
+                "image"
+              ]
             },
             "description": "",
             "auth": {
@@ -2431,7 +2797,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -2443,8 +2811,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}/image",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services", "{{serviceId}}", "image"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services",
+                "{{serviceId}}",
+                "image"
+              ]
             },
             "description": "",
             "auth": {
@@ -2463,7 +2839,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -2480,8 +2858,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/packages/{{packageId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "packages", "{{packageId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages",
+                "{{packageId}}",
+                "status"
+              ]
             },
             "description": "",
             "auth": {
@@ -2509,7 +2895,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -2526,8 +2914,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services", "{{serviceId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services",
+                "{{serviceId}}",
+                "status"
+              ]
             },
             "description": "",
             "auth": {
@@ -2555,7 +2951,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -2567,8 +2965,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services", "{{serviceId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services",
+                "{{serviceId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -2602,8 +3007,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services", "{{serviceId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services",
+                "{{serviceId}}",
+                "status"
+              ]
             },
             "description": "",
             "auth": {
@@ -2631,7 +3044,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -2648,8 +3063,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/packages/{{packageId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "packages", "{{packageId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages",
+                "{{packageId}}",
+                "status"
+              ]
             },
             "description": "",
             "auth": {
@@ -2677,7 +3100,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -2700,8 +3125,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services"
+              ]
             },
             "description": "",
             "auth": {
@@ -2744,8 +3175,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services"
+              ]
             },
             "description": "",
             "auth": {
@@ -2795,8 +3232,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/packages",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "packages"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages"
+              ]
             },
             "description": "",
             "auth": {
@@ -2846,8 +3289,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/packages",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "packages"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages"
+              ]
             },
             "description": "",
             "auth": {
@@ -2892,8 +3341,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services?sortBy=rating",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services"
+              ],
               "query": [
                 {
                   "key": "sortBy",
@@ -2928,8 +3383,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/catalog/suggestions?search=c",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "catalog", "suggestions"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalog",
+                "suggestions"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -2964,8 +3426,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}/image",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "services", "{{serviceId}}", "image"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services",
+                "{{serviceId}}",
+                "image"
+              ]
             },
             "description": "",
             "auth": {
@@ -3011,8 +3481,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/packages/00000000-0000-0000-0000-000000000001",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "packages", "00000000-0000-0000-0000-000000000001"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages",
+                "00000000-0000-0000-0000-000000000001"
+              ]
             },
             "description": "",
             "auth": {
@@ -3052,8 +3529,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/staff",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "staff"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff"
+              ]
             },
             "description": "Mật khẩu tạm được gửi tới email nhân viên, không có trong phản hồi (BR-STF-02, BR-STF-08).",
             "auth": {
@@ -3111,8 +3594,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/staff?search=thu&status=working&pageNumber=1&pageSize=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "staff"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -3166,8 +3655,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/staff?spaServiceId={{serviceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "staff"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff"
+              ],
               "query": [
                 {
                   "key": "spaServiceId",
@@ -3202,8 +3697,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "staff", "{{staffId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -3243,8 +3745,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "staff", "{{staffId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -3304,8 +3813,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/services",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "staff", "{{staffId}}", "services"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "services"
+              ]
             },
             "description": "",
             "auth": {
@@ -3333,7 +3850,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -3350,8 +3869,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/work-schedules",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "work-schedules"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "work-schedules"
+              ]
             },
             "description": "",
             "auth": {
@@ -3411,8 +3936,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/work-schedules?fromDate={{shiftDate}}&toDate={{shiftDate}}&staffMemberId={{staffId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "work-schedules"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "work-schedules"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -3480,8 +4011,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/work-schedules/{{workScheduleId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "work-schedules", "{{workScheduleId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "work-schedules",
+                "{{workScheduleId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -3544,8 +4082,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/work-schedules/{{workScheduleId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "work-schedules", "{{workScheduleId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "work-schedules",
+                "{{workScheduleId}}",
+                "status"
+              ]
             },
             "description": "",
             "auth": {
@@ -3573,7 +4119,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -3590,8 +4138,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/work-schedules/batch",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "work-schedules", "batch"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "work-schedules",
+                "batch"
+              ]
             },
             "description": "Một ca 13:00–17:00 mỗi ngày từ thứ 2 đến thứ 7 trong 7 ngày tới; ca không hợp lệ nằm trong `skipped` kèm lý do (BR-STF-09).",
             "auth": {
@@ -3656,8 +4211,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/resign",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "staff", "{{staffId}}", "resign"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "resign"
+              ]
             },
             "description": "Từ ngày nghỉ, nhân viên không đăng nhập được (BR-STF-05); các ca từ ngày đó bị hủy.",
             "auth": {
@@ -3727,8 +4290,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/staff",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "staff"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff"
+              ]
             },
             "description": "",
             "auth": {
@@ -3771,8 +4340,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/staff",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "staff"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff"
+              ]
             },
             "description": "",
             "auth": {
@@ -3833,8 +4408,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/work-schedules",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "work-schedules"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "work-schedules"
+              ]
             },
             "description": "",
             "auth": {
@@ -3893,8 +4474,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/work-schedules?fromDate={{today}}&toDate={{todayPlus60}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "work-schedules"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "work-schedules"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -3959,8 +4546,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/resign",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "staff", "{{staffId}}", "resign"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "resign"
+              ]
             },
             "description": "",
             "auth": {
@@ -4019,8 +4614,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/staff/00000000-0000-0000-0000-000000000001",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "staff", "00000000-0000-0000-0000-000000000001"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "00000000-0000-0000-0000-000000000001"
+              ]
             },
             "description": "",
             "auth": {
@@ -4062,8 +4664,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?spaServiceId={{serviceId}}&date={{shiftDate}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "spaServiceId",
@@ -4121,8 +4729,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments?fromDate={{shiftDate}}&toDate={{batchToDate}}&pageNumber=1&pageSize=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -4205,8 +4819,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{appointmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{appointmentId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -4247,8 +4868,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}/confirm",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{appointmentId}}", "confirm"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{appointmentId}}",
+                "confirm"
+              ]
             },
             "description": "Chỉ lịch `pending_confirmation`; lịch đã xác nhận trả 409 `appointment_status_invalid`.",
             "auth": {
@@ -4285,8 +4914,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}/reschedule",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{appointmentId}}", "reschedule"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{appointmentId}}",
+                "reschedule"
+              ]
             },
             "description": "Giữ nguyên thời lượng; phải nằm trọn trong một ca, không trùng lịch nhân viên (`slot_unavailable`) và lịch khác của khách (`customer_busy`).",
             "auth": {
@@ -4338,8 +4975,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}/assign-staff",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{appointmentId}}", "assign-staff"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{appointmentId}}",
+                "assign-staff"
+              ]
             },
             "description": "Nhân viên mới phải làm được dịch vụ, có ca phủ khung giờ và rảnh.",
             "auth": {
@@ -4376,8 +5021,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}/no-show",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{appointmentId}}", "no-show"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{appointmentId}}",
+                "no-show"
+              ]
             },
             "description": "Chỉ lịch `confirmed` đã tới giờ bắt đầu; mặc định trả lại quyền (Q-07).",
             "auth": {
@@ -4414,8 +5067,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{appointmentId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{appointmentId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{appointmentId}}",
+                "cancel"
+              ]
             },
             "description": "Trả quyền sử dụng hoặc buổi trong gói (BR-BKG-10).",
             "auth": {
@@ -4466,8 +5127,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?spaServiceId={{serviceId}}&date={{yesterday}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "spaServiceId",
@@ -4520,8 +5187,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments?fromDate={{today}}&toDate={{todayPlus60}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -4581,8 +5254,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments?fromDate={{today}}&toDate={{shiftDate}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -4646,7 +5325,9 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/00000000-0000-0000-0000-000000000001/cancel",
-              "host": ["{{baseUrl}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "api",
                 "v1",
@@ -4709,8 +5390,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/promotions",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "promotions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "promotions"
+              ]
             },
             "description": "Mã được bỏ khoảng trắng và viết hoa (BR-PRM-04).",
             "auth": {
@@ -4768,8 +5455,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/promotions?search={{promotionCode}}&status=active&pageNumber=1&pageSize=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "promotions"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "promotions"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -4823,8 +5516,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/promotions/{{promotionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "promotions", "{{promotionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "promotions",
+                "{{promotionId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -4864,8 +5564,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/promotions/{{promotionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "promotions", "{{promotionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "promotions",
+                "{{promotionId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -4925,8 +5632,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/promotions/{{promotionId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "promotions", "{{promotionId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "promotions",
+                "{{promotionId}}",
+                "status"
+              ]
             },
             "description": "",
             "auth": {
@@ -4954,7 +5669,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -4971,8 +5688,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/promotions/{{promotionId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "promotions", "{{promotionId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "promotions",
+                "{{promotionId}}",
+                "status"
+              ]
             },
             "description": "",
             "auth": {
@@ -5000,7 +5725,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -5023,8 +5750,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "",
             "auth": {
@@ -5068,8 +5802,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/cart/items",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "cart", "items"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "cart",
+                "items"
+              ]
             },
             "description": "Lần thứ hai thêm cùng dịch vụ trả 409 cart_item_exists (BR-ORD-01).",
             "auth": {
@@ -5114,8 +5856,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/cart",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "cart"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "cart"
+              ]
             },
             "description": "",
             "auth": {
@@ -5156,8 +5905,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders/preview",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders", "preview"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders",
+                "preview"
+              ]
             },
             "description": "Không ghi gì vào CSDL; mã không áp được nằm ở promotionError.",
             "auth": {
@@ -5207,8 +5964,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders"
+              ]
             },
             "description": "Gửi header Idempotency-Key (UUID) để bấm lại không tạo đơn trùng (BR-ORD-08).",
             "auth": {
@@ -5254,8 +6018,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders/{{orderId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders", "{{orderId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders",
+                "{{orderId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -5295,8 +6067,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders/{{orderId}}/payments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders", "{{orderId}}", "payments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders",
+                "{{orderId}}",
+                "payments"
+              ]
             },
             "description": "Mở paymentUrl trong trình duyệt. Thẻ test NCB: 9704198526191432198, NGUYEN VAN A, 07/15, OTP 123456. Cần VNPAY_TMN_CODE, VNPAY_HASH_SECRET trong .env (thiếu → 503 payment_gateway_unavailable).",
             "auth": {
@@ -5346,8 +6127,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders"
+              ]
             },
             "description": "",
             "auth": {
@@ -5402,8 +6190,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/cart/items",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "cart", "items"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "cart",
+                "items"
+              ]
             },
             "description": "Giỏ còn dịch vụ này khi đơn chưa thanh toán → 409 cart_item_exists; đã thanh toán thì giỏ đã được xóa → 201.",
             "auth": {
@@ -5450,8 +6246,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders/preview",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders", "preview"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders",
+                "preview"
+              ]
             },
             "description": "",
             "auth": {
@@ -5501,8 +6305,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/promotions",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "promotions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "promotions"
+              ]
             },
             "description": "",
             "auth": {
@@ -5558,8 +6368,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/cart",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "cart"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "cart"
+              ]
             },
             "description": "",
             "auth": {
@@ -5594,8 +6411,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders/00000000-0000-0000-0000-000000000001",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders", "00000000-0000-0000-0000-000000000001"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders",
+                "00000000-0000-0000-0000-000000000001"
+              ]
             },
             "description": "",
             "auth": {
@@ -5637,8 +6462,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders?pageNumber=1&pageSize=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders"
+              ],
               "query": [
                 {
                   "key": "status",
@@ -5704,8 +6536,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders"
+              ]
             },
             "description": "",
             "auth": {
@@ -5756,8 +6595,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders/{{cancelOrderId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders", "{{cancelOrderId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders",
+                "{{cancelOrderId}}",
+                "cancel"
+              ]
             },
             "description": "Lý do bắt buộc với cả khách và chủ spa (Q-43).",
             "auth": {
@@ -5807,8 +6655,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders/{{cancelOrderId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders", "{{cancelOrderId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders",
+                "{{cancelOrderId}}",
+                "cancel"
+              ]
             },
             "description": "Lần thanh toán đang chờ → expired; lịch giữ chỗ của đơn đặt ngay → cancelled (BR-ORD-04, 12).",
             "auth": {
@@ -5858,8 +6715,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders/{{cancelOrderId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders", "{{cancelOrderId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders",
+                "{{cancelOrderId}}",
+                "cancel"
+              ]
             },
             "description": "",
             "auth": {
@@ -5904,8 +6770,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/orders",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "orders"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ]
             },
             "description": "",
             "auth": {
@@ -5940,8 +6812,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/orders?search={{cancelOrderCode}}&pageNumber=1&pageSize=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "orders"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -6006,8 +6884,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "orders", "{{orderId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "{{orderId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -6048,8 +6933,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "orders", "{{orderId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "{{orderId}}",
+                "cancel"
+              ]
             },
             "description": "",
             "auth": {
@@ -6099,8 +6992,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "orders", "{{orderId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "{{orderId}}",
+                "cancel"
+              ]
             },
             "description": "Đơn đã thanh toán hoặc hết hạn → 409 order_not_cancellable.",
             "auth": {
@@ -6153,8 +7054,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "",
             "auth": {
@@ -6197,8 +7105,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "Giữ chỗ 15 + 5 phút; bỏ staffMemberId = nhân viên bất kỳ (ít lịch nhất). Gửi header Idempotency-Key (UUID) để bấm lại không tạo đơn trùng. Tiếp theo: 'Tạo lần thanh toán VNPay' ở folder Giỏ & đơn với orderId vừa lưu.",
             "auth": {
@@ -6263,8 +7179,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/{{bookedAppointmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "{{bookedAppointmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "{{bookedAppointmentId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -6300,8 +7224,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases?",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases"
+              ],
               "query": [
                 {
                   "key": "type",
@@ -6351,8 +7282,17 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases/packages/{{customerPackageId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases", "packages", "{{customerPackageId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases",
+                "packages",
+                "{{customerPackageId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -6388,8 +7328,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?serviceEntitlementId={{entitlementId}}&date={{demoDay2}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "serviceEntitlementId",
@@ -6457,8 +7403,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "Không chọn nhân viên = nhân viên bất kỳ. Gửi lại cùng quyền → 409 entitlement_not_eligible.",
             "auth": {
@@ -6526,8 +7479,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "Trước ngày sớm nhất (nextSession.earliestDate) → 400 session_too_early.",
             "auth": {
@@ -6589,8 +7549,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "",
             "auth": {
@@ -6633,8 +7600,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "",
             "auth": {
@@ -6677,8 +7651,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "",
             "auth": {
@@ -6721,8 +7702,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "",
             "auth": {
@@ -6760,8 +7748,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?spaServiceId={{demoServiceBasicId}}&date={{demoTomorrow}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "spaServiceId",
@@ -6819,8 +7813,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?spaServiceId={{demoServiceBasicId}}&date={{demoTomorrow}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "spaServiceId",
@@ -6886,8 +7886,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?serviceEntitlementId={{demoEntitlementDiscontinuedId}}&date={{demoTomorrow}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "serviceEntitlementId",
@@ -6951,8 +7957,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?treatmentSessionId={{demoLanSession2Id}}&date={{demoTomorrow}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "treatmentSessionId",
@@ -7016,8 +8028,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?treatmentSessionId={{demoLanSession2Id}}&date={{demoDay4}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "treatmentSessionId",
@@ -7081,8 +8099,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?treatmentSessionId={{demoLanSession2Id}}&date={{demoDay4}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "treatmentSessionId",
@@ -7146,8 +8170,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?spaServiceId={{demoServiceBasicId}}&date={{today}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "spaServiceId",
@@ -7206,8 +8236,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?spaServiceId={{demoServiceBasicId}}&date={{yesterday}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "spaServiceId",
@@ -7263,8 +8299,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?spaServiceId={{demoServiceBasicId}}&date={{demoDay61}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "spaServiceId",
@@ -7320,8 +8362,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?spaServiceId={{demoServiceBasicId}}&treatmentSessionId={{demoLanSession2Id}}&date={{demoTomorrow}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "spaServiceId",
@@ -7388,8 +8436,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases"
+              ]
             },
             "description": "",
             "auth": {
@@ -7448,8 +8503,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases?type=service&status=expired",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases"
+              ],
               "query": [
                 {
                   "key": "type",
@@ -7495,8 +8557,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases?status=used",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases"
+              ],
               "query": [
                 {
                   "key": "status",
@@ -7537,8 +8606,17 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases/packages/{{demoLanPackageId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases", "packages", "{{demoLanPackageId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases",
+                "packages",
+                "{{demoLanPackageId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -7574,8 +8652,17 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases/services/{{demoEntitlementBookedId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases", "services", "{{demoEntitlementBookedId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases",
+                "services",
+                "{{demoEntitlementBookedId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -7611,8 +8698,17 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases/packages/{{demoLanPackageId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases", "packages", "{{demoLanPackageId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases",
+                "packages",
+                "{{demoLanPackageId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -7653,8 +8749,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "BR-BKG-15, Q-31.",
             "auth": {
@@ -7722,8 +8826,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "",
             "auth": {
@@ -7790,8 +8902,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "",
             "auth": {
@@ -7863,8 +8983,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "Giữ chỗ = hạn thanh toán + 5 phút (Q-03). Lưu Idempotency-Key vào bookNowKey cho request sau.",
             "auth": {
@@ -7939,8 +9067,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "",
             "auth": {
@@ -8008,8 +9144,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "Lịch held còn hạn vẫn chiếm chỗ (UAT-02).",
             "auth": {
@@ -8077,8 +9221,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "UAT-03.",
             "auth": {
@@ -8146,8 +9298,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "",
             "auth": {
@@ -8215,8 +9375,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "",
             "auth": {
@@ -8284,8 +9452,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "",
             "auth": {
@@ -8353,8 +9529,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "",
             "auth": {
@@ -8422,8 +9606,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "Q-26: chọn người rảnh có ít lịch nhất trong ngày, hòa thì theo tên.",
             "auth": {
@@ -8486,8 +9678,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders/{{lanHeldOrderId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders", "{{lanHeldOrderId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders",
+                "{{lanHeldOrderId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -8528,8 +9728,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/orders/{{lanHeldOrderId}}/payments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "orders", "{{lanHeldOrderId}}", "payments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "orders",
+                "{{lanHeldOrderId}}",
+                "payments"
+              ]
             },
             "description": "Mở paymentUrl, thanh toán thẻ test NCB; ở Development return URL xác nhận lịch (Q-19). Sau đó chạy lại 44 để thấy confirmed.",
             "auth": {
@@ -8571,8 +9780,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/{{lanHeldAppointmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "{{lanHeldAppointmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "{{lanHeldAppointmentId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -8608,8 +9825,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/{{lanHeldAppointmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "{{lanHeldAppointmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "{{lanHeldAppointmentId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -8650,8 +9875,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "",
             "auth": {
@@ -8720,8 +9952,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "",
             "auth": {
@@ -8789,8 +10028,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "",
             "auth": {
@@ -8858,8 +10104,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "",
             "auth": {
@@ -8926,8 +10179,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "",
             "auth": {
@@ -8995,8 +10255,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "",
             "auth": {
@@ -9064,8 +10331,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "",
             "auth": {
@@ -9133,8 +10407,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "",
             "auth": {
@@ -9202,8 +10483,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "",
             "auth": {
@@ -9265,8 +10553,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{lanFlowTwoAppointmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{lanFlowTwoAppointmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{lanFlowTwoAppointmentId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -9307,8 +10602,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{lanHeldAppointmentId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{lanHeldAppointmentId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{lanHeldAppointmentId}}",
+                "cancel"
+              ]
             },
             "description": "",
             "auth": {
@@ -9355,8 +10658,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{lanFlowTwoAppointmentId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{lanFlowTwoAppointmentId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{lanFlowTwoAppointmentId}}",
+                "cancel"
+              ]
             },
             "description": "",
             "auth": {
@@ -9401,8 +10712,17 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases/services/{{demoEntitlementAvailableId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases", "services", "{{demoEntitlementAvailableId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases",
+                "services",
+                "{{demoEntitlementAvailableId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -9438,8 +10758,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments?fromDate={{today}}&toDate={{demoDay7}}&staffMemberId={{demoStaffAnId}}&pageSize=50",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -9517,8 +10843,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "",
             "auth": {
@@ -9580,8 +10914,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases"
+              ]
             },
             "description": "",
             "auth": {
@@ -9621,8 +10962,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "",
             "auth": {
@@ -9684,8 +11032,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases"
+              ]
             },
             "description": "",
             "auth": {
@@ -9724,8 +11079,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "",
             "auth": {
@@ -9768,8 +11130,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "book-now"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "book-now"
+              ]
             },
             "description": "",
             "auth": {
@@ -9837,8 +11207,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ]
             },
             "description": "",
             "auth": {
@@ -9901,8 +11278,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases?status=used",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases"
+              ],
               "query": [
                 {
                   "key": "status",
@@ -9944,8 +11328,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/purchases",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "purchases"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "purchases"
+              ]
             },
             "description": "",
             "auth": {
@@ -9986,8 +11377,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/assigned-appointments?fromDate={{yesterday}}&toDate={{demoDay4}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "assigned-appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "assigned-appointments"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -10058,8 +11456,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{careAppointmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{careAppointmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{careAppointmentId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -10094,8 +11499,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/customers/{{careCustomerId}}/allergies",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "customers", "{{careCustomerId}}", "allergies"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers",
+                "{{careCustomerId}}",
+                "allergies"
+              ]
             },
             "description": "",
             "auth": {
@@ -10135,8 +11548,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/customers/{{careCustomerId}}/allergies",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "customers", "{{careCustomerId}}", "allergies"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers",
+                "{{careCustomerId}}",
+                "allergies"
+              ]
             },
             "description": "Trùng tác nhân (không phân biệt hoa thường, dấu) → 409 allergy_exists.",
             "auth": {
@@ -10186,8 +11607,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/customers/{{careCustomerId}}/allergies/{{allergyId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "customers", "{{careCustomerId}}", "allergies", "{{allergyId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers",
+                "{{careCustomerId}}",
+                "allergies",
+                "{{allergyId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -10236,8 +11666,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{careAppointmentId}}/skin-profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{careAppointmentId}}", "skin-profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{careAppointmentId}}",
+                "skin-profile"
+              ]
             },
             "description": "201 khi lịch đã tới ngày hẹn; lịch tương lai → 400 skin_profile_too_early; lần hai → 409 skin_profile_exists.",
             "auth": {
@@ -10280,8 +11718,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{careAppointmentId}}/skin-profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{careAppointmentId}}", "skin-profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{careAppointmentId}}",
+                "skin-profile"
+              ]
             },
             "description": "404 skin_profile_not_found khi chưa lập.",
             "auth": {
@@ -10309,8 +11755,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/skin-profiles/{{skinProfileId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "skin-profiles", "{{skinProfileId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "skin-profiles",
+                "{{skinProfileId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -10347,8 +11800,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/appointments/{{careAppointmentId}}/complete",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "appointments", "{{careAppointmentId}}", "complete"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "appointments",
+                "{{careAppointmentId}}",
+                "complete"
+              ]
             },
             "description": "200 { appointment, packageProgress? } sau giờ bắt đầu; trước đó 400 complete_too_early.",
             "auth": {
@@ -10380,8 +11841,17 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/customers/{{careCustomerId}}/allergies/{{allergyId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "customers", "{{careCustomerId}}", "allergies", "{{allergyId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers",
+                "{{careCustomerId}}",
+                "allergies",
+                "{{allergyId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -10400,7 +11870,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -10412,8 +11884,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/assigned-appointments?fromDate={{today}}&toDate={{today}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "assigned-appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "assigned-appointments"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -10458,8 +11937,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/assigned-appointments?fromDate={{today}}&toDate={{today}}&status=held",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "assigned-appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "assigned-appointments"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -10501,6 +11987,244 @@
               }
             }
           ]
+        },
+        {
+          "name": "13 Lịch làm việc của tôi (UC-SPA-24)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/work-schedules?fromDate={{yesterday}}&toDate={{demoDay4}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "work-schedules"
+              ],
+              "query": [
+                {
+                  "key": "fromDate",
+                  "value": "{{yesterday}}"
+                },
+                {
+                  "key": "toDate",
+                  "value": "{{demoDay4}}"
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Ca của chính nhân viên, gồm cả ca đã hủy; mỗi ca có appointmentCount. Khoảng ≤ 42 ngày.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAnAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const vn = new Date(Date.now() + 7 * 3600e3);",
+                  "const day = (offset) => new Date(vn.getTime() + offset * 86400e3).toISOString().slice(0, 10);",
+                  "['today', 'yesterday', 'todayPlus60'].forEach((k, i) => pm.environment.set(k, day([0, -1, 60][i])));",
+                  "pm.environment.set('demoTomorrow', day(1));",
+                  "pm.environment.set('demoDay2', day(2));",
+                  "pm.environment.set('demoDay4', day(4));",
+                  "pm.environment.set('demoDay61', day(61));",
+                  "const soon = new Date(Math.floor((vn.getTime() + 19 * 60e3) / 1800e3) * 1800e3);",
+                  "pm.environment.set('soonDate', soon.toISOString().slice(0, 10));",
+                  "pm.environment.set('soonTime', soon.toISOString().slice(11, 16));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Là danh sách', () => pm.expect(body.data).to.be.an('array'));",
+                  "pm.environment.set('myShiftId', body.data.length ? body.data[0].id : '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 Chi tiết ca của tôi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/work-schedules/{{myShiftId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "work-schedules",
+                "{{myShiftId}}"
+              ]
+            },
+            "description": "Lịch hẹn trong ca (bỏ giữ chỗ và đã hủy). Ca của nhân viên khác → 404 work_schedule_not_found.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAnAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 Lịch sử khách đã chăm sóc (UC-SPA-26)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/care-history?pageNumber=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "care-history"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "fromDate",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "toDate",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "customerId",
+                  "value": "{{careCustomerId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "pageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Các buổi completed của chính nhân viên, mới nhất trước; tìm theo tên (không dấu) hoặc SĐT.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAnAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16 Chủ spa xem lịch sử chăm sóc → 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/care-history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "care-history"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope lỗi', () => { pm.expect(body.success).to.eql(false); pm.expect(body.traceId).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -10515,8 +12239,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/treatments?",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "treatments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "treatments"
+              ],
               "query": [
                 {
                   "key": "status",
@@ -10559,8 +12290,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/treatments/{{treatmentPlanId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "treatments", "{{treatmentPlanId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "treatments",
+                "{{treatmentPlanId}}"
+              ]
             },
             "description": "Mỗi buổi có canBook, reason, earliestDate (cùng điều kiện với POST /me/appointments). Không có ghi chú nội bộ.",
             "auth": {
@@ -10596,7 +12335,9 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/treatments/{{treatmentPlanId}}/sessions/{{treatmentSessionId}}",
-              "host": ["{{baseUrl}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "api",
                 "v1",
@@ -10640,8 +12381,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/service-history?pageNumber=1&pageSize=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "service-history"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "service-history"
+              ],
               "query": [
                 {
                   "key": "pageNumber",
@@ -10697,8 +12445,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/service-history/{{historyAppointmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "service-history", "{{historyAppointmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "service-history",
+                "{{historyAppointmentId}}"
+              ]
             },
             "description": "404 appointment_not_found khi chưa có lịch sử.",
             "auth": {
@@ -10721,8 +12477,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments?search=lan&pageNumber=1&pageSize=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "treatments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "treatments"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -10776,8 +12538,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments/{{treatmentPlanId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "treatments", "{{treatmentPlanId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "treatments",
+                "{{treatmentPlanId}}"
+              ]
             },
             "description": "Gồm sessions, skinProfiles, careHistory, canEdit, canManage, hasAllergies.",
             "auth": {
@@ -10817,8 +12586,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments/{{treatmentPlanId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "treatments", "{{treatmentPlanId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "treatments",
+                "{{treatmentPlanId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -10867,7 +12643,9 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments/{{treatmentPlanId}}/sessions/{{treatmentSessionId}}",
-              "host": ["{{baseUrl}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "api",
                 "v1",
@@ -10924,8 +12702,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments/{{treatmentPlanId}}/assign-staff",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "treatments", "{{treatmentPlanId}}", "assign-staff"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "treatments",
+                "{{treatmentPlanId}}",
+                "assign-staff"
+              ]
             },
             "description": "null bỏ người phụ trách; nhân viên đã nghỉ → 400 staff_resigned.",
             "auth": {
@@ -10974,8 +12760,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments/{{treatmentPlanId}}/pause",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "treatments", "{{treatmentPlanId}}", "pause"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "treatments",
+                "{{treatmentPlanId}}",
+                "pause"
+              ]
             },
             "description": "Giữ lịch đã đặt, chặn đặt buổi mới; đang tạm dừng → 409 treatment_status_invalid.",
             "auth": {
@@ -11012,8 +12806,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments/{{treatmentPlanId}}/resume",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "treatments", "{{treatmentPlanId}}", "resume"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "treatments",
+                "{{treatmentPlanId}}",
+                "resume"
+              ]
             },
             "description": "",
             "auth": {
@@ -11050,8 +12852,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments/{{treatmentPlanId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "treatments", "{{treatmentPlanId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "treatments",
+                "{{treatmentPlanId}}",
+                "cancel"
+              ]
             },
             "description": "409 treatment_has_booked_sessions khi còn buổi booked; thành công thì gói cancelled.",
             "auth": {
@@ -11088,8 +12898,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments/{{treatmentPlanId}}/complete",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "treatments", "{{treatmentPlanId}}", "complete"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "treatments",
+                "{{treatmentPlanId}}",
+                "complete"
+              ]
             },
             "description": "Chỉ khi còn lại toàn buổi completed/skipped; ngược lại 409 treatment_sessions_remaining.",
             "auth": {
@@ -11126,8 +12944,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments/{{treatmentPlanId}}/pause",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "treatments", "{{treatmentPlanId}}", "pause"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "treatments",
+                "{{treatmentPlanId}}",
+                "pause"
+              ]
             },
             "description": "",
             "auth": {
@@ -11172,8 +12998,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "treatments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "treatments"
+              ]
             },
             "description": "Liệu trình phụ trách và (Treatments:AssignedStaffCanView) liệu trình có buổi được phân công.",
             "auth": {
@@ -11208,8 +13040,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/treatments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "treatments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "treatments"
+              ]
             },
             "description": "",
             "auth": {
@@ -11255,8 +13093,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "",
             "auth": {
@@ -11294,8 +13139,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments?scope=upcoming&pageNumber=1&pageSize=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ],
               "query": [
                 {
                   "key": "scope",
@@ -11347,8 +13199,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments?scope=past",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ],
               "query": [
                 {
                   "key": "scope",
@@ -11389,8 +13248,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments?scope=abc",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ],
               "query": [
                 {
                   "key": "scope",
@@ -11431,8 +13297,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/{{myAppointmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "{{myAppointmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "{{myAppointmentId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -11468,8 +13342,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/availability?appointmentId={{myAppointmentId}}&date={{myAppointmentDate}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "availability"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "availability"
+              ],
               "query": [
                 {
                   "key": "appointmentId",
@@ -11519,8 +13399,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/{{myAppointmentId}}/reschedule",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "{{myAppointmentId}}", "reschedule"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "{{myAppointmentId}}",
+                "reschedule"
+              ]
             },
             "description": "Không có staffMemberId = nhân viên bất kỳ (ít lịch nhất). 409 slot_unavailable / customer_busy / outside_work_schedule khi khung không còn; 400 change_window_passed khi còn dưới 24 giờ; buổi gói: 400 session_too_early / session_too_late.",
             "auth": {
@@ -11570,8 +13459,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/{{myAppointmentId}}/reschedule",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "{{myAppointmentId}}", "reschedule"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "{{myAppointmentId}}",
+                "reschedule"
+              ]
             },
             "description": "",
             "auth": {
@@ -11620,8 +13518,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/{{myAppointmentId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "{{myAppointmentId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "{{myAppointmentId}}",
+                "cancel"
+              ]
             },
             "description": "",
             "auth": {
@@ -11670,8 +13577,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/{{myAppointmentId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "{{myAppointmentId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "{{myAppointmentId}}",
+                "cancel"
+              ]
             },
             "description": "Trả lại dịch vụ/buổi đã dùng để đặt, không hoàn tiền. Lịch giữ chỗ (held) không hủy ở đây (Q-41).",
             "auth": {
@@ -11721,8 +13637,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments/{{myAppointmentId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments", "{{myAppointmentId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments",
+                "{{myAppointmentId}}",
+                "cancel"
+              ]
             },
             "description": "",
             "auth": {
@@ -11767,8 +13692,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/appointments?scope=cancelled",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "appointments"
+              ],
               "query": [
                 {
                   "key": "scope",
@@ -11815,8 +13747,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/reports/revenue?fromDate=2026-01-01&toDate=2026-12-31&groupBy=quarter",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "reports", "revenue"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "revenue"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -11871,8 +13810,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/reports/revenue?groupBy=month&productType=package",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "reports", "revenue"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "revenue"
+              ],
               "query": [
                 {
                   "key": "groupBy",
@@ -11918,8 +13864,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/reports/revenue/by-product?fromDate=2026-01-01&toDate=2026-12-31&productType=all&top=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "reports", "revenue", "by-product"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "revenue",
+                "by-product"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -11973,8 +13927,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/reports/revenue/export?fromDate=2026-01-01&toDate=2026-12-31&groupBy=month",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "reports", "revenue", "export"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "revenue",
+                "export"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -12022,8 +13984,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/reports/revenue?groupBy=week",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "reports", "revenue"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "revenue"
+              ],
               "query": [
                 {
                   "key": "groupBy",
@@ -12065,8 +14034,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/reports/revenue?fromDate=2020-01-01&toDate=2026-01-01",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "reports", "revenue"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "revenue"
+              ],
               "query": [
                 {
                   "key": "fromDate",
@@ -12112,8 +14088,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/reports/revenue",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "reports", "revenue"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "revenue"
+              ]
             },
             "description": "",
             "auth": {
@@ -12159,8 +14142,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/ai/chat",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ai", "chat"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ai",
+                "chat"
+              ]
             },
             "description": "Chỉ dùng dữ liệu thật qua tool; gợi ý sản phẩm đang bán (BR-AI-02, 05). Không có key → 503.",
             "auth": {
@@ -12204,8 +14194,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/ai/chat",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ai", "chat"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ai",
+                "chat"
+              ]
             },
             "description": "UAT-25: không chẩn đoán, không kê thuốc (BR-AI-01).",
             "auth": {
@@ -12249,8 +14246,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/ai/chat",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ai", "chat"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ai",
+                "chat"
+              ]
             },
             "description": "BR-AI-09, Q-65.",
             "auth": {
@@ -12293,8 +14297,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/ai/chat",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ai", "chat"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ai",
+                "chat"
+              ]
             },
             "description": "UAT-26: chỉ gói của khách đang đăng nhập (mã khách lấy từ JWT).",
             "auth": {
@@ -12344,8 +14355,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/ai/chat",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ai", "chat"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ai",
+                "chat"
+              ]
             },
             "description": "AI chỉ đề xuất (bookingProposals kèm path /booking/new?...), khách tự xác nhận qua API đặt lịch (BR-AI-08).",
             "auth": {
@@ -12389,8 +14407,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/ai/history?limit=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "ai", "history"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "ai",
+                "history"
+              ],
               "query": [
                 {
                   "key": "limit",
@@ -12442,8 +14468,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/ai/chat",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ai", "chat"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ai",
+                "chat"
+              ]
             },
             "description": "",
             "auth": {
@@ -12486,8 +14519,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/ai/chat",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "ai", "chat"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ai",
+                "chat"
+              ]
             },
             "description": "",
             "auth": {
@@ -12538,8 +14578,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me"
+              ]
             },
             "description": "",
             "auth": {
@@ -12582,8 +14628,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me"
+              ]
             },
             "description": "Gửi đủ 4 trường; null xóa ngày sinh/giới tính. Email, vai trò, trạng thái không đổi được (Q-50).",
             "auth": {
@@ -12628,8 +14680,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/avatar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "avatar"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "avatar"
+              ]
             },
             "description": "Ở field `file` bấm Select Files chọn ảnh JPEG/PNG/WebP ≤ 5 MB. Cần `CLOUDINARY_*`, thiếu thì 503.",
             "auth": {
@@ -12675,8 +14734,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/avatar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "avatar"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "avatar"
+              ]
             },
             "description": "",
             "auth": {
@@ -12695,7 +14761,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -12712,8 +14780,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me"
+              ]
             },
             "description": "",
             "auth": {
@@ -12763,8 +14837,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "password"
+              ]
             },
             "description": "",
             "auth": {
@@ -12809,8 +14890,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/users?search=khach hang mau&role=customer&pageNumber=1&pageSize=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -12869,8 +14956,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/{{accountUserId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{accountUserId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{accountUserId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -12911,8 +15005,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/{{accountUserId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{accountUserId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{accountUserId}}"
+              ]
             },
             "description": "",
             "auth": {
@@ -12961,8 +15062,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/{{accountUserId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{accountUserId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{accountUserId}}",
+                "status"
+              ]
             },
             "description": "Thu hồi mọi refresh token của khách; access token hiện tại hết hạn sau tối đa 15 phút (Q-52).",
             "auth": {
@@ -12990,7 +15099,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -13007,8 +15118,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/{{accountUserId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{accountUserId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{accountUserId}}",
+                "status"
+              ]
             },
             "description": "",
             "auth": {
@@ -13036,7 +15155,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]
@@ -13053,8 +15174,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/{{accountUserId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "{{accountUserId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{accountUserId}}",
+                "status"
+              ]
             },
             "description": "",
             "auth": {
@@ -13098,8 +15227,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
             },
             "description": "",
             "auth": {
@@ -13139,8 +15274,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/me/password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "me", "password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "password"
+              ]
             },
             "description": "Điền `customerNewPassword` (8–128 ký tự, có chữ và số, khác mật khẩu cũ). Sau đó mọi phiên của khách bị thu hồi.",
             "auth": {
@@ -13168,7 +15310,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"]
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
               }
             }
           ]

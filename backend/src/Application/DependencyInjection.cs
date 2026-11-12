@@ -78,6 +78,8 @@ public static class DependencyInjection
         services.AddScoped<ISkinProfileService, SkinProfileService>();
         services.AddScoped<ICustomerAllergyService, CustomerAllergyService>();
         services.AddScoped<IAssignedAppointmentService, AssignedAppointmentService>();
+        services.AddScoped<IMyWorkScheduleService, MyWorkScheduleService>();
+        services.AddScoped<ICareHistoryService, CareHistoryService>();
         services.AddScoped<AiToolExecutor>();
         services.AddScoped<IAiAssistantService, AiAssistantService>();
         return services;
