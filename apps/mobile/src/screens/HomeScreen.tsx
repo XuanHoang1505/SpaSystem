@@ -2,11 +2,15 @@ import { router } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { AppScreen } from '@components/common/AppScreen';
 import { AppText } from '@components/common/AppText';
-import { AppCard } from '@components/common/AppCard';
 import { AppButton } from '@components/common/AppButton';
+import { AppLoader } from '@components/common/AppLoader';
 import { SystemStatus } from '@components/common/SystemStatus';
+import { homePathFor, useAuthStore } from '@/stores/authStore';
 import { colors, typography, spacing } from '@theme/index';
+
 export function HomeScreen() {
+  const status = useAuthStore((state) => state.status);
+  const user = useAuthStore((state) => state.user);
   return (
     <AppScreen>
       <AppText style={styles.brand}>NHƯ NGUYỆT SPA</AppText>
@@ -14,17 +18,36 @@ export function HomeScreen() {
         Một khoảng lặng, dành riêng cho bạn.
       </AppText>
       <AppText>Nền tảng chăm sóc da và quản lý spa.</AppText>
-      <AppCard>
-        <AppText>Tính năng đang được phát triển</AppText>
-        <AppText style={styles.note}>
-          Bản nền tảng · Chưa có xác thực hoặc dữ liệu nghiệp vụ.
-        </AppText>
-      </AppCard>
-      <AppButton title="Khám phá dịch vụ" onPress={() => router.push('/(public)/services')} />
-      <AppButton title="Gói chăm sóc" onPress={() => router.push('/(public)/packages')} />
-      <AppButton title="Không gian khách hàng" onPress={() => router.push('/(customer)/home')} />
-      <AppButton title="Không gian nhân viên" onPress={() => router.push('/(staff)/dashboard')} />
-      <AppButton title="Không gian quản lý" onPress={() => router.push('/(owner)/dashboard')} />
+      {status === 'restoring' ? (
+        <AppLoader />
+      ) : user ? (
+        <>
+          <AppText style={styles.greeting}>{`Xin chào, ${user.fullName}`}</AppText>
+          <AppButton
+            title="Vào không gian của tôi"
+            onPress={() => router.push(homePathFor(user.role))}
+          />
+        </>
+      ) : (
+        <>
+          <AppButton title="Đăng nhập" onPress={() => router.push('/(public)/login')} />
+          <AppButton
+            title="Đăng ký"
+            variant="outline"
+            onPress={() => router.push('/(public)/register')}
+          />
+        </>
+      )}
+      <AppButton
+        title="Khám phá dịch vụ"
+        variant="outline"
+        onPress={() => router.push('/(public)/services')}
+      />
+      <AppButton
+        title="Gói chăm sóc"
+        variant="outline"
+        onPress={() => router.push('/(public)/packages')}
+      />
       <SystemStatus />
     </AppScreen>
   );
@@ -37,5 +60,5 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   title: { fontSize: typography.hero, lineHeight: 44, color: colors.primary },
-  note: { color: colors.muted, fontSize: typography.small },
+  greeting: { fontWeight: '600' },
 });

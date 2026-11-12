@@ -6,14 +6,18 @@ export function AppButton({
   onPress,
   disabled = false,
   loading = false,
+  variant = 'primary',
   accessibilityLabel = title,
 }: {
   title: string;
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
+  /** `outline` is the secondary action next to a primary button. */
+  variant?: 'primary' | 'outline';
   accessibilityLabel?: string;
 }) {
+  const outline = variant === 'outline';
   return (
     <Pressable
       onPress={onPress}
@@ -21,12 +25,19 @@ export function AppButton({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
-      style={({ pressed }) => [styles.button, (pressed || disabled || loading) && styles.dim]}
+      style={({ pressed }) => [
+        styles.button,
+        outline && styles.outline,
+        (pressed || disabled || loading) && styles.dim,
+      ]}
     >
       {loading ? (
-        <ActivityIndicator color={colors.onPrimary} accessibilityLabel="Đang xử lý" />
+        <ActivityIndicator
+          color={outline ? colors.primary : colors.onPrimary}
+          accessibilityLabel="Đang xử lý"
+        />
       ) : (
-        <AppText style={styles.text}>{title}</AppText>
+        <AppText style={[styles.text, outline && styles.outlineText]}>{title}</AppText>
       )}
     </Pressable>
   );
@@ -40,6 +51,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.small,
     backgroundColor: colors.primary,
   },
+  outline: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary },
   text: { color: colors.onPrimary, fontWeight: '600' },
+  outlineText: { color: colors.primary },
   dim: { opacity: 0.55 },
 });

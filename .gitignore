@@ -18,5 +18,7 @@ node_modules/
 ~$*
 apps/mobile/android/
 apps/mobile/ios/
+dist-web/
+.playwright-mcp/
 __pycache__/
 .superpowers/

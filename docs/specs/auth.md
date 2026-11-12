@@ -720,6 +720,76 @@ Phạm vi: web, chủ spa, `OwnerLayout` (theme sáng và tối). Không có mà
 | AUTH-UI-T45 | Khóa tài khoản `active`; mở khóa `locked`; dòng của chính chủ spa                                      | `PATCH { status: 'locked' }` / `{ status: 'active' }`, toast, danh sách làm mới; dòng chính mình không có "Khóa tài khoản" |
 | AUTH-UI-T46 | Khóa gặp `cannot_lock_self`, `account_inactive`, `user_not_found`                                      | Toast tương ứng; `user_not_found` đóng Sheet và làm mới                                                                    |
 
+## Giao diện (mobile): UC-SPA-01, 02, 03
+
+Phạm vi: Android (Expo Go SDK 57), ba màn SCR-M06, M07, M08 và **nền tảng phiên đăng nhập** mà mọi màn mobile sau này dùng. Không làm lần này: UC-SPA-04 (hồ sơ), màn nghiệp vụ trong các khu vực.
+
+Feature: `apps/mobile/src/features/auth/` (`screens/`, `components/`, `hooks/`, `schemas.ts`, `errors.ts`, `index.ts`); route file trong `app/(public)` chỉ render screen. Hợp đồng dùng lại nguyên `AuthApi`, `authErrorCodes`, kiểu trong `@spa/shared-types` (không thêm kiểu mới).
+
+### Phiên đăng nhập trên mobile
+
+- **Chế độ body (không cookie):** mobile **không** gửi header `X-Auth-Transport: cookie`, nên `/auth/login` và `/auth/refresh` trả `refreshToken` trong body (BR-AUTH-21, AUTH-T44). Backend không cần sửa.
+- **Lưu trữ:** refresh token trong `expo-secure-store` (khóa `spa.refresh_token`, thêm bằng `npx expo install expo-secure-store`). Access token, hạn và `user` chỉ trong bộ nhớ: `stores/authStore.ts` (Zustand, không persist) `{ status: 'restoring' | 'authenticated' | 'anonymous', user: AuthUser | null, accessToken, accessTokenExpiresAtUtc }`, thay kiểu `AuthSession { userId, roles[] }` hiện tại. Không dùng AsyncStorage.
+- **Client dùng chung:** `src/lib/api/client.ts` tạo một `ApiClient` gắn `Authorization: Bearer` từ store; gặp `401` ở request có Bearer thì gọi làm mới **một lần** (các request đồng thời dùng chung một lời gọi `/auth/refresh`) rồi gửi lại; làm mới bị từ chối (`401`/`403`/`429`) thì xóa phiên + secure store và về `anonymous`. Mất mạng hoặc 5xx giữ phiên. `src/lib/api/session.ts`: `restoreSession`, `refreshSession`, `signIn(result)`, `signOut()`.
+- **Khởi động app:** `AppProviders` đọc refresh token; có thì gọi `/auth/refresh` với body (`status = restoring` trong lúc chờ, hiện `AppLoader`); thành công lưu token mới (xoay vòng); bị từ chối thì xóa token, `anonymous`. Không có token → `anonymous` ngay.
+- **Đăng xuất:** `POST /auth/logout` với Bearer + `{ refreshToken }`; dù API lỗi vẫn xóa phiên và secure store, `queryClient.clear()`, về màn chính. Nút "Đăng xuất" đặt ở tab "Cá nhân" (khách) và màn "Tổng quan" của nhân viên, chủ spa (các màn này vẫn là placeholder, chỉ thêm nút).
+- **Chặn khu vực:** `_layout.tsx` của `(customer)`, `(staff)`, `(owner)` dùng `RouteGuard` (`src/components/auth/RouteGuard.tsx`): `restoring` → `AppLoader`; `anonymous` → `/(public)/login?redirect=<đường dẫn>`; sai vai trò → màn "Không có quyền truy cập" (`app/forbidden.tsx`, route mới ở gốc, ngoài các nhóm vai trò; quyết định 12/11/2026). Chỉ là trải nghiệm, API vẫn kiểm tra quyền.
+- **Màn "Không có quyền truy cập" (`app/forbidden.tsx`):** `AppScreen` gồm nhãn "403", tiêu đề "Không có quyền truy cập", mô tả "Tài khoản của bạn không dùng được khu vực này.", nút "Về không gian của tôi" (`homePathFor(role)`, chỉ khi đã đăng nhập) và nút phụ "Về trang chủ" (`/`). Dùng `router.replace` để nút quay lại của Android không đưa người dùng về lại khu vực bị chặn.
+- **Sau đăng nhập:** có `redirect` hợp lệ (bắt đầu `/`, thuộc khu vực của vai trò hoặc route công khai) thì `router.replace(redirect)`, không thì về `homePathFor(role)`: khách `/(customer)/home`, nhân viên `/(staff)/dashboard`, chủ spa `/(owner)/dashboard`. `queryClient.clear()` khi phiên đổi.
+- **Màn chính (`HomeScreen`):** chưa đăng nhập → "Đăng nhập", "Đăng ký" thay cho ba nút vào khu vực; đã đăng nhập → "Vào không gian của tôi" (`homePathFor`) và lời chào tên. Hai nút danh mục giữ nguyên.
+
+### SCR-M06 — Đăng nhập (`app/(public)/login.tsx`)
+
+- **Trường:** "Email hoặc số điện thoại" (`autoComplete="username"`, `textContentType="username"`, `autoCapitalize="none"`, `keyboardType="email-address"`), "Mật khẩu" (`secureTextEntry`, nút icon `Eye`/`EyeOff` có `accessibilityLabel` "Hiện mật khẩu"/"Ẩn mật khẩu", vùng chạm 48dp). Kiểm tra như SCR-W07.
+- **Liên kết:** "Quên mật khẩu?" → `/(public)/forgot-password`; "Chưa có tài khoản? Đăng ký" → `/(public)/register`.
+- **Điền sẵn:** tham số route `login` do màn đăng ký/đặt lại mật khẩu truyền sang (`router.replace({ pathname, params: { login } })`).
+- **Mã lỗi:** như bảng SCR-W07. `Alert` của web dùng component mới `AppNotice` (`src/components/common/AppNotice.tsx`, `tone: 'error' | 'info' | 'success'`, `accessibilityRole="alert"`); toast thay bằng `AppNotice` trên màn hoặc `Alert.alert` của React Native khi điều hướng đi.
+
+### SCR-M07 — Đăng ký + OTP (`app/(public)/register.tsx`)
+
+- Hai bước trong một màn, cùng trường, kiểm tra, đếm ngược `expiresAtUtc`/`resendAvailableAtUtc` và mã lỗi như SCR-W08 (bước 1: họ tên, email, SĐT `keyboardType="phone-pad"`, mật khẩu, xác nhận; bước 2: ô "Mã OTP" `keyboardType="number-pad"`, `textContentType="oneTimeCode"`, chỉ nhận 6 chữ số).
+- Thành công `201`: `Alert.alert('Đăng ký thành công', 'Vui lòng đăng nhập.')` rồi `router.replace` sang đăng nhập với `login = email`.
+- Đổi bước: cuộn lên đầu và đặt focus đọc màn hình vào tiêu đề bước (`accessibilityRole="header"`).
+
+### SCR-M08 — Quên mật khẩu (`app/(public)/forgot-password.tsx`, route mới)
+
+- Ba bước như SCR-W09 ("Bước x/3" + thanh tiến độ ba đoạn dùng token `colors.primary`/`colors.border`): email → OTP (câu trung lập, đếm ngược, gửi lại) → mật khẩu mới ("Hoàn tất trước HH:mm").
+- Thành công `204`: nếu đang có phiên thì `signOut()` cục bộ (backend đã thu hồi mọi refresh token), `Alert.alert` "Đặt lại mật khẩu thành công…", về đăng nhập với `login = email`.
+- Thêm `Stack.Screen name="forgot-password"` "Quên mật khẩu" vào `(public)/_layout.tsx`.
+
+### Thư viện icon (quyết định 12/11/2026)
+
+- **Chọn `lucide-react-native` + `react-native-svg`.** Cùng bộ icon Lucide với web (`lucide-react`), nên hai nền tảng dùng chung tên và hình icon (`Eye`, `EyeOff`, `LogOut`, `ShieldAlert`…). `react-native-svg` có sẵn trong Expo Go SDK 57 (bản `15.15.4` theo `bundledNativeModules.json`), cài bằng `npx expo install react-native-svg`; `lucide-react-native` chỉ là mã JS, cài bằng `npm install --workspace @spa/mobile`, nhập từng icon (không nhập cả gói).
+- **Phương án đã cân nhắc:** `@expo/vector-icons` (có sẵn trong Expo Go, bộ `Feather` gần giống Lucide) không cần thêm native nhưng tên/hình lệch với web và nạp cả font icon; `expo-symbols` chỉ có SF Symbols trên iOS, không dùng được cho Android.
+- Màu icon lấy từ token `colors` (`colors.muted`, `colors.primary`), không viết mã màu. Jest: thêm `lucide-react-native` và `react-native-svg` vào `transformIgnorePatterns`.
+
+### Trạng thái, cấu hình, a11y (cả ba màn)
+
+- Bốn trạng thái của form: sẵn sàng / đang gửi (`AppButton loading`, ô `editable={false}`) / lỗi (dưới ô hoặc `AppNotice`) / thành công (sang bước hoặc điều hướng).
+- Thiếu hoặc sai `EXPO_PUBLIC_API_BASE_URL` → `AppNotice` "Configuration Error", nút gửi tắt, không gọi mạng.
+- `AppScreen` lo bàn phím; nút chính rộng toàn màn; mọi vùng chạm ≥ 48dp; nút icon hiện/ẩn mật khẩu có `accessibilityLabel`; lỗi dùng `accessibilityRole="alert"`; dòng đếm ngược chỉ thông báo khi đổi trạng thái (không đọc mỗi giây).
+
+### Thiếu từ backend
+
+Không. `/auth/*` đã hỗ trợ chế độ body cho mobile.
+
+### Kiểm thử giao diện (mobile)
+
+Jest + Testing Library Native, `fetch` giả, `expo-secure-store` và `expo-router` mock.
+
+| Mã          | Tình huống                                                                                                           | Kết quả mong đợi                                                                                                           |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| AUTH-UI-T60 | Đăng nhập thành công (khách / nhân viên / chủ spa); có `redirect` hợp lệ / không hợp lệ                              | Lưu refresh token vào secure store, store `authenticated`; `router.replace` đúng trang chủ vai trò / `redirect`            |
+| AUTH-UI-T61 | Đăng nhập: thiếu trường; `invalid_credentials`; `account_locked`; `rate_limited`; mất mạng                           | Lỗi dưới ô, không gọi API; `AppNotice` message server + xóa mật khẩu; giữ dữ liệu; thông báo mạng                          |
+| AUTH-UI-T62 | Không gửi header `X-Auth-Transport`; body login không có cookie                                                      | Đúng chế độ body                                                                                                           |
+| AUTH-UI-T63 | Khởi động có refresh token hợp lệ / bị từ chối 401 / mất mạng; không có token                                        | `authenticated` + lưu token mới / xóa token, `anonymous` / giữ token, `anonymous` tạm / `anonymous` không gọi mạng         |
+| AUTH-UI-T64 | Request có Bearer gặp 401 → làm mới thành công → gửi lại; hai request 401 đồng thời                                  | Một `/auth/refresh`, cả hai gửi lại thành công                                                                             |
+| AUTH-UI-T65 | `RouteGuard`: `restoring` / `anonymous` / sai vai trò / đúng vai trò                                                 | Loader / về đăng nhập kèm `redirect` / màn "Không có quyền truy cập" (nút "Về không gian của tôi" đúng vai trò) / hiện màn |
+| AUTH-UI-T66 | Đăng xuất: API 204 / API lỗi                                                                                         | Cả hai: xóa secure store, `anonymous`, `queryClient` rỗng                                                                  |
+| AUTH-UI-T67 | Đăng ký: validate bước 1; gửi mã → bước 2 có đếm ngược; `email_exists` ở bước 2 về bước 1; `otp_invalid`; thành công | Đúng hành vi như SCR-W08; thành công `Alert.alert` + về đăng nhập với email điền sẵn                                       |
+| AUTH-UI-T68 | Quên mật khẩu: bước 1 → 2 (câu trung lập) → 3; `invalid_reset_token` về bước 1; thành công                           | Đúng hành vi như SCR-W09; thành công về đăng nhập với email điền sẵn                                                       |
+| AUTH-UI-T69 | Thiếu `EXPO_PUBLIC_API_BASE_URL`                                                                                     | `AppNotice` "Configuration Error", nút gửi tắt, không gọi `fetch`                                                          |
+
 ## Câu hỏi còn mở
 
 - ~~Web lưu refresh token ở cookie HttpOnly hay trong bộ nhớ~~ — **đã chốt 05/11/2026: cookie HttpOnly** (task backend BE-1, xem mục "Giao diện (web)").

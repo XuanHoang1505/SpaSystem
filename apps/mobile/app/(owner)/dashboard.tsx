@@ -1,3 +1,4 @@
+import { LogOutButton } from '@features/auth/components/LogOutButton';
 import { WorkspaceOverviewScreen } from '@/screens/WorkspaceOverviewScreen';
 export default function Screen() {
   return (
@@ -9,6 +10,7 @@ export default function Screen() {
         { href: '/(owner)/bookings', title: 'Lịch hẹn' },
         { href: '/(owner)/reports', title: 'Báo cáo' },
       ]}
+      footer={<LogOutButton />}
     />
   );
 }
