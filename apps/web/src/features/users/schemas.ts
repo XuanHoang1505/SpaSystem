@@ -51,3 +51,12 @@ export const changePasswordSchema = z
   });
 
 export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
+
+/** UC-SPA-05 A1: the owner edits name, date of birth and gender; email, phone and role stay read-only. */
+export const ownerUserSchema = profileSchema.pick({
+  fullName: true,
+  dateOfBirth: true,
+  gender: true,
+});
+
+export type OwnerUserFormValues = z.infer<typeof ownerUserSchema>;
