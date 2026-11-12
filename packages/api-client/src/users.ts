@@ -2,8 +2,13 @@ import type {
   ApiResponse,
   AvatarUrlDto,
   ChangePasswordRequest,
+  ChangeUserStatusRequest,
   MeDto,
+  PagedResponse,
   UpdateProfileRequest,
+  UserDetail,
+  UserFilterParams,
+  UserListItem,
 } from '@spa/shared-types';
 import type { ApiClient, RequestOptions } from './index';
 
@@ -51,4 +56,42 @@ export const usersErrorCodes = {
   fileTooLarge: 'file_too_large',
   uploadFailed: 'upload_failed',
   rateLimited: 'rate_limited',
+  phoneExists: 'phone_exists',
+  userNotFound: 'user_not_found',
+  cannotLockSelf: 'cannot_lock_self',
+  accountInactive: 'account_inactive',
 } as const;
+
+const ownerPath = (id: string, child?: string) =>
+  `/api/v1/users/${encodeURIComponent(id)}${child ? `/${child}` : ''}`;
+
+/** UC-SPA-05: the owner searches, reads, edits and locks/unlocks accounts. */
+export class OwnerUsersApi {
+  constructor(private readonly client: ApiClient) {}
+
+  list(params: UserFilterParams, signal?: AbortSignal) {
+    return this.client.get<ApiResponse<PagedResponse<UserListItem>>>('/api/v1/users', {
+      query: { ...params },
+      signal,
+    });
+  }
+
+  get(id: string, signal?: AbortSignal) {
+    return this.client.get<ApiResponse<UserDetail>>(ownerPath(id), { signal });
+  }
+
+  update(id: string, body: UpdateProfileRequest) {
+    return this.client.put<UpdateProfileRequest, ApiResponse<UserDetail>>(ownerPath(id), body);
+  }
+
+  /** 204 No Content; locking ends every session of the account. */
+  changeStatus(id: string, status: ChangeUserStatusRequest['status']) {
+    return this.client.patch<ChangeUserStatusRequest, void>(ownerPath(id, 'status'), { status });
+  }
+}
+
+export const ownerUsersQueryKeys = {
+  all: ['owner-users'] as const,
+  list: (params: UserFilterParams) => ['owner-users', 'list', params] as const,
+  detail: (id: string) => ['owner-users', 'detail', id] as const,
+};
