@@ -654,6 +654,72 @@ Feature: `src/features/auth/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts
 | AUTH-UI-T25 | Đổi mật khẩu: `400 password_mismatch`, `password_same_as_current`, `429 rate_limited`                                                                         | Hiển thị lỗi đúng trường hoặc alert tần suất                                                                                                                                          |
 | AUTH-UI-T26 | Tải ảnh đại diện: chọn file > 5MB / file không phải ảnh bị chặn; upload thành công cập nhật ảnh hiển thị; xóa ảnh đại diện thành công                         | Chặn file lỗi; upload/xóa thành công cập nhật UI                                                                                                                                      |
 
+### SCR-W40 — Quản lý tài khoản người dùng (UC-SPA-05, `/owner/accounts`)
+
+Phạm vi: web, chủ spa, `OwnerLayout` (theme sáng và tối). Không có màn mobile (UC-SPA-05 là `n/a` trên Android).
+
+- **Route mới:** `/owner/accounts` "Tài khoản người dùng" trong `routes.ts` (sidebar, icon `UserCogIcon`), đúng SCR-W40.
+- **Code:** `features/users/components/owner/` (glossary: `User` → thư mục `users`): `OwnerUsersView`, `UserFilterToolbar`, `UserTable`, `UserDetailSheet`, `EditUserDialog`, `ChangeUserStatusDialog`; `userStatus.ts` (nhãn + tông); hooks `useOwnerUsers`, `useOwnerUser`, `useOwnerUserMutations`. Trang `pages/owner/OwnerAccountsPage.tsx`.
+- **Gói chung:** `shared-types/src/users.ts` thêm `UserListItem`, `UserDetail` (+ `staff: { hireDate, resignationDate } | null`), `UserFilterParams` (`PaginationParams` + `role?`, `status?`), `ChangeUserStatusRequest`. `api-client/src/users.ts` thêm `OwnerUsersApi` (`list`, `get`, `update`, `changeStatus` → `void`), `ownerUsersQueryKeys` (`all`, `list(params)`, `detail(id)`); `usersErrorCodes` thêm `phoneExists: 'phone_exists'`, `userNotFound`, `cannotLockSelf`, `accountInactive` (mã `duplicate_phone_number` cũ không có ở backend, giữ để không vỡ `ProfileCard`).
+- **Mẫu bố cục:** danh sách = khung thẻ + breadcrumb + `PageHeader` + thanh lọc + `DataTable` phân trang server; chi tiết = `Sheet`; sửa = `Dialog`; khóa/mở khóa = `AlertDialog` (theo mẫu `OwnerStaffView` / `OwnerOrdersView`).
+- **PageHeader:** "Tài khoản người dùng", mô tả "Tìm, xem và cập nhật tài khoản khách hàng, nhân viên, chủ spa. Khóa tài khoản sẽ đăng xuất người đó khỏi mọi thiết bị."
+
+**Bộ lọc (URL qua `useTableSearchParams`, đổi bộ lọc về trang 1):** ô "Tìm theo họ tên, email hoặc số điện thoại" (`search`, debounce 300 ms, tối đa 100 ký tự); "Vai trò" (`role`: Tất cả, Khách hàng, Nhân viên, Chủ spa — dùng `roleLabels` có sẵn); "Trạng thái" (`status`: Tất cả, Đang hoạt động, Đã khóa, Ngừng hoạt động); "Xóa bộ lọc" khi đang lọc. Sắp xếp: server cố định mới nhất trước, không có cột sắp xếp.
+
+**Nhãn trạng thái (`userStatus.ts`):** `active` → "Đang hoạt động" (`success`), `locked` → "Đã khóa" (`danger`), `inactive` → "Ngừng hoạt động" (`neutral`, nhân viên đã nghỉ việc).
+
+**Cột `DataTable`** (`getRowId = id`, caption "Danh sách tài khoản"):
+
+| Cột        | Nội dung                                                       | Ẩn ở |
+| ---------- | -------------------------------------------------------------- | ---- |
+| Tài khoản  | `Avatar` (ảnh hoặc chữ cái đầu) + `fullName`, dòng phụ `email` | —    |
+| SĐT        | `phoneNumber`                                                  | `md` |
+| Vai trò    | `roleLabels[role]`                                             | `sm` |
+| Trạng thái | `StatusBadge`                                                  | —    |
+| Ngày tạo   | `formatDateTimeUtc(createdAtUtc)` (chỉ ngày)                   | `lg` |
+
+**Hành động (`rowActions` + nút trong Sheet):**
+
+| Hành động      | Hiện khi                                                     | Gọi                                                               | Làm mới                                                           |
+| -------------- | ------------------------------------------------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Xem chi tiết   | luôn (cũng là `onRowClick`)                                  | mở Sheet, `GET /users/{id}`                                       | —                                                                 |
+| Sửa thông tin  | luôn                                                         | `EditUserDialog` → `PUT /users/{id}`                              | ghi `detail(id)` từ kết quả, invalidate `ownerUsersQueryKeys.all` |
+| Khóa tài khoản | `status = active` và không phải chính chủ spa đang đăng nhập | `AlertDialog` → `PATCH /users/{id}/status` `{ status: 'locked' }` | invalidate `ownerUsersQueryKeys.all`                              |
+| Mở khóa        | `status = locked`                                            | `AlertDialog` → `PATCH … { status: 'active' }`                    | invalidate `ownerUsersQueryKeys.all`                              |
+
+- Tài khoản `inactive` không có nút khóa/mở; Sheet hiện "Nhân viên đã nghỉ việc từ {resignationDate}. Trạng thái này quản lý ở trang Nhân viên." kèm link `/owner/staff`.
+- Ẩn "Khóa tài khoản" ở chính dòng của chủ spa (so `id` với `user.id` trong `authStore`) chỉ để đỡ thao tác thừa; server vẫn chặn bằng `409 cannot_lock_self`.
+- **Sheet chi tiết:** avatar lớn, họ tên, `StatusBadge`, vai trò; các dòng Email, SĐT, Ngày sinh (`formatLocalDate`, trống → "Chưa cập nhật"), Giới tính (Nam/Nữ/Khác), Ngày tạo, Cập nhật lần cuối; với nhân viên: Ngày vào làm, Ngày nghỉ việc (nếu có). Chân Sheet: "Sửa thông tin" và "Khóa tài khoản"/"Mở khóa".
+- **`EditUserDialog`:** "Họ tên" (bắt buộc, ≤ 100), "Ngày sinh" (`Input type="date"`, không ở tương lai, để trống được), "Giới tính" (`Select` Nam/Nữ/Khác, bỏ chọn được). Email, số điện thoại và vai trò hiện dạng chỉ đọc với dòng nhắc "Email và số điện thoại dùng để đăng nhập nên không đổi ở đây." (quyết định 12/11/2026). `PUT /users/{id}` thay cả 4 trường nên gửi lại đúng `phoneNumber` hiện có; ngày sinh, giới tính trống → `null`. Nút "Lưu thay đổi".
+- **`ChangeUserStatusDialog`:** Khóa: tiêu đề "Khóa tài khoản {fullName}?", mô tả "Người này sẽ bị đăng xuất khỏi mọi thiết bị và không đăng nhập được cho tới khi mở khóa.", nút "Khóa tài khoản" (destructive). Mở khóa: "Mở khóa tài khoản {fullName}?", "Người này đăng nhập lại được ngay.", nút "Mở khóa".
+
+**Mã lỗi → xử lý**
+
+| Mã                       | Ở đâu            | Xử lý                                                                                     |
+| ------------------------ | ---------------- | ----------------------------------------------------------------------------------------- |
+| `validation_error`       | Sửa              | gắn `errors[].field` (PascalCase) vào ô tương ứng; không khớp ô → toast thông điệp server |
+| `phone_exists`           | Sửa              | không xảy ra khi gửi lại SĐT cũ; nếu có → toast thông điệp server                         |
+| `user_not_found`         | Sheet, sửa, khóa | toast "Không tìm thấy tài khoản.", đóng Sheet/Dialog, làm mới danh sách                   |
+| `cannot_lock_self`       | Khóa             | toast "Bạn không thể tự khóa tài khoản của mình."                                         |
+| `account_inactive`       | Khóa/mở          | toast thông điệp server, làm mới chi tiết và danh sách                                    |
+| `validation_error` (lọc) | Danh sách        | trạng thái lỗi của bảng kèm thông điệp server                                             |
+
+**Trạng thái:** bảng: skeleton / lỗi + "Thử lại" / rỗng ("Chưa có tài khoản nào", đang lọc: "Không có tài khoản nào khớp bộ lọc" + "Xóa bộ lọc") / dữ liệu. Sheet: skeleton / `ErrorState` + "Thử lại" / dữ liệu.
+
+**Responsive và a11y:** 320px còn cột Tài khoản và Trạng thái; thanh lọc xếp dọc. Nút icon có `aria-label`; đóng Dialog/AlertDialog trả focus về nút mở (Radix).
+
+**Thiếu từ backend:** không chặn. Ghi chú: `PUT /users/{id}` vẫn cho đổi SĐT qua API; nếu muốn khóa hẳn ở server (giống email) cần sửa `UserProfileEditor`/`UpdateProfileRequest` trong một task backend riêng.
+
+| Mã          | Tình huống                                                                                             | Kết quả mong đợi                                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| AUTH-UI-T40 | `OwnerUsersApi`: query `search/role/status/pageNumber/pageSize`; `PUT` body; `PATCH` status trả `void` | Đúng URL, method, body                                                                                                     |
+| AUTH-UI-T41 | Trang `/owner/accounts`: tải / lỗi + Thử lại / rỗng / có dữ liệu (avatar, vai trò, nhãn trạng thái)    | Đủ 4 trạng thái                                                                                                            |
+| AUTH-UI-T42 | Gõ tìm kiếm (debounce), chọn vai trò, trạng thái; "Xóa bộ lọc"                                         | Query đúng, về trang 1, URL cập nhật; xóa bộ lọc gọi lại không tham số lọc                                                 |
+| AUTH-UI-T43 | Bấm dòng → Sheet chi tiết; nhân viên đã nghỉ việc                                                      | Đủ trường; dòng "Nhân viên đã nghỉ việc từ …", không có nút khóa/mở                                                        |
+| AUTH-UI-T44 | Sửa: họ tên trống; SĐT chỉ đọc; lưu thành công                                                         | Lỗi dưới ô, không gọi API; không có ô SĐT sửa được; `PUT` gửi SĐT cũ + 3 trường, toast, Sheet cập nhật                     |
+| AUTH-UI-T45 | Khóa tài khoản `active`; mở khóa `locked`; dòng của chính chủ spa                                      | `PATCH { status: 'locked' }` / `{ status: 'active' }`, toast, danh sách làm mới; dòng chính mình không có "Khóa tài khoản" |
+| AUTH-UI-T46 | Khóa gặp `cannot_lock_self`, `account_inactive`, `user_not_found`                                      | Toast tương ứng; `user_not_found` đóng Sheet và làm mới                                                                    |
+
 ## Câu hỏi còn mở
 
 - ~~Web lưu refresh token ở cookie HttpOnly hay trong bộ nhớ~~ — **đã chốt 05/11/2026: cookie HttpOnly** (task backend BE-1, xem mục "Giao diện (web)").

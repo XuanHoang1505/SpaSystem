@@ -52,6 +52,7 @@ React + Vite + TypeScript strict, UI bằng Tailwind CSS v4 + shadcn/ui ([ADR-00
 - `/owner/treatments` — Liệu trình
 - `/owner/orders` — Đơn hàng (UC-SPA-13; thay route placeholder `/owner/payments`)
 - `/owner/reports` — Báo cáo
+- `/owner/accounts` — Tài khoản người dùng (SCR-W40, UC-SPA-05, `features/users/components/owner`: DataTable phân trang server, lọc vai trò/trạng thái, Sheet chi tiết, sửa họ tên/ngày sinh/giới tính, khóa/mở khóa)
 
 - `/forbidden` — Không có quyền truy cập.
 - `*` — Không tìm thấy trang.
