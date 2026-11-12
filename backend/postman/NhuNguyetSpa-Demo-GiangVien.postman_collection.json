@@ -1,0 +1,957 @@
+{
+  "info": {
+    "_postman_id": "d8801020-3215-4b99-9a01-20261103de00",
+    "name": "Nhu Nguyet Spa – DEMO GIẢNG VIÊN (Đặt lịch chống trùng & Trợ lý AI)",
+    "description": "Collection chuyên biệt phục vụ trình bày và demo đồ án với giảng viên, tập trung vào 2 điểm nhấn kỹ thuật:\n1. **Đặt lịch & Cơ chế chống trùng lịch đa tầng (UC-SPA-15, 16, 17)**\n2. **Trợ lý AI tư vấn dịch vụ & đề xuất đặt lịch an toàn (UC-SPA-32)**\n\n### Chuẩn bị trước buổi Demo:\n1. Khởi động DB & nạp dữ liệu mẫu: `npm run db:up` rồi `npm run db:seed:demo` (có thể chạy lại lệnh này bất cứ lúc nào để reset dữ liệu về trạng thái ban đầu).\n2. Chạy API: `dotnet run --project backend/src/API --launch-profile http`.\n3. Trong Postman, chọn Environment **`Spa – Local HTTP`**, điền biến `demoPassword` và `loginPassword` bằng mật khẩu trong `backend/src/API/.env` (`SEED_OWNER_PASSWORD`).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Bước chuẩn bị – Đăng nhập các tài khoản Demo",
+      "description": "Chạy 3 request này đầu tiên để lưu token của Khách hàng Lan (`lanAccessToken`), Khách hàng Mai (`maiAccessToken`) và Chủ spa (`ownerAccessToken`) vào Environment.",
+      "item": [
+        {
+          "name": "01. Đăng nhập Khách hàng 1 – Phạm Thị Lan",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const vn = new Date(Date.now() + 7 * 3600e3);",
+                  "const day = (offset) => new Date(vn.getTime() + offset * 86400e3).toISOString().slice(0, 10);",
+                  "pm.environment.set('today', day(0));",
+                  "pm.environment.set('demoTomorrow', day(1));",
+                  "pm.environment.set('demoDay2', day(2));",
+                  "pm.environment.set('demoDay4', day(4));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('lanAccessToken', body.data.accessToken);",
+                  "pm.environment.set('customerAccessToken', body.data.accessToken);",
+                  "pm.test('Đã lưu lanAccessToken', () => pm.expect(body.data.user.email).to.eql('lan.demo@nhunguyetspa.local'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"lan.demo@nhunguyetspa.local\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Khách Lan có sẵn:\n- 1 lịch hẹn đã xác nhận vào **ngày mai 14:00–14:45** với NV An.\n- 1 quyền dịch vụ Cơ bản chưa dùng (`demoEntitlementAvailableId`).\n- 1 gói Trị mụn 5 buổi đã hoàn thành buổi 1 cách đây 3 ngày (buổi 2 đặt được từ `demoDay4`)."
+          }
+        },
+        {
+          "name": "02. Đăng nhập Khách hàng 2 – Võ Thị Mai",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('maiAccessToken', body.data.accessToken);",
+                  "pm.test('Đã lưu maiAccessToken', () => pm.expect(body.data.user.email).to.eql('mai.demo@nhunguyetspa.local'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"mai.demo@nhunguyetspa.local\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Khách Mai dùng để đóng vai người thứ 2 tranh cùng khung giờ/nhân viên với khách Lan."
+          }
+        },
+        {
+          "name": "03. Đăng nhập Chủ Spa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('ownerAccessToken', body.data.accessToken);",
+                  "pm.test('Vai trò owner', () => pm.expect(body.data.user.role).to.eql('owner'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Lưu `ownerAccessToken` để kiểm tra lịch hẹn dưới góc nhìn quản lý và test phân quyền AI."
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Demo Đặt lịch & Chống trùng lịch đa tầng (UC-SPA-15, 16, 17)",
+      "description": "Trình diễn đầy đủ các trường hợp chống trùng lịch: từ bước lọc giờ trống, chống bấm đúp (Idempotency-Key), giữ chỗ 20 phút (Held), chống 2 khách đặt đè giờ nhân viên, chống 1 khách đặt 2 lịch trùng giờ mình, đến kiểm tra kỹ năng/ca làm và dùng quyền dịch vụ.",
+      "item": [
+        {
+          "name": "01. [Lọc giờ trống – Khách vãng lai] Xem giờ trống ngày mai (thấy khung 14:00 ở Bình & Chi)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const vn = new Date(Date.now() + 7 * 3600e3);",
+                  "pm.environment.set('demoTomorrow', new Date(vn.getTime() + 86400e3).toISOString().slice(0, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const starts = body.data.staff.flatMap(s => s.slots.map(x => x.startTime));",
+                  "pm.test('Đủ 3 nhân viên có kỹ năng Chăm sóc da cơ bản', () => pm.expect(body.data.staff.length).to.eql(3));",
+                  "pm.test('Khách vãng lai vẫn thấy khung 14:00 (ở NV Chi)', () => pm.expect(starts).to.include('14:00'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/availability?spaServiceId={{demoServiceBasicId}}&date={{demoTomorrow}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "availability"],
+              "query": [
+                { "key": "spaServiceId", "value": "{{demoServiceBasicId}}" },
+                { "key": "date", "value": "{{demoTomorrow}}" }
+              ]
+            },
+            "description": "Khách vãng lai xem giờ trống dịch vụ Cơ bản (60 phút) ngày mai:\n- NV An đã có lịch 14:00–14:45 nên An mất khung 13:30, 14:00.\n- NV Chi rảnh buổi chiều nên khách vãng lai vẫn thấy khung 14:00 ở NV Chi."
+          }
+        },
+        {
+          "name": "02. [Lọc giờ trống – Khách Lan] Tự động ẩn khung 13:30, 14:00, 14:30 ở MỌI nhân viên (BR-BKG-04)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const starts = body.data.staff.flatMap(s => s.slots.map(x => x.startTime));",
+                  "pm.test('Đã loại bỏ 13:30, 14:00, 14:30 vì trùng lịch 14:00-14:45 của chính Lan', () => {",
+                  "  ['13:30', '14:00', '14:30'].forEach(t => pm.expect(starts).to.not.include(t));",
+                  "});",
+                  "pm.test('Khung 15:00 ngay sau khi xong lịch cũ vẫn đặt được', () => pm.expect(starts).to.include('15:00'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/availability?spaServiceId={{demoServiceBasicId}}&date={{demoTomorrow}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "availability"],
+              "query": [
+                { "key": "spaServiceId", "value": "{{demoServiceBasicId}}" },
+                { "key": "date", "value": "{{demoTomorrow}}" }
+              ]
+            },
+            "description": "Cùng câu truy vấn như bước 01 nhưng gắn Bearer token của Lan:\n- Vì Lan đang có lịch hẹn lúc **14:00–14:45** ngày mai, dịch vụ mới dài **60 phút** nếu bắt đầu lúc `13:30` (13:30–14:30), `14:00` (14:00–15:00) hoặc `14:30` (14:30–15:30) đều giao thoa với lịch của Lan.\n- Hệ thống tự động loại bỏ các khung đó trên toàn bộ nhân viên để khách không thể chọn nhầm."
+          }
+        },
+        {
+          "name": "03. [Đặt ngay & Giữ chỗ 20 phút] Lan đặt Massage 09:00 ngày mai với NV Bình → 201 HELD",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.environment.set('bookNowKey', pm.variables.replaceIn('{{$guid}}'));"]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('lanHeldAppointmentId', body.data.appointment.id);",
+                  "pm.environment.set('lanHeldOrderId', body.data.order.id);",
+                  "pm.test('Lịch ở trạng thái held (giữ chỗ), đơn ở pending_payment', () => {",
+                  "  pm.expect(body.data.appointment.status).to.eql('held');",
+                  "  pm.expect(body.data.order.status).to.eql('pending_payment');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{bookNowKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spaServiceId\": \"{{demoServiceMassageId}}\",\n  \"date\": \"{{demoTomorrow}}\",\n  \"startTime\": \"09:00\",\n  \"staffMemberId\": \"{{demoStaffBinhId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments", "book-now"]
+            },
+            "description": "Lan đặt ngay dịch vụ Massage (45 phút, 09:00–09:45) với NV Bình.\n- Hệ thống khóa dòng NV Bình + dòng khách Lan (`FOR NO KEY UPDATE`), tạo đơn `pending_payment` (15 phút) và lịch `held` giữ chỗ 20 phút (15p thanh toán + 5p ân hạn IPN)."
+          }
+        },
+        {
+          "name": "04. [Chống bấm đúp – Idempotency-Key] Lan bấm gửi lại cùng request → 200 trả lại đơn cũ",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK (không tạo mới)', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Trả về đúng mã đơn và lịch hẹn đã tạo ở bước 03', () => {",
+                  "  pm.expect(body.data.order.id).to.eql(pm.environment.get('lanHeldOrderId'));",
+                  "  pm.expect(body.data.appointment.id).to.eql(pm.environment.get('lanHeldAppointmentId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{bookNowKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spaServiceId\": \"{{demoServiceMassageId}}\",\n  \"date\": \"{{demoTomorrow}}\",\n  \"startTime\": \"09:00\",\n  \"staffMemberId\": \"{{demoStaffBinhId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments", "book-now"]
+            },
+            "description": "Mô phỏng khách bấm đúp nút 'Đặt lịch' hoặc mạng chập chờn retry:\n- Nhờ `Idempotency-Key` và unique index `ux_orders_customer_id_idempotency_key`, hệ thống trả `200 OK` với đúng đơn hàng cũ thay vì báo lỗi hoặc tạo 2 đơn."
+          }
+        },
+        {
+          "name": "05. [Chống 2 khách trùng đúng khung giờ] Mai đặt cùng NV Bình lúc 09:00 → 409 slot_unavailable",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409 Conflict', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('Mã lỗi slot_unavailable', () => pm.expect(body.errors[0].code).to.eql('slot_unavailable'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{maiAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spaServiceId\": \"{{demoServiceMassageId}}\",\n  \"date\": \"{{demoTomorrow}}\",\n  \"startTime\": \"09:00\",\n  \"staffMemberId\": \"{{demoStaffBinhId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments", "book-now"]
+            },
+            "description": "Dù Lan chưa thanh toán VNPay nhưng lịch `held` của Lan vẫn đang trong 20 phút giữ chỗ (09:00–09:45).\n- Khách Mai đặt vào 09:00 với NV Bình bị chặn ngay với lỗi `409 slot_unavailable`."
+          }
+        },
+        {
+          "name": "06. [Chống trùng lệch giờ / giao thoa một phần] Mai đặt NV Bình lúc 09:30 → 409 slot_unavailable",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409 Conflict', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('Mã lỗi slot_unavailable (giao thoa 09:30-09:45)', () => pm.expect(body.errors[0].code).to.eql('slot_unavailable'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{maiAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spaServiceId\": \"{{demoServiceMassageId}}\",\n  \"date\": \"{{demoTomorrow}}\",\n  \"startTime\": \"09:30\",\n  \"staffMemberId\": \"{{demoStaffBinhId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments", "book-now"]
+            },
+            "description": "Kiểm tra giao thoa khoảng thời gian nửa mở `[start, end)`:\n- Lịch của Lan với Bình là **09:00–09:45**.\n- Mai đặt lúc **09:30** (09:30–10:15) bị đè 15 phút (09:30–09:45) → Bị chặn `409 slot_unavailable`."
+          }
+        },
+        {
+          "name": "07. [Chống 1 khách đặt 2 nơi cùng lúc] Lan đặt NV Chi lúc 09:30 (khi đang giữ 09:00–09:45 ở Bình) → 409 customer_busy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409 Conflict', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('Mã lỗi customer_busy', () => pm.expect(body.errors[0].code).to.eql('customer_busy'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spaServiceId\": \"{{demoServiceBasicId}}\",\n  \"date\": \"{{demoTomorrow}}\",\n  \"startTime\": \"09:30\",\n  \"staffMemberId\": \"{{demoStaffChiId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments", "book-now"]
+            },
+            "description": "NV Chi hoàn toàn rảnh lúc 09:30, NHƯNG chính khách Lan đang có lịch giữ chỗ 09:00–09:45 với NV Bình.\n- Hệ thống phát hiện khách hàng bị trùng lịch của chính mình và trả lỗi riêng biệt `409 customer_busy`."
+          }
+        },
+        {
+          "name": "08. [Chống đặt sai kỹ năng] Đặt Trị mụn chuyên sâu cho NV Bình → 400 staff_not_qualified",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Mã lỗi staff_not_qualified', () => pm.expect(body.errors[0].code).to.eql('staff_not_qualified'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spaServiceId\": \"{{demoServiceAcneId}}\",\n  \"date\": \"{{demoTomorrow}}\",\n  \"startTime\": \"10:00\",\n  \"staffMemberId\": \"{{demoStaffBinhId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments", "book-now"]
+            },
+            "description": "NV Bình chỉ có kỹ năng làm Cơ bản & Massage, không có kỹ năng Trị mụn chuyên sâu → Trả `400 staff_not_qualified`."
+          }
+        },
+        {
+          "name": "09. [Chống ngoài ca làm & bắc qua giờ nghỉ trưa] Đặt Trị mụn (90p) lúc 11:30 với NV Chi → 409 outside_work_schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409 Conflict', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('Mã lỗi outside_work_schedule', () => pm.expect(body.errors[0].code).to.eql('outside_work_schedule'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spaServiceId\": \"{{demoServiceAcneId}}\",\n  \"date\": \"{{demoTomorrow}}\",\n  \"startTime\": \"11:30\",\n  \"staffMemberId\": \"{{demoStaffChiId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments", "book-now"]
+            },
+            "description": "NV Chi có ca sáng `08:00–12:00` và ca chiều `13:00–17:00`.\n- Dịch vụ Trị mụn dài 90 phút bắt đầu lúc `11:30` sẽ kết thúc lúc `13:00`, đè vào giờ nghỉ trưa `12:00–13:00` (BR-BKG-02: ca làm việc phải bao trọn `[start, end]`) → Trả `409 outside_work_schedule`."
+          }
+        },
+        {
+          "name": "10. [Tự động phân công NV ít lịch nhất] Mai đặt 08:00 ngày mai không chọn NV → Tự động chọn Chi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Tự động phân công Lê Thị Chi (người đang có 0 lịch ngày mai)', () => {",
+                  "  pm.expect(body.data.appointment.staff.fullName).to.include('Chi');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{maiAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spaServiceId\": \"{{demoServiceBasicId}}\",\n  \"date\": \"{{demoTomorrow}}\",\n  \"startTime\": \"08:00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments/book-now",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments", "book-now"]
+            },
+            "description": "Thuật toán `StaffPicker.PickLeastBusy` (Q-26):\n- Lúc 08:00 ngày mai cả An, Bình, Chi đều rảnh và đều có kỹ năng Cơ bản.\n- Nhưng trong ngày mai: An đã có 1 lịch (14:00), Bình đã có 1 lịch giữ chỗ (09:00 ở bước 03), còn **Chi đang có 0 lịch**.\n- Hệ thống tự động phân công cho **Lê Thị Chi** để cân bằng tải nhân sự!"
+          }
+        },
+        {
+          "name": "11. [Đặt bằng quyền dịch vụ đã mua] Lan đặt lịch lúc 15:00 ngày mai → 201 Confirmed ngay",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('lanFlowTwoAppointmentId', body.data.id);",
+                  "pm.test('Trạng thái confirmed ngay (không cần qua thanh toán)', () => pm.expect(body.data.status).to.eql('confirmed'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceEntitlementId\": \"{{demoEntitlementAvailableId}}\",\n  \"date\": \"{{demoTomorrow}}\",\n  \"startTime\": \"15:00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments"]
+            },
+            "description": "Luồng 2: Đặt bằng quyền dịch vụ lẻ đã mua trước đó (`demoEntitlementAvailableId`) → Lịch lên trạng thái `confirmed` ngay lập tức và quyền chuyển sang `booked`."
+          }
+        },
+        {
+          "name": "12. [Chống dùng 1 quyền đặt 2 lịch] Lan dùng lại quyền vừa đặt để đặt thêm lúc 16:00 → 409 entitlement_not_eligible",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409 Conflict', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('Mã lỗi entitlement_not_eligible', () => pm.expect(body.errors[0].code).to.eql('entitlement_not_eligible'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceEntitlementId\": \"{{demoEntitlementAvailableId}}\",\n  \"date\": \"{{demoTomorrow}}\",\n  \"startTime\": \"16:00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments"]
+            },
+            "description": "Quyền dịch vụ đã chuyển sang `booked` ở bước 11 (và được đọc lại sau khóa `FOR UPDATE` trong Transaction) nên không thể dùng đặt lần thứ 2."
+          }
+        },
+        {
+          "name": "13. [Chống đặt buổi liệu trình sai thứ tự / chưa đủ ngày giãn cách] Lan đặt Buổi 2 vào ngày mai → 400 session_too_early",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Mã lỗi session_too_early', () => pm.expect(body.errors[0].code).to.eql('session_too_early'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"treatmentSessionId\": \"{{demoLanSession2Id}}\",\n  \"date\": \"{{demoTomorrow}}\",\n  \"startTime\": \"10:30\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments"]
+            },
+            "description": "Buổi 1 của gói Trị mụn hoàn thành cách đây 3 ngày, quy định giãn cách tối thiểu giữa 2 buổi là **7 ngày** (`minDaysBetweenSessions = 7`), nên ngày sớm nhất đặt được Buổi 2 là `hôm nay + 4` (`demoDay4`). Đặt vào ngày mai bị chặn `400 session_too_early`."
+          }
+        },
+        {
+          "name": "14. [Đặt buổi liệu trình đúng ngày giãn cách] Lan đặt Buổi 2 vào ngày +4 → 201 Confirmed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Đặt thành công Buổi 2 của gói', () => {",
+                  "  pm.expect(body.data.source).to.eql('session');",
+                  "  pm.expect(body.data.treatmentSession.sequenceNumber).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"treatmentSessionId\": \"{{demoLanSession2Id}}\",\n  \"date\": \"{{demoDay4}}\",\n  \"startTime\": \"09:00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "appointments"]
+            },
+            "description": "Đặt đúng từ ngày sớm nhất cho phép (`demoDay4`) → Thành công `201 Created`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Demo Trợ lý AI Tư vấn & Đề xuất Đặt lịch (UC-SPA-32)",
+      "description": "Trình diễn khả năng của Trợ lý AI tích hợp Gemini Function Calling (`mode = ANY`):\n- Chỉ trả lời từ dữ liệu thật trong PostgreSQL (dịch vụ, gói, giá, giờ trống).\n- Chốt chặn an toàn 2 lớp cho câu hỏi Y khoa & Ngoài phạm vi.\n- Bảo mật dữ liệu cá nhân theo JWT (khách vãng lai vs khách hàng đăng nhập).\n- Hỗ trợ tìm giờ trống và tạo thẻ đề xuất đặt lịch (`bookingProposals`) đã kiểm chứng chống trùng.",
+      "item": [
+        {
+          "name": "01. [Khách vãng lai – Tra cứu danh mục thật] Hỏi dịch vụ chăm sóc da dưới 500k",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Khách vãng lai không lưu lịch sử (saved = false)', () => pm.expect(body.data.saved).to.eql(false));",
+                  "pm.test('Có câu trả lời tiếng Việt và tối đa 3 thẻ sản phẩm gợi ý', () => {",
+                  "  pm.expect(body.data.answer).to.be.a('string').and.not.empty;",
+                  "  pm.expect(body.data.suggestions.length).to.be.at.most(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Spa có dịch vụ chăm sóc da mặt nào dưới 500k không?\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai", "chat"]
+            },
+            "description": "Luồng xử lý bên dưới:\n1. AI gọi tool `search_catalog` với `maxPrice: 500000`.\n2. Server chỉ trả các dịch vụ `on_sale` (dịch vụ *Đắp mặt nạ thảo dược 150k* đã ngừng bán `discontinued` bị lọc bỏ, không xuất hiện).\n3. AI gọi `suggest_products` và `final_answer` → Server gắn thẻ sản phẩm kèm giá thật từ DB và đường dẫn `/services/{id}`."
+          }
+        },
+        {
+          "name": "02. [Chốt chặn Y khoa 2 lớp – BR-AI-01] Hỏi triệu chứng bệnh lý & uống thuốc gì",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Server thay bằng câu cố định khuyên gặp bác sĩ da liễu', () => {",
+                  "  pm.expect(body.data.answer).to.include('Mình không thể chẩn đoán bệnh hay tư vấn thuốc');",
+                  "  pm.expect(body.data.answer).to.include('bác sĩ da liễu');",
+                  "});",
+                  "pm.test('Xóa sạch gợi ý sản phẩm và đề xuất lịch', () => {",
+                  "  pm.expect(body.data.suggestions).to.eql([]);",
+                  "  pm.expect(body.data.bookingProposals).to.eql([]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Da mặt tôi nổi mụn mủ sưng đỏ đau nhức là bị bệnh gì, nên mua thuốc gì uống hay bôi?\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai", "chat"]
+            },
+            "description": "Cơ chế an toàn 2 lớp (BR-AI-01, UAT-25):\n- Lớp 1: System Prompt cấm chẩn đoán và yêu cầu gán nhãn `scope = \"medical\"`.\n- Lớp 2: Khi thấy `scope == medical`, `AiAssistantService` **hủy bỏ toàn bộ văn bản của AI**, thay bằng hằng số `AiCannedAnswers.Medical` và xóa mọi thẻ sản phẩm để đảm bảo 100% không tư vấn thuốc sai lệch."
+          }
+        },
+        {
+          "name": "03. [Chốt chặn Ngoài phạm vi – BR-AI-09] Hỏi kiến thức ngoài chủ đề Spa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Trả câu cố định ngoài phạm vi', () => {",
+                  "  pm.expect(body.data.answer).to.include('ngoài phạm vi hỗ trợ của trợ lý Spa Như Nguyệt');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Viết giúp tôi đoạn code thuật toán sắp xếp nhanh bằng Python\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai", "chat"]
+            },
+            "description": "Chống lạm dụng API key của Spa làm chatbot đa năng miễn phí: khi `scope = \"out_of_scope\"`, Server trả câu cố định `AiCannedAnswers.OutOfScope`."
+          }
+        },
+        {
+          "name": "04. [Bảo mật khách vãng lai – BR-AI-02] Chưa đăng nhập mà hỏi thông tin gói cá nhân",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Không lưu lịch sử', () => pm.expect(body.data.saved).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Kiểm tra giúp gói trị mụn của tôi còn bao nhiêu buổi?\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai", "chat"]
+            },
+            "description": "Khách vãng lai chỉ được cấp 6 tool công khai (không được cấp `list_my_packages` và `list_my_appointments`; nếu AI cố gọi cũng bị `AiToolExecutor` chặn). AI sẽ hướng dẫn khách đăng nhập."
+          }
+        },
+        {
+          "name": "05. [Khách hàng Lan – Tra cứu gói cá nhân từ JWT] Hỏi số buổi còn lại của gói",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Đã lưu vào lịch sử chat của Lan (saved = true)', () => {",
+                  "  pm.expect(body.data.saved).to.eql(true);",
+                  "  pm.expect(body.data.messageId).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Gói trị mụn của tôi đã dùng mấy buổi, còn lại mấy buổi?\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai", "chat"]
+            },
+            "description": "UAT-26 (BR-AI-02, BR-AI-07):\n- Tool `list_my_packages` **không có tham số `customerId`** (chống Prompt Injection hỏi trộm gói của khách Mai); Server luôn lấy `customerId` trực tiếp từ JWT của Lan.\n- Dữ liệu gửi cho AI đã lược bỏ hoàn toàn SĐT, email, dị ứng và ghi chú nội bộ."
+          }
+        },
+        {
+          "name": "06. [AI đề xuất đặt lịch an toàn – BR-AI-08] Lan nhờ tìm giờ trống & đặt lịch sáng ngày kia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Đã lưu lượt hội thoại', () => pm.expect(body.data.saved).to.eql(true));",
+                  "if (body.data.bookingProposals.length > 0) {",
+                  "  pm.test('Đề xuất lịch có đường dẫn /booking/new điền sẵn', () => {",
+                  "    pm.expect(body.data.bookingProposals[0].path).to.include('/booking/new?');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Tìm giờ trống và đặt giúp mình dịch vụ Chăm sóc da cơ bản vào ngày {{demoDay2}} lúc 10:00 sáng nhé\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai", "chat"]
+            },
+            "description": "Quy tắc BR-AI-08 (Q-64):\n- AI gọi `search_catalog` → `find_available_slots` → `propose_booking`.\n- Server kiểm tra lại khung giờ bằng chính `IAvailabilityService` (cùng bộ quy tắc chống trùng lịch!).\n- AI **không tự ý tạo đơn hay giữ chỗ trong DB**, mà trả về thẻ `bookingProposals` chứa sẵn đường dẫn `/booking/new?serviceId=...&date=...&startTime=10:00` để khách bấm xác nhận."
+          }
+        },
+        {
+          "name": "07. [Lịch sử hội thoại & Ngữ cảnh 5 lượt gần nhất] Xem lịch sử chat của Lan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Có các lượt chat của Lan vừa lưu, mới nhất đứng trước', () => {",
+                  "  pm.expect(body.data.items.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{lanAccessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/ai/history?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "me", "ai", "history"],
+              "query": [{ "key": "limit", "value": "10" }]
+            },
+            "description": "Hiển thị lịch sử hội thoại của riêng khách Lan (BR-AI-04). Trong các câu hỏi tiếp theo, 5 lượt gần nhất này được tự động đưa vào ngữ cảnh để AI hiểu mạch hội thoại."
+          }
+        },
+        {
+          "name": "08. [Kiểm tra phân quyền AI – E3] Chủ spa gọi trợ lý AI → 403 forbidden",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403 Forbidden', () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json();",
+                  "pm.test('Mã lỗi forbidden', () => pm.expect(body.errors[0].code).to.eql('forbidden'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{ownerAccessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Xin chào\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai", "chat"]
+            },
+            "description": "Theo ma trận phân quyền (`ai.chat`, Q-60), trợ lý AI tư vấn chỉ dành cho Khách vãng lai và Khách hàng. Nhân viên hoặc Chủ spa gọi sẽ bị chặn `403 forbidden`."
+          }
+        }
+      ]
+    }
+  ]
+}

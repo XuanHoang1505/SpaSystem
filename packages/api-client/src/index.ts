@@ -14,6 +14,8 @@ export interface RequestOptions {
 export interface ApiClientOptions {
   headers?: () => Record<string, string> | Promise<Record<string, string>>;
   fetch?: typeof fetch;
+  /** `'include'` makes the browser send and store cookies across origins (web refresh cookie). */
+  credentials?: RequestCredentials;
 }
 
 export class ApiClientError extends Error {
@@ -93,6 +95,77 @@ export class ApiClient {
   delete<T>(path: string, options?: RequestOptions): Promise<T> {
     return this.request<T>('DELETE', path, undefined, options);
   }
+  getBlob(path: string, options?: RequestOptions): Promise<Blob> {
+    return this.requestBlob('GET', path, options);
+  }
+
+  private async requestBlob(
+    method: string,
+    path: string,
+    options: RequestOptions = {},
+  ): Promise<Blob> {
+    if (!path.startsWith('/') || path.startsWith('//') || /[?#]/.test(path))
+      throw new ApiClientError(
+        'Use a relative API path starting with / and pass query separately.',
+        0,
+      );
+    const query = Object.entries(options.query ?? {})
+      .flatMap(([key, value]) =>
+        (Array.isArray(value) ? value : [value])
+          .filter((item) => item !== null && item !== undefined)
+          .map((item) => `${encodeURIComponent(key)}=${encodeURIComponent(String(item))}`),
+      )
+      .join('&');
+    let response: Response;
+    try {
+      response = await this.fetcher(`${this.baseUrl}${path}${query ? `?${query}` : ''}`, {
+        method,
+        signal: options.signal,
+        headers: {
+          Accept: '*/*',
+          ...(await this.options.headers?.()),
+          ...options.headers,
+        },
+        ...(this.options.credentials ? { credentials: this.options.credentials } : {}),
+      });
+    } catch (cause) {
+      if (options.signal?.aborted || (cause instanceof Error && cause.name === 'AbortError'))
+        throw cause;
+      throw new ApiClientError('Unable to connect to the API.', 0, [], undefined, cause);
+    }
+    if (!response.ok) {
+      let data: unknown;
+      try {
+        const raw = await response.text();
+        if (raw.trim()) {
+          data = JSON.parse(raw);
+        }
+      } catch {
+        // Ignored if non-JSON error
+      }
+      const error =
+        typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {};
+      throw new ApiClientError(
+        typeof error.message === 'string' ? error.message : `HTTP ${response.status}`,
+        response.status,
+        errorDetails(error.errors),
+        typeof error.traceId === 'string' ? error.traceId : undefined,
+      );
+    }
+    try {
+      return await response.blob();
+    } catch (cause) {
+      if (options.signal?.aborted || (cause instanceof Error && cause.name === 'AbortError'))
+        throw cause;
+      throw new ApiClientError(
+        'Unable to read the API response.',
+        response.status,
+        [],
+        undefined,
+        cause,
+      );
+    }
+  }
 
   private async request<T>(
     method: string,
@@ -113,17 +186,23 @@ export class ApiClient {
       )
       .join('&');
     let response: Response;
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
     try {
       response = await this.fetcher(`${this.baseUrl}${path}${query ? `?${query}` : ''}`, {
         method,
         signal: options.signal,
         headers: {
           Accept: 'application/json',
-          ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+          ...(body !== undefined && !isFormData ? { 'Content-Type': 'application/json' } : {}),
           ...(await this.options.headers?.()),
           ...options.headers,
         },
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: isFormData
+          ? (body as FormData)
+          : body === undefined
+            ? undefined
+            : JSON.stringify(body),
+        ...(this.options.credentials ? { credentials: this.options.credentials } : {}),
       });
     } catch (cause) {
       if (options.signal?.aborted || (cause instanceof Error && cause.name === 'AbortError'))
@@ -173,6 +252,11 @@ export class ApiClient {
   }
 }
 
+/** First error code of an API error, for branching on `errors[].code`. */
+export function errorCodeOf(error: unknown): string | undefined {
+  return error instanceof ApiClientError ? error.errors[0]?.code : undefined;
+}
+
 export class SystemApi {
   constructor(private readonly client: ApiClient) {}
   ping(signal?: AbortSignal) {
@@ -194,3 +278,19 @@ export async function checkSystemStatus(
     throw new ApiClientError('The API is not healthy.', 503);
   return ping.data;
 }
+
+export * from './auth';
+export * from './catalog';
+export * from './availability';
+export * from './staff';
+export * from './orders';
+export * from './appointments';
+export * from './purchases';
+export * from './treatments';
+export * from './serviceHistory';
+export * from './users';
+export * from './aiAssistant';
+export * from './workSchedules';
+export * from './promotions';
+export * from './reports';
+export * from './care';

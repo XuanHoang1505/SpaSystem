@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NhuNguyetSpa.API.Authentication;
 using NhuNguyetSpa.API.Authorization;
 using NhuNguyetSpa.API.Responses;
 using NhuNguyetSpa.Application.Common.Models;
@@ -15,11 +16,17 @@ namespace NhuNguyetSpa.API.Extensions;
 public static class AuthenticationExtensions
 {
     public const string AuthRateLimitPolicy = "auth";
+    public const string AuthRefreshRateLimitPolicy = "auth-refresh";
     private const int AuthPermitLimit = 10;
+
+    // BR-AUTH-24 (Q-68): the web refreshes on every page load, so /auth/refresh gets its own, wider window.
+    private const int AuthRefreshPermitLimit = 30;
 
     public static IServiceCollection AddApiAuthentication(this IServiceCollection services)
     {
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+        services.AddOptions<AuthCookieOptions>().BindConfiguration(AuthCookieOptions.SectionName);
+        services.AddSingleton<RefreshTokenCookie>();
         // The bearer handler initialises on every request (UseAuthentication), so it must not touch the validated
         // JwtOptions up front: issuer/audience are read unvalidated (non-secret, with defaults) and the signing key is
         // resolved only when a token is actually validated. A missing JWT_KEY then fails bearer requests with 401
@@ -65,6 +72,9 @@ public static class AuthenticationExtensions
             options.AddPolicy(AuthRateLimitPolicy, context => RateLimitPartition.GetFixedWindowLimiter(
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = AuthPermitLimit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+            options.AddPolicy(AuthRefreshRateLimitPolicy, context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = AuthRefreshPermitLimit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
             options.OnRejected = (context, _) => new ValueTask(WriteErrorAsync(context.HttpContext, StatusCodes.Status429TooManyRequests,
                 "rate_limited", "Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút."));
         });

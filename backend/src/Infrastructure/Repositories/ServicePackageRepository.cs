@@ -16,7 +16,11 @@ public sealed class ServicePackageRepository : Repository<ServicePackage>, IServ
         package.Id, package.Name, package.Price, package.ValidityDays, package.Items.Sum(item => item.SessionCount),
         package.ImageUrl ?? package.Items.Where(item => item.SpaService.ImageUrl != null).OrderBy(item => item.SortOrder)
             .Select(item => item.SpaService.ImageUrl).FirstOrDefault(),
-        package.Status, package.SaleStartDate, package.SaleEndDate);
+        package.Status, package.SaleStartDate, package.SaleEndDate)
+    {
+        ShortDescription = package.ShortDescription,
+        RetailPrice = package.Items.Sum(item => item.SpaService.Price * item.SessionCount),
+    };
 
     public ServicePackageRepository(AppDbContext context) : base(context)
     {
@@ -38,6 +42,8 @@ public sealed class ServicePackageRepository : Repository<ServicePackage>, IServ
             query = query.Where(package => package.Price >= minPrice);
         if (criteria.MaxPrice is { } maxPrice)
             query = query.Where(package => package.Price <= maxPrice);
+        if (criteria.ServiceId is { } serviceId)
+            query = query.Where(package => package.Items.Any(item => item.SpaServiceId == serviceId));
 
         var total = await query.CountAsync(cancellationToken);
         var ordered = (criteria.SortBy, criteria.SortDirection) switch
@@ -67,8 +73,15 @@ public sealed class ServicePackageRepository : Repository<ServicePackage>, IServ
                 package.Items.OrderBy(item => item.SortOrder)
                     .Select(item => new PackageItemDto(
                         item.SpaServiceId, item.SpaService.Name, item.SpaService.ImageUrl, item.SpaService.Status, item.SessionCount,
-                        item.SortOrder, item.MinDaysBetweenSessions, item.Note))
-                    .ToList()))
+                        item.SortOrder, item.MinDaysBetweenSessions, item.Note)
+                    {
+                        ServicePrice = item.SpaService.Price,
+                    })
+                    .ToList())
+            {
+                ShortDescription = package.ShortDescription,
+                RetailPrice = package.Items.Sum(item => item.SpaService.Price * item.SessionCount),
+            })
             .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<IReadOnlyList<ServicePackage>> GetForFulfilmentAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>

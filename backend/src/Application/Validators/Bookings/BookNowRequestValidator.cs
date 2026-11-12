@@ -14,5 +14,6 @@ public sealed class BookNowRequestValidator : AbstractValidator<BookNowRequest>
         BookingSlotRules.Date(RuleFor(request => request.Date), clock, options.Value);
         BookingSlotRules.StartTime(RuleFor(request => request.StartTime), options.Value);
         RuleFor(request => request.PromotionCode).MaximumLength(50).WithMessage("Mã khuyến mãi tối đa 50 ký tự.");
+        RuleFor(request => request.Note).MaximumLength(500).WithMessage("Ghi chú tối đa 500 ký tự.");
     }
 }

@@ -12,11 +12,11 @@ public interface ISpaServiceRepository : IRepository<SpaService>
     /// <summary>Null when missing, or when <paramref name="publicOnly"/> and the service is not on sale.</summary>
     Task<ServiceDetailDto?> GetDetailAsync(Guid id, bool publicOnly, CancellationToken cancellationToken);
 
-    /// <summary>The stored spelling of a category equal to <paramref name="category"/>, ignoring the service being edited.</summary>
-    Task<string?> FindCategoryAsync(string category, Guid? excludeServiceId, CancellationToken cancellationToken);
+    /// <summary>Tracked steps of a service, ordered by sort order (Q-71).</summary>
+    Task<IReadOnlyList<ServiceStep>> GetStepsAsync(Guid serviceId, CancellationToken cancellationToken);
 
-    /// <summary>Distinct categories ordered by name; <paramref name="publicOnly"/> keeps those with an on-sale service.</summary>
-    Task<IReadOnlyList<string>> GetCategoriesAsync(bool publicOnly, CancellationToken cancellationToken);
+    /// <summary>Deletes <paramref name="current"/> and adds <paramref name="next"/>; saved with the unit of work (BR-CAT-17).</summary>
+    void ReplaceSteps(IReadOnlyCollection<ServiceStep> current, IReadOnlyCollection<ServiceStep> next);
 
     Task<IReadOnlyList<SpaService>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
 

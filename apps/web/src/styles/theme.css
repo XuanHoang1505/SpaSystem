@@ -1,0 +1,112 @@
+/*
+ * Design tokens của Spa Như Nguyệt (ADR-0005).
+ * Đây là nơi DUY NHẤT định nghĩa màu. index.css ánh xạ các biến này vào Tailwind (@theme inline);
+ * component chỉ dùng class Tailwind (bg-primary, text-muted-foreground, bg-status-success…),
+ * không viết mã màu cứng. Màu thương hiệu giữ khớp với apps/mobile/src/theme/colors.ts.
+ */
+:root {
+  /* ── Nền và chữ ──────────────────────────────── */
+  --background: #faf7f2;
+  --foreground: #342e30;
+  --card: #fffdf9;
+  --card-foreground: #342e30;
+  --popover: #fffdf9;
+  --popover-foreground: #342e30;
+
+  /* ── Thương hiệu ─────────────────────────────── */
+  --primary: #884d5f;
+  --primary-foreground: #ffffff;
+  --secondary: #dde6da;
+  --secondary-foreground: #2f3d31;
+  --muted: #f1ebe5;
+  --muted-foreground: #5c5256;
+  --accent: #f5e8eb;
+  --accent-foreground: #6e3f50;
+  --destructive: #a23846;
+  --destructive-foreground: #ffffff;
+
+  /* ── Viền, input, focus ──────────────────────── */
+  --border: #e5dadb;
+  --input: #ddd0d2;
+  --ring: #884d5f;
+  --radius: 0.75rem;
+
+  /* ── Trạng thái (StatusBadge, thông báo) ─────── */
+  --status-success: #e3efe5;
+  --status-success-foreground: #386647;
+  --status-warning: #f7ecd9;
+  --status-warning-foreground: #835c22;
+  --status-info: #e2ebf3;
+  --status-info-foreground: #2f5677;
+  --status-danger: #f8e3e5;
+  --status-danger-foreground: #a23846;
+  --status-neutral: #efebe8;
+  --status-neutral-foreground: #5f5559;
+
+  /* ── Biểu đồ (báo cáo doanh thu) ─────────────── */
+  --chart-1: #884d5f;
+  --chart-2: #6f8f77;
+  --chart-3: #c39a5b;
+  --chart-4: #5f7d99;
+  --chart-5: #c48a9b;
+
+  /* ── Sidebar khu vực staff/owner/customer ────── */
+  --sidebar: #fffdf9;
+  --sidebar-foreground: #342e30;
+  --sidebar-primary: #884d5f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5e8eb;
+  --sidebar-accent-foreground: #6e3f50;
+  --sidebar-border: #e5dadb;
+  --sidebar-ring: #884d5f;
+}
+
+.dark {
+  --background: #1a1517;
+  --foreground: #f2ebe7;
+  --card: #231d1f;
+  --card-foreground: #f2ebe7;
+  --popover: #231d1f;
+  --popover-foreground: #f2ebe7;
+
+  --primary: #d49aab;
+  --primary-foreground: #2a1a20;
+  --secondary: #2c3a2e;
+  --secondary-foreground: #dde6da;
+  --muted: #2b2326;
+  --muted-foreground: #b4a7ab;
+  --accent: #3a2a31;
+  --accent-foreground: #f2ebe7;
+  --destructive: #e0707d;
+  --destructive-foreground: #2a1216;
+
+  --border: #3a3033;
+  --input: #463a3e;
+  --ring: #d49aab;
+
+  --status-success: #22362a;
+  --status-success-foreground: #9fd0ad;
+  --status-warning: #3a2f1c;
+  --status-warning-foreground: #e6c387;
+  --status-info: #1f2e3c;
+  --status-info-foreground: #9fc2e0;
+  --status-danger: #3d2125;
+  --status-danger-foreground: #f0a3ac;
+  --status-neutral: #2e2729;
+  --status-neutral-foreground: #c9bdc1;
+
+  --chart-1: #d49aab;
+  --chart-2: #8fb59a;
+  --chart-3: #dcb67a;
+  --chart-4: #8eaccb;
+  --chart-5: #e8b4c3;
+
+  --sidebar: #201a1c;
+  --sidebar-foreground: #f2ebe7;
+  --sidebar-primary: #d49aab;
+  --sidebar-primary-foreground: #2a1a20;
+  --sidebar-accent: #3a2a31;
+  --sidebar-accent-foreground: #f2ebe7;
+  --sidebar-border: #3a3033;
+  --sidebar-ring: #d49aab;
+}

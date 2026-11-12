@@ -42,7 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<CatalogViewer>();
-        services.AddScoped<ServiceCategoryResolver>();
+        services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
         services.AddScoped<IPackageCatalogService, PackageCatalogService>();
         services.AddScoped<ICatalogSearchService, CatalogSearchService>();
@@ -78,6 +78,8 @@ public static class DependencyInjection
         services.AddScoped<ISkinProfileService, SkinProfileService>();
         services.AddScoped<ICustomerAllergyService, CustomerAllergyService>();
         services.AddScoped<IAssignedAppointmentService, AssignedAppointmentService>();
+        services.AddScoped<IMyWorkScheduleService, MyWorkScheduleService>();
+        services.AddScoped<ICareHistoryService, CareHistoryService>();
         services.AddScoped<AiToolExecutor>();
         services.AddScoped<IAiAssistantService, AiAssistantService>();
         return services;

@@ -89,7 +89,7 @@ public sealed class UserAccountService : IUserAccountService
             return;
         // A locked account loses every session; its access token expires on its own (Q-52).
         if (lockRequested)
-            await _refreshTokens.RevokeAllActiveAsync(user.Id, _clock.UtcNow, cancellationToken);
+            await _refreshTokens.DeleteAllActiveAsync(user.Id, _clock.UtcNow, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

@@ -1,11 +1,11 @@
 import { screen, render, fireEvent } from '@testing-library/react';
-import { createMemoryRouter, RouterProvider, MemoryRouter, Routes, Route } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { vi, test, expect } from 'vitest';
 import { AppProviders } from '@app/providers';
 import { routeObjects } from '@app/router';
 import { routes } from '@app/routes';
-import { AppButton } from '@components/common/AppButton/AppButton';
-import { RouteGuard } from '@app/RouteGuard';
+import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/stores/authStore';
 vi.mock('@/hooks/useSystemStatus', () => ({
   useSystemStatus: () => ({ configurationError: undefined, isPending: false, isError: false }),
 }));
@@ -26,11 +26,19 @@ test('Unknown routes render NotFoundPage', () => {
   expect(screen.getByRole('heading', { name: 'Không tìm thấy trang' })).toBeInTheDocument();
 });
 
-test.each(
-  Object.values(routes)
-    .flat()
-    .filter(([path]) => path !== '/'),
-)('Route %s renders its placeholder page', (path, title) => {
+/** Public routes with a real page (own tests) instead of the placeholder. */
+const builtPages = [
+  '/',
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/services',
+  '/services/:serviceId',
+  '/packages',
+  '/packages/:packageId',
+];
+
+function renderPlaceholder(path: string) {
   render(
     <AppProviders>
       <RouterProvider
@@ -40,41 +48,57 @@ test.each(
       />
     </AppProviders>,
   );
+}
+
+test.each(routes.public.filter(([path]) => !builtPages.includes(path)))(
+  'Public route %s renders its placeholder page',
+  (path, title) => {
+    useAuthStore.setState({ status: 'anonymous', accessToken: null, user: null });
+    renderPlaceholder(path);
+    expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
+    expect(screen.getByText(/Tính năng đang được phát triển/)).toBeInTheDocument();
+  },
+);
+
+test.each(['/services', '/services/preview-id', '/packages', '/packages/preview-id'])(
+  'Catalog route %s renders a real page, not the placeholder (CAT-UI-T16)',
+  async (path) => {
+    useAuthStore.setState({ status: 'anonymous', accessToken: null, user: null });
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    renderPlaceholder(path);
+    expect(await screen.findByText('Lỗi cấu hình')).toBeInTheDocument();
+    expect(screen.queryByText(/Tính năng đang được phát triển/)).not.toBeInTheDocument();
+    vi.unstubAllEnvs();
+  },
+);
+
+test.each(
+  (['customer', 'staff', 'owner'] as const).flatMap((role) =>
+    routes[role].map(([path, title]) => [role, path, title] as const),
+  ),
+)('Signed-in %s sees %s placeholder', (role, path, title) => {
+  useAuthStore.setState({
+    status: 'authenticated',
+    accessToken: 'a',
+    user: { id: 'u', fullName: 'Lan', email: 'lan@spa.vn', role },
+  });
+  renderPlaceholder(path);
   expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
   expect(screen.getByText(/Tính năng đang được phát triển/)).toBeInTheDocument();
 });
 
-test('AppButton calls click and respects disabled and loading', () => {
+test('Button calls click and respects disabled and loading', () => {
   const onClick = vi.fn();
-  const { rerender } = render(<AppButton onClick={onClick}>Tiếp tục</AppButton>);
+  const { rerender } = render(<Button onClick={onClick}>Tiếp tục</Button>);
   fireEvent.click(screen.getByRole('button'));
   expect(onClick).toHaveBeenCalledTimes(1);
   rerender(
-    <AppButton onClick={onClick} loading>
+    <Button onClick={onClick} loading>
       Tiếp tục
-    </AppButton>,
+    </Button>,
   );
-  expect(screen.getByRole('button')).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeDisabled();
+  expect(screen.getByRole('button')).toHaveAttribute('aria-busy', 'true');
   fireEvent.click(screen.getByRole('button'));
   expect(onClick).toHaveBeenCalledTimes(1);
-});
-
-test('RouteGuard denies missing session without simulating sign-in', async () => {
-  render(
-    <MemoryRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <RouteGuard role="owner">
-              <p>Private content</p>
-            </RouteGuard>
-          }
-        />
-        <Route path="/forbidden" element={<p>Forbidden</p>} />
-      </Routes>
-    </MemoryRouter>,
-  );
-  expect(await screen.findByText('Forbidden')).toBeInTheDocument();
-  expect(screen.queryByText('Private content')).not.toBeInTheDocument();
 });

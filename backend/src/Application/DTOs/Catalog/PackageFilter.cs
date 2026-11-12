@@ -6,4 +6,7 @@ public sealed class PackageFilter
     public decimal? MinPrice { get; set; }
     public decimal? MaxPrice { get; set; }
     public string? Status { get; set; }
+
+    /// <summary>Only packages containing this service (service detail page suggestions).</summary>
+    public Guid? ServiceId { get; set; }
 }

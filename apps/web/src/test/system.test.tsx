@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import { vi, beforeEach, afterEach, test, expect } from 'vitest';
-import { SystemStatus } from '@components/common/SystemStatus/SystemStatus';
+import { SystemStatus } from '@components/shared/SystemStatus/SystemStatus';
 import { renderWithQuery } from './utils';
 import { readEnvironment } from '@/config/env';
 

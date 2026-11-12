@@ -95,7 +95,8 @@ public sealed class AccountService : IAccountService
             throw AccountErrors.ResendTooSoon((int)Math.Ceiling(issued.Wait.TotalSeconds));
 
         await SendOtpMailAsync(issued.Otp!, issued.Code!, request.FullName, cancellationToken);
-        return OperationResult<OtpSentDto>.Success(new OtpSentDto(request.Email, issued.Otp!.ExpiresAtUtc));
+        return OperationResult<OtpSentDto>.Success(new OtpSentDto(request.Email, issued.Otp!.ExpiresAtUtc,
+            issued.Otp.CreatedAtUtc.AddSeconds(Settings.OtpResendCooldownSeconds)));
     }
 
     public async Task<OperationResult<RegisteredUserDto>> VerifyRegistrationOtpAsync(VerifyOtpRequest request, CancellationToken cancellationToken)
@@ -154,7 +155,9 @@ public sealed class AccountService : IAccountService
                 await SendOtpMailAsync(issued.Otp, issued.Code!, user.FullName, cancellationToken);
         }
 
-        return OperationResult<OtpSentDto>.Success(new OtpSentDto(request.Email, now.AddMinutes(Settings.OtpExpirationMinutes)));
+        // BR-AUTH-25: the same resend time for every email, whether or not a code was actually sent.
+        return OperationResult<OtpSentDto>.Success(new OtpSentDto(request.Email, now.AddMinutes(Settings.OtpExpirationMinutes),
+            now.AddSeconds(Settings.OtpResendCooldownSeconds)));
     }
 
     public async Task<OperationResult<PasswordResetTokenDto>> VerifyPasswordResetOtpAsync(VerifyOtpRequest request, CancellationToken cancellationToken)
@@ -184,7 +187,7 @@ public sealed class AccountService : IAccountService
             throw AccountErrors.InvalidResetToken();
 
         user.PasswordHash = _passwordHasher.Hash(request.NewPassword);
-        await _refreshTokens.RevokeAllActiveAsync(user.Id, now, cancellationToken);
+        await _refreshTokens.DeleteAllActiveAsync(user.Id, now, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 

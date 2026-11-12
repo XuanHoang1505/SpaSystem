@@ -5,6 +5,7 @@ using NhuNguyetSpa.Application.DTOs.Care;
 using NhuNguyetSpa.Application.DTOs.Purchases;
 using NhuNguyetSpa.Application.DTOs.Staff;
 using NhuNguyetSpa.Application.DTOs.Treatments;
+using NhuNguyetSpa.Application.DTOs.WorkSchedules;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.UseCases.Bookings;
 using NhuNguyetSpa.Application.UseCases.WorkSchedules;
@@ -125,6 +126,73 @@ public sealed class AppointmentRepository : Repository<Appointment>, IAppointmen
                 Context.CustomerAllergies.Any(allergy => allergy.CustomerId == row.Appointment.CustomerId),
                 Context.SkinProfiles.Any(profile => profile.AppointmentId == row.Appointment.Id)))
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<ShiftAppointmentDto>> ListInShiftAsync(
+        Guid staffMemberId, DateOnly date, TimeOnly start, TimeOnly end, CancellationToken cancellationToken)
+    {
+        var shown = ShiftAppointments.ShownStatuses.ToArray();
+        return await Set.AsNoTracking()
+            .Where(appointment => appointment.StaffMemberId == staffMemberId && appointment.Date == date &&
+                                  appointment.StartTime < end && start < appointment.EndTime && shown.Contains(appointment.Status))
+            .OrderBy(appointment => appointment.StartTime).ThenBy(appointment => appointment.Id)
+            .WithService(Context)
+            .Select(row => new ShiftAppointmentDto(
+                row.Appointment.Id, row.Appointment.StartTime, row.Appointment.EndTime, row.Appointment.Status,
+                new AppointmentCustomerDto(row.Appointment.CustomerId, row.Appointment.Customer.User.FullName, row.Appointment.Customer.User.PhoneNumber),
+                new AppointmentServiceDto(row.Service.Id, row.Service.Name),
+                row.Appointment.TreatmentSession == null
+                    ? null
+                    : new TreatmentSessionRefDto(
+                        row.Appointment.TreatmentSession.Id, row.Appointment.TreatmentSession.SequenceNumber,
+                        row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.TotalSessions,
+                        row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackageId,
+                        row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.PackageName)))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<PagedResult<CareHistoryItemDto>> SearchCareHistoryAsync(
+        Guid staffMemberId, CareHistoryCriteria criteria, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(criteria);
+        var query = Set.AsNoTracking()
+            .Where(appointment => appointment.StaffMemberId == staffMemberId && appointment.Status == AppointmentStatus.Completed)
+            .WithService(Context);
+        if (criteria.FromDate is { } from)
+            query = query.Where(row => row.Appointment.Date >= from);
+        if (criteria.ToDate is { } to)
+            query = query.Where(row => row.Appointment.Date <= to);
+        if (criteria.CustomerId is { } customerId)
+            query = query.Where(row => row.Appointment.CustomerId == customerId);
+        if (criteria.Search is { } search)
+        {
+            var pattern = CatalogSearchText.Contains(search);
+            query = query.Where(row =>
+                EF.Functions.Like(AppDbContext.Unaccent(row.Appointment.Customer.User.FullName.ToLower()), AppDbContext.Unaccent(pattern.ToLower()), CatalogSearchText.EscapeCharacter) ||
+                EF.Functions.Like(row.Appointment.Customer.User.PhoneNumber, pattern, CatalogSearchText.EscapeCharacter));
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderByDescending(row => row.Appointment.Date).ThenByDescending(row => row.Appointment.StartTime)
+            .ThenBy(row => row.Appointment.Id)
+            .Skip((criteria.PageNumber - 1) * criteria.PageSize)
+            .Take(criteria.PageSize)
+            .Select(row => new CareHistoryItemDto(
+                row.Appointment.Id, row.Appointment.Date, row.Appointment.StartTime, row.Appointment.EndTime,
+                new AppointmentCustomerDto(row.Appointment.CustomerId, row.Appointment.Customer.User.FullName, row.Appointment.Customer.User.PhoneNumber),
+                new AppointmentServiceDto(row.Service.Id, row.Service.Name),
+                row.Appointment.TreatmentSession == null
+                    ? null
+                    : new TreatmentSessionRefDto(
+                        row.Appointment.TreatmentSession.Id, row.Appointment.TreatmentSession.SequenceNumber,
+                        row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.TotalSessions,
+                        row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackageId,
+                        row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.PackageName),
+                Context.CustomerAllergies.Any(allergy => allergy.CustomerId == row.Appointment.CustomerId),
+                Context.SkinProfiles.Where(profile => profile.AppointmentId == row.Appointment.Id).Select(profile => (Guid?)profile.Id).FirstOrDefault()))
+            .ToListAsync(cancellationToken);
+        return new PagedResult<CareHistoryItemDto>(items, criteria.PageNumber, criteria.PageSize, total);
+    }
 
     public Task<AppointmentCareInfo?> GetCareInfoAsync(Guid id, CancellationToken cancellationToken) => Set.AsNoTracking()
         .Where(appointment => appointment.Id == id)
@@ -265,7 +333,11 @@ public sealed class AppointmentRepository : Repository<Appointment>, IAppointmen
                     row.Appointment.TreatmentSession.TreatmentPlan.CustomerPackage.PackageName),
             row.Appointment.OrderItem == null
                 ? null
-                : new MyAppointmentOrderDto(row.Appointment.OrderItem.OrderId, row.Appointment.OrderItem.Order.Code, row.Appointment.OrderItem.Order.Status)),
+                : new MyAppointmentOrderDto(row.Appointment.OrderItem.OrderId, row.Appointment.OrderItem.Order.Code, row.Appointment.OrderItem.Order.Status),
+            // The note is the customer's while the visit is ahead; after it, staff remarks are appended to it, so it stays hidden.
+            row.Appointment.Status == AppointmentStatus.Completed || row.Appointment.Status == AppointmentStatus.NoShow
+                ? null
+                : row.Appointment.Note),
             new AppointmentChangeFacts(
                 row.Appointment.Status, row.Appointment.Date, row.Appointment.StartTime,
                 row.Appointment.TreatmentSession == null ? null : row.Appointment.TreatmentSession.TreatmentPlan.Status,

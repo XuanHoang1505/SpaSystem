@@ -197,7 +197,7 @@ public sealed class StaffService : IStaffService
             if (date <= SpaTime.Today(now))
             {
                 staff.User.Status = UserStatus.Inactive;
-                await _refreshTokens.RevokeAllActiveAsync(id, now, token);
+                await _refreshTokens.DeleteAllActiveAsync(id, now, token);
             }
             await _unitOfWork.SaveChangesAsync(token);
         }, cancellationToken);

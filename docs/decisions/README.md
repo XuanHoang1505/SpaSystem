@@ -10,3 +10,4 @@ Các điểm nghiệp vụ còn chờ chủ spa hoặc giảng viên hướng d�
 | [ADR-0002](ADR-0002-business-logic-in-application.md) | Nghiệp vụ nằm ở Application, Infrastructure chỉ chứa adapter                       | Chấp nhận  |
 | [ADR-0003](ADR-0003-appointment-time-and-overlap.md)  | Lịch hẹn lưu ngày + giờ địa phương, chống trùng bằng ràng buộc EXCLUDE             | Chấp nhận  |
 | [ADR-0004](ADR-0004-manual-dto-mapping.md)            | Ánh xạ DTO thủ công, không phụ thuộc AutoMapper                                    | Chấp nhận  |
+| [ADR-0005](ADR-0005-web-ui-tailwind-shadcn.md)        | Giao diện web dùng Tailwind CSS v4 + shadcn/ui với một bộ design token             | Chấp nhận  |

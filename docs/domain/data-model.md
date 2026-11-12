@@ -17,15 +17,17 @@ erDiagram
     users ||--o| owner_profiles : id
     users ||--o| customers : id
     users ||--o| staff_members : id
-    spa_services ||--o{ service_package_items : spa_service_id
+    service_categories ||--o{ spa_services : category_id
+    spa_services ||--o| service_steps : spa_service_id
+    spa_services ||--o| service_package_items : spa_service_id
     service_packages ||--o{ service_package_items : service_package_id
     staff_members ||--o{ staff_skills : staff_member_id
     spa_services ||--o{ staff_skills : spa_service_id
     staff_members ||--o{ work_schedules : staff_member_id
     customers ||--o| carts : customer_id
     carts ||--o{ cart_items : cart_id
-    spa_services |o--o{ cart_items : spa_service_id
-    service_packages |o--o{ cart_items : service_package_id
+    spa_services |o--o| cart_items : spa_service_id
+    service_packages |o--o| cart_items : service_package_id
     customers ||--o{ orders : customer_id
     orders ||--o{ order_items : order_id
     spa_services |o--o{ order_items : spa_service_id
@@ -66,7 +68,9 @@ erDiagram
 | Tài khoản                  | [`owner_profiles`](#owner_profiles)               | `OwnerProfile`        | ChuSpa                   | Thông tin riêng của chủ spa (1-1 với users, dùng chung khóa chính)    | DA    |
 | Tài khoản                  | [`customers`](#customers)                         | `Customer`            | KhachHang                | Thông tin riêng của khách hàng (1-1 với users, dùng chung khóa chính) | DA    |
 | Nhân viên                  | [`staff_members`](#staff_members)                 | `StaffMember`         | NhanVien                 | Thông tin riêng của nhân viên (1-1 với users, dùng chung khóa chính)  | DA    |
+| Dịch vụ & gói              | [`service_categories`](#service_categories)       | `ServiceCategory`     | DanhMucDichVu            | Danh mục (loại) dịch vụ, dùng làm bộ lọc (Q-13)                       | ĐX    |
 | Dịch vụ & gói              | [`spa_services`](#spa_services)                   | `SpaService`          | DichVu                   | Dịch vụ chăm sóc da lẻ                                                | DA    |
+| Dịch vụ & gói              | [`service_steps`](#service_steps)                 | `ServiceStep`         | BuocDichVu               | Quy trình từng bước của một dịch vụ (Q-71)                            | ĐX    |
 | Dịch vụ & gói              | [`service_packages`](#service_packages)           | `ServicePackage`      | GoiDichVu                | Gói dịch vụ nhiều buổi                                                | DA    |
 | Dịch vụ & gói              | [`service_package_items`](#service_package_items) | `ServicePackageItem`  | GoiDichVuChiTiet         | Dịch vụ thành phần của gói: số buổi, thứ tự, khoảng cách              | DA    |
 | Nhân viên                  | [`staff_skills`](#staff_skills)                   | `StaffSkill`          | NhanVien_DichVu          | Nhân viên thực hiện được dịch vụ nào (khóa chính ghép)                | DA    |
@@ -144,57 +148,89 @@ erDiagram
 | `specialty`        | varchar(255) | `Specialty`: string         | có    | —                                   | Chuyên môn                  | ChuyenMon    |
 | `resignation_date` | date         | `ResignationDate`: DateOnly | có    | CHECK resignation_date >= hire_date | Ngày nghỉ việc              | NgayNghiViec |
 
+### service_categories
+
+`ServiceCategory` · DA: DanhMucDichVu · Sprint 1 · Danh mục (loại) dịch vụ, dùng làm bộ lọc (Q-13). UC: UC-SPA-06, UC-SPA-09.
+
+| Cột              | PostgreSQL   | C#                       | Null  | Ràng buộc                  | Mô tả                                   | DA          |
+| ---------------- | ------------ | ------------------------ | ----- | -------------------------- | --------------------------------------- | ----------- |
+| `id`             | uuid         | `Id`: Guid               | không | PK                         | Mã danh mục                             | Id          |
+| `name`           | varchar(100) | `Name`: string           | không | UQ f_unaccent(lower(name)) | Tên danh mục                            | TenDanhMuc  |
+| `description`    | varchar(500) | `Description`: string    | có    | —                          | Mô tả ngắn                              | MoTa        |
+| `sort_order`     | integer      | `SortOrder`: int         | không | CHECK 0..999; mặc định 0   | Thứ tự hiển thị                         | ThuTu       |
+| `is_active`      | boolean      | `IsActive`: bool         | không | mặc định true              | Đang hiển thị trong bộ lọc              | DangHienThi |
+| `created_at_utc` | timestamptz  | `CreatedAtUtc`: DateTime | không | —                          | Thời điểm tạo                           | NgayTao     |
+| `updated_at_utc` | timestamptz  | `UpdatedAtUtc`: DateTime | có    | —                          | Thời điểm cập nhật gần nhất             | NgayCapNhat |
+| `created_by`     | uuid         | `CreatedBy`: Guid        | có    | —                          | Người tạo (từ BaseAuditableEntity)      | —           |
+| `updated_by`     | uuid         | `UpdatedBy`: Guid        | có    | —                          | Người cập nhật (từ BaseAuditableEntity) | —           |
+
 ### spa_services
 
 `SpaService` · DA: DichVu · Sprint 1 · Dịch vụ chăm sóc da lẻ. UC: UC-SPA-06, UC-SPA-07, UC-SPA-09, UC-SPA-10, UC-SPA-15, UC-SPA-20, UC-SPA-25, UC-SPA-29, UC-SPA-32.
 
-| Cột                | PostgreSQL    | C#                       | Null  | Ràng buộc                | Mô tả                                     | DA            |
-| ------------------ | ------------- | ------------------------ | ----- | ------------------------ | ----------------------------------------- | ------------- |
-| `id`               | uuid          | `Id`: Guid               | không | PK                       | Mã dịch vụ                                | Id            |
-| `name`             | varchar(150)  | `Name`: string           | không | —                        | Tên dịch vụ                               | TenDichVu     |
-| `category`         | varchar(100)  | `Category`: string       | không | IDX                      | Nhóm phân loại (dùng làm bộ lọc danh mục) | LoaiDichVu    |
-| `description`      | text          | `Description`: string    | có    | —                        | Mô tả                                     | MoTa          |
-| `duration_minutes` | integer       | `DurationMinutes`: int   | không | CHECK > 0                | Thời lượng (phút)                         | ThoiLuongPhut |
-| `price`            | numeric(12,0) | `Price`: decimal         | không | CHECK >= 0               | Giá bán (VND)                             | Gia           |
-| `image_url`        | varchar(500)  | `ImageUrl`: string       | có    | —                        | Ảnh dịch vụ                               | HinhAnh       |
-| `status`           | varchar(30)   | `Status`: CatalogStatus  | không | CHECK enum CatalogStatus | Trạng thái kinh doanh                     | TrangThai     |
-| `created_at_utc`   | timestamptz   | `CreatedAtUtc`: DateTime | không | —                        | Thời điểm tạo                             | NgayTao       |
-| `updated_at_utc`   | timestamptz   | `UpdatedAtUtc`: DateTime | có    | —                        | Thời điểm cập nhật gần nhất               | NgayCapNhat   |
-| `created_by`       | uuid          | `CreatedBy`: Guid        | có    | —                        | Người tạo (từ BaseAuditableEntity)        | —             |
-| `updated_by`       | uuid          | `UpdatedBy`: Guid        | có    | —                        | Người cập nhật (từ BaseAuditableEntity)   | —             |
+| Cột                 | PostgreSQL    | C#                         | Null  | Ràng buộc                       | Mô tả                                                     | DA              |
+| ------------------- | ------------- | -------------------------- | ----- | ------------------------------- | --------------------------------------------------------- | --------------- |
+| `id`                | uuid          | `Id`: Guid                 | không | PK                              | Mã dịch vụ                                                | Id              |
+| `name`              | varchar(150)  | `Name`: string             | không | —                               | Tên dịch vụ                                               | TenDichVu       |
+| `category_id`       | uuid          | `CategoryId`: Guid         | không | FK → service_categories.id; IDX | Danh mục dịch vụ                                          | IdDanhMucDichVu |
+| `short_description` | varchar(200)  | `ShortDescription`: string | có    | —                               | Mô tả ngắn hiển thị trên thẻ và đầu trang chi tiết (Q-71) | MoTaNgan        |
+| `description`       | text          | `Description`: string      | có    | —                               | Mô tả                                                     | MoTa            |
+| `duration_minutes`  | integer       | `DurationMinutes`: int     | không | CHECK > 0                       | Thời lượng (phút)                                         | ThoiLuongPhut   |
+| `price`             | numeric(12,0) | `Price`: decimal           | không | CHECK >= 0                      | Giá bán (VND)                                             | Gia             |
+| `image_url`         | varchar(500)  | `ImageUrl`: string         | có    | —                               | Ảnh dịch vụ                                               | HinhAnh         |
+| `status`            | varchar(30)   | `Status`: CatalogStatus    | không | CHECK enum CatalogStatus        | Trạng thái kinh doanh                                     | TrangThai       |
+| `created_at_utc`    | timestamptz   | `CreatedAtUtc`: DateTime   | không | —                               | Thời điểm tạo                                             | NgayTao         |
+| `updated_at_utc`    | timestamptz   | `UpdatedAtUtc`: DateTime   | có    | —                               | Thời điểm cập nhật gần nhất                               | NgayCapNhat     |
+| `created_by`        | uuid          | `CreatedBy`: Guid          | có    | —                               | Người tạo (từ BaseAuditableEntity)                        | —               |
+| `updated_by`        | uuid          | `UpdatedBy`: Guid          | có    | —                               | Người cập nhật (từ BaseAuditableEntity)                   | —               |
+
+### service_steps
+
+`ServiceStep` · DA: BuocDichVu · Sprint 1 · Quy trình từng bước của một dịch vụ (Q-71). UC: UC-SPA-07, UC-SPA-09.
+
+| Cột                | PostgreSQL   | C#                     | Null  | Ràng buộc                                             | Mô tả                  | DA            |
+| ------------------ | ------------ | ---------------------- | ----- | ----------------------------------------------------- | ---------------------- | ------------- |
+| `id`               | uuid         | `Id`: Guid             | không | PK                                                    | Mã bước                | Id            |
+| `spa_service_id`   | uuid         | `SpaServiceId`: Guid   | không | FK → spa_services.id; UQ (spa_service_id, sort_order) | Dịch vụ                | IdDichVu      |
+| `sort_order`       | integer      | `SortOrder`: int       | không | CHECK 1..12                                           | Thứ tự bước            | ThuTu         |
+| `title`            | varchar(100) | `Title`: string        | không | —                                                     | Tên bước               | TenBuoc       |
+| `description`      | varchar(500) | `Description`: string  | có    | —                                                     | Mô tả bước             | MoTa          |
+| `duration_minutes` | integer      | `DurationMinutes`: int | có    | CHECK 1..600                                          | Thời lượng bước (phút) | ThoiLuongPhut |
 
 ### service_packages
 
 `ServicePackage` · DA: GoiDichVu · Sprint 1 · Gói dịch vụ nhiều buổi. UC: UC-SPA-06, UC-SPA-07, UC-SPA-09, UC-SPA-10, UC-SPA-29, UC-SPA-32.
 
-| Cột               | PostgreSQL    | C#                        | Null  | Ràng buộc                              | Mô tả                                   | DA             |
-| ----------------- | ------------- | ------------------------- | ----- | -------------------------------------- | --------------------------------------- | -------------- |
-| `id`              | uuid          | `Id`: Guid                | không | PK                                     | Mã gói                                  | Id             |
-| `name`            | varchar(150)  | `Name`: string            | không | —                                      | Tên gói                                 | TenGoiDichVu   |
-| `description`     | text          | `Description`: string     | có    | —                                      | Mô tả                                   | MoTa           |
-| `price`           | numeric(12,0) | `Price`: decimal          | không | CHECK >= 0                             | Giá bán (VND)                           | Gia            |
-| `validity_days`   | integer       | `ValidityDays`: int       | không | CHECK > 0                              | Thời hạn sử dụng (ngày)                 | ThoiHanNgay    |
-| `status`          | varchar(30)   | `Status`: CatalogStatus   | không | CHECK enum CatalogStatus               | Trạng thái kinh doanh                   | TrangThai      |
-| `sale_start_date` | date          | `SaleStartDate`: DateOnly | có    | —                                      | Ngày bắt đầu bán                        | NgayBatDauBan  |
-| `sale_end_date`   | date          | `SaleEndDate`: DateOnly   | có    | CHECK sale_end_date >= sale_start_date | Ngày kết thúc bán                       | NgayKetThucBan |
-| `created_at_utc`  | timestamptz   | `CreatedAtUtc`: DateTime  | không | —                                      | Thời điểm tạo                           | NgayTao        |
-| `updated_at_utc`  | timestamptz   | `UpdatedAtUtc`: DateTime  | có    | —                                      | Thời điểm cập nhật gần nhất             | NgayCapNhat    |
-| `created_by`      | uuid          | `CreatedBy`: Guid         | có    | —                                      | Người tạo (từ BaseAuditableEntity)      | —              |
-| `updated_by`      | uuid          | `UpdatedBy`: Guid         | có    | —                                      | Người cập nhật (từ BaseAuditableEntity) | —              |
+| Cột                 | PostgreSQL    | C#                         | Null  | Ràng buộc                              | Mô tả                                                     | DA             |
+| ------------------- | ------------- | -------------------------- | ----- | -------------------------------------- | --------------------------------------------------------- | -------------- |
+| `id`                | uuid          | `Id`: Guid                 | không | PK                                     | Mã gói                                                    | Id             |
+| `name`              | varchar(150)  | `Name`: string             | không | —                                      | Tên gói                                                   | TenGoiDichVu   |
+| `short_description` | varchar(200)  | `ShortDescription`: string | có    | —                                      | Mô tả ngắn hiển thị trên thẻ và đầu trang chi tiết (Q-71) | MoTaNgan       |
+| `description`       | text          | `Description`: string      | có    | —                                      | Mô tả                                                     | MoTa           |
+| `price`             | numeric(12,0) | `Price`: decimal           | không | CHECK >= 0                             | Giá bán (VND)                                             | Gia            |
+| `validity_days`     | integer       | `ValidityDays`: int        | không | CHECK > 0                              | Thời hạn sử dụng (ngày)                                   | ThoiHanNgay    |
+| `status`            | varchar(30)   | `Status`: CatalogStatus    | không | CHECK enum CatalogStatus               | Trạng thái kinh doanh                                     | TrangThai      |
+| `sale_start_date`   | date          | `SaleStartDate`: DateOnly  | có    | —                                      | Ngày bắt đầu bán                                          | NgayBatDauBan  |
+| `sale_end_date`     | date          | `SaleEndDate`: DateOnly    | có    | CHECK sale_end_date >= sale_start_date | Ngày kết thúc bán                                         | NgayKetThucBan |
+| `image_url`         | varchar(500)  | `ImageUrl`: string         | có    | —                                      | Ảnh gói dịch vụ                                           | HinhAnh        |
+| `created_at_utc`    | timestamptz   | `CreatedAtUtc`: DateTime   | không | —                                      | Thời điểm tạo                                             | NgayTao        |
+| `updated_at_utc`    | timestamptz   | `UpdatedAtUtc`: DateTime   | có    | —                                      | Thời điểm cập nhật gần nhất                               | NgayCapNhat    |
+| `created_by`        | uuid          | `CreatedBy`: Guid          | có    | —                                      | Người tạo (từ BaseAuditableEntity)                        | —              |
+| `updated_by`        | uuid          | `UpdatedBy`: Guid          | có    | —                                      | Người cập nhật (từ BaseAuditableEntity)                   | —              |
 
 ### service_package_items
 
 `ServicePackageItem` · DA: GoiDichVuChiTiet · Sprint 1 · Dịch vụ thành phần của gói: số buổi, thứ tự, khoảng cách. UC: UC-SPA-06, UC-SPA-07, UC-SPA-09, UC-SPA-15.
 
-| Cột                         | PostgreSQL | C#                            | Null  | Ràng buộc                | Mô tả                                      | DA                     |
-| --------------------------- | ---------- | ----------------------------- | ----- | ------------------------ | ------------------------------------------ | ---------------------- |
-| `id`                        | uuid       | `Id`: Guid                    | không | PK                       | Mã chi tiết gói                            | Id                     |
-| `spa_service_id`            | uuid       | `SpaServiceId`: Guid          | không | FK → spa_services.id     | Dịch vụ thuộc gói                          | IdDichVu               |
-| `service_package_id`        | uuid       | `ServicePackageId`: Guid      | không | FK → service_packages.id | Gói chứa chi tiết                          | IdGoiDichVu            |
-| `session_count`             | integer    | `SessionCount`: int           | không | CHECK > 0                | Số buổi của dịch vụ trong gói              | SoBuoi                 |
-| `min_days_between_sessions` | integer    | `MinDaysBetweenSessions`: int | không | CHECK >= 0               | Khoảng cách tối thiểu giữa các buổi (ngày) | KhoangCachNgayToiThieu |
-| `sort_order`                | integer    | `SortOrder`: int              | không | CHECK > 0                | Thứ tự thực hiện trong gói                 | ThuTu                  |
-| `note`                      | text       | `Note`: string                | có    | —                        | Ghi chú                                    | GhiChu                 |
+| Cột                         | PostgreSQL | C#                            | Null  | Ràng buộc                                                     | Mô tả                                      | DA                     |
+| --------------------------- | ---------- | ----------------------------- | ----- | ------------------------------------------------------------- | ------------------------------------------ | ---------------------- |
+| `id`                        | uuid       | `Id`: Guid                    | không | PK                                                            | Mã chi tiết gói                            | Id                     |
+| `spa_service_id`            | uuid       | `SpaServiceId`: Guid          | không | FK → spa_services.id; UQ (service_package_id, spa_service_id) | Dịch vụ thuộc gói                          | IdDichVu               |
+| `service_package_id`        | uuid       | `ServicePackageId`: Guid      | không | FK → service_packages.id                                      | Gói chứa chi tiết                          | IdGoiDichVu            |
+| `session_count`             | integer    | `SessionCount`: int           | không | CHECK > 0                                                     | Số buổi của dịch vụ trong gói              | SoBuoi                 |
+| `min_days_between_sessions` | integer    | `MinDaysBetweenSessions`: int | không | CHECK >= 0                                                    | Khoảng cách tối thiểu giữa các buổi (ngày) | KhoangCachNgayToiThieu |
+| `sort_order`                | integer    | `SortOrder`: int              | không | CHECK > 0; UQ (service_package_id, sort_order)                | Thứ tự thực hiện trong gói                 | ThuTu                  |
+| `note`                      | text       | `Note`: string                | có    | —                                                             | Ghi chú                                    | GhiChu                 |
 
 ### staff_skills
 
@@ -209,33 +245,33 @@ erDiagram
 
 `WorkSchedule` · DA: LichLamViec · Sprint 1 · Ca làm việc của nhân viên (giờ Việt Nam — ADR-0003). UC: UC-SPA-15, UC-SPA-16, UC-SPA-17, UC-SPA-23, UC-SPA-24.
 
-| Cột               | PostgreSQL  | C#                           | Null  | Ràng buộc                     | Mô tả                    | DA         |
-| ----------------- | ----------- | ---------------------------- | ----- | ----------------------------- | ------------------------ | ---------- |
-| `id`              | uuid        | `Id`: Guid                   | không | PK                            | Mã ca                    | Id         |
-| `staff_member_id` | uuid        | `StaffMemberId`: Guid        | không | FK → staff_members.id         | Nhân viên được phân công | IdNhanVien |
-| `date`            | date        | `Date`: DateOnly             | không | IDX (staff_member_id, date)   | Ngày làm việc            | Ngay       |
-| `start_time`      | time        | `StartTime`: TimeOnly        | không | —                             | Giờ bắt đầu ca           | GioBatDau  |
-| `end_time`        | time        | `EndTime`: TimeOnly          | không | CHECK end_time > start_time   | Giờ kết thúc ca          | GioKetThuc |
-| `status`          | varchar(30) | `Status`: WorkScheduleStatus | không | CHECK enum WorkScheduleStatus | Trạng thái ca            | TrangThai  |
+| Cột               | PostgreSQL  | C#                           | Null  | Ràng buộc                                                           | Mô tả                    | DA         |
+| ----------------- | ----------- | ---------------------------- | ----- | ------------------------------------------------------------------- | ------------------------ | ---------- |
+| `id`              | uuid        | `Id`: Guid                   | không | PK                                                                  | Mã ca                    | Id         |
+| `staff_member_id` | uuid        | `StaffMemberId`: Guid        | không | FK → staff_members.id                                               | Nhân viên được phân công | IdNhanVien |
+| `date`            | date        | `Date`: DateOnly             | không | IDX (staff_member_id, date)                                         | Ngày làm việc            | Ngay       |
+| `start_time`      | time        | `StartTime`: TimeOnly        | không | —                                                                   | Giờ bắt đầu ca           | GioBatDau  |
+| `end_time`        | time        | `EndTime`: TimeOnly          | không | CHECK end_time > start_time; EXCLUDE chống chồng ca (status active) | Giờ kết thúc ca          | GioKetThuc |
+| `status`          | varchar(30) | `Status`: WorkScheduleStatus | không | CHECK enum WorkScheduleStatus                                       | Trạng thái ca            | TrangThai  |
 
 ### promotions
 
 `Promotion` · DA: KhuyenMai · Sprint 2 · Chương trình khuyến mãi. UC: UC-SPA-11, UC-SPA-14.
 
-| Cột                   | PostgreSQL    | C#                           | Null  | Ràng buộc                         | Mô tả                   | DA                    |
-| --------------------- | ------------- | ---------------------------- | ----- | --------------------------------- | ----------------------- | --------------------- |
-| `id`                  | uuid          | `Id`: Guid                   | không | PK                                | Mã chương trình         | Id                    |
-| `code`                | varchar(50)   | `Code`: string               | không | UQ                                | Mã khách nhập           | MaCode                |
-| `description`         | text          | `Description`: string        | có    | —                                 | Mô tả                   | MoTa                  |
-| `discount_type`       | varchar(30)   | `DiscountType`: DiscountType | không | CHECK enum DiscountType           | Hình thức giảm          | LoaiGiamGia           |
-| `discount_value`      | numeric(12,2) | `DiscountValue`: decimal     | không | CHECK > 0; <= 100 khi percentage  | Giá trị giảm            | GiaTri                |
-| `min_order_amount`    | numeric(12,0) | `MinOrderAmount`: decimal    | không | CHECK >= 0                        | Giá trị đơn tối thiểu   | GiaTriDonHangToiThieu |
-| `max_discount_amount` | numeric(12,0) | `MaxDiscountAmount`: decimal | có    | CHECK > 0                         | Số tiền giảm tối đa     | GiaTriGiamToiDa       |
-| `starts_at_utc`       | timestamptz   | `StartsAtUtc`: DateTime      | không | —                                 | Thời điểm bắt đầu       | NgayBatDau            |
-| `ends_at_utc`         | timestamptz   | `EndsAtUtc`: DateTime        | không | CHECK ends_at_utc > starts_at_utc | Thời điểm kết thúc      | NgayKetThuc           |
-| `per_customer_limit`  | integer       | `PerCustomerLimit`: int      | có    | CHECK > 0                         | Số lần tối đa mỗi khách | GioiHanMoiKhach       |
-| `usage_limit`         | integer       | `UsageLimit`: int            | có    | CHECK > 0                         | Tổng số lượt tối đa     | SoLuong               |
-| `status`              | varchar(30)   | `Status`: PromotionStatus    | không | CHECK enum PromotionStatus        | Trạng thái              | TrangThai             |
+| Cột                   | PostgreSQL    | C#                           | Null  | Ràng buộc                         | Mô tả                       | DA                    |
+| --------------------- | ------------- | ---------------------------- | ----- | --------------------------------- | --------------------------- | --------------------- |
+| `id`                  | uuid          | `Id`: Guid                   | không | PK                                | Mã chương trình             | Id                    |
+| `code`                | varchar(50)   | `Code`: string               | không | UQ; CHECK code = upper(code)      | Mã khách nhập (lưu chữ hoa) | MaCode                |
+| `description`         | text          | `Description`: string        | có    | —                                 | Mô tả                       | MoTa                  |
+| `discount_type`       | varchar(30)   | `DiscountType`: DiscountType | không | CHECK enum DiscountType           | Hình thức giảm              | LoaiGiamGia           |
+| `discount_value`      | numeric(12,2) | `DiscountValue`: decimal     | không | CHECK > 0; <= 100 khi percentage  | Giá trị giảm                | GiaTri                |
+| `min_order_amount`    | numeric(12,0) | `MinOrderAmount`: decimal    | không | CHECK >= 0                        | Giá trị đơn tối thiểu       | GiaTriDonHangToiThieu |
+| `max_discount_amount` | numeric(12,0) | `MaxDiscountAmount`: decimal | có    | CHECK > 0                         | Số tiền giảm tối đa         | GiaTriGiamToiDa       |
+| `starts_at_utc`       | timestamptz   | `StartsAtUtc`: DateTime      | không | —                                 | Thời điểm bắt đầu           | NgayBatDau            |
+| `ends_at_utc`         | timestamptz   | `EndsAtUtc`: DateTime        | không | CHECK ends_at_utc > starts_at_utc | Thời điểm kết thúc          | NgayKetThuc           |
+| `per_customer_limit`  | integer       | `PerCustomerLimit`: int      | có    | CHECK > 0                         | Số lần tối đa mỗi khách     | GioiHanMoiKhach       |
+| `usage_limit`         | integer       | `UsageLimit`: int            | có    | CHECK > 0                         | Tổng số lượt tối đa         | SoLuong               |
+| `status`              | varchar(30)   | `Status`: PromotionStatus    | không | CHECK enum PromotionStatus        | Trạng thái                  | TrangThai             |
 
 ### carts
 
@@ -254,34 +290,37 @@ erDiagram
 
 `CartItem` · DA: ChiTietGioHang · Sprint 2 · Sản phẩm trong giỏ. UC: UC-SPA-10, UC-SPA-11.
 
-| Cột                  | PostgreSQL    | C#                       | Null  | Ràng buộc                                                                            | Mô tả                  | DA          |
-| -------------------- | ------------- | ------------------------ | ----- | ------------------------------------------------------------------------------------ | ---------------------- | ----------- |
-| `id`                 | uuid          | `Id`: Guid               | không | PK                                                                                   | Mã dòng giỏ            | Id          |
-| `cart_id`            | uuid          | `CartId`: Guid           | không | FK → carts.id (CASCADE)                                                              | Giỏ chứa sản phẩm      | IdGioHang   |
-| `spa_service_id`     | uuid          | `SpaServiceId`: Guid     | có    | FK → spa_services.id                                                                 | Dịch vụ được thêm      | IdDichVu    |
-| `service_package_id` | uuid          | `ServicePackageId`: Guid | có    | FK → service_packages.id; CHECK num_nonnulls(spa_service_id, service_package_id) = 1 | Gói được thêm          | IdGoiDichVu |
-| `unit_price`         | numeric(12,0) | `UnitPrice`: decimal     | không | CHECK >= 0                                                                           | Giá tham khảo lúc thêm | DonGia      |
-| `added_at_utc`       | timestamptz   | `AddedAtUtc`: DateTime   | không | —                                                                                    | Thời điểm thêm         | NgayThem    |
+| Cột                  | PostgreSQL    | C#                       | Null  | Ràng buộc                                                                                                                            | Mô tả                  | DA          |
+| -------------------- | ------------- | ------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- | ----------- |
+| `id`                 | uuid          | `Id`: Guid               | không | PK                                                                                                                                   | Mã dòng giỏ            | Id          |
+| `cart_id`            | uuid          | `CartId`: Guid           | không | FK → carts.id (CASCADE)                                                                                                              | Giỏ chứa sản phẩm      | IdGioHang   |
+| `spa_service_id`     | uuid          | `SpaServiceId`: Guid     | có    | FK → spa_services.id; UQ (cart_id, spa_service_id) khi khác null                                                                     | Dịch vụ được thêm      | IdDichVu    |
+| `service_package_id` | uuid          | `ServicePackageId`: Guid | có    | FK → service_packages.id; UQ (cart_id, service_package_id) khi khác null; CHECK num_nonnulls(spa_service_id, service_package_id) = 1 | Gói được thêm          | IdGoiDichVu |
+| `unit_price`         | numeric(12,0) | `UnitPrice`: decimal     | không | CHECK >= 0                                                                                                                           | Giá tham khảo lúc thêm | DonGia      |
+| `added_at_utc`       | timestamptz   | `AddedAtUtc`: DateTime   | không | —                                                                                                                                    | Thời điểm thêm         | NgayThem    |
 
 ### orders
 
 `Order` · DA: DonHang · Sprint 2 · Đơn hàng. UC: UC-SPA-11, UC-SPA-12, UC-SPA-13, UC-SPA-15, UC-SPA-18, UC-SPA-33.
 
-| Cột                  | PostgreSQL    | C#                          | Null  | Ràng buộc                                     | Mô tả                                   | DA                 |
-| -------------------- | ------------- | --------------------------- | ----- | --------------------------------------------- | --------------------------------------- | ------------------ |
-| `id`                 | uuid          | `Id`: Guid                  | không | PK                                            | Mã định danh đơn                        | Id                 |
-| `code`               | varchar(50)   | `Code`: string              | không | UQ                                            | Mã đơn hiển thị                         | MaDonHang          |
-| `customer_id`        | uuid          | `CustomerId`: Guid          | không | FK → customers.id                             | Khách tạo đơn                           | IdKhachHang        |
-| `subtotal`           | numeric(12,0) | `Subtotal`: decimal         | không | CHECK >= 0                                    | Tổng tiền hàng trước giảm               | TongTienHang       |
-| `discount_total`     | numeric(12,0) | `DiscountTotal`: decimal    | không | CHECK 0 <= discount_total <= subtotal         | Tổng giảm giá                           | TongGiamGia        |
-| `grand_total`        | numeric(12,0) | `GrandTotal`: decimal       | không | CHECK grand_total = subtotal - discount_total | Tổng thanh toán                         | TongThanhToan      |
-| `status`             | varchar(30)   | `Status`: OrderStatus       | không | CHECK enum OrderStatus                        | Trạng thái đơn                          | TrangThai          |
-| `note`               | text          | `Note`: string              | có    | —                                             | Ghi chú                                 | GhiChu             |
-| `payment_due_at_utc` | timestamptz   | `PaymentDueAtUtc`: DateTime | không | CHECK > created_at_utc                        | Hết hạn thanh toán                      | HetHanThanhToanLuc |
-| `created_at_utc`     | timestamptz   | `CreatedAtUtc`: DateTime    | không | —                                             | Thời điểm tạo                           | NgayTao            |
-| `updated_at_utc`     | timestamptz   | `UpdatedAtUtc`: DateTime    | có    | —                                             | Thời điểm cập nhật gần nhất             | NgayCapNhat        |
-| `created_by`         | uuid          | `CreatedBy`: Guid           | có    | —                                             | Người tạo (từ BaseAuditableEntity)      | —                  |
-| `updated_by`         | uuid          | `UpdatedBy`: Guid           | có    | —                                             | Người cập nhật (từ BaseAuditableEntity) | —                  |
+| Cột                   | PostgreSQL    | C#                           | Null  | Ràng buộc                                                     | Mô tả                                             | DA                 |
+| --------------------- | ------------- | ---------------------------- | ----- | ------------------------------------------------------------- | ------------------------------------------------- | ------------------ |
+| `id`                  | uuid          | `Id`: Guid                   | không | PK                                                            | Mã định danh đơn                                  | Id                 |
+| `code`                | varchar(50)   | `Code`: string               | không | UQ                                                            | Mã đơn hiển thị                                   | MaDonHang          |
+| `customer_id`         | uuid          | `CustomerId`: Guid           | không | FK → customers.id                                             | Khách tạo đơn                                     | IdKhachHang        |
+| `subtotal`            | numeric(12,0) | `Subtotal`: decimal          | không | CHECK >= 0                                                    | Tổng tiền hàng trước giảm                         | TongTienHang       |
+| `discount_total`      | numeric(12,0) | `DiscountTotal`: decimal     | không | CHECK 0 <= discount_total <= subtotal                         | Tổng giảm giá                                     | TongGiamGia        |
+| `grand_total`         | numeric(12,0) | `GrandTotal`: decimal        | không | CHECK grand_total = subtotal - discount_total                 | Tổng thanh toán                                   | TongThanhToan      |
+| `status`              | varchar(30)   | `Status`: OrderStatus        | không | CHECK enum OrderStatus                                        | Trạng thái đơn                                    | TrangThai          |
+| `note`                | text          | `Note`: string               | có    | —                                                             | Ghi chú                                           | GhiChu             |
+| `payment_due_at_utc`  | timestamptz   | `PaymentDueAtUtc`: DateTime  | không | CHECK > created_at_utc; IDX một phần khi pending_payment      | Hết hạn thanh toán                                | HetHanThanhToanLuc |
+| `idempotency_key`     | uuid          | `IdempotencyKey`: Guid       | có    | UQ (customer_id, idempotency_key) khi khác null               | Khóa chống tạo đơn trùng (header Idempotency-Key) | —                  |
+| `cancelled_at_utc`    | timestamptz   | `CancelledAtUtc`: DateTime   | có    | CHECK (status = 'cancelled') = (cancelled_at_utc IS NOT NULL) | Thời điểm hủy đơn                                 | HuyLuc             |
+| `cancellation_reason` | text          | `CancellationReason`: string | có    | —                                                             | Lý do hủy đơn                                     | LyDoHuy            |
+| `created_at_utc`      | timestamptz   | `CreatedAtUtc`: DateTime     | không | IDX                                                           | Thời điểm tạo                                     | NgayTao            |
+| `updated_at_utc`      | timestamptz   | `UpdatedAtUtc`: DateTime     | có    | —                                                             | Thời điểm cập nhật gần nhất                       | NgayCapNhat        |
+| `created_by`          | uuid          | `CreatedBy`: Guid            | có    | —                                                             | Người tạo (từ BaseAuditableEntity)                | —                  |
+| `updated_by`          | uuid          | `UpdatedBy`: Guid            | có    | —                                                             | Người cập nhật (từ BaseAuditableEntity)           | —                  |
 
 ### order_items
 
@@ -366,17 +405,18 @@ erDiagram
 
 `TreatmentPlan` · DA: LieuTrinh · Sprint 2 · Liệu trình gắn với gói đã mua (1-1). UC: UC-SPA-11, UC-SPA-19, UC-SPA-21, UC-SPA-28.
 
-| Cột                       | PostgreSQL  | C#                            | Null  | Ràng buộc                      | Mô tả                 | DA                 |
-| ------------------------- | ----------- | ----------------------------- | ----- | ------------------------------ | --------------------- | ------------------ |
-| `id`                      | uuid        | `Id`: Guid                    | không | PK                             | Mã liệu trình         | Id                 |
-| `customer_package_id`     | uuid        | `CustomerPackageId`: Guid     | không | UQ, FK → customer_packages.id  | Gói đã mua tương ứng  | IdGoiKhachHang     |
-| `primary_staff_member_id` | uuid        | `PrimaryStaffMemberId`: Guid  | có    | FK → staff_members.id          | Nhân viên phụ trách   | IdNhanVienPhuTrach |
-| `start_date`              | date        | `StartDate`: DateOnly         | có    | —                              | Ngày bắt đầu          | NgayBatDau         |
-| `expected_end_date`       | date        | `ExpectedEndDate`: DateOnly   | có    | —                              | Ngày dự kiến kết thúc | NgayKetThucDuKien  |
-| `actual_end_date`         | date        | `ActualEndDate`: DateOnly     | có    | —                              | Ngày kết thúc thực tế | NgayKetThucThucTe  |
-| `goal`                    | text        | `Goal`: string                | có    | —                              | Mục tiêu chăm sóc     | MucTieu            |
-| `status`                  | varchar(30) | `Status`: TreatmentPlanStatus | không | CHECK enum TreatmentPlanStatus | Trạng thái            | TrangThai          |
-| `note`                    | text        | `Note`: string                | có    | —                              | Ghi chú               | GhiChu             |
+| Cột                       | PostgreSQL  | C#                            | Null  | Ràng buộc                      | Mô tả                   | DA                 |
+| ------------------------- | ----------- | ----------------------------- | ----- | ------------------------------ | ----------------------- | ------------------ |
+| `id`                      | uuid        | `Id`: Guid                    | không | PK                             | Mã liệu trình           | Id                 |
+| `customer_package_id`     | uuid        | `CustomerPackageId`: Guid     | không | UQ, FK → customer_packages.id  | Gói đã mua tương ứng    | IdGoiKhachHang     |
+| `primary_staff_member_id` | uuid        | `PrimaryStaffMemberId`: Guid  | có    | FK → staff_members.id          | Nhân viên phụ trách     | IdNhanVienPhuTrach |
+| `start_date`              | date        | `StartDate`: DateOnly         | có    | —                              | Ngày bắt đầu            | NgayBatDau         |
+| `expected_end_date`       | date        | `ExpectedEndDate`: DateOnly   | có    | —                              | Ngày dự kiến kết thúc   | NgayKetThucDuKien  |
+| `actual_end_date`         | date        | `ActualEndDate`: DateOnly     | có    | —                              | Ngày kết thúc thực tế   | NgayKetThucThucTe  |
+| `goal`                    | text        | `Goal`: string                | có    | —                              | Mục tiêu chăm sóc       | MucTieu            |
+| `status`                  | varchar(30) | `Status`: TreatmentPlanStatus | không | CHECK enum TreatmentPlanStatus | Trạng thái              | TrangThai          |
+| `status_reason`           | text        | `StatusReason`: string        | có    | —                              | Lý do tạm dừng/hủy (ĐX) | LyDoTrangThai      |
+| `note`                    | text        | `Note`: string                | có    | —                              | Ghi chú                 | GhiChu             |
 
 ### treatment_sessions
 
@@ -398,23 +438,23 @@ erDiagram
 
 `Appointment` · DA: LichHen · Sprint 1 · Lịch hẹn — bảng trung tâm của thuật toán chống trùng lịch (ADR-0003). UC: UC-SPA-11, UC-SPA-12, UC-SPA-13, UC-SPA-15, UC-SPA-16, UC-SPA-17, UC-SPA-19, UC-SPA-20, UC-SPA-21, UC-SPA-22, UC-SPA-23, UC-SPA-25, UC-SPA-26, UC-SPA-27, UC-SPA-28, UC-SPA-32.
 
-| Cột                      | PostgreSQL  | C#                           | Null  | Ràng buộc                                                  | Mô tả                                    | DA                |
-| ------------------------ | ----------- | ---------------------------- | ----- | ---------------------------------------------------------- | ---------------------------------------- | ----------------- |
-| `id`                     | uuid        | `Id`: Guid                   | không | PK                                                         | Mã lịch hẹn                              | Id                |
-| `customer_id`            | uuid        | `CustomerId`: Guid           | không | FK → customers.id                                          | Khách đặt lịch                           | IdKhachHang       |
-| `staff_member_id`        | uuid        | `StaffMemberId`: Guid        | không | FK → staff_members.id                                      | Nhân viên thực hiện                      | IdNhanVien        |
-| `service_entitlement_id` | uuid        | `ServiceEntitlementId`: Guid | có    | FK → service_entitlements.id                               | Quyền dịch vụ lẻ dùng để đặt             | IdDichVuKhachHang |
-| `treatment_session_id`   | uuid        | `TreatmentSessionId`: Guid   | có    | FK → treatment_sessions.id                                 | Buổi trong gói dùng để đặt               | IdBuoiChamSoc     |
-| `order_item_id`          | uuid        | `OrderItemId`: Guid          | có    | FK → order_items.id                                        | Dòng đơn của lịch giữ chỗ chờ thanh toán | IdChiTietDonHang  |
-| `hold_expires_at_utc`    | timestamptz | `HoldExpiresAtUtc`: DateTime | có    | —                                                          | Hết hạn giữ chỗ                          | GiuChoDen         |
-| `date`                   | date        | `Date`: DateOnly             | không | IDX (staff_member_id, date)                                | Ngày hẹn (giờ VN)                        | NgayHen           |
-| `start_time`             | time        | `StartTime`: TimeOnly        | không | —                                                          | Giờ bắt đầu (giờ VN)                     | GioBatDau         |
-| `end_time`               | time        | `EndTime`: TimeOnly          | không | CHECK end_time > start_time; EXCLUDE chống trùng nhân viên | Giờ kết thúc (giờ VN)                    | GioKetThuc        |
-| `status`                 | varchar(30) | `Status`: AppointmentStatus  | không | CHECK enum AppointmentStatus                               | Trạng thái                               | TrangThai         |
-| `cancelled_at_utc`       | timestamptz | `CancelledAtUtc`: DateTime   | có    | —                                                          | Thời điểm hủy                            | HuyLuc            |
-| `cancellation_reason`    | text        | `CancellationReason`: string | có    | —                                                          | Lý do hủy                                | LyDoHuy           |
-| `note`                   | text        | `Note`: string               | có    | —                                                          | Ghi chú, kết quả buổi dịch vụ lẻ         | GhiChu            |
-| `created_at_utc`         | timestamptz | `CreatedAtUtc`: DateTime     | không | —                                                          | Thời điểm tạo                            | NgayTao           |
+| Cột                      | PostgreSQL  | C#                           | Null  | Ràng buộc                                                                                                                                    | Mô tả                                    | DA                |
+| ------------------------ | ----------- | ---------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ----------------- |
+| `id`                     | uuid        | `Id`: Guid                   | không | PK                                                                                                                                           | Mã lịch hẹn                              | Id                |
+| `customer_id`            | uuid        | `CustomerId`: Guid           | không | FK → customers.id; IDX (customer_id, date)                                                                                                   | Khách đặt lịch                           | IdKhachHang       |
+| `staff_member_id`        | uuid        | `StaffMemberId`: Guid        | không | FK → staff_members.id                                                                                                                        | Nhân viên thực hiện                      | IdNhanVien        |
+| `service_entitlement_id` | uuid        | `ServiceEntitlementId`: Guid | có    | FK → service_entitlements.id                                                                                                                 | Quyền dịch vụ lẻ dùng để đặt             | IdDichVuKhachHang |
+| `treatment_session_id`   | uuid        | `TreatmentSessionId`: Guid   | có    | FK → treatment_sessions.id                                                                                                                   | Buổi trong gói dùng để đặt               | IdBuoiChamSoc     |
+| `order_item_id`          | uuid        | `OrderItemId`: Guid          | có    | FK → order_items.id; CHECK num_nonnulls(service_entitlement_id, treatment_session_id, order_item_id) >= 1 (dịch vụ của lịch suy ra từ nguồn) | Dòng đơn của lịch giữ chỗ chờ thanh toán | IdChiTietDonHang  |
+| `hold_expires_at_utc`    | timestamptz | `HoldExpiresAtUtc`: DateTime | có    | —                                                                                                                                            | Hết hạn giữ chỗ                          | GiuChoDen         |
+| `date`                   | date        | `Date`: DateOnly             | không | IDX (staff_member_id, date)                                                                                                                  | Ngày hẹn (giờ VN)                        | NgayHen           |
+| `start_time`             | time        | `StartTime`: TimeOnly        | không | —                                                                                                                                            | Giờ bắt đầu (giờ VN)                     | GioBatDau         |
+| `end_time`               | time        | `EndTime`: TimeOnly          | không | CHECK end_time > start_time; EXCLUDE chống trùng nhân viên                                                                                   | Giờ kết thúc (giờ VN)                    | GioKetThuc        |
+| `status`                 | varchar(30) | `Status`: AppointmentStatus  | không | CHECK enum AppointmentStatus                                                                                                                 | Trạng thái                               | TrangThai         |
+| `cancelled_at_utc`       | timestamptz | `CancelledAtUtc`: DateTime   | có    | —                                                                                                                                            | Thời điểm hủy                            | HuyLuc            |
+| `cancellation_reason`    | text        | `CancellationReason`: string | có    | —                                                                                                                                            | Lý do hủy                                | LyDoHuy           |
+| `note`                   | text        | `Note`: string               | có    | —                                                                                                                                            | Ghi chú, kết quả buổi dịch vụ lẻ         | GhiChu            |
+| `created_at_utc`         | timestamptz | `CreatedAtUtc`: DateTime     | không | —                                                                                                                                            | Thời điểm tạo                            | NgayTao           |
 
 ### skin_profiles
 

@@ -1,19 +1,27 @@
 import { Outlet } from 'react-router-dom';
+import { useSettleLogout } from '@/features/auth/hooks/useSettleLogout';
+import { useThemeScope } from '@/stores/themeScopeStore';
+import { AiChatWidget } from '@/features/ai-assistant';
 import { Header } from '../Header/Header';
 import { Footer } from '../Footer/Footer';
-import { MobileNavigation } from '../MobileNavigation/MobileNavigation';
+import { SkipLink } from '../SkipLink/SkipLink';
+
 export function PublicLayout() {
+  useThemeScope('light-only');
+  useSettleLogout();
   return (
-    <>
-      <a href="#main-content" className="skip-link">
-        Đến nội dung chính
-      </a>
+    <div className="flex min-h-svh flex-col">
+      <SkipLink />
       <Header />
-      <MobileNavigation />
-      <main id="main-content" className="public-content" tabIndex={-1}>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 outline-none sm:px-6 lg:px-8"
+      >
         <Outlet />
       </main>
       <Footer />
-    </>
+      <AiChatWidget />
+    </div>
   );
 }

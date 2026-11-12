@@ -12,4 +12,10 @@ public sealed record PackageListItemDto(
     string? ImageUrl,
     CatalogStatus Status,
     DateOnly? SaleStartDate,
-    DateOnly? SaleEndDate);
+    DateOnly? SaleEndDate)
+{
+    public string? ShortDescription { get; init; }
+
+    /// <summary>Sum of each item's current service price × its sessions: what the sessions cost bought one by one.</summary>
+    public decimal RetailPrice { get; init; }
+}

@@ -22,7 +22,9 @@ public sealed class AppDbContext : DbContext
     public DbSet<OwnerProfile> OwnerProfiles => Set<OwnerProfile>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<StaffMember> StaffMembers => Set<StaffMember>();
+    public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
     public DbSet<SpaService> SpaServices => Set<SpaService>();
+    public DbSet<ServiceStep> ServiceSteps => Set<ServiceStep>();
     public DbSet<ServicePackage> ServicePackages => Set<ServicePackage>();
     public DbSet<ServicePackageItem> ServicePackageItems => Set<ServicePackageItem>();
     public DbSet<StaffSkill> StaffSkills => Set<StaffSkill>();

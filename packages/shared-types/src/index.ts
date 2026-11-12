@@ -42,3 +42,17 @@ export interface SystemStatusResponse {
   status: string;
   utcTime: string;
 }
+export * from './auth';
+export * from './catalog';
+export * from './availability';
+export * from './staff';
+export * from './orders';
+export * from './bookings';
+export * from './purchases';
+export * from './treatments';
+export * from './users';
+export * from './aiAssistant';
+export * from './workSchedules';
+export * from './promotions';
+export * from './reports';
+export * from './care';
