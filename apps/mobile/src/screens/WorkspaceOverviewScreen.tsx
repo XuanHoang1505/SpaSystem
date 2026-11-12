@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link, type Href } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { AppScreen } from '@components/common/AppScreen';
@@ -8,16 +9,19 @@ import { colors, radius, spacing } from '@theme/index';
 export function WorkspaceOverviewScreen({
   title,
   links,
+  footer,
 }: {
   title: string;
   links: readonly { href: Href; title: string }[];
+  /** Extra actions under the links, e.g. the logout button. */
+  footer?: ReactNode;
 }) {
   return (
     <AppScreen>
       <AppText accessibilityRole="header">{title}</AppText>
       <EmptyState
         title="Tính năng đang được phát triển"
-        description="Bản xem trước navigation. Chưa có xác thực hoặc dữ liệu nghiệp vụ."
+        description="Các màn nghiệp vụ của khu vực này sẽ có ở các bản sau."
       />
       {links.map((link) => (
         <Link
@@ -32,6 +36,7 @@ export function WorkspaceOverviewScreen({
       <Link href="/" accessibilityLabel="Về trang chủ" style={styles.link}>
         Về trang chủ
       </Link>
+      {footer}
     </AppScreen>
   );
 }

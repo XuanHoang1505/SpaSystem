@@ -1,4 +1,1 @@
-import { AuthPlaceholderScreen } from '@features/auth/AuthPlaceholderScreen';
-export default function Screen() {
-  return <AuthPlaceholderScreen title="Đăng ký" />;
-}
+export { RegisterScreen as default } from '@features/auth/screens/RegisterScreen';
