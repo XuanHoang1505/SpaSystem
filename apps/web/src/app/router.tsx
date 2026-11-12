@@ -25,6 +25,7 @@ import { MyServiceHistoryPage } from '@/pages/customer/MyServiceHistoryPage';
 import { MyTreatmentPlanDetailPage } from '@/pages/customer/MyTreatmentPlanDetailPage';
 import { MyTreatmentPlansPage } from '@/pages/customer/MyTreatmentPlansPage';
 import { PaymentResultPage } from '@/pages/customer/PaymentResultPage';
+import { OwnerAccountsPage } from '@/pages/owner/OwnerAccountsPage';
 import { OwnerAppointmentsPage } from '@/pages/owner/OwnerAppointmentsPage';
 import { OwnerPackagesPage } from '@/pages/owner/OwnerPackagesPage';
 import { OwnerOrdersPage } from '@/pages/owner/OwnerOrdersPage';
@@ -137,6 +138,7 @@ export const ownerPages: Record<string, ReactElement> = {
   '/owner/orders': <OwnerOrdersPage />,
   '/owner/treatments': <OwnerTreatmentsPage />,
   '/owner/reports': <OwnerReportsPage />,
+  '/owner/accounts': <OwnerAccountsPage />,
 };
 
 /** Login, register, forgot-password: own split layout without the site header/footer, guests only. */

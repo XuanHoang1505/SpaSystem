@@ -47,5 +47,6 @@ export const routes = {
     ['/owner/treatments', 'Liệu trình'],
     ['/owner/orders', 'Đơn hàng'],
     ['/owner/reports', 'Báo cáo'],
+    ['/owner/accounts', 'Tài khoản người dùng'],
   ],
 } as const;
