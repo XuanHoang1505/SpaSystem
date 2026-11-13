@@ -23,6 +23,8 @@ public static class Permissions
     public const string PurchaseSelf = "purchase.self";
     public const string ScheduleSelf = "schedule.self";
     public const string CareWrite = "care.write";
+    /// <summary>A staff member declares their own certifications (docs/specs/staff.md, BR-STF-14).</summary>
+    public const string CertificationSelf = "certification.self";
     public const string TreatmentManage = "treatment.manage";
     public const string ReportView = "report.view";
     /// <summary>Saved assistant history; guests chat anonymously without it (Q-01), staff and owners not at all (Q-60).</summary>
@@ -44,6 +46,7 @@ public static class Permissions
         [PurchaseSelf] = [SecurityRoles.Customer],
         [ScheduleSelf] = [SecurityRoles.Staff],
         [CareWrite] = [SecurityRoles.Staff],
+        [CertificationSelf] = [SecurityRoles.Staff],
         [TreatmentManage] = [SecurityRoles.Owner, SecurityRoles.Staff],
         [ReportView] = [SecurityRoles.Owner],
         [AiChat] = [SecurityRoles.Customer],

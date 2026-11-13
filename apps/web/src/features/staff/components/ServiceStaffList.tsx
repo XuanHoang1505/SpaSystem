@@ -32,6 +32,9 @@ export function ServiceStaffList({ serviceId }: { serviceId: string }) {
               {member.specialty && (
                 <p className="truncate text-sm text-muted-foreground">{member.specialty}</p>
               )}
+              {member.certifications.length > 0 && (
+                <p className="text-xs text-muted-foreground">{member.certifications.join(' · ')}</p>
+              )}
             </div>
           </li>
         ))}

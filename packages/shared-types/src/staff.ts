@@ -9,6 +9,8 @@ export interface PublicStaffMember {
   fullName: string;
   specialty: string | null;
   avatarUrl: string | null;
+  /** Names of verified, public, unexpired certifications (BR-STF-13). */
+  certifications: readonly string[];
 }
 
 export type StaffStatusFilter = 'working' | 'resigned';
@@ -31,6 +33,8 @@ export interface StaffListItem {
   resignationDate: string | null; // YYYY-MM-DD
   accountStatus: UserStatus;
   services: readonly StaffServiceItem[];
+  /** Certifications declared by the staff member and waiting for the owner (BR-STF-14). */
+  pendingCertificationCount: number;
 }
 
 /** Full staff member detail returned by `GET /staff/{id}` and write operations. */
@@ -91,4 +95,41 @@ export interface ResignationResult {
 export interface StaffFilterParams extends PaginationParams {
   status?: StaffStatusFilter;
   spaServiceId?: string;
+}
+
+/** Validity on the Vietnam date, computed by the server (BR-STF-13). */
+export type StaffCertificationStatus = 'valid' | 'expiring_soon' | 'expired';
+
+/** Owner review of a certification (BR-STF-14). */
+export type CertificationVerificationStatus = 'pending' | 'verified' | 'rejected';
+
+/** `GET /staff/{id}/certifications` and `GET /me/certifications`, most urgent first. */
+export interface StaffCertification {
+  id: string;
+  name: string;
+  issuer: string | null;
+  credentialNumber: string | null;
+  issuedOn: string | null; // YYYY-MM-DD
+  expiresOn: string | null; // YYYY-MM-DD, null = no expiry
+  isPublic: boolean;
+  note: string | null;
+  /** Photo of the certificate on Cloudinary (public URL for now, Q-74); null = none. */
+  imageUrl: string | null;
+  status: StaffCertificationStatus;
+  verificationStatus: CertificationVerificationStatus;
+  rejectionReason: string | null;
+  reviewedAtUtc: string | null;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
+}
+
+/** Body of POST/PUT; every field is replaced. */
+export interface SaveStaffCertificationRequest {
+  name: string;
+  issuer: string | null;
+  credentialNumber: string | null;
+  issuedOn: string | null;
+  expiresOn: string | null;
+  isPublic: boolean;
+  note: string | null;
 }

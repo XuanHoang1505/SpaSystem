@@ -43,6 +43,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<SkinProfile> SkinProfiles => Set<SkinProfile>();
     public DbSet<CustomerAllergy> CustomerAllergies => Set<CustomerAllergy>();
+    public DbSet<StaffCertification> StaffCertifications => Set<StaffCertification>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<AiChatMessage> AiChatMessages => Set<AiChatMessage>();
     public DbSet<Notification> Notifications => Set<Notification>();

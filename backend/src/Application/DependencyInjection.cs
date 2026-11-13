@@ -80,6 +80,7 @@ public static class DependencyInjection
         services.AddScoped<IAssignedAppointmentService, AssignedAppointmentService>();
         services.AddScoped<IMyWorkScheduleService, MyWorkScheduleService>();
         services.AddScoped<ICareHistoryService, CareHistoryService>();
+        services.AddScoped<IStaffCertificationService, StaffCertificationService>();
         services.AddScoped<AiToolExecutor>();
         services.AddScoped<IAiAssistantService, AiAssistantService>();
         return services;

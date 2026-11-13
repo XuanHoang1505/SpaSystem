@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "87e29b46-0ebe-48ed-882a-80f9da7cc9ff",
+    "_postman_id": "de85ca11-29fe-467b-b163-f4dbd158e4c2",
     "name": "Nhu Nguyet Spa API",
     "description": "Collection thử API backend Spa Như Nguyệt.\n\n**Chuẩn bị:** `npm run db:up`, `npm run db:migrate`, `npm run db:seed`, rồi chạy API (`dotnet run --project backend/src/API --launch-profile http`, hoặc `--launch-profile https` cho cổng 7001).\n\n**Environment:** chọn `Spa – Local HTTP` (cổng 5000) hoặc `Spa – Local HTTPS` (cổng 7001). Điền **Current value** của `loginPassword` bằng `SEED_OWNER_PASSWORD` trong `backend/src/API/.env` (không lưu vào Initial value để mật khẩu không bị chia sẻ).\n\n**Thứ tự gợi ý:** Auth › Đăng nhập (email) → Làm mới phiên → Đăng xuất. Các request đăng nhập/làm mới tự lưu `accessToken`, `refreshToken` vào environment. Có thể chạy cả folder bằng Collection Runner.\n\n**Đăng ký / Quên mật khẩu (OTP email):** gửi mail thật qua Gmail — cần `MAIL_SETTINGS_*` trong `backend/src/API/.env`. Sau bước gửi OTP, mở hộp thư và dán mã 6 số vào biến `otp`. Mật khẩu (`registerPassword`, `newPassword`): 8–128 ký tự, có chữ và số.\n\n**Catalog (UC-SPA-06, 07, 09):** chạy `Catalog › Đăng nhập chủ spa` trước (lưu `ownerAccessToken`), rồi theo thứ tự trong folder: tạo dịch vụ lưu `serviceId`, tạo gói lưu `packageId`. Request tải ảnh dùng form-data: ở field `file` bấm **Select Files** chọn ảnh JPEG/PNG/WebP ≤ 5 MB. Ảnh cần `CLOUDINARY_*` trong `backend/src/API/.env`, thiếu thì trả 503 `image_storage_unavailable`. Spec: `docs/specs/catalog.md`.\n\n**Staff (UC-SPA-22, 23):** chạy `Catalog › Đăng nhập chủ spa` và `Catalog › Thêm dịch vụ` trước (cần `ownerAccessToken`, `serviceId`). `Thêm nhân viên` gửi mật khẩu tạm qua mail thật (cần `MAIL_SETTINGS_*`); điền `staffEmail` trong environment để nhận mail, bỏ trống thì dùng địa chỉ `@example.com` ngẫu nhiên. Phản hồi không chứa mật khẩu. Ngày ca làm tự tính theo giờ Việt Nam (ngày mai). `Ghi nhận nghỉ việc` để cuối folder vì mỗi nhân viên chỉ ghi được một lần. Spec: `docs/specs/staff.md`.\n\n**Lưu ý:** mọi endpoint `/auth/*` ẩn danh dùng chung giới hạn 10 yêu cầu/phút/IP (429 `rate_limited`). Chạy cả collection bằng Collection Runner thì đặt **Delay = 6500 ms**. Request 'E5 – Dùng lại refresh token cũ' thu hồi mọi phiên → đăng nhập lại sau khi chạy. Spec: `docs/specs/auth.md`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -3843,6 +3843,472 @@
                   "language": "json"
                 }
               }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Thêm bằng cấp cho nhân viên",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/certifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "certifications"
+              ]
+            },
+            "description": "Bằng do chủ spa thêm được duyệt luôn (BR-STF-14). Không lưu ảnh bằng (Q-74).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Chứng chỉ chăm sóc da\",\n  \"issuer\": \"Trường Trung cấp Thẩm mỹ\",\n  \"credentialNumber\": \"CC-001\",\n  \"issuedOn\": \"2025-01-10\",\n  \"expiresOn\": null,\n  \"isPublic\": true,\n  \"note\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Chủ spa thêm là đã duyệt', () => pm.expect(body.data.verificationStatus).to.eql('verified'));",
+                  "pm.environment.set('certificationId', body.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bằng cấp của nhân viên",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/certifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "certifications"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Có hiệu lực tính khi đọc', () => pm.expect(body.data[0].status).to.be.oneOf(['valid', 'expiring_soon', 'expired']));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sửa bằng cấp",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/certifications/{{certificationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "certifications",
+                "{{certificationId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Chứng chỉ chăm sóc da nâng cao\",\n  \"issuer\": \"Trường Trung cấp Thẩm mỹ\",\n  \"credentialNumber\": \"CC-001\",\n  \"issuedOn\": \"2025-01-10\",\n  \"expiresOn\": \"2030-01-10\",\n  \"isPublic\": true,\n  \"note\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Từ chối bằng cấp",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/certifications/{{certificationId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "certifications",
+                "{{certificationId}}",
+                "reject"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Sai số hiệu\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Bị từ chối kèm lý do', () => pm.expect(body.data.rejectionReason).to.eql('Sai số hiệu'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tải ảnh bằng cấp (form-data)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/certifications/{{certificationId}}/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "certifications",
+                "{{certificationId}}",
+                "image"
+              ]
+            },
+            "description": "Chọn file ở field `file` (JPEG/PNG/WebP ≤ 5 MB). Ảnh tạm thời là URL công khai (Q-74).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Có imageUrl', () => pm.expect(body.data.imageUrl).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xóa ảnh bằng cấp",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/certifications/{{certificationId}}/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "certifications",
+                "{{certificationId}}",
+                "image"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Không còn ảnh', () => pm.expect(body.data.imageUrl).to.eql(null));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duyệt bằng cấp",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/certifications/{{certificationId}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "certifications",
+                "{{certificationId}}",
+                "verify"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Đã duyệt', () => pm.expect(body.data.verificationStatus).to.eql('verified'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duyệt lại bằng đã duyệt → 409",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/certifications/{{certificationId}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "certifications",
+                "{{certificationId}}",
+                "verify"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope lỗi', () => { pm.expect(body.success).to.eql(false); pm.expect(body.traceId).to.be.a('string'); });",
+                  "pm.test('Mã lỗi staff_certification_status_invalid', () => pm.expect(body.errors[0].code).to.eql('staff_certification_status_invalid'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xóa bằng cấp",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/staff/{{staffId}}/certifications/{{certificationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "{{staffId}}",
+                "certifications",
+                "{{certificationId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "event": [
@@ -12221,6 +12687,372 @@
                   "pm.test('HTTP 403', () => pm.response.to.have.status(403));",
                   "const body = pm.response.json();",
                   "pm.test('Envelope lỗi', () => { pm.expect(body.success).to.eql(false); pm.expect(body.traceId).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bằng cấp của tôi (UC-SPA-22)",
+      "description": "Nhân viên tự khai báo bằng cấp, chứng chỉ; bằng luôn chờ chủ spa duyệt. Chạy sau 'Kịch bản demo' (cần staffAnAccessToken); spec: docs/specs/staff.md.",
+      "item": [
+        {
+          "name": "Khai báo bằng cấp",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/certifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "certifications"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAnAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Chứng chỉ massage body\",\n  \"issuer\": null,\n  \"credentialNumber\": null,\n  \"issuedOn\": \"2024-06-01\",\n  \"expiresOn\": null,\n  \"isPublic\": true,\n  \"note\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Chờ duyệt', () => pm.expect(body.data.verificationStatus).to.eql('pending'));",
+                  "pm.environment.set('myCertificationId', body.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bằng cấp của tôi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/certifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "certifications"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAnAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sửa bằng cấp của tôi",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/certifications/{{myCertificationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "certifications",
+                "{{myCertificationId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAnAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Chứng chỉ massage body và đá nóng\",\n  \"issuer\": null,\n  \"credentialNumber\": null,\n  \"issuedOn\": \"2024-06-01\",\n  \"expiresOn\": null,\n  \"isPublic\": true,\n  \"note\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Sửa xong vẫn chờ duyệt', () => pm.expect(body.data.verificationStatus).to.eql('pending'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ngày hết hạn trước ngày cấp → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/certifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "certifications"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAnAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bằng lỗi\",\n  \"issuedOn\": \"2024-06-01\",\n  \"expiresOn\": \"2024-05-01\",\n  \"isPublic\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope lỗi', () => { pm.expect(body.success).to.eql(false); pm.expect(body.traceId).to.be.a('string'); });",
+                  "pm.test('Mã lỗi validation_error', () => pm.expect(body.errors[0].code).to.eql('validation_error'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chủ spa gọi /me/certifications → 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/certifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "certifications"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope lỗi', () => { pm.expect(body.success).to.eql(false); pm.expect(body.traceId).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tải ảnh bằng cấp của tôi (form-data)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/certifications/{{myCertificationId}}/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "certifications",
+                "{{myCertificationId}}",
+                "image"
+              ]
+            },
+            "description": "Chọn file ở field `file`.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAnAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Về chờ duyệt', () => pm.expect(body.data.verificationStatus).to.eql('pending'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xóa bằng cấp của tôi",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/certifications/{{myCertificationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "certifications",
+                "{{myCertificationId}}"
+              ]
+            },
+            "description": "Chỉ xóa được bằng chưa duyệt (409 staff_certification_verified).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffAnAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
                 ]
               }
             }
