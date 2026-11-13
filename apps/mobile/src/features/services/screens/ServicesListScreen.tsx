@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -14,7 +14,7 @@ import { AppNotice } from '@components/common/AppNotice';
 import { AppScreen } from '@components/common/AppScreen';
 import { AppText } from '@components/common/AppText';
 import { AppTextButton } from '@components/common/AppTextButton';
-import { colors, radius, spacing, typography } from '@theme/index';
+import { colors, spacing, typography } from '@theme/index';
 import { CatalogSearchInput } from '../components/CatalogSearchInput';
 import { CategoryPills } from '../components/CategoryPills';
 import { PriceFilterSheet } from '../components/PriceFilterSheet';
@@ -22,6 +22,7 @@ import { ServiceCard } from '../components/ServiceCard';
 import { ServiceSkeleton } from '../components/ServiceSkeleton';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useServiceSearch } from '../hooks/useServiceSearch';
+import { CartBadgeButton } from '@/features/orders';
 
 export function ServicesListScreen() {
   const [search, setSearch] = useState('');
@@ -88,6 +89,10 @@ export function ServicesListScreen() {
 
   return (
     <AppScreen scroll={false} style={styles.screen}>
+      <View style={styles.topHeaderBar}>
+        <AppText style={styles.screenTitle}>Dịch vụ chăm sóc</AppText>
+        <CartBadgeButton />
+      </View>
       <View style={styles.headerArea}>
         <CatalogSearchInput
           value={search}
@@ -216,6 +221,18 @@ const styles = StyleSheet.create({
   screen: {
     paddingHorizontal: 0,
     backgroundColor: colors.background,
+  },
+  topHeaderBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  screenTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
   },
   headerArea: {
     paddingHorizontal: spacing.md,

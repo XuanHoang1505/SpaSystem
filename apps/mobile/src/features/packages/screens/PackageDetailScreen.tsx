@@ -1,17 +1,21 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ActivityIndicator,
+  Alert,
   Image,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  ArrowLeft,
   Calendar,
   CheckCircle2,
   Clock,
   Layers,
+  ShoppingBag,
   Sparkles,
 } from 'lucide-react-native';
 import { AppButton } from '@components/common/AppButton';
@@ -24,6 +28,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { colors, radius, spacing, typography } from '@theme/index';
 import { PackageRoadmapItem } from '../components/PackageRoadmapItem';
 import { usePackage } from '../hooks/usePackage';
+import { CartBadgeButton, useAddToCart } from '@/features/orders';
 
 export function PackageDetailScreen() {
   const { packageId } = useLocalSearchParams<{ packageId: string }>();
@@ -31,6 +36,7 @@ export function PackageDetailScreen() {
   const authStatus = useAuthStore((state) => state.status);
 
   const { data: pkg, isLoading, isError, refetch } = usePackage(packageId ?? '');
+  const addToCartMutation = useAddToCart();
 
   if (isLoading) {
     return (
@@ -67,18 +73,57 @@ export function PackageDetailScreen() {
     ? Math.round((savingsAmount / pkg.retailPrice) * 100)
     : 0;
 
-  const handlePurchase = () => {
-    if (authStatus === 'authenticated') {
-      router.push(`/(customer)/bookings`);
-    } else {
+  const handleAddToCart = () => {
+    if (authStatus !== 'authenticated') {
       router.push(
         `/(public)/login?redirect=${encodeURIComponent(`/(public)/packages/${pkg.id}`)}`,
+      );
+      return;
+    }
+    addToCartMutation.mutate(
+      { servicePackageId: pkg.id },
+      {
+        onSuccess: () => {
+          Alert.alert('Thành công', 'Đã thêm gói dịch vụ vào giỏ hàng.', [
+            { text: 'Tiếp tục xem', style: 'cancel' },
+            { text: 'Xem giỏ hàng', onPress: () => router.push('/cart') },
+          ]);
+        },
+        onError: (err) => {
+          Alert.alert('Thông báo', err.message || 'Không thể thêm vào giỏ hàng.');
+        },
+      },
+    );
+  };
+
+  const handlePurchase = () => {
+    if (authStatus === 'authenticated') {
+      router.push(
+        `/checkout?source=buy_now&servicePackageId=${pkg.id}`,
+      );
+    } else {
+      router.push(
+        `/(public)/login?redirect=${encodeURIComponent(`/checkout?source=buy_now&servicePackageId=${pkg.id}`)}`,
       );
     }
   };
 
   return (
     <View style={styles.container}>
+      {/* Floating Header */}
+      <View style={[styles.floatingHeader, { top: insets.top + spacing.xs }]}>
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Quay lại"
+          hitSlop={8}
+          style={styles.floatingHeaderButton}
+        >
+          <ArrowLeft size={22} color={colors.text} />
+        </Pressable>
+        <CartBadgeButton />
+      </View>
+
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
@@ -209,12 +254,26 @@ export function PackageDetailScreen() {
           <AppText style={styles.bottomPriceLabel}>Trọn gói {pkg.totalSessions} buổi</AppText>
           <AppText style={styles.bottomPriceValue}>{formatCurrency(pkg.price)}</AppText>
         </View>
-        <View style={styles.bottomCtaColumn}>
-          <AppButton
-            title={isDiscontinued ? 'Tạm ngừng mở bán' : 'Mua gói dịch vụ'}
-            onPress={handlePurchase}
-            disabled={isDiscontinued}
-          />
+        <View style={styles.bottomCtaRow}>
+          <Pressable
+            onPress={handleAddToCart}
+            disabled={isDiscontinued || addToCartMutation.isPending}
+            accessibilityRole="button"
+            accessibilityLabel="Thêm gói dịch vụ vào giỏ hàng"
+            style={[
+              styles.addToCartIconBtn,
+              (isDiscontinued || addToCartMutation.isPending) && styles.addToCartIconBtnDisabled,
+            ]}
+          >
+            <ShoppingBag size={20} color={colors.primary} />
+          </Pressable>
+          <View style={styles.purchaseBtnWrap}>
+            <AppButton
+              title={isDiscontinued ? 'Tạm ngừng mở bán' : 'Mua gói'}
+              onPress={handlePurchase}
+              disabled={isDiscontinued}
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -420,6 +479,49 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.primary,
+  },
+  floatingHeader: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    zIndex: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  floatingHeaderButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  bottomCtaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  addToCartIconBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.small,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addToCartIconBtnDisabled: {
+    opacity: 0.4,
+  },
+  purchaseBtnWrap: {
+    minWidth: 120,
   },
   bottomCtaColumn: {
     width: 170,

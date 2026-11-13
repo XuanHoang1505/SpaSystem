@@ -1,8 +1,16 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ServiceStep } from '@spa/shared-types';
-import { CheckCircle2, Clock, Sparkles, Star, Tag } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle2, Clock, ShoppingBag, Sparkles, Star, Tag } from 'lucide-react-native';
 import { AppButton } from '@components/common/AppButton';
 import { AppNotice } from '@components/common/AppNotice';
 import { AppScreen } from '@components/common/AppScreen';
@@ -13,6 +21,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { colors, radius, spacing, typography } from '@theme/index';
 import { ServiceStepItem } from '../components/ServiceStepItem';
 import { useService } from '../hooks/useService';
+import { CartBadgeButton, useAddToCart } from '@/features/orders';
 
 const FALLBACK_STEPS: ServiceStep[] = [
   {
@@ -58,6 +67,8 @@ export function ServiceDetailScreen() {
   const authStatus = useAuthStore((state) => state.status);
 
   const { data: service, isLoading, isError, refetch } = useService(serviceId ?? '');
+  // Every hook runs before the early returns below (Rules of Hooks).
+  const addToCartMutation = useAddToCart();
 
   if (isLoading) {
     return (
@@ -90,6 +101,29 @@ export function ServiceDetailScreen() {
   const isDiscontinued = service.status === 'discontinued';
   const displaySteps = service.steps && service.steps.length > 0 ? service.steps : FALLBACK_STEPS;
 
+  const handleAddToCart = () => {
+    if (authStatus !== 'authenticated') {
+      router.push(
+        `/(public)/login?redirect=${encodeURIComponent(`/(public)/services/${service.id}`)}`,
+      );
+      return;
+    }
+    addToCartMutation.mutate(
+      { spaServiceId: service.id },
+      {
+        onSuccess: () => {
+          Alert.alert('Thành công', 'Đã thêm dịch vụ vào giỏ hàng.', [
+            { text: 'Tiếp tục xem', style: 'cancel' },
+            { text: 'Xem giỏ hàng', onPress: () => router.push('/cart') },
+          ]);
+        },
+        onError: (err) => {
+          Alert.alert('Thông báo', err.message || 'Không thể thêm vào giỏ hàng.');
+        },
+      },
+    );
+  };
+
   const handleBooking = () => {
     if (authStatus === 'authenticated') {
       router.push(`/(customer)/bookings`);
@@ -102,6 +136,20 @@ export function ServiceDetailScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Floating Header */}
+      <View style={[styles.floatingHeader, { top: insets.top + spacing.xs }]}>
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Quay lại"
+          hitSlop={8}
+          style={styles.floatingHeaderButton}
+        >
+          <ArrowLeft size={22} color={colors.text} />
+        </Pressable>
+        <CartBadgeButton />
+      </View>
+
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 90 }]}
       >
@@ -219,12 +267,26 @@ export function ServiceDetailScreen() {
           <AppText style={styles.bottomPriceLabel}>Giá dịch vụ</AppText>
           <AppText style={styles.bottomPriceValue}>{formatCurrency(service.price)}</AppText>
         </View>
-        <View style={styles.bottomCtaColumn}>
-          <AppButton
-            title={isDiscontinued ? 'Tạm ngừng phục vụ' : 'Đặt lịch ngay'}
-            onPress={handleBooking}
-            disabled={isDiscontinued}
-          />
+        <View style={styles.bottomCtaRow}>
+          <Pressable
+            onPress={handleAddToCart}
+            disabled={isDiscontinued || addToCartMutation.isPending}
+            accessibilityRole="button"
+            accessibilityLabel="Thêm dịch vụ vào giỏ hàng"
+            style={[
+              styles.addToCartIconBtn,
+              (isDiscontinued || addToCartMutation.isPending) && styles.addToCartIconBtnDisabled,
+            ]}
+          >
+            <ShoppingBag size={20} color={colors.primary} />
+          </Pressable>
+          <View style={styles.bookingBtnWrap}>
+            <AppButton
+              title={isDiscontinued ? 'Tạm ngừng phục vụ' : 'Đặt lịch ngay'}
+              onPress={handleBooking}
+              disabled={isDiscontinued}
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -449,6 +511,49 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.primary,
+  },
+  floatingHeader: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    zIndex: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  floatingHeaderButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  bottomCtaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  addToCartIconBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.small,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addToCartIconBtnDisabled: {
+    opacity: 0.4,
+  },
+  bookingBtnWrap: {
+    minWidth: 140,
   },
   bottomCtaColumn: {
     width: 160,
