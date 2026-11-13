@@ -105,7 +105,7 @@ for i, a in enumerate(APIS, start=1):
     API_ROWS.append(dict(id=f"SPA-API-{i:03d}", dom=dom, action=action, method=method, path=path, kind=kind,
                          ucs=uc_tokens(ucs), scrs=scr_tokens(scrs), scr_raw=scrs, roles=roles, req=req, resp=resp, http=http, note=note))
 API_BY_ID = {a["id"]: a for a in API_ROWS}
-assert len(API_ROWS) == 131, len(API_ROWS)
+assert len(API_ROWS) == 145, len(API_ROWS)
 expect = {"SPA-API-016": ("PATCH", "/api/v1/users/{id}/status"), "SPA-API-036": ("POST", "/api/v1/me/orders"),
           "SPA-API-037": ("POST", "/api/v1/me/orders/{id}/payments"), "SPA-API-039": ("GET", "/api/v1/payments/vnpay/ipn"),
           "SPA-API-052": ("POST", "/api/v1/me/appointments/book-now"), "SPA-API-053": ("POST", "/api/v1/me/appointments"),

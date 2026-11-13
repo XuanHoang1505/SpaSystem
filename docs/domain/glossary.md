@@ -22,6 +22,7 @@ Danh sách **đầy đủ từng cột** của mọi bảng (kiểu PostgreSQL, 
 | KhachHang                | `Customer`            | `customers`             | `Customers`                   | `customers`              | `/customers`                                             |
 | NhanVien                 | `StaffMember`         | `staff_members`         | `Staff`                       | `staff`                  | `/staff`                                                 |
 | NhanVien_DichVu          | `StaffSkill`          | `staff_skills`          | `Staff`                       | `staff`                  | `/staff/{id}/services`                                   |
+| BangCapNhanVien          | `StaffCertification`  | `staff_certifications`  | `Staff`                       | `staff`                  | `/staff/{id}/certifications`, `/me/certifications`       |
 | LichLamViec              | `WorkSchedule`        | `work_schedules`        | `Staff`                       | `staff`                  | `/work-schedules`                                        |
 | DanhMucDichVu            | `ServiceCategory`     | `service_categories`    | `Catalog`                     | `services`               | `/service-categories`                                    |
 | DichVu                   | `SpaService`          | `spa_services`          | `Catalog`                     | `services`               | `/services`                                              |
@@ -85,24 +86,25 @@ Dịch vụ, gói và chi tiết gói dùng chung thư mục backend `Catalog` (
 
 C# dùng PascalCase; CSDL và JSON lưu chuỗi `snake_case`.
 
-| Enum                           | Báo cáo → Code                                                                                                                                                                |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `UserStatus`                   | HoatDong → `Active`, BiKhoa → `Locked`, NgungHoatDong → `Inactive`                                                                                                            |
-| `CatalogStatus` (dịch vụ, gói) | DangBan → `OnSale`, NgungBan → `Discontinued`                                                                                                                                 |
-| `WorkScheduleStatus`           | HoatDong → `Active`, DaHuy → `Cancelled`                                                                                                                                      |
-| `PromotionStatus`              | HoatDong → `Active`, NgungApDung → `Stopped`                                                                                                                                  |
-| `DiscountType`                 | PhanTram → `Percentage`, SoTien → `FixedAmount`                                                                                                                               |
-| `OrderStatus`                  | ChoThanhToan → `PendingPayment`, DaThanhToan → `Paid`, DaHuy → `Cancelled`, HetHan → `Expired`                                                                                |
-| `PaymentStatus`                | DangCho → `Pending`, ThanhCong → `Succeeded`, ThatBai → `Failed`, HetHan → `Expired`                                                                                          |
-| `EntitlementStatus`            | ChuaSuDung → `Available`, DaDatLich → `Booked`, DaSuDung → `Used`, HetHan → `Expired`                                                                                         |
-| `CustomerPackageStatus`        | DangSuDung → `Active`, HoanThanh → `Completed`, HetHan → `Expired`, DaHuy → `Cancelled`                                                                                       |
-| `TreatmentPlanStatus`          | ChuaBatDau → `NotStarted`, DangThucHien → `InProgress`, HoanThanh → `Completed`, TamDung → `Paused`, DaHuy → `Cancelled`                                                      |
-| `TreatmentSessionStatus`       | ChuaDat → `NotBooked`, DaDatLich → `Booked`, HoanThanh → `Completed`, BoQua → `Skipped`                                                                                       |
-| `AppointmentStatus`            | GiuCho → `Held`, ChoXacNhan → `PendingConfirmation`, DaXacNhan → `Confirmed`, HoanThanh → `Completed`, DaHuy → `Cancelled`, KhongDen → `NoShow`, HetHanGiuCho → `HoldExpired` |
-| `SkinType`                     | Thuong → `Normal`, Kho → `Dry`, Dau → `Oily`, HonHop → `Combination`, NhayCam → `Sensitive`                                                                                   |
-| `AllergySeverity`              | Nhe → `Mild`, TrungBinh → `Moderate`, Nang → `Severe`                                                                                                                         |
-| `ReviewStatus`                 | HienThi → `Visible`, An → `Hidden`                                                                                                                                            |
-| `NotificationType`             | LichHen → `Appointment`, ThanhToan → `Payment`, LieuTrinh → `Treatment`, KhuyenMai → `Promotion`, HeThong → `System`                                                          |
+| Enum                              | Báo cáo → Code                                                                                                                                                                |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UserStatus`                      | HoatDong → `Active`, BiKhoa → `Locked`, NgungHoatDong → `Inactive`                                                                                                            |
+| `CatalogStatus` (dịch vụ, gói)    | DangBan → `OnSale`, NgungBan → `Discontinued`                                                                                                                                 |
+| `WorkScheduleStatus`              | HoatDong → `Active`, DaHuy → `Cancelled`                                                                                                                                      |
+| `CertificationVerificationStatus` | ChoDuyet → `Pending`, DaDuyet → `Verified`, TuChoi → `Rejected` (hiệu lực `valid`/`expiring_soon`/`expired` chỉ tính khi đọc)                                                 |
+| `PromotionStatus`                 | HoatDong → `Active`, NgungApDung → `Stopped`                                                                                                                                  |
+| `DiscountType`                    | PhanTram → `Percentage`, SoTien → `FixedAmount`                                                                                                                               |
+| `OrderStatus`                     | ChoThanhToan → `PendingPayment`, DaThanhToan → `Paid`, DaHuy → `Cancelled`, HetHan → `Expired`                                                                                |
+| `PaymentStatus`                   | DangCho → `Pending`, ThanhCong → `Succeeded`, ThatBai → `Failed`, HetHan → `Expired`                                                                                          |
+| `EntitlementStatus`               | ChuaSuDung → `Available`, DaDatLich → `Booked`, DaSuDung → `Used`, HetHan → `Expired`                                                                                         |
+| `CustomerPackageStatus`           | DangSuDung → `Active`, HoanThanh → `Completed`, HetHan → `Expired`, DaHuy → `Cancelled`                                                                                       |
+| `TreatmentPlanStatus`             | ChuaBatDau → `NotStarted`, DangThucHien → `InProgress`, HoanThanh → `Completed`, TamDung → `Paused`, DaHuy → `Cancelled`                                                      |
+| `TreatmentSessionStatus`          | ChuaDat → `NotBooked`, DaDatLich → `Booked`, HoanThanh → `Completed`, BoQua → `Skipped`                                                                                       |
+| `AppointmentStatus`               | GiuCho → `Held`, ChoXacNhan → `PendingConfirmation`, DaXacNhan → `Confirmed`, HoanThanh → `Completed`, DaHuy → `Cancelled`, KhongDen → `NoShow`, HetHanGiuCho → `HoldExpired` |
+| `SkinType`                        | Thuong → `Normal`, Kho → `Dry`, Dau → `Oily`, HonHop → `Combination`, NhayCam → `Sensitive`                                                                                   |
+| `AllergySeverity`                 | Nhe → `Mild`, TrungBinh → `Moderate`, Nang → `Severe`                                                                                                                         |
+| `ReviewStatus`                    | HienThi → `Visible`, An → `Hidden`                                                                                                                                            |
+| `NotificationType`                | LichHen → `Appointment`, ThanhToan → `Payment`, LieuTrinh → `Treatment`, KhuyenMai → `Promotion`, HeThong → `System`                                                          |
 
 ## Thuật ngữ nghiệp vụ
 

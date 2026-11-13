@@ -148,6 +148,20 @@ APIS = [
  ("CAT","Thêm danh mục dịch vụ","POST",P+"/service-categories","Command","UC-SPA-09","SCR-W31","OWN","{name, description?, sortOrder?, isActive?}","ServiceCategoryDto","201","ĐX (Q-13); 409 service_category_exists"),
  ("CAT","Sửa danh mục dịch vụ","PUT",P+"/service-categories/{id}","Command","UC-SPA-09","SCR-W31","OWN","{name, description?, sortOrder, isActive}","ServiceCategoryDto","200","ĐX (Q-13); 404 service_category_not_found, 409 service_category_exists"),
  ("CAT","Xóa danh mục dịch vụ","DELETE",P+"/service-categories/{id}","Command","UC-SPA-09","SCR-W31","OWN","—","—","204","ĐX (Q-13); 409 service_category_in_use khi còn dịch vụ"),
+ ("STF","Xem bằng cấp của nhân viên","GET",P+"/staff/{id}/certifications","Query","UC-SPA-22","SCR-W33","OWN","—","StaffCertificationDto[]","200","ĐX (Q-74); sắp hết hạn → còn → hết hạn"),
+ ("STF","Thêm bằng cấp cho nhân viên","POST",P+"/staff/{id}/certifications","Command","UC-SPA-22","SCR-W33","OWN","{name, issuer?, credentialNumber?, issuedOn?, expiresOn?, isPublic, note?}","StaffCertificationDto","201","Chủ spa thêm → verified; 409 staff_certification_limit"),
+ ("STF","Sửa bằng cấp của nhân viên","PUT",P+"/staff/{id}/certifications/{certificationId}","Command","UC-SPA-22","SCR-W33","OWN","như POST","StaffCertificationDto","200","ĐX (Q-74)"),
+ ("STF","Xóa bằng cấp của nhân viên","DELETE",P+"/staff/{id}/certifications/{certificationId}","Command","UC-SPA-22","SCR-W33","OWN","—","—","204","Xóa cứng bằng ghi nhầm"),
+ ("STF","Duyệt bằng cấp","POST",P+"/staff/{id}/certifications/{certificationId}/verify","Command","UC-SPA-22","SCR-W33","OWN","—","StaffCertificationDto","200","BR-STF-14; 409 staff_certification_status_invalid"),
+ ("STF","Từ chối bằng cấp","POST",P+"/staff/{id}/certifications/{certificationId}/reject","Command","UC-SPA-22","SCR-W33","OWN","{reason}","StaffCertificationDto","200","BR-STF-14; lý do 1–500"),
+ ("STF","Bằng cấp của tôi","GET",P+"/me/certifications","Query","UC-SPA-22","SCR-W41","STF","—","StaffCertificationDto[]","200","Quyền certification.self"),
+ ("STF","Khai báo bằng cấp của tôi","POST",P+"/me/certifications","Command","UC-SPA-22","SCR-W41","STF","như POST của chủ spa","StaffCertificationDto","201","Luôn pending, chờ chủ spa duyệt"),
+ ("STF","Sửa bằng cấp của tôi","PUT",P+"/me/certifications/{certificationId}","Command","UC-SPA-22","SCR-W41","STF","như POST","StaffCertificationDto","200","Về pending, xóa thông tin duyệt"),
+ ("STF","Xóa bằng cấp của tôi","DELETE",P+"/me/certifications/{certificationId}","Command","UC-SPA-22","SCR-W41","STF","—","—","204","409 staff_certification_verified với bằng đã duyệt"),
+ ("STF","Tải ảnh bằng cấp (chủ spa)","POST",P+"/staff/{id}/certifications/{certificationId}/image","Command","UC-SPA-22","SCR-W33","OWN","multipart file","StaffCertificationDto","200","BR-STF-15; giữ trạng thái duyệt; 503 image_storage_unavailable"),
+ ("STF","Xóa ảnh bằng cấp (chủ spa)","DELETE",P+"/staff/{id}/certifications/{certificationId}/image","Command","UC-SPA-22","SCR-W33","OWN","—","StaffCertificationDto","200","BR-STF-15"),
+ ("STF","Tải ảnh bằng cấp của tôi","POST",P+"/me/certifications/{certificationId}/image","Command","UC-SPA-22","SCR-W41","STF","multipart file","StaffCertificationDto","200","BR-STF-15; về pending"),
+ ("STF","Xóa ảnh bằng cấp của tôi","DELETE",P+"/me/certifications/{certificationId}/image","Command","UC-SPA-22","SCR-W41","STF","—","StaffCertificationDto","200","BR-STF-15; về pending"),
 ]
 
 DTO_EXAMPLES = [

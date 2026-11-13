@@ -207,6 +207,7 @@ RBAC = [
  ("staff.manage","Quản lý nhân viên","UC-SPA-22","","","","✓"),
  ("schedule.manage","Phân công lịch làm việc","UC-SPA-23","","","","✓"),
  ("schedule.self","Xem lịch làm việc cá nhân, lịch hẹn được phân công","UC-SPA-24, 25","","","✓",""),
+ ("certification.self","Khai báo bằng cấp, chứng chỉ của chính mình (chờ chủ spa duyệt)","UC-SPA-22","","","✓",""),
  ("care.write","Lịch sử khách đã chăm sóc, hồ sơ da, xác nhận hoàn thành","UC-SPA-26, 27, 28","","","✓ (lịch của mình)",""),
  ("review.write","Đánh giá dịch vụ","UC-SPA-30","","✓","",""),
  ("review.manage","Phản hồi, ẩn đánh giá","UC-SPA-31","","","","✓"),

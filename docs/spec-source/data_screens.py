@@ -44,6 +44,7 @@ SCREENS = [
  ("SCR-W38","Web","Owner","Báo cáo","Thống kê báo cáo doanh thu","/owner/reports",HAS,"Bộ lọc + biểu đồ + bảng","—","Khoảng thời gian; Nhóm theo tháng/quý/năm; Tiêu chí","Doanh thu theo kỳ; Theo dịch vụ/gói; Số đơn","Xuất Excel (ĐX)","—","UC-SPA-33","OWN","Sprint 3"),
  ("SCR-W39","Web","Owner","Đánh giá","Quản lý đánh giá","/owner/reviews",NEW,"Danh sách","—","★; Dịch vụ/gói; Trạng thái","Khách; Sản phẩm; ★; Nội dung; Ảnh; Phản hồi; Trạng thái","Phản hồi; Ẩn/Hiện","Modal phản hồi","UC-SPA-31","OWN","Sprint 3"),
  ("SCR-W40","Web","Owner","Tài khoản","Quản lý tài khoản người dùng","/owner/accounts",NEW,"Data grid + chi tiết","—","Từ khóa; Vai trò; Trạng thái","Họ tên; Email; SĐT; Vai trò; Trạng thái","Xem; Sửa; Khóa/Mở khóa","Modal xác nhận khóa","UC-SPA-05","OWN","Sprint 2"),
+ ("SCR-W41","Web","Staff","Bằng cấp","Bằng cấp của tôi","/staff/certifications",NEW,"Danh sách thẻ","—","—","Tên; Nơi cấp; Ngày cấp/hết hạn; Hiệu lực; Duyệt","Thêm; Sửa; Xóa (chưa duyệt)","Modal thêm/sửa; xác nhận xóa","UC-SPA-22","STF","Sprint 2"),
  # Android (Expo Router)
  ("SCR-M01","Android","Root","—","Trang chủ","app/index.tsx",HAS,"Hero + lối tắt","—","—","Dịch vụ nổi bật","Tìm kiếm; Trợ lý AI","—","UC-SPA-06","GUEST, CUS","Sprint 1"),
  ("SCR-M02","Android","Public Stack","—","Tìm kiếm dịch vụ","app/(public)/services/index.tsx",HAS,"FlatList + bottom sheet lọc","—","Từ khóa; Loại; Giá","Thẻ dịch vụ","Xem; Thêm vào giỏ","—","UC-SPA-06","GUEST, CUS","Sprint 1"),
@@ -96,7 +97,8 @@ SIDEBAR = [
  ("Staff",3,"Lịch hẹn được phân công","clipboard-list","/staff/bookings","SCR-W26"),
  ("Staff",4,"Lịch sử khách đã chăm sóc","history","/staff/care-history","SCR-W28"),
  ("Staff",5,"Liệu trình phụ trách","sparkles","/staff/treatments","SCR-W29"),
- ("Staff",6,"Thông báo","bell","/notifications","SCR-W23"),
+ ("Staff",6,"Bằng cấp của tôi","award","/staff/certifications","SCR-W41"),
+ ("Staff",7,"Thông báo","bell","/notifications","SCR-W23"),
  ("Customer",1,"Lịch hẹn của tôi","calendar-days","/my-bookings","SCR-W14"),
  ("Customer",2,"Dịch vụ và gói của tôi","package","/my-packages","SCR-W16"),
  ("Customer",3,"Liệu trình","sparkles","/my-treatment-plans","SCR-W17"),
