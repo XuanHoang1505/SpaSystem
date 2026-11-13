@@ -722,7 +722,7 @@ Phạm vi: web, chủ spa, `OwnerLayout` (theme sáng và tối). Không có mà
 
 ## Giao diện (mobile): UC-SPA-01, 02, 03
 
-Phạm vi: Android (Expo Go SDK 57), ba màn SCR-M06, M07, M08 và **nền tảng phiên đăng nhập** mà mọi màn mobile sau này dùng. Không làm lần này: UC-SPA-04 (hồ sơ), màn nghiệp vụ trong các khu vực.
+Phạm vi: Android (Expo Go SDK 57), ba màn SCR-M06, M07, M08 và **nền tảng phiên đăng nhập** mà mọi màn mobile sau này dùng. UC-SPA-04 (hồ sơ) nằm ở mục riêng bên dưới. Không làm trong mục này: màn nghiệp vụ của các khu vực.
 
 Feature: `apps/mobile/src/features/auth/` (`screens/`, `components/`, `hooks/`, `schemas.ts`, `errors.ts`, `index.ts`); route file trong `app/(public)` chỉ render screen. Hợp đồng dùng lại nguyên `AuthApi`, `authErrorCodes`, kiểu trong `@spa/shared-types` (không thêm kiểu mới).
 
@@ -743,7 +743,7 @@ Feature: `apps/mobile/src/features/auth/` (`screens/`, `components/`, `hooks/`, 
 - **Trường:** "Email hoặc số điện thoại" (`autoComplete="username"`, `textContentType="username"`, `autoCapitalize="none"`, `keyboardType="email-address"`), "Mật khẩu" (`secureTextEntry`, nút icon `Eye`/`EyeOff` có `accessibilityLabel` "Hiện mật khẩu"/"Ẩn mật khẩu", vùng chạm 48dp). Kiểm tra như SCR-W07.
 - **Liên kết:** "Quên mật khẩu?" → `/(public)/forgot-password`; "Chưa có tài khoản? Đăng ký" → `/(public)/register`.
 - **Điền sẵn:** tham số route `login` do màn đăng ký/đặt lại mật khẩu truyền sang (`router.replace({ pathname, params: { login } })`).
-- **Mã lỗi:** như bảng SCR-W07. `Alert` của web dùng component mới `AppNotice` (`src/components/common/AppNotice.tsx`, `tone: 'error' | 'info' | 'success'`, `accessibilityRole="alert"`); toast thay bằng `AppNotice` trên màn hoặc `Alert.alert` của React Native khi điều hướng đi.
+- **Mã lỗi:** như bảng SCR-W07. `Alert` của web dùng component mới toast (`src/components/common/AppNotice.tsx`, `tone: 'error' | 'info' | 'success'`, `accessibilityRole="alert"`); toast thay bằng toast trên màn hoặc `Alert.alert` của React Native khi điều hướng đi.
 
 ### SCR-M07 — Đăng ký + OTP (`app/(public)/register.tsx`)
 
@@ -765,8 +765,8 @@ Feature: `apps/mobile/src/features/auth/` (`screens/`, `components/`, `hooks/`, 
 
 ### Trạng thái, cấu hình, a11y (cả ba màn)
 
-- Bốn trạng thái của form: sẵn sàng / đang gửi (`AppButton loading`, ô `editable={false}`) / lỗi (dưới ô hoặc `AppNotice`) / thành công (sang bước hoặc điều hướng).
-- Thiếu hoặc sai `EXPO_PUBLIC_API_BASE_URL` → `AppNotice` "Configuration Error", nút gửi tắt, không gọi mạng.
+- Bốn trạng thái của form: sẵn sàng / đang gửi (`AppButton loading`, ô `editable={false}`) / lỗi (dưới ô hoặc toast) / thành công (sang bước hoặc điều hướng).
+- Thiếu hoặc sai `EXPO_PUBLIC_API_BASE_URL` → toast "Configuration Error", nút gửi tắt, không gọi mạng.
 - `AppScreen` lo bàn phím; nút chính rộng toàn màn; mọi vùng chạm ≥ 48dp; nút icon hiện/ẩn mật khẩu có `accessibilityLabel`; lỗi dùng `accessibilityRole="alert"`; dòng đếm ngược chỉ thông báo khi đổi trạng thái (không đọc mỗi giây).
 
 ### Thiếu từ backend
@@ -780,7 +780,7 @@ Jest + Testing Library Native, `fetch` giả, `expo-secure-store` và `expo-rout
 | Mã          | Tình huống                                                                                                           | Kết quả mong đợi                                                                                                           |
 | ----------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | AUTH-UI-T60 | Đăng nhập thành công (khách / nhân viên / chủ spa); có `redirect` hợp lệ / không hợp lệ                              | Lưu refresh token vào secure store, store `authenticated`; `router.replace` đúng trang chủ vai trò / `redirect`            |
-| AUTH-UI-T61 | Đăng nhập: thiếu trường; `invalid_credentials`; `account_locked`; `rate_limited`; mất mạng                           | Lỗi dưới ô, không gọi API; `AppNotice` message server + xóa mật khẩu; giữ dữ liệu; thông báo mạng                          |
+| AUTH-UI-T61 | Đăng nhập: thiếu trường; `invalid_credentials`; `account_locked`; `rate_limited`; mất mạng                           | Lỗi dưới ô, không gọi API; toast message server + xóa mật khẩu; giữ dữ liệu; thông báo mạng                                |
 | AUTH-UI-T62 | Không gửi header `X-Auth-Transport`; body login không có cookie                                                      | Đúng chế độ body                                                                                                           |
 | AUTH-UI-T63 | Khởi động có refresh token hợp lệ / bị từ chối 401 / mất mạng; không có token                                        | `authenticated` + lưu token mới / xóa token, `anonymous` / giữ token, `anonymous` tạm / `anonymous` không gọi mạng         |
 | AUTH-UI-T64 | Request có Bearer gặp 401 → làm mới thành công → gửi lại; hai request 401 đồng thời                                  | Một `/auth/refresh`, cả hai gửi lại thành công                                                                             |
@@ -788,7 +788,113 @@ Jest + Testing Library Native, `fetch` giả, `expo-secure-store` và `expo-rout
 | AUTH-UI-T66 | Đăng xuất: API 204 / API lỗi                                                                                         | Cả hai: xóa secure store, `anonymous`, `queryClient` rỗng                                                                  |
 | AUTH-UI-T67 | Đăng ký: validate bước 1; gửi mã → bước 2 có đếm ngược; `email_exists` ở bước 2 về bước 1; `otp_invalid`; thành công | Đúng hành vi như SCR-W08; thành công `Alert.alert` + về đăng nhập với email điền sẵn                                       |
 | AUTH-UI-T68 | Quên mật khẩu: bước 1 → 2 (câu trung lập) → 3; `invalid_reset_token` về bước 1; thành công                           | Đúng hành vi như SCR-W09; thành công về đăng nhập với email điền sẵn                                                       |
-| AUTH-UI-T69 | Thiếu `EXPO_PUBLIC_API_BASE_URL`                                                                                     | `AppNotice` "Configuration Error", nút gửi tắt, không gọi `fetch`                                                          |
+| AUTH-UI-T69 | Thiếu `EXPO_PUBLIC_API_BASE_URL`                                                                                     | toast "Configuration Error", nút gửi tắt, không gọi `fetch`                                                                |
+
+## Giao diện (mobile): UC-SPA-04
+
+Phạm vi: Android (Expo Go SDK 57). Ba vai trò đã đăng nhập (`account.self`: khách, nhân viên, chủ spa) xem và sửa hồ sơ của chính mình, đổi mật khẩu, đổi ảnh đại diện. Không làm UC-SPA-05 (không có màn Android). Không thêm mục "Thông báo" hay màn đơn hàng/lịch sử mới: tab Cá nhân giữ các lối tắt đã có.
+
+Feature: `apps/mobile/src/features/users/` (`screens/`, `components/AccountPanel.tsx`, `hooks/`, `schemas.ts`, `index.ts`). Ba file `app/(customer|staff|owner)/profile.tsx` chỉ render screen. Hợp đồng dùng `UsersApi`, `usersQueryKeys.me()`, `MeDto` có sẵn. Không thêm kiểu mới trong `shared-types`.
+
+**Đã chốt 13/11/2026, sửa cùng ngày:** tab hồ sơ chỉ hiện cụm thông tin và menu lối tắt. Bấm cụm thông tin mở `app/account.tsx` trên stack gốc (cùng lớp với giỏ hàng và thanh toán). Đổi mật khẩu ở `app/password.tsx`. Không có Stitch.
+
+### SCR-M15 — Tab hồ sơ (khách, nhân viên, chủ spa)
+
+`data_screens.py` gán SCR-M15 cho khách (`app/(customer)/profile.tsx`, "Menu + form"). Nhân viên và chủ spa đã có tab cùng vai trò (`profile.tsx`, nhãn "Cá nhân"). Form nằm ở `app/account.tsx` trên stack gốc, mở khi bấm cụm thông tin đầu tab.
+
+|         |                                                                                                                                                                     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mã      | SCR-M15 cho khách. Tab nhân viên và chủ spa dùng cùng khối form, cùng hợp đồng với SCR-W22                                                                          |
+| Route   | Tab: `app/(customer)/profile.tsx` ("Tài khoản"), `app/(staff)/profile.tsx`, `app/(owner)/profile.tsx`. Form: `app/account.tsx` và `app/password.tsx` trên stack gốc |
+| Vai trò | Khách, nhân viên, chủ spa đã đăng nhập. Khách chưa đăng nhập giữ màn chào                                                                                           |
+| Layout  | Tab một cột. Cụm thông tin mở trang cập nhật. Menu lối tắt là danh sách full width                                                                                  |
+
+**Khách chưa đăng nhập:** giữ màn chào, Đăng nhập, Đăng ký và các lối tắt khám phá. Không gọi `GET /me`, không hiện form.
+
+**Đã đăng nhập (cả ba tab, `SignedInProfile`):** thẻ nền trắng (`colors.card`, bo `radius.card`, viền và bóng nhẹ) có nhãn "Cập nhật tài khoản": ảnh tròn 64dp (ảnh từ `GET /me`, không có thì hai chữ cái đầu), tên, nhãn vai trò dạng viên thuốc nền `colors.primarySoft` kèm biểu tượng (khách `UserStar`, nhân viên `BadgeCheck`, chủ spa `Crown`), dòng "Thành viên từ MM/YYYY" (từ `createdAtUtc`, giờ VN), nút ✎. Không hiện email. Bấm thẻ mở trang cập nhật. Dưới thẻ là các nhóm menu có tiêu đề (`ProfileMenu` với `sections`): khách "Dịch vụ của tôi" (lịch hẹn, liệu trình, gói đã mua) và "Hỗ trợ" (trợ lý AI, đánh giá dịch vụ ghi "Sắp có" vì UC-SPA-30 chưa làm); nhân viên "Công việc"; chủ spa "Quản lý spa". Nhóm cuối chung cho cả ba là "Tài khoản": "Thông tin cá nhân" (`/account`), "Đổi mật khẩu" (`/password`), "Đăng xuất" chữ đỏ, hỏi `Alert` "Đăng xuất?" trước khi thoát. Cuối trang: "Như Nguyệt Spa · Phiên bản x.y.z" từ `expo-constants`. Không thêm hàng "Thông báo", không thêm mục đơn hàng khi mobile chưa có màn đó. Tab không hiện form.
+
+**Trang thông tin cá nhân** (`app/account.tsx`, header riêng như giỏ hàng): ảnh giữa màn với nút máy ảnh, họ tên, rồi các ô `AppInput` (họ tên, số điện thoại chỉ đọc, ngày sinh, email chỉ đọc) và hàng radio giới tính. Nút "Cập nhật" ở cuối. "Chỉnh sửa lại mật khẩu" mở `app/password.tsx`.
+
+**Khối 1 — Thông tin cá nhân**
+
+- Ảnh 80dp, bo tròn. Có `avatarUrl` thì hiện ảnh, không thì chữ cái đầu của `fullName`.
+- Nút máy ảnh: chưa có ảnh thì mở thư viện ngay; đã có ảnh thì `Alert` "Ảnh đại diện" với "Chọn ảnh từ thư viện", "Xóa ảnh", "Hủy".
+- "Chọn ảnh từ thư viện": `expo-image-picker` chỉ mở thư viện (không camera), cắt vuông (`allowsEditing`, `aspect` 1:1), iOS lấy bản tương thích (HEIC → JPEG). Xin quyền; từ chối → toast "Ứng dụng cần quyền thư viện ảnh để đổi ảnh đại diện.". Ảnh chọn được luôn qua `expo-image-manipulator` (`avatarImage.prepareAvatar`): thu về tối đa 512 px cạnh dài, lưu JPEG chất lượng 0,8, rồi gửi tệp đó dưới dạng `File` của `expo-file-system` (`useUploadAvatar`). Không gửi phần `{ uri, name, type }` của React Native: Expo SDK 57 thay `fetch` toàn cục bằng `expo/fetch`, bản này không mã hóa được phần đó và lỗi ngay trên máy (app thấy như "Không kết nối được máy chủ"). Nhờ đó mọi ảnh máy đọc được (HEIC, PNG, WebP, JPEG lớn) đều qua kiểm tra JPEG/PNG/WebP ≤ 5 MB của server, client không chặn theo loại hay dung lượng. Máy không đọc được ảnh → toast "Không đọc được ảnh này. Vui lòng chọn ảnh khác.", không gọi API. Đọc được → hiện ngay ảnh vừa chọn kèm lớp mờ và vòng xoay, `POST /me/avatar` → ghi `avatarUrl` vào cache `usersQueryKeys.me()`, toast "Đã cập nhật ảnh đại diện.". Lỗi thì quay về ảnh cũ.
+- "Xóa ảnh": `DELETE /me/avatar` (Q-56) → `avatarUrl` = `null` trong cache, ảnh về chữ cái đầu, toast "Đã xóa ảnh đại diện.".
+- `avatarUrl` của Cloudinary có số phiên bản (`/v…/`), mỗi lần tải là một URL mới, nên `Image` không giữ ảnh cũ trong cache.
+- "Họ và tên": sửa được, bắt buộc, 1–100 ký tự sau khi bỏ khoảng trắng hai đầu.
+- "Email": chỉ đọc, kèm nhãn vai trò "Khách hàng" / "Nhân viên" / "Chủ spa".
+- "Số điện thoại": chỉ đọc, dòng phụ "Số điện thoại dùng để đăng nhập, không đổi ở đây." (cùng quyết định với SCR-W22, 10/11/2026). `PUT /me` vẫn phải gửi đủ 4 trường, nên form gửi lại `phoneNumber` đang có.
+- "Ngày sinh": tùy chọn. Nút hiện `formatLocalDate` hoặc "Chưa cập nhật", mở `@react-native-community/datetimepicker` (chế độ ngày, tối đa hôm nay theo giờ Việt Nam, tối thiểu 01/01/1900). Chỉ nhận ngày khi `event.type === 'set'`: trên Android nút Hủy vẫn gọi `onChange` với ngày khởi đầu của lịch (hôm nay khi còn trống), nên bỏ qua để giữ giá trị cũ. Đã có ngày thì biểu tượng lịch ở cuối ô đổi thành nút ✕ (vùng chạm 48dp, `accessibilityLabel` "Xóa ngày sinh"), bấm thì gửi `null`; chưa có ngày thì hiện biểu tượng lịch.
+- "Giới tính": tùy chọn, một hàng ba nút "Nam" (`male`), "Nữ" (`female`), "Khác" (`other`). Bấm lại lựa chọn đang chọn thì bỏ, gửi `null`.
+- "Ngày tham gia": chỉ đọc, phần ngày của `formatDateTimeUtc(createdAtUtc)` (giờ Việt Nam, không hiện giờ).
+- "Lưu thông tin" → `PUT /me` với `{ fullName, phoneNumber, dateOfBirth, gender }`. Thành công: toast "Đã lưu thông tin.", `setQueryData(usersQueryKeys.me(), me)`, và `authStore.user.fullName` = tên mới để đầu tab đổi ngay. Ảnh đầu tab lấy từ cùng cache `me`.
+
+**Khối 2 — Đổi mật khẩu**
+
+- Dòng nhắc: "Đổi mật khẩu sẽ đăng xuất các phiên khác. Phiên này vẫn dùng được tới khi hết hạn đăng nhập."
+- "Mật khẩu hiện tại", "Mật khẩu mới", "Xác nhận mật khẩu mới". Mỗi ô có nút Eye/EyeOff, `accessibilityLabel` "Hiện mật khẩu" / "Ẩn mật khẩu", vùng chạm ≥ 48dp. Mật khẩu mới: 8–128 ký tự, có ít nhất một chữ và một số, khác mật khẩu hiện tại, khớp ô xác nhận (cùng BR-AUTH-10, BR-AUTH-16).
+- "Đổi mật khẩu" → `PUT /me/password`. `204`: xóa trắng ba ô, toast "Đổi mật khẩu thành công. Các phiên khác đã được thu hồi." Không gọi `signOut` ngay (access token còn hạn, giống web). Refresh token trong secure store đã bị server thu hồi, nên lần mở app sau hoặc lần làm mới phiên sẽ về màn đăng nhập.
+
+**Dữ liệu**
+
+| Việc                | Endpoint            | Query key                                           |
+| ------------------- | ------------------- | --------------------------------------------------- |
+| Mở tab đã đăng nhập | `GET /me`           | `usersQueryKeys.me()`                               |
+| Lưu hồ sơ           | `PUT /me`           | ghi đè `me`, đồng thời `invalidateQueries` cùng key |
+| Đổi mật khẩu        | `PUT /me/password`  | không đổi cache hồ sơ                               |
+| Đổi ảnh             | `POST /me/avatar`   | ghi `avatarUrl` vào cache `me`                      |
+| Xóa ảnh             | `DELETE /me/avatar` | `avatarUrl` = `null` trong cache `me`               |
+
+Không có bộ lọc, sắp xếp hay phân trang. Không đưa trạng thái form lên URL.
+
+**Mã lỗi → xử lý.** So khớp `errors[].code` với mã backend thật (`UserErrors`, `ImageUploadReader`), không dùng mã cũ trong bảng SCR-W22 (`password_mismatch`, `invalid_file_type`). `usersErrorCodes` thêm `currentPasswordIncorrect`, `passwordUnchanged`, `imageRequired`, `imageTooLarge`, `imageTypeNotSupported`, `imageStorageUnavailable`. Giữ các khóa cũ để web không vỡ. `validation_error` gắn theo `field` (PascalCase → chữ thường ký tự đầu), giống `ChangePasswordCard`.
+
+| Mã                                                              | Thao tác                | Hành vi                                                                                                                                                           |
+| --------------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `validation_error`                                              | Lưu hồ sơ, đổi mật khẩu | Lỗi dưới ô theo `field` (`FullName`, `DateOfBirth`, `Gender`, `CurrentPassword`, `NewPassword`, `ConfirmPassword`). Ô không khớp → toast với `message` của server |
+| `phone_exists`                                                  | Lưu hồ sơ               | Không xảy ra khi gửi lại đúng SĐT cũ. Nếu có → toast "Số điện thoại đã được dùng cho tài khoản khác."                                                             |
+| `current_password_incorrect`                                    | Đổi mật khẩu            | Lỗi dưới "Mật khẩu hiện tại": "Mật khẩu hiện tại không đúng."                                                                                                     |
+| `password_unchanged`                                            | Đổi mật khẩu            | Lỗi dưới "Mật khẩu mới": "Mật khẩu mới phải khác mật khẩu hiện tại."                                                                                              |
+| `rate_limited`                                                  | Đổi mật khẩu            | toast "Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau ít phút."                                                                                              |
+| `image_required`, `image_too_large`, `image_type_not_supported` | Đổi ảnh                 | toast dùng `message` của server. Ảnh cũ giữ nguyên                                                                                                                |
+| `image_storage_unavailable`                                     | Đổi ảnh                 | toast "Kho ảnh tạm không dùng được. Vui lòng thử lại sau." Ảnh cũ giữ nguyên                                                                                      |
+| `user_not_found`                                                | Mở tab hoặc lưu         | toast "Không tìm thấy tài khoản." và nút "Đăng xuất"                                                                                                              |
+| Mất mạng, 500                                                   | Mọi thao tác            | toast lỗi mạng theo quy ước màn auth. Nút lưu không kẹt ở trạng thái loading                                                                                      |
+
+`401` để lớp phiên hiện tại làm mới token. Ba vai trò đều có `account.self`, nên `403` không phải luồng của màn này.
+
+**Trạng thái**
+
+- Đang tải `GET /me` trên trang cập nhật: `AppLoader` ở chỗ form. Đầu tab vẫn hiện tên từ `authStore` nếu đã có.
+- Lỗi tải trên trang cập nhật: `AppNotice` và nút "Thử lại" (gọi lại query).
+- Có dữ liệu: form điền sẵn. `dateOfBirth` và `gender` null hiện "Chưa cập nhật" / không nút nào được chọn.
+- Phản hồi sau thao tác (lưu, đổi mật khẩu, đổi/xóa ảnh, lỗi server không gắn được vào ô): toast (`toast.success/error` từ `stores/toastStore`, hiện bằng `AppToastHost` trong `AppProviders`), trượt xuống dưới thanh trạng thái, chạm để đóng, thành công tự ẩn sau 3 giây, lỗi sau 5 giây. Lỗi theo ô vẫn hiện dưới ô.
+- Đang lưu, đang đổi mật khẩu: nút tương ứng `loading`, các ô của khối đó không sửa được. Đang tải hoặc xóa ảnh: lớp mờ và vòng xoay trên ảnh (`accessibilityLabel` "Đang cập nhật ảnh đại diện"), nút máy ảnh mờ và `busy`.
+
+**Responsive và a11y.** Một cột từ 320dp, nút chính rộng hết hàng, không cuộn ngang. `AppScreen` xử lý bàn phím. Ảnh là minh họa (`accessible={false}`) vì tên đã có chữ. Lỗi có `accessibilityRole="alert"`. Sau lỗi server, focus vào ô lỗi đầu tiên.
+
+**Thiếu từ backend:** không chặn. `PUT /me` vẫn cho đổi SĐT; form không gửi SĐT mới. Muốn khóa ở server thì sửa `UpdateProfileRequest` trong một task backend riêng. `UsersApi.uploadAvatar` hiện chỉ nhận `File | Blob`. React Native cần `{ uri, name, type }` gắn vào `FormData` trường `file`. Mở rộng chữ ký trong `packages/api-client` (web vẫn truyền `File`), kèm test cả hai dạng. Không đổi API.
+
+**Thư viện.** Cài bằng `npx expo install`: `expo-image-picker`, `expo-image-manipulator` (chuẩn hóa ảnh đại diện), `expo-file-system` (`File` để gửi ảnh qua `expo/fetch`), `@react-native-community/datetimepicker`. Không thêm thư viện khác. Jest mock cả bốn.
+
+### Kiểm thử giao diện (mobile, UC-SPA-04)
+
+Jest + Testing Library Native, `fetch` giả. `AUTH-UI-T60`…`T69` giữ cho đăng nhập.
+
+| Mã          | Tình huống                                                                                   | Kết quả mong đợi                                                                                                                                                                 |
+| ----------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AUTH-UI-T70 | `UsersApi.uploadAvatar` với `File` và với `{ uri, name, type }`                              | Cả hai gửi `POST /me/avatar`, multipart trường `file`                                                                                                                            |
+| AUTH-UI-T71 | Tab đã đăng nhập: tải được / lỗi + Thử lại / ngày sinh và giới tính null / đủ dữ liệu và ảnh | Đủ 4 trạng thái. Email, SĐT, vai trò, ngày tham gia chỉ đọc                                                                                                                      |
+| AUTH-UI-T72 | Họ tên trống hoặc quá 100 ký tự                                                              | Lỗi dưới ô, không gọi `PUT /me`                                                                                                                                                  |
+| AUTH-UI-T73 | Lưu thành công                                                                               | `PUT` gửi SĐT cũ kèm họ tên, ngày sinh, giới tính. Cache `me` và `authStore.user.fullName` đổi. toast đã lưu                                                                     |
+| AUTH-UI-T74 | `validation_error` field `DateOfBirth`; `phone_exists`                                       | Lỗi dưới ngày sinh / toast SĐT đã dùng                                                                                                                                           |
+| AUTH-UI-T75 | Đổi mật khẩu: quá ngắn, không có số, xác nhận lệch; rồi `204`                                | Chặn trước khi gọi API. Thành công thì xóa ba ô, không `signOut`                                                                                                                 |
+| AUTH-UI-T76 | `current_password_incorrect`, `password_unchanged`, `rate_limited`                           | Đúng ô hoặc toast tần suất                                                                                                                                                       |
+| AUTH-UI-T77 | Ảnh HEIC 4032 px; ảnh máy không đọc được; upload `200`; `image_storage_unavailable`          | Thu về 512 px JPEG, gửi `avatar.jpg` / `image/jpeg`, đang tải có vòng xoay và ảnh xem trước, xong có thông báo. Ảnh không đọc được thì báo, không gọi API. Lỗi kho giữ ảnh cũ    |
+| AUTH-UI-T79 | Đã có ảnh, bấm máy ảnh rồi "Xóa ảnh"                                                         | `Alert` có ba lựa chọn; `DELETE /me/avatar`, thông báo đã xóa                                                                                                                    |
+| AUTH-UI-T80 | Mở lịch ngày sinh rồi bấm Hủy                                                                | Ngày sinh giữ nguyên (không thành hôm nay)                                                                                                                                       |
+| AUTH-UI-T78 | Tab khách đã đăng nhập, tab nhân viên, tab chủ spa                                           | Cả ba không hiện form trên tab. Bấm cụm thông tin mở `/account` trên stack gốc. Tab vẫn còn lối tắt cũ cùng Đăng xuất. Khách chưa đăng nhập không có form và không gọi `GET /me` |
 
 ## Câu hỏi còn mở
 
