@@ -688,6 +688,222 @@ Phạm vi: Quản lý dịch vụ và danh mục (`SCR-W31` — `/owner/services
 
 ---
 
+## Giao diện (mobile)
+
+Phạm vi: **UC-SPA-06** và **UC-SPA-07** trên nền tảng Mobile (`apps/mobile`), gồm 4 màn hình công khai thuộc Public Stack `SCR-M02..SCR-M05`.
+Mẫu Stitch: Không có Stitch MCP trực tiếp trong môi trường agent; tuân thủ Design Tokens mobile (`@theme/index.ts`: colors, spacing, radius, typography), các common components chuẩn `AppScreen`, `AppInput`, `AppButton`, `AppNotice` và touch target tối thiểu 48dp.
+Feature theo glossary:
+- `apps/mobile/src/features/services/`: Danh sách dịch vụ (`ServicesListScreen`), chi tiết dịch vụ (`ServiceDetailScreen`), thẻ dịch vụ (`ServiceCard`), thanh danh mục cuộn ngang (`CategoryPills`), bộ lọc giá (`PriceFilterSheet`), ô tìm kiếm (`CatalogSearchInput`).
+- `apps/mobile/src/features/packages/`: Danh sách gói (`PackagesListScreen`), chi tiết gói (`PackageDetailScreen`), thẻ gói (`PackageCard`), lộ trình liệu trình (`PackageRoadmapItem`).
+- Component dùng chung: `apps/mobile/src/components/common/` (`AppScreen`, `AppInput`, `AppButton`, `AppText`, `AppTextButton`, `AppNotice`).
+- Client API: `apps/mobile/src/lib/api/catalog.ts` dùng `getCatalogApi()` từ `@spa/api-client`.
+- Formatting: `formatCurrency(amount)` (`vi-VN` đ) và `formatDuration(minutes)` (`45` $\rightarrow$ "45 phút", `90` $\rightarrow$ "1 giờ 30 phút") đặt trong `apps/mobile/src/lib/formatting/formatters.ts`.
+
+---
+
+### Hợp đồng dữ liệu dùng chung (Mobile)
+
+- **Endpoints & Query Keys (TanStack Query):**
+  - `GET /services?search=&category=&minPrice=&maxPrice=&pageNumber=&pageSize=` $\rightarrow$ `catalogQueryKeys.services(params)`
+  - `GET /services/{id}` $\rightarrow$ `catalogQueryKeys.service(id)`
+  - `GET /service-categories` $\rightarrow$ `catalogQueryKeys.categories`
+  - `GET /packages?search=&minPrice=&maxPrice=&pageNumber=&pageSize=` $\rightarrow$ `catalogQueryKeys.packages(params)`
+  - `GET /packages/{id}` $\rightarrow$ `catalogQueryKeys.package(id)`
+  - `GET /catalog/suggestions?search=` $\rightarrow$ `catalogQueryKeys.suggestions(search)`
+- **Chính sách cache:** `staleTime: 60 * 1000` (60 giây), `placeholderData: keepPreviousData` cho danh sách để tránh giật giao diện khi chuyển trang hoặc đổi bộ lọc. Chi tiết lỗi 404 không retry (`retry: false`).
+- **Trạng thái & Phân quyền:** Mọi vai trò (`GUEST`, `CUS`, `STF`, `OWN`) đều truy cập được các màn hình này. Người dùng chưa đăng nhập hoặc khách hàng chỉ thấy mục `status = 'on_sale'`; nếu chủ spa đăng nhập thì thấy cả mục `discontinued` (BR-CAT-01).
+
+---
+
+### SCR-M02 — Tìm kiếm dịch vụ (Mobile)
+
+- **Mã & Route:** `SCR-M02` · `app/(public)/services/index.tsx`
+- **Vai trò:** Khách vãng lai (`GUEST`), Khách hàng (`CUS`), Nhân viên (`STF`), Chủ spa (`OWN`).
+- **Layout:** `PublicStackLayout` (Expo Router Stack, Header tiêu đề "Dịch vụ spa", nút back quay lại trang trước nếu có).
+- **Mẫu bố cục:** `FlatList` danh sách dịch vụ + ô tìm kiếm phía trên + thanh chip danh mục cuộn ngang (`CategoryPills`) + Bottom Sheet lọc khoảng giá (`PriceFilterSheet`).
+- **Bố cục & Thành phần:**
+  - **Thanh tìm kiếm (`CatalogSearchInput`):**
+    - `AppInput` với icon kính lúp `Search` (`lucide-react-native`) ở bên trái (`leading`), nút xoá chữ (icon `X`) ở bên phải (`trailing`) khi có text.
+    - Placeholder: "Tìm kiếm dịch vụ chăm sóc...".
+    - Debounce 300 ms trước khi gửi query `search` lên server.
+  - **Thanh danh mục cuộn ngang (`CategoryPills`):**
+    - `ScrollView` ngang (`horizontal`, `showsHorizontalScrollIndicator={false}`), bọc trong container đệm chuẩn.
+    - Chip đầu tiên: "Tất cả" (`category = undefined`).
+    - Các chip tiếp theo: Lấy từ `useServiceCategories()`.
+    - Chip đang chọn: Nền `colors.primary`, chữ trắng, bo tròn `radius.full`.
+    - Chip chưa chọn: Nền `colors.surface`, viền `colors.border`, chữ `colors.text`. Vùng bấm $\ge 48$dp touch target (padding chuẩn).
+  - **Thanh tóm tắt & Mở bộ lọc giá:**
+    - Hàng phụ hiển thị số lượng kết quả (ví dụ: "Tìm thấy 12 dịch vụ") và nút mở lọc giá: Pill "Khoảng giá" (icon `SlidersHorizontal`), đổi màu nổi bật khi đang áp dụng `minPrice` hoặc `maxPrice`.
+  - **Bottom Sheet / Modal lọc giá (`PriceFilterSheet`):**
+    - Cho phép nhập "Giá từ" (`minPrice`) và "Giá đến" (`maxPrice`) dạng số VND.
+    - Các mốc chọn nhanh: "Dưới 300.000đ", "300.000đ - 700.000đ", "Trên 700.000đ".
+    - Hai nút thao tác: "Đặt lại" (xoá lọc giá) và "Áp dụng" (`AppButton`, đóng modal và kích hoạt query).
+  - **Thẻ dịch vụ (`ServiceCard`):**
+    - Bố cục thẻ nằm ngang hoặc dọc tối ưu cho ngón tay cái:
+      - Ảnh đại diện dịch vụ (tỉ lệ 16:9 hoặc khối vuông $88 \times 88$ dp bo góc `radius.medium`), `resizeMode="cover"`.
+      - Fallback khi không có ảnh (`imageUrl = null`): Icon `Sparkles` trên nền nhạt `colors.card`.
+      - Tên dịch vụ: `typography.subtitle` (in đậm, tối đa 2 dòng).
+      - Tag danh mục nhỏ (`category`).
+      - Dòng thông tin: Icon `Clock` nhỏ + thời lượng (`formatDuration(durationMinutes)`).
+      - Giá dịch vụ: `formatCurrency(price)` cỡ to, màu `colors.primary`, in đậm.
+      - Nếu `status === 'discontinued'`: Hiển thị badge nhỏ "Ngừng bán" (`tone="neutral"`).
+      - Toàn bộ thẻ bọc trong `Pressable` điều hướng tới `/(public)/services/${service.id}`. Touch target phản hồi thị giác `opacity: 0.7`.
+  - **Phân trang & Kéo để làm mới:**
+    - Kéo xuống để tải lại danh sách (`RefreshControl` với màu chủ đạo).
+    - Cuộn tới đáy danh sách (`onEndReached`): Tải trang kế tiếp (`pageNumber + 1`) nếu còn trang (`pageNumber < totalPages`), hiển thị `ActivityIndicator` ở chân trang.
+- **Trạng thái:**
+  - **Đang tải (Loading):** Hiển thị danh sách 4 thẻ skeleton placeholder mô phỏng bố cục thẻ dịch vụ.
+  - **Lỗi (Error):** Hiển thị `AppNotice` dạng cảnh báo lỗi, nút "Thử lại" gọi hàm `refetch()`.
+  - **Rỗng (Empty):** Hình minh hoạ / Icon `SearchX` + dòng thông báo "Không tìm thấy dịch vụ phù hợp với yêu cầu tìm kiếm" + nút "Xoá bộ lọc".
+  - **Thành công:** `FlatList` các thẻ dịch vụ mượt mà.
+
+---
+
+### SCR-M03 — Chi tiết dịch vụ (Mobile)
+
+- **Mã & Route:** `SCR-M03` · `app/(public)/services/[serviceId].tsx`
+- **Vai trò:** Khách vãng lai (`GUEST`), Khách hàng (`CUS`), Nhân viên (`STF`), Chủ spa (`OWN`).
+- **Layout:** `PublicStackLayout` (Expo Router Stack, Header có nút Back $\leftarrow$, tiêu đề "Chi tiết dịch vụ", nút Chia sẻ ở bên phải nếu có).
+- **Mẫu bố cục:** Trang chi tiết cuộn dọc (`ScrollView`) + Thanh hành động ghim cố định đáy màn hình (Sticky Bottom CTA Bar).
+- **Bố cục & Thành phần:**
+  - **Ảnh đại diện lớn (Hero Image):**
+    - Chiều cao $240$ dp, hiển thị ảnh chất lượng cao bo tròn 2 góc dưới.
+    - Fallback: Nền màu thương hiệu kèm icon `Sparkles`.
+    - Badge trạng thái nếu `discontinued`: Huy hiệu "Tạm ngừng bán" phủ góc ảnh.
+  - **Thông tin tóm tắt dịch vụ:**
+    - Tên dịch vụ: `typography.heading` (cỡ chữ 22–24, màu chữ nổi bật).
+    - Tag danh mục (`category`) kèm icon `Tag`.
+    - Thời lượng dịch vụ: Icon `Clock` + `formatDuration(durationMinutes)`.
+    - Giá niêm yết: `formatCurrency(price)` (to, đậm, màu `colors.primary`).
+  - **Nội dung mô tả (`description`):**
+    - Khối tiêu đề: "Mô tả dịch vụ".
+    - Đoạn văn bản mô tả chi tiết công dụng, công nghệ sử dụng và lợi ích của liệu trình.
+  - **Quy trình các bước thực hiện tiêu chuẩn:**
+    - Khối tiêu đề: "Quy trình thực hiện".
+    - Danh sách 5 bước chuẩn của liệu trình spa (ví dụ: 1. Soi da & tư vấn $\rightarrow$ 2. Làm sạch sâu $\rightarrow$ 3. Chăm sóc chuyên sâu $\rightarrow$ 4. Đắp mặt nạ phục hồi $\rightarrow$ 5. Bôi kem dưỡng & dặn dò).
+  - **Lưu ý & Chính sách hẹn:**
+    - Ghi chú: Đến trước 10 phút, hỗ trợ đổi giờ hẹn trước tối thiểu 2 giờ.
+  - **Thanh CTA ghim đáy (Sticky Bottom Bar):**
+    - Bố cục nằm ngang cố định sát cạnh dưới (đáp ứng `useSafeAreaInsets().bottom`):
+      - Cột trái: Giá dịch vụ `formatCurrency(price)` + chữ phụ "Thời lượng: X phút".
+      - Nút CTA bên phải: "Đặt lịch ngay" (`AppButton`, variant `primary`, chiều cao $\ge 48$dp, icon `Calendar`).
+      - Xử lý hành động bấm:
+        - Nếu dịch vụ `discontinued`: Nút bị vô hiệu hóa (`disabled`), nhãn "Tạm ngừng phục vụ".
+        - Nếu `on_sale`: Điều hướng sang màn hình đặt lịch `/(customer)/booking/new?serviceId=${serviceId}` (nếu đã đăng nhập) hoặc điều hướng sang luồng đăng nhập yêu cầu tiếp tục.
+- **Trạng thái:**
+  - **Đang tải:** Skeleton hiển thị ảnh giả lập + các dòng tiêu đề và mô tả.
+  - **404 (Không tìm thấy):** `AppNotice` tone error "Dịch vụ không tồn tại hoặc đã ngừng phục vụ", kèm nút "Quay lại danh sách".
+  - **Lỗi mạng:** `AppNotice` "Không thể tải thông tin dịch vụ", kèm nút "Thử lại".
+  - **Thành công:** Toàn bộ thông tin chi tiết và thanh CTA đáy.
+
+---
+
+### SCR-M04 — Tìm kiếm gói dịch vụ (Mobile)
+
+- **Mã & Route:** `SCR-M04` · `app/(public)/packages/index.tsx`
+- **Vai trò:** Khách vãng lai (`GUEST`), Khách hàng (`CUS`), Nhân viên (`STF`), Chủ spa (`OWN`).
+- **Layout:** `PublicStackLayout` (Expo Router Stack, Header tiêu đề "Gói chăm sóc", nút back).
+- **Mẫu bố cục:** `FlatList` danh sách gói + ô tìm kiếm + bộ lọc khoảng giá. (Lưu ý: Gói dịch vụ không có danh mục theo RS-14).
+- **Bố cục & Thành phần:**
+  - **Thanh tìm kiếm (`CatalogSearchInput`):**
+    - `AppInput` icon `Search`, placeholder "Tìm gói chăm sóc, liệu trình...", debounce 300 ms.
+  - **Thanh mở bộ lọc giá:**
+    - Nút mở `PriceFilterSheet` để lọc theo `minPrice`, `maxPrice`.
+  - **Thẻ gói dịch vụ (`PackageCard`):**
+    - Thiết kế dạng thẻ card nổi bật tính chất tiết kiệm và trọn gói:
+      - Ảnh đại diện gói: Ảnh riêng của gói hoặc fallback ảnh của dịch vụ thành phần đầu tiên có ảnh (BR-CAT-07).
+      - Tên gói: `typography.subtitle` (đậm).
+      - Huy hiệu thông số:
+        - Tổng số buổi: Icon `Layers` + `{totalSessions} buổi`.
+        - Thời hạn: Icon `Calendar` + `{validityDays} ngày`.
+      - Giá gói: `formatCurrency(price)` màu `colors.primary`. Nếu có giá gốc `retailPrice` $\rightarrow$ hiển thị giá gạch ngang kèm huy hiệu % tiết kiệm.
+      - Thời gian mở bán: Nếu có giới hạn ngày, hiển thị dòng nhỏ "Mở bán đến dd/MM/yyyy".
+      - Toàn bộ thẻ bấm vào để xem chi tiết `/(public)/packages/${package.id}`. Touch target $\ge 48$dp.
+  - **Phân trang & Kéo làm mới:**
+    - `RefreshControl` kéo để làm mới danh sách.
+    - `onEndReached` cuộn tải tiếp các trang sau.
+- **Trạng thái:**
+  - **Đang tải:** Danh sách thẻ skeleton giả lập gói.
+  - **Lỗi:** `AppNotice` cảnh báo lỗi kèm nút "Thử lại".
+  - **Rỗng:** Icon `PackageSearch` + "Chưa có gói chăm sóc nào phù hợp" + nút "Xoá bộ lọc".
+  - **Thành công:** `FlatList` các gói dịch vụ ưu đãi.
+
+---
+
+### SCR-M05 — Chi tiết gói dịch vụ (Mobile)
+
+- **Mã & Route:** `SCR-M05` · `app/(public)/packages/[packageId].tsx`
+- **Vai trò:** Khách vãng lai (`GUEST`), Khách hàng (`CUS`), Nhân viên (`STF`), Chủ spa (`OWN`).
+- **Layout:** `PublicStackLayout` (Expo Router Stack, Header nút Back $\leftarrow$, tiêu đề "Chi tiết gói chăm sóc").
+- **Mẫu bố cục:** Trang chi tiết cuộn dọc (`ScrollView`) + Lộ trình các buổi dịch vụ thành phần (Roadmap Timeline) + Thanh CTA ghim đáy.
+- **Bố cục & Thành phần:**
+  - **Ảnh đại diện lớn (Hero Image):**
+    - Chiều cao $240$ dp, hiển thị ảnh gói (hoặc fallback ảnh dịch vụ thành phần đầu tiên theo BR-CAT-07).
+  - **Thông tin tóm tắt gói:**
+    - Tên gói: `typography.heading` (cỡ chữ to, nổi bật).
+    - Các chip thông số: Tổng số buổi (`totalSessions` buổi) · Thời hạn sử dụng (`validityDays` ngày) · Hạn mở bán (nếu có).
+    - So sánh giá: Giá gói trọn gói `formatCurrency(price)` (to, đậm), hiển thị kèm giá mua lẻ từng buổi gạch ngang và số tiền tiết kiệm.
+  - **Mô tả gói (`description`):** Đoạn giới thiệu mục đích, kết quả cam kết của gói liệu trình.
+  - **Lộ trình các buổi chăm sóc (`PackageRoadmap`):**
+    - Tiêu đề: "Lộ trình liệu trình ({items.length} giai đoạn / buổi)".
+    - Danh sách các mục `items[]` theo đúng thứ tự `sortOrder`:
+      - Cột mốc số thứ tự (ví dụ: Buổi 01, Buổi 02...).
+      - Tên dịch vụ thành phần (`serviceName`).
+      - Số buổi thực hiện: `{sessionCount} buổi`.
+      - Khoảng cách khuyến nghị: "Cách buổi trước tối thiểu {minDaysBetweenSessions} ngày".
+      - Ghi chú kỹ thuật viên / liệu trình (`note`): Hiển thị hướng dẫn riêng cho buổi.
+      - Cảnh báo trạng thái dịch vụ (Q-14): Nếu `serviceStatus === 'discontinued'`, hiển thị nhãn cảnh báo màu xám "Dịch vụ đã ngừng bán lẻ (vẫn được phục vụ trong gói)".
+  - **Chính sách & Điều khoản gói:**
+    - Quy định kích hoạt, thời hạn bảo lưu, chính sách không hoàn lại tiền mặt.
+  - **Thanh CTA ghim đáy (Sticky Bottom Bar):**
+    - Cố định sát cạnh đáy (an toàn safe area):
+      - Cột trái: Giá trọn gói `formatCurrency(price)` + "Trọn gói {totalSessions} buổi".
+      - Nút CTA bên phải: "Mua gói / Đăng ký" (`AppButton`, variant `primary`, chiều cao $\ge 48$dp, icon `Sparkles`).
+      - Xử lý hành động bấm:
+        - Điều hướng sang quy trình mua gói / đặt lịch tư vấn `/(customer)/packages/checkout?packageId=${packageId}` hoặc liên hệ đặt hẹn.
+- **Trạng thái:**
+  - **Đang tải:** Skeleton chi tiết gói và timeline lộ trình.
+  - **404:** `AppNotice` "Gói dịch vụ không tồn tại hoặc đã hết hạn mở bán" kèm nút "Quay lại danh sách gói".
+  - **Lỗi mạng:** `AppNotice` "Không thể tải thông tin gói dịch vụ" kèm nút "Thử lại".
+  - **Thành công:** Đầy đủ thông tin và lộ trình chi tiết.
+
+---
+
+### Bảng mã lỗi và cách xử lý giao diện Mobile
+
+| Mã lỗi backend | Ngữ cảnh áp dụng | Cách xử lý trên màn hình Mobile |
+| --- | --- | --- |
+| `service_not_found` (404) | Mở màn hình chi tiết dịch vụ `SCR-M03` | Hiển thị `AppNotice` lỗi toàn màn hình: "Dịch vụ không tồn tại hoặc đã ngừng phục vụ." Nút "Về danh sách dịch vụ" đưa về `/(public)/services`. Không retry query. |
+| `package_not_found` (404) | Mở màn hình chi tiết gói `SCR-M05` | Hiển thị `AppNotice` lỗi: "Gói chăm sóc không tồn tại hoặc đã kết thúc mở bán." Nút "Về danh sách gói" đưa về `/(public)/packages`. Không retry query. |
+| `validation_error` (400) | Bộ lọc giá (giá âm, `minPrice > maxPrice`) | Trong `PriceFilterSheet`: Hiển thị lỗi form trực tiếp dưới ô nhập giá; chặn nút "Áp dụng" khi `minPrice > maxPrice`. |
+| `Network error` / Timeout | Mất kết nối internet hoặc API không phản hồi | `AppNotice` tone error trên đầu danh sách / màn hình: "Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng." Kèm nút "Thử lại" (`refetch`). |
+| `unauthorized` (401) | Khách vãng lai bấm nút "Đặt lịch ngay" / "Mua gói" | Điều hướng mượt mà sang `/(public)/login` kèm tham số `redirect` để sau khi đăng nhập tự động quay lại màn hình chi tiết. |
+
+---
+
+### Bảng kiểm thử giao diện Mobile (`CAT-M-UI-T01...T16`)
+
+| Mã kiểm thử | Màn hình | Tình huống kiểm thử | Kết quả mong đợi |
+| --- | --- | --- | --- |
+| CAT-M-UI-T01 | SCR-M02 | Mở danh sách dịch vụ lần đầu | Hiển thị trạng thái đang tải (Skeletons), sau đó hiển thị danh sách thẻ dịch vụ kèm ảnh, tên, thời lượng, giá và tag danh mục. |
+| CAT-M-UI-T02 | SCR-M02 | Nhập từ khóa tìm kiếm vào ô `CatalogSearchInput` | Sau debounce 300ms, gọi API `GET /services?search=...`, danh sách cập nhật đúng kết quả khớp từ khóa. |
+| CAT-M-UI-T03 | SCR-M02 | Bấm chọn chip danh mục trên thanh `CategoryPills` | Chip được chọn đổi màu nổi bật (`colors.primary`), gọi `GET /services?category=...`, danh sách tải lại và cuộn lên đầu (trang 1). |
+| CAT-M-UI-T04 | SCR-M02 | Mở `PriceFilterSheet` và chọn khoảng giá | Đặt `minPrice`/`maxPrice`, bấm "Áp dụng", gọi `GET /services` kèm khoảng giá; nút lọc đổi màu báo có bộ lọc đang bật. |
+| CAT-M-UI-T05 | SCR-M02 | Tìm kiếm với từ khóa không có kết quả | Hiển thị trạng thái rỗng (`EmptyState`), thông báo thân thiện và có nút "Xoá bộ lọc". |
+| CAT-M-UI-T06 | SCR-M02 | Kéo xuống để làm mới danh sách (Pull-to-refresh) | Kích hoạt `RefreshControl`, tải lại dữ liệu mới nhất từ server và đóng animation xoay khi hoàn tất. |
+| CAT-M-UI-T07 | SCR-M02 | Cuộn xuống cuối danh sách (Infinite scroll) | Kích hoạt `onEndReached`, hiển thị indicator tải trang tiếp theo và nối kết quả mới vào danh sách. |
+| CAT-M-UI-T08 | SCR-M02 | Bấm vào một thẻ dịch vụ | Điều hướng sang màn hình chi tiết `/(public)/services/[serviceId]` tương ứng. |
+| CAT-M-UI-T09 | SCR-M03 | Mở màn hình chi tiết dịch vụ với `serviceId` hợp lệ | Hiển thị ảnh đại diện hero, tên, danh mục, thời lượng, giá, mô tả đầy đủ, quy trình 5 bước và thanh CTA đáy. |
+| CAT-M-UI-T10 | SCR-M03 | Mở chi tiết dịch vụ với `serviceId` không tồn tại (404) | Hiển thị `AppNotice` lỗi `service_not_found`, không crash app, có nút quay lại danh sách dịch vụ. |
+| CAT-M-UI-T11 | SCR-M03 | Dịch vụ có trạng thái `discontinued` (ngừng bán) | Hiển thị badge "Ngừng bán", nút CTA đặt lịch bị vô hiệu hóa (`disabled`) với nhãn "Tạm ngừng phục vụ". |
+| CAT-M-UI-T12 | SCR-M03 | Bấm nút "Đặt lịch ngay" khi dịch vụ đang bán | Khách hàng đã đăng nhập $\rightarrow$ chuyển sang luồng đặt hẹn; khách vãng lai $\rightarrow$ gợi ý đăng nhập hoặc đặt lịch nhanh. |
+| CAT-M-UI-T13 | SCR-M04 | Mở danh sách gói dịch vụ lần đầu | Hiển thị danh sách các thẻ gói với tên, tổng số buổi, thời hạn ngày, giá gói và % tiết kiệm nếu có. |
+| CAT-M-UI-T14 | SCR-M04 | Lọc gói theo từ khóa và khoảng giá | Gọi `GET /packages` kèm tham số lọc, danh sách cập nhật mượt mà; đổi bộ lọc quay về trang 1. |
+| CAT-M-UI-T15 | SCR-M05 | Mở chi tiết gói dịch vụ với `packageId` hợp lệ | Hiển thị chi tiết gói, so sánh giá lẻ, điều khoản và danh sách lộ trình các buổi sắp xếp theo thứ tự `sortOrder`. |
+| CAT-M-UI-T16 | SCR-M05 | Gói có dịch vụ thành phần đã ngừng bán (Q-14) | Hiển thị dòng dịch vụ thành phần bình thường kèm badge ghi chú "Dịch vụ đã ngừng bán lẻ", gói vẫn mua được bình thường. |
+
+---
+
 ## Câu hỏi còn mở
 
 - Q-13 (mới): Có tách bảng danh mục dịch vụ (`service_categories` + `category_id`) không? Mặc định: **text tự do, chuẩn hóa khi lưu** (BR-CAT-04).
