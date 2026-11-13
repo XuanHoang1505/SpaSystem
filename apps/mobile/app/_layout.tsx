@@ -19,6 +19,9 @@ export default function RootLayout() {
         <Stack.Screen name="(staff)" options={{ headerShown: false }} />
         <Stack.Screen name="(owner)" options={{ headerShown: false }} />
         <Stack.Screen name="forbidden" options={{ title: 'Không có quyền truy cập' }} />
+        <Stack.Screen name="cart" options={{ headerShown: false }} />
+        <Stack.Screen name="checkout" options={{ headerShown: false }} />
+        <Stack.Screen name="payment" options={{ headerShown: false }} />
       </Stack>
     </AppProviders>
   );
