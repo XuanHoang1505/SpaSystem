@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AppToastHost } from '@components/common/AppToast';
 import { QueryProvider } from './QueryProvider';
 import { SessionBootstrap } from './SessionBootstrap';
 export function AppProviders({ children }: PropsWithChildren) {
@@ -8,6 +9,7 @@ export function AppProviders({ children }: PropsWithChildren) {
       <QueryProvider>
         <SessionBootstrap />
         {children}
+        <AppToastHost />
       </QueryProvider>
     </SafeAreaProvider>
   );
