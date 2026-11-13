@@ -330,23 +330,23 @@ Ghi chú so với `data_api.py` (sửa dòng tại chỗ để giữ mã `SPA-AP
 
 ## Cấu hình
 
-| Biến `.env`                   | Khóa cấu hình                     | Mặc định (`appsettings.json`)                          |
-| ----------------------------- | --------------------------------- | ------------------------------------------------------ |
-| `VNPAY_TMN_CODE`              | `Vnpay:TmnCode`                   | — (bắt buộc cho thanh toán)                            |
-| `VNPAY_HASH_SECRET`           | `Vnpay:HashSecret`                | — (bắt buộc, chỉ ở `.env`, không bao giờ ghi log)      |
-| — (`appsettings.json`)        | `Vnpay:PaymentUrl`                | `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html`   |
-| — (`appsettings.json`)        | `Vnpay:MinAmount`                 | `5000`                                                 |
-| — (`appsettings.json`)        | `Vnpay:ProcessReturnUrl`          | `false`; `appsettings.Development.json`: `true` (Q-19) |
-| `PAYMENT_PUBLIC_API_BASE_URL` | `Payment:PublicApiBaseUrl`        | — (dev: `https://localhost:7001`)                      |
-| `PAYMENT_WEB_RETURN_URL`      | `Payment:ClientReturnUrls:Web`    | — (dev: `http://localhost:5173/payment/result`)        |
-| `PAYMENT_MOBILE_RETURN_URL`   | `Payment:ClientReturnUrls:Mobile` | — (deep link Expo, đặt khi làm mobile)                 |
-| — (`appsettings.json`)        | `Payment:MaxAttemptsPerOrder`     | `5`                                                    |
-| — (`appsettings.json`)        | `Order:PaymentTimeoutMinutes`     | `15` (Q-03)                                            |
-| — (`appsettings.json`)        | `Cart:MaxItems`                   | `20`                                                   |
-| — (`appsettings.json`)        | `OrderExpiry:Enabled`             | `true` (test tích hợp: `false`)                        |
-| — (`appsettings.json`)        | `OrderExpiry:IntervalSeconds`     | `60`                                                   |
-| — (`appsettings.json`)        | `OrderExpiry:GraceMinutes`        | `5`                                                    |
-| — (`appsettings.json`)        | `OrderExpiry:BatchSize`           | `200`                                                  |
+| Biến `.env`                   | Khóa cấu hình                     | Mặc định (`appsettings.json`)                                                                                                               |
+| ----------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VNPAY_TMN_CODE`              | `Vnpay:TmnCode`                   | — (bắt buộc cho thanh toán)                                                                                                                 |
+| `VNPAY_HASH_SECRET`           | `Vnpay:HashSecret`                | — (bắt buộc, chỉ ở `.env`, không bao giờ ghi log)                                                                                           |
+| — (`appsettings.json`)        | `Vnpay:PaymentUrl`                | `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html`                                                                                        |
+| — (`appsettings.json`)        | `Vnpay:MinAmount`                 | `5000`                                                                                                                                      |
+| — (`appsettings.json`)        | `Vnpay:ProcessReturnUrl`          | `false`; `appsettings.Development.json`: `true` (Q-19)                                                                                      |
+| `PAYMENT_PUBLIC_API_BASE_URL` | `Payment:PublicApiBaseUrl`        | — (dev: `https://localhost:7001`)                                                                                                           |
+| `PAYMENT_WEB_RETURN_URL`      | `Payment:ClientReturnUrls:Web`    | — (dev: `http://localhost:5173/payment/result`)                                                                                             |
+| `PAYMENT_MOBILE_RETURN_URL`   | `Payment:ClientReturnUrls:Mobile` | — (deep link màn kết quả: Expo Go `exp://<IP LAN>:8081/--/payment/result`, bản build `nhunguyetspa://payment/result`; `npm run dev` tự đặt) |
+| — (`appsettings.json`)        | `Payment:MaxAttemptsPerOrder`     | `5`                                                                                                                                         |
+| — (`appsettings.json`)        | `Order:PaymentTimeoutMinutes`     | `15` (Q-03)                                                                                                                                 |
+| — (`appsettings.json`)        | `Cart:MaxItems`                   | `20`                                                                                                                                        |
+| — (`appsettings.json`)        | `OrderExpiry:Enabled`             | `true` (test tích hợp: `false`)                                                                                                             |
+| — (`appsettings.json`)        | `OrderExpiry:IntervalSeconds`     | `60`                                                                                                                                        |
+| — (`appsettings.json`)        | `OrderExpiry:GraceMinutes`        | `5`                                                                                                                                         |
+| — (`appsettings.json`)        | `OrderExpiry:BatchSize`           | `200`                                                                                                                                       |
 
 Đợt 2 thêm (không có biến `.env` mới):
 
@@ -810,3 +810,159 @@ Nhãn trạng thái dùng lại `orderStatusBadge` (Chờ thanh toán `warning`,
 | ORD-UI-T32 | Hủy: lý do rỗng hoặc > 500 ký tự báo lỗi, không gọi API; hợp lệ gọi `POST /orders/{id}/cancel` với lý do đã cắt khoảng trắng, toast, đóng, danh sách tải lại                                                                       |
 | ORD-UI-T33 | Hủy lỗi `409 order_not_cancellable` hiện thông báo trong hộp thoại và làm mới danh sách; `404 order_not_found` toast và đóng                                                                                                       |
 | ORD-UI-T34 | Route `/owner/orders` render trang thật trong `OwnerLayout`, menu "Đơn hàng"; `/owner/payments` không còn                                                                                                                          |
+
+## Giao diện (mobile): Giỏ hàng & Thanh toán (UC-SPA-10, UC-SPA-11)
+
+Phạm vi: Triển khai giao diện Giỏ hàng, Đặt mua & Thanh toán trực tuyến qua cổng VNPay trên nền tảng React Native / Expo (`apps/mobile`), phục vụ khách hàng (`role = customer`) và hỗ trợ chuyển đổi mượt mà từ khách vãng lai.
+
+### SCR-M19a — Giỏ hàng (UC-SPA-10)
+
+- **Mã và route:** `SCR-M19a` · **Route file:** `app/(customer)/cart.tsx` · **Vai trò:** Khách hàng (`role = customer`, quyền `cart.self`). Khách vãng lai truy cập tự động chuyển hướng sang `/(public)/login?redirect=/(customer)/cart`.
+- **Layout:** Customer Stack (tiêu đề "Giỏ hàng", nút quay lại `ArrowLeft`).
+- **Mẫu bố cục:** Danh sách sản phẩm cuộn dọc (`FlatList`) + Thẻ tóm tắt & nút thanh toán dính ở chân màn hình (`StickyBottomBar`).
+- **Dữ liệu:**
+  - `GET /api/v1/me/cart` (`ordersQueryKeys.cart`) qua `OrdersApi.getCart()`.
+  - Hiển thị danh sách các dòng `CartItem`:
+    - Ảnh sản phẩm (80×80dp, bo góc `radius.small`, fallback `Sparkles` icon trên nền `colors.secondary`).
+    - Nhãn loại sản phẩm: Tag "Dịch vụ" (màu xô thơm hữu cơ `#e6ede8`, chữ xanh `#2e593f`) hoặc "Gói liệu trình" (màu mận nhạt, chữ mận).
+    - Tên sản phẩm (`numberOfLines={2}`, font chữ đậm `colors.text`).
+    - Mức giá hiện tại `currentPrice` (`formatCurrency`, 16px đậm `colors.text`).
+    - Cảnh báo đổi giá: Nếu `priceChanged = true` $\rightarrow$ hiện nhãn nhỏ "Giá đã đổi (lúc thêm: {formatCurrency(unitPrice)})" màu cam đất.
+    - Cảnh báo ngừng bán: Nếu `isAvailable = false` $\rightarrow$ làm mờ dòng (opacity 0.5), gắn badge "Ngừng bán", ghi chú "Sản phẩm không còn mở bán, hãy xóa khỏi giỏ".
+    - Nút xóa sản phẩm: Icon `Trash2` (vùng chạm $\ge 48$dp, `accessibilityLabel="Xóa {name} khỏi giỏ hàng"`). Bấm nút mở hộp thoại xác nhận `Alert.alert` ("Xóa khỏi giỏ hàng?", "Bạn có chắc muốn bỏ {name} khỏi giỏ?").
+- **Thanh tổng tiền dính chân màn hình (`StickyBottomBar`):**
+  - Cột trái: Nhãn "Tạm tính ({số lượng còn bán} mục)", mức giá `totalAmount` (20px, font đậm `colors.primary`). Backend chỉ tính tổng tiền của các sản phẩm còn bán.
+  - Cột phải: Nút "Thanh toán" (`AppButton`, variant `primary`, chiều rộng $\ge 140$dp).
+  - Vô hiệu hóa nút khi: Giỏ hàng rỗng, hoặc tất cả sản phẩm đều ngừng bán (`isAvailable = false`). Nếu giỏ có sản phẩm ngừng bán nhưng vẫn còn sản phẩm hợp lệ, nút vẫn bật và có banner cảnh báo phía trên danh sách.
+- **Biểu tượng Giỏ hàng trên Header (`CartBadgeButton`):**
+  - Tích hợp trên thanh header của màn hình Dịch vụ (`SCR-M02`), Chi tiết dịch vụ (`SCR-M03`), Gói (`SCR-M04`), Chi tiết gói (`SCR-M05`).
+  - Hiển thị icon `ShoppingCart` kèm badge số đỏ/mận nếu `itemCount > 0`. Bấm vào điều hướng tới `/(customer)/cart`. Khách chưa đăng nhập bấm vào chuyển tới `/(public)/login?redirect=/(customer)/cart`.
+- **Nút "Thêm vào giỏ" trên màn hình chi tiết:**
+  - Trên `ServiceDetailScreen` (`SCR-M03`) và `PackageDetailScreen` (`SCR-M05`): Nút phụ "Thêm vào giỏ" (icon `ShoppingCart` hoặc nút outline) bên cạnh nút "Đặt lịch ngay" / "Mua gói".
+  - Thao tác: Gọi mutation `POST /me/cart/items`. Thành công hiển thị thông báo "Đã thêm vào giỏ hàng". Nếu sản phẩm đã có (`409 cart_item_exists`), hiển thị thông báo "Sản phẩm đã có trong giỏ hàng".
+- **Hành động & Mutation:**
+
+| Hành động              | Mutation API                                                   | Làm mới dữ liệu                                     |
+| :--------------------- | :------------------------------------------------------------- | :-------------------------------------------------- |
+| Thêm vào giỏ           | `POST /me/cart/items` `{ spaServiceId? \| servicePackageId? }` | `ordersQueryKeys.cart`                              |
+| Xóa khỏi giỏ           | `DELETE /me/cart/items/{itemId}`                               | Cập nhật `ordersQueryKeys.cart` bằng dữ liệu trả về |
+| Chuyển sang thanh toán | Điều hướng `router.push('/(customer)/checkout?source=cart')`   | —                                                   |
+
+- **Mã lỗi & Cách xử lý:**
+  - `404 cart_item_not_found`: Báo thông báo "Sản phẩm không còn trong giỏ", tự động tải lại giỏ hàng.
+  - `400 cart_full`: Báo thông báo "Giỏ hàng đã đầy (tối đa 20 sản phẩm)".
+  - `409 cart_item_exists`: Báo thông báo "Sản phẩm đã có sẵn trong giỏ hàng".
+  - `401 unauthorized`: Hết phiên đăng nhập $\rightarrow$ chuyển hướng về đăng nhập kèm redirect.
+- **Trạng thái giao diện:**
+  - _Đang tải:_ Danh sách 3 thẻ skeleton mô phỏng đúng cấu trúc dòng giỏ hàng + skeleton khối thanh toán.
+  - _Lỗi mạng/hệ thống:_ `AppNotice` tone error "Không thể tải giỏ hàng" kèm nút `AppTextButton` "Thử lại".
+  - _Giỏ hàng rỗng:_ Icon `ShoppingCart` rỗng lớn mờ, tiêu đề "Giỏ hàng của bạn đang trống", mô tả "Hãy chọn dịch vụ hoặc gói chăm sóc phù hợp cho bản thân", 2 nút CTA `AppButton` "Khám phá dịch vụ" (`/(public)/services`) và "Xem gói liệu trình" (`/(public)/packages`).
+  - _Có dữ liệu:_ Danh sách cuộn mượt mà với pull-to-refresh.
+
+---
+
+### SCR-M19b — Thanh toán trực tuyến (UC-SPA-11)
+
+- **Mã và route:** `SCR-M19b` · **Route file:** `app/(customer)/checkout.tsx` · **Vai trò:** Khách hàng (`role = customer`, quyền `order.self`).
+- **Layout:** Customer Stack (tiêu đề "Xác nhận & Thanh toán", nút quay lại).
+- **Tham số nhận vào (Query Params):**
+  - Chế độ 1 — Chuẩn bị đơn: `?source=cart` hoặc `?source=buy_now&spaServiceId=...` hoặc `?source=buy_now&servicePackageId=...`.
+  - Chế độ 2 — Thanh toán đơn có sẵn: `?orderId=...`.
+  - Tham số không hợp lệ $\rightarrow$ hiển thị thông báo lỗi "Liên kết thanh toán không hợp lệ" kèm nút "Về giỏ hàng".
+- **Mẫu bố cục:** Trang cuộn nội dung (`ScrollView`) gồm các khối thông tin mạch lạc + Chân trang cố định chứa tổng tiền và nút bấm thanh toán.
+- **Nội dung hiển thị:**
+  1. _Khối thời hạn giữ đơn:_
+     - Chế độ chuẩn bị: Hộp thông tin mềm mại (`backgroundColor: colors.surface`, viền mỏng): Icon `Clock` + "Đơn hàng sẽ được giữ chỗ 15 phút để bạn hoàn tất thanh toán."
+     - Chế độ đơn có sẵn (`?orderId=`): Dòng đếm ngược thời gian thanh toán còn lại tính theo `paymentDueAtUtc`. Nếu đã hết hạn $\rightarrow$ báo "Đơn hàng đã hết hạn thanh toán".
+  2. _Khối sản phẩm thanh toán:_
+     - Danh sách tóm tắt các dòng sản phẩm (`OrderPreviewItem`): Tên sản phẩm, nhãn phân loại ("Dịch vụ" / "Gói"), đơn giá, số tiền giảm (nếu có, ví dụ `−50.000 đ`), thành tiền dòng.
+     - Cảnh báo sản phẩm ngừng bán: Nếu `unavailableItems` có phần tử $\rightarrow$ hiển thị cảnh báo `AppNotice` "Các sản phẩm sau không còn mở bán và không được tính vào đơn hàng: {danh sách tên}". Nếu không còn sản phẩm nào khả dụng $\rightarrow$ ẩn nút xác nhận thanh toán, hiện nút "Về giỏ hàng".
+  3. _Khối mã khuyến mãi (chỉ hiện ở chế độ chuẩn bị đơn):_
+     - Ô nhập mã khuyến mãi (`AppInput` tự động in hoa ký tự, cắt khoảng trắng 2 đầu, giới hạn 50 ký tự) kèm nút "Áp dụng".
+     - Khi áp mã thành công: Hiển thị dòng màu xanh lá dịu: "Mã {code}: −{formatCurrency(discountAmount)}" kèm nút text nhỏ "Bỏ mã".
+     - Khi mã không hợp lệ (`promotionError` từ backend): Hiển thị thông báo lỗi trực tiếp màu đỏ dưới ô nhập, các số tiền giữ nguyên không chiết khấu.
+  4. _Khối phương thức thanh toán:_
+     - Thẻ lựa chọn phương thức:
+       - **Cổng thanh toán VNPay (Sandbox)**: Tùy chọn mặc định được kích hoạt, biểu tượng chữ VN kèm huy hiệu "Khuyên dùng" và icon bảo mật `ShieldCheck`.
+       - Các cổng MoMo, ZaloPay, Thẻ quốc tế: Hiển thị mờ (disabled) kèm tag "Sắp có".
+  5. _Khối tổng kết tiền thanh toán:_
+     - Tạm tính (`subtotal`): `formatCurrency(subtotal)`.
+     - Giảm giá khuyến mãi (`discountTotal`): `−{formatCurrency(discountTotal)}` (màu xanh lá/mận nếu > 0).
+     - Tổng thanh toán (`grandTotal`): Font chữ lớn 22px, in đậm `colors.primary`.
+     - Lưu ý: Nếu `0 < grandTotal < 5.000 đ`, cảnh báo "Mức thanh toán tối thiểu qua VNPay là 5.000 đ" và vô hiệu hóa nút thanh toán.
+- **Thanh chân trang dính (`StickyBottomBar`):**
+  - Hiển thị mức giá tổng thanh toán `grandTotal`.
+  - Nút chính: "Thanh toán VNPay" (`AppButton`, icon `ArrowRight`, `minHeight: 48`).
+- **Luồng kích hoạt thanh toán & Điều hướng:**
+  1. Client sinh mã `Idempotency-Key` (chuỗi UUID duy nhất cho phiên chuẩn bị đơn, lưu trong `useRef`; khi người dùng đổi mã khuyến mãi hoặc đổi sản phẩm thì sinh UUID mới).
+  2. Bấm "Thanh toán VNPay":
+     - Nếu ở chế độ chuẩn bị: Gọi `POST /api/v1/me/orders` kèm header `Idempotency-Key` $\rightarrow$ nhận `order.id`.
+     - Sau khi có `orderId` (hoặc ở chế độ đơn có sẵn): Gọi `POST /api/v1/me/orders/{orderId}/payments` với `{ client: "mobile" }` $\rightarrow$ nhận `paymentUrl`.
+  3. _Xử lý mở cổng VNPay trên Mobile:_
+     - Sử dụng `WebBrowser.openAuthSessionAsync(paymentUrl, redirectUrl)` từ `expo-web-browser` (với `redirectUrl` là deep-link scheme của app: `nhunguyetspa://payment/result` hoặc return URL được cấu hình).
+     - Khi khách hàng hoàn tất hoặc hủy thanh toán trên cổng VNPay: Trình duyệt in-app đóng lại $\rightarrow$ app nhận URL kết quả và điều hướng mượt mà sang màn hình Kết quả thanh toán: `/(customer)/payment/result?orderId={orderId}`.
+     - _Ngoại lệ đơn 0 đ:_ Nếu áp mã giảm 100% dẫn đến `grandTotal = 0`, đơn được đánh dấu `paid` ngay tại backend mà không sinh lượt thanh toán cổng $\rightarrow$ chuyển thẳng sang `/(customer)/payment/result?orderId={orderId}`.
+- **Mã lỗi & Cách xử lý:**
+  - `400 cart_empty`: Báo lỗi giỏ trống, chuyển về `/(customer)/cart`.
+  - `400 order_items_unavailable`: Báo tên sản phẩm không còn mở bán, tải lại preview.
+  - `400 promotion_invalid` / `promotion_not_applicable`: Hiện thông báo lỗi trực tiếp dưới ô nhập mã.
+  - `409 order_not_payable`: Báo "Đơn hàng đã hết hạn hoặc không còn chờ thanh toán", tải lại thông tin đơn.
+  - `409 payment_attempts_exceeded`: Báo "Đã vượt quá số lần thử thanh toán cho phép đối với đơn này", vô hiệu hóa nút thanh toán lại.
+  - `503 payment_gateway_unavailable`: Báo "Cổng thanh toán VNPay đang bảo trì hoặc chưa sẵn sàng. Vui lòng thử lại sau.", giữ nguyên đơn hàng và cho phép thử lại.
+
+---
+
+### SCR-M19c — Kết quả thanh toán (UC-SPA-11)
+
+- **Mã và route:** `SCR-M19c` · **Route file:** `app/(customer)/payment/result.tsx` · **Vai trò:** Khách hàng (`role = customer`).
+- **Layout:** Customer Stack (nút "Về trang chủ" hoặc icon đóng `X`).
+- **Tham số nhận vào (Query Params):** `?orderId=...` (hoặc `?error=invalid_payment_result`). Thiếu `orderId` $\rightarrow$ báo lỗi "Không tìm thấy thông tin kết quả giao dịch" + nút "Về trang chủ".
+- **Mẫu bố cục:** Trang nội dung tập trung một cột (Centered card layout) với huy hiệu trạng thái đồ họa lớn.
+- **Cơ chế Polling cập nhật trạng thái (Polling Mechanism):**
+  - Khi mở màn hình, nếu đơn có trạng thái `pending_payment` và lần thanh toán mới nhất đang `pending`: Tiến hành tự động gọi `GET /api/v1/me/orders/{id}` mỗi 2 giây, tối đa 10 lần (20 giây), hiển thị trạng thái "Đang xác nhận giao dịch từ ngân hàng...".
+  - Khi đơn chuyển sang `paid` hoặc `failed`: Lập tức dừng polling và hiển thị giao diện kết quả chính thức.
+  - Nếu hết 10 lần polling vẫn chưa nhận được kết quả cuối cùng: Dừng polling, hiển thị thông báo "Hệ thống đang xử lý giao dịch. Nếu tài khoản của bạn đã bị trừ tiền, dịch vụ sẽ được cập nhật tự động trong ít phút." kèm nút "Kiểm tra lại" (`refetch`) và nút "Về trang chủ".
+- **Trường hợp hiển thị kết quả chi tiết:**
+
+| Trạng thái đơn & lần thanh toán                         | Giao diện hiển thị                                                                                                                                                                                                           | Hành động khả dụng                                                                                                                                                                            |
+| :------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Đã thanh toán (`paid`)**                              | Icon tròn xanh lá `CheckCircle2`, tiêu đề "Thanh toán thành công!", mô tả "Dịch vụ đã được kích hoạt trong tài khoản của bạn.", thẻ tóm tắt (Mã đơn hàng, Tổng thanh toán, Thời gian thanh toán, Danh sách sản phẩm đã mua). | - "Đặt lịch ngay" $\rightarrow$ `/(customer)/bookings`<br/>- "Xem gói của tôi" (nếu có gói) $\rightarrow$ `/(customer)/packages`<br/>- "Tiếp tục khám phá" $\rightarrow$ `/(public)/services` |
+| **Thất bại (`pending_payment`, lần mới nhất `failed`)** | Icon tròn cam/đỏ `XCircle`, tiêu đề "Giao dịch chưa hoàn tất", mô tả "Giao dịch qua VNPay không thành công hoặc bạn đã hủy giao dịch. Đơn hàng được giữ đến {paymentDueAtUtc}."                                              | - "Thanh toán lại" $\rightarrow$ mở lại `/(customer)/checkout?orderId={orderId}` (khi `isPayable = true`)<br/>- "Về giỏ hàng" $\rightarrow$ `/(customer)/cart`                                |
+| **Đơn hết hạn (`expired`)**                             | Icon xám `AlertCircle`, tiêu đề "Đơn hàng đã hết hạn", mô tả "Đơn hàng đã quá thời hạn thanh toán 15 phút."                                                                                                                  | - "Đặt mua lại" $\rightarrow$ `/(customer)/cart`<br/>- "Về trang chủ" $\rightarrow$ `/(customer)/home`                                                                                        |
+| **Đã hủy (`cancelled`)**                                | Icon xám `XCircle`, tiêu đề "Đơn hàng đã bị hủy", mô tả thời gian và lý do hủy nếu có.                                                                                                                                       | - "Về trang chủ" $\rightarrow$ `/(customer)/home`                                                                                                                                             |
+
+- **Trạng thái dữ liệu:**
+  - _Đang tải:_ Skeleton thẻ trạng thái và các dòng thông tin.
+  - _Lỗi truy vấn:_ `AppNotice` lỗi + nút "Thử lại".
+  - _Lỗi chữ ký/tham số (`error=invalid_payment_result`):_ Báo cảnh báo "Không thể xác thực tính toàn vẹn của kết quả giao dịch. Vui lòng kiểm tra lại trạng thái đơn hàng hoặc liên hệ spa hỗ trợ."
+
+---
+
+### Tiếp cận a11y & Touch Target trên Mobile
+
+- Toàn bộ nút bấm, icon thao tác (xóa dòng, thêm giỏ, áp mã, thanh toán) đều có chiều cao/vùng chạm tối thiểu $48\times 48$dp (`hitSlop={8}`).
+- Định dạng tiền tệ thống nhất theo chuẩn tiếng Việt `vi-VN` kèm ký hiệu đ (`formatCurrency`).
+- Mọi trường nhập và nút bấm có thuộc tính `accessibilityLabel`, `accessibilityRole="button"`, trạng thái disabled được khai báo rõ ràng qua `accessibilityState={{ disabled: true }}`.
+
+---
+
+### Bảng kiểm thử giao diện mobile Giỏ hàng & Thanh toán (`ORD-M-UI-T01…T16`)
+
+| Mã               | Tình huống kiểm thử                                            | Kết quả mong đợi                                                                                                                                                                                                        |
+| :--------------- | :------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ORD-M-UI-T01** | Khách xem giỏ hàng rỗng (`/cart`)                              | Hiển thị màn hình rỗng với minh họa giỏ trống, lời nhắn thân thiện và 2 nút CTA "Khám phá dịch vụ", "Xem gói liệu trình".                                                                                               |
+| **ORD-M-UI-T02** | Khách xem giỏ hàng có dữ liệu                                  | Hiển thị đúng danh sách sản phẩm với ảnh, tên, loại, đơn giá và tổng tiền tạm tính `totalAmount` ở thanh chân trang dính.                                                                                               |
+| **ORD-M-UI-T03** | Giỏ hàng có sản phẩm đổi giá (`priceChanged = true`)           | Hiển thị dòng cảnh báo nhỏ kèm mức giá cũ lúc thêm vào giỏ; tổng tiền tính theo `currentPrice`.                                                                                                                         |
+| **ORD-M-UI-T04** | Giỏ hàng có sản phẩm ngừng bán (`isAvailable = false`)         | Dòng sản phẩm bị làm mờ, gắn nhãn "Ngừng bán", không cộng vào tổng tạm tính. Nút xóa sản phẩm vẫn hoạt động bình thường.                                                                                                |
+| **ORD-M-UI-T05** | Xóa sản phẩm khỏi giỏ hàng                                     | Bấm icon xóa mở hộp thoại xác nhận. Xác nhận xóa gọi `DELETE /me/cart/items/{id}` thành công, danh sách giỏ và tổng tiền tự động cập nhật.                                                                              |
+| **ORD-M-UI-T06** | Thêm sản phẩm vào giỏ từ màn hình chi tiết dịch vụ/gói         | Bấm "Thêm vào giỏ" gọi `POST /me/cart/items`, hiện thông báo thành công và badge giỏ hàng trên Header tăng lên. Khách vãng lai bấm chuyển sang màn đăng nhập.                                                           |
+| **ORD-M-UI-T07** | Mở trang Checkout với `source=cart`                            | Gọi `POST /me/orders/preview` với `{ source: "cart" }`, hiển thị danh sách dòng hàng, tạm tính và tổng thanh toán.                                                                                                      |
+| **ORD-M-UI-T08** | Mở trang Checkout chế độ mua ngay (`source=buy_now`)           | Gọi preview với đúng `spaServiceId` hoặc `servicePackageId`, hiển thị đúng sản phẩm được chọn mua.                                                                                                                      |
+| **ORD-M-UI-T09** | Áp dụng mã khuyến mãi hợp lệ trên Checkout                     | Nhập mã, bấm "Áp dụng": Gọi lại preview mang `promotionCode`, tự động viết hoa mã, hiển thị dòng giảm giá và cập nhật tổng thanh toán mới.                                                                              |
+| **ORD-M-UI-T10** | Áp dụng mã khuyến mãi không hợp lệ hoặc không đủ điều kiện     | Hiển thị thông báo lỗi `promotionError.message` ngay dưới ô nhập mã; tổng tiền giữ nguyên như không áp mã.                                                                                                              |
+| **ORD-M-UI-T11** | Bấm "Bỏ mã" khuyến mãi                                         | Gọi lại preview không có mã, mức giảm xóa về 0 đ và tổng thanh toán hoàn về giá gốc.                                                                                                                                    |
+| **ORD-M-UI-T12** | Xác nhận thanh toán VNPay                                      | Gọi `POST /me/orders` kèm `Idempotency-Key` (UUID), sau đó gọi `POST /me/orders/{id}/payments` nhận `paymentUrl` và mở qua `WebBrowser.openAuthSessionAsync`. Nút thanh toán hiển thị trạng thái loading chống bấm đúp. |
+| **ORD-M-UI-T13** | Đơn hàng 0 đ (áp mã giảm 100%)                                 | Đơn chuyển trạng thái `paid` ngay lập tức, không mở cổng VNPay mà điều hướng thẳng sang màn hình kết quả thành công `/(customer)/payment/result`.                                                                       |
+| **ORD-M-UI-T14** | Màn hình kết quả khi thanh toán thành công (`status = 'paid'`) | Hiển thị icon thành công `CheckCircle2`, mã đơn hàng, số tiền, ngày giờ thanh toán và các nút điều hướng "Đặt lịch ngay", "Về trang chủ".                                                                               |
+| **ORD-M-UI-T15** | Màn hình kết quả khi đơn đang xử lý (`pending_payment`)        | Kích hoạt polling 2s/lần (tối đa 10 lần). Đơn chuyển `paid` giữa chừng thì dừng polling và hiển thị giao diện thành công. Hết 10 lần vẫn pending thì hiện thông báo chờ xử lý và nút "Kiểm tra lại".                    |
+| **ORD-M-UI-T16** | Màn hình kết quả khi thanh toán thất bại (`failed`)            | Hiển thị thông báo giao dịch thất bại, thời hạn giữ đơn và nút "Thanh toán lại" điều hướng về lại `/checkout?orderId=...`.                                                                                              |

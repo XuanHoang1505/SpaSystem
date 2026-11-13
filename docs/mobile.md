@@ -16,6 +16,7 @@ Expo SDK 57 managed workflow, React Native 0.86.3, React 19.2.3, Expo Router 57.
 | Public Stack     | `(public)/login.tsx`, `register.tsx`, `forgot-password.tsx`                                              | Đăng nhập (SCR-M06), đăng ký + OTP (SCR-M07), quên mật khẩu 3 bước (SCR-M08), `features/auth/screens` |
 | Customer Tabs    | `(customer)/home.tsx`, `bookings/index.tsx`, `treatments/index.tsx`, `packages/index.tsx`, `profile.tsx` | Trang chủ, lịch hẹn, liệu trình, gói của tôi, cá nhân                                                 |
 | Customer bổ sung | `(customer)/bookings/[bookingId].tsx`, `ai-assistant.tsx`, `reviews.tsx`                                 | Chi tiết lịch hẹn, AI, đánh giá                                                                       |
+| Root Stack Đơn hàng | `cart.tsx`, `checkout.tsx`, `payment/result.tsx`                                                         | Giỏ hàng (SCR-M19a), xác nhận & thanh toán (SCR-M19b), kết quả thanh toán (SCR-M19c), `features/orders` |
 | Staff Stack      | `(staff)/dashboard.tsx`, `schedule.tsx`, `bookings/index.tsx`, `bookings/[bookingId].tsx`                | Tổng quan, lịch làm việc, lịch hẹn, buổi chăm sóc                                                     |
 | Owner Stack      | `(owner)/dashboard.tsx`, `services.tsx`, `staff.tsx`, `bookings.tsx`, `reports.tsx`                      | Tổng quan, dịch vụ, nhân viên, lịch hẹn, báo cáo                                                      |
 
