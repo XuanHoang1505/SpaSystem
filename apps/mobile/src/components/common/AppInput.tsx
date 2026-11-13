@@ -10,6 +10,7 @@ export function AppInput({
   hint,
   leading,
   trailing,
+  dim = true,
   style,
   ref,
   ...props
@@ -22,12 +23,16 @@ export function AppInput({
   leading?: ReactNode;
   /** A control inside the field on the right, e.g. the show/hide password button. */
   trailing?: ReactNode;
+  /** When false, a non-editable field stays at full strength. Date fields use this. */
+  dim?: boolean;
   ref?: Ref<TextInput>;
 }) {
   return (
     <View style={styles.field}>
       {!hideLabel && <AppText>{label}</AppText>}
-      <View style={[styles.box, error && styles.invalid, props.editable === false && styles.dim]}>
+      <View
+        style={[styles.box, error && styles.invalid, props.editable === false && dim && styles.dim]}
+      >
         {leading && <View style={styles.leading}>{leading}</View>}
         <TextInput
           placeholder={props.placeholder ?? label}
