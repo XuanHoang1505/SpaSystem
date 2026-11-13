@@ -141,6 +141,11 @@ try {
       // signed in on (the LAN IP above); the session lives in memory and in a cookie of that host, so returning to
       // localhost would show the user as signed out.
       Payment__ClientReturnUrls__Web: `http://${host}:5173/payment/result`,
+      // VNPay sends the phone's browser to {PublicApiBaseUrl}/api/v1/payments/vnpay/return/mobile, so it must be the
+      // LAN IP (localhost on the phone is the phone itself). The API then redirects to the Expo Go deep link of the
+      // result screen, which hands the result back to the app.
+      Payment__PublicApiBaseUrl: apiUrl,
+      Payment__ClientReturnUrls__Mobile: `exp://${host}:8081/--/payment/result`,
     },
   );
   start(
