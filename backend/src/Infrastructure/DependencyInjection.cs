@@ -64,6 +64,7 @@ public static class DependencyInjection
         services.AddScoped<IPurchaseRepository, PurchaseRepository>();
         services.AddScoped<ITreatmentRepository, TreatmentRepository>();
         services.AddScoped<ISkinProfileRepository, SkinProfileRepository>();
+        services.AddScoped<IStaffCertificationRepository, StaffCertificationRepository>();
         services.AddScoped<ICustomerAllergyRepository, CustomerAllergyRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
         services.AddScoped<ICartRepository, CartRepository>();
@@ -92,6 +93,10 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(StaffOptions.SectionName))
             .Validate(options => options.TemporaryPasswordLength is >= TemporaryPasswordGenerator.MinLength and <= TemporaryPasswordGenerator.MaxLength,
                 $"Staff:TemporaryPasswordLength must be between {TemporaryPasswordGenerator.MinLength} and {TemporaryPasswordGenerator.MaxLength}.");
+        services.AddOptions<StaffCertificationOptions>()
+            .Bind(configuration.GetSection(StaffCertificationOptions.SectionName))
+            .Validate(options => options.MaxPerStaff is >= 1 and <= 200 && options.ExpiringSoonDays is >= 0 and <= 365,
+                "StaffCertification:MaxPerStaff must be 1-200 and ExpiringSoonDays 0-365.");
         services.AddOptions<WorkScheduleOptions>()
             .Bind(configuration.GetSection(WorkScheduleOptions.SectionName))
             .Validate(options => options.MaxDaysAhead is >= 1 and <= 366 && options.MaxQueryRangeDays is >= 1 and <= 366 &&

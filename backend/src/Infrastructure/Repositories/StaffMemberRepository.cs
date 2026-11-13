@@ -42,7 +42,9 @@ public sealed class StaffMemberRepository : Repository<StaffMember>, IStaffMembe
                 staff.Id, staff.User.FullName, staff.User.Email, staff.User.PhoneNumber, staff.User.AvatarUrl, staff.Specialty, staff.HireDate,
                 staff.ResignationDate, staff.User.Status,
                 staff.Skills.OrderBy(skill => skill.SpaService.Name)
-                    .Select(skill => new StaffServiceDto(skill.SpaServiceId, skill.SpaService.Name, skill.SpaService.Status)).ToList()))
+                    .Select(skill => new StaffServiceDto(skill.SpaServiceId, skill.SpaService.Name, skill.SpaService.Status)).ToList(),
+                Context.StaffCertifications.Count(certification =>
+                    certification.StaffMemberId == staff.Id && certification.VerificationStatus == CertificationVerificationStatus.Pending)))
             .ToListAsync(cancellationToken);
         return new PagedResult<StaffListItemDto>(items, criteria.PageNumber, criteria.PageSize, total);
     }
@@ -62,7 +64,17 @@ public sealed class StaffMemberRepository : Repository<StaffMember>, IStaffMembe
 
         var total = await query.CountAsync(cancellationToken);
         var items = await Page(query, criteria)
-            .Select(staff => new PublicStaffListItemDto(staff.Id, staff.User.FullName, staff.Specialty, staff.User.AvatarUrl))
+            .Select(staff => new PublicStaffListItemDto(
+                staff.Id, staff.User.FullName, staff.Specialty, staff.User.AvatarUrl,
+                // BR-STF-13: only verified, public and unexpired certifications reach guests, and only their names.
+                Context.StaffCertifications
+                    .Where(certification => certification.StaffMemberId == staff.Id &&
+                                            certification.VerificationStatus == CertificationVerificationStatus.Verified &&
+                                            certification.IsPublic &&
+                                            (certification.ExpiresOn == null || certification.ExpiresOn >= today))
+                    .OrderBy(certification => certification.Name)
+                    .Select(certification => certification.Name)
+                    .ToList()))
             .ToListAsync(cancellationToken);
         return new PagedResult<PublicStaffListItemDto>(items, criteria.PageNumber, criteria.PageSize, total);
     }

@@ -1484,6 +1484,112 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.StaffCertification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("CredentialNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("credential_number");
+
+                    b.Property<DateOnly?>("ExpiresOn")
+                        .HasColumnType("date")
+                        .HasColumnName("expires_on");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("image_url");
+
+                    b.Property<bool>("IsPublic")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_public");
+
+                    b.Property<DateOnly?>("IssuedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("issued_on");
+
+                    b.Property<string>("Issuer")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("issuer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("rejection_reason");
+
+                    b.Property<DateTime?>("ReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at_utc");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewed_by_user_id");
+
+                    b.Property<Guid>("StaffMemberId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("staff_member_id");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<string>("VerificationStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("verification_status")
+                        .HasDefaultValueSql("'pending'");
+
+                    b.HasKey("Id")
+                        .HasName("pk_staff_certifications");
+
+                    b.HasIndex("ReviewedByUserId")
+                        .HasDatabaseName("ix_staff_certifications_reviewed_by_user_id");
+
+                    b.HasIndex("StaffMemberId")
+                        .HasDatabaseName("ix_staff_certifications_staff_member_id");
+
+                    b.ToTable("staff_certifications", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_staff_certifications_dates", "expires_on IS NULL OR issued_on IS NULL OR expires_on >= issued_on");
+
+                            t.HasCheckConstraint("ck_staff_certifications_rejection", "(verification_status = 'rejected') = (rejection_reason IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_staff_certifications_verification_status", "verification_status IN ('pending', 'verified', 'rejected')");
+                        });
+                });
+
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.StaffMember", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2158,6 +2264,26 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_spa_services_service_categories_category_id");
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.StaffCertification", b =>
+                {
+                    b.HasOne("NhuNguyetSpa.Domain.Entities.User", "ReviewedBy")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_staff_certifications_users_reviewed_by_user_id");
+
+                    b.HasOne("NhuNguyetSpa.Domain.Entities.StaffMember", "StaffMember")
+                        .WithMany()
+                        .HasForeignKey("StaffMemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_staff_certifications_staff_members_staff_member_id");
+
+                    b.Navigation("ReviewedBy");
+
+                    b.Navigation("StaffMember");
                 });
 
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.StaffMember", b =>
