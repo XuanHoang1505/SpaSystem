@@ -163,9 +163,6 @@ export function ProfileCard({ user }: ProfileCardProps) {
                 readOnly
                 className="bg-muted text-muted-foreground"
               />
-              <p className="text-xs text-muted-foreground">
-                Số điện thoại dùng để đăng nhập, không thể thay đổi.
-              </p>
             </div>
 
             <div className="space-y-2">

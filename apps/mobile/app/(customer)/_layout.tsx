@@ -1,11 +1,5 @@
 import { Redirect, Tabs } from 'expo-router';
-import {
-  Home,
-  CalendarCheck,
-  Sparkles,
-  Package,
-  User,
-} from 'lucide-react-native';
+import { Home, CalendarCheck, Sparkles, Package, User } from 'lucide-react-native';
 import { useAuthStore } from '@/stores/authStore';
 import { useCommonTabScreenOptions } from '@/config/navigation';
 

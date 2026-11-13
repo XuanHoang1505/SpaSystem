@@ -57,7 +57,11 @@ export function LoginScreen() {
     <AppScreen>
       <View style={styles.bannerContainer}>
         <Image
-          source={require('@/assets/images/login_banner.png')}
+          source={
+            // Metro bundles an image only from a static require().
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            require('@/assets/images/login_banner.png')
+          }
           style={styles.banner}
           resizeMode="contain"
         />
@@ -152,7 +156,12 @@ const styles = StyleSheet.create({
     height: 220,
   },
   heading: { alignItems: 'center', gap: spacing.xs, marginBottom: spacing.xs },
-  title: { fontSize: typography.heading, lineHeight: 34, color: colors.primary, textAlign: 'center' },
+  title: {
+    fontSize: typography.heading,
+    lineHeight: 34,
+    color: colors.primary,
+    textAlign: 'center',
+  },
   subtitle: { color: colors.muted, textAlign: 'center' },
   forgot: { alignItems: 'flex-end', marginTop: -spacing.sm },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },

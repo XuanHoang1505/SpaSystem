@@ -12,6 +12,9 @@ import type {
 } from '@spa/shared-types';
 import type { ApiClient, RequestOptions } from './index';
 
+/** A browser `File`/`Blob`, or the `{ uri, name, type }` part React Native puts on `FormData`. */
+export type AvatarUploadFile = Blob | { uri: string; name: string; type: string };
+
 export class UsersApi {
   constructor(private readonly client: ApiClient) {}
 
@@ -27,9 +30,16 @@ export class UsersApi {
     return this.client.put<ChangePasswordRequest, void>('/api/v1/me/password', body, options);
   }
 
-  uploadAvatar(file: File | Blob, options?: RequestOptions): Promise<ApiResponse<AvatarUrlDto>> {
+  uploadAvatar(
+    file: AvatarUploadFile,
+    options?: RequestOptions,
+  ): Promise<ApiResponse<AvatarUrlDto>> {
     const formData = new FormData();
-    formData.append('file', file);
+    // React Native appends `{ uri, name, type }`; the DOM type only lists Blob.
+    const multipart = formData as {
+      append(name: string, value: AvatarUploadFile): void;
+    };
+    multipart.append('file', file);
     return this.client.post<FormData, ApiResponse<AvatarUrlDto>>(
       '/api/v1/me/avatar',
       formData,
@@ -56,6 +66,12 @@ export const usersErrorCodes = {
   fileTooLarge: 'file_too_large',
   uploadFailed: 'upload_failed',
   rateLimited: 'rate_limited',
+  currentPasswordIncorrect: 'current_password_incorrect',
+  passwordUnchanged: 'password_unchanged',
+  imageRequired: 'image_required',
+  imageTooLarge: 'image_too_large',
+  imageTypeNotSupported: 'image_type_not_supported',
+  imageStorageUnavailable: 'image_storage_unavailable',
   phoneExists: 'phone_exists',
   userNotFound: 'user_not_found',
   cannotLockSelf: 'cannot_lock_self',

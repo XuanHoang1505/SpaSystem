@@ -1,12 +1,6 @@
 import { Tabs } from 'expo-router';
 import { RouteGuard } from '@components/auth/RouteGuard';
-import {
-  LayoutDashboard,
-  CalendarCheck,
-  BarChart3,
-  Users,
-  User,
-} from 'lucide-react-native';
+import { LayoutDashboard, CalendarCheck, BarChart3, Users, User } from 'lucide-react-native';
 import { useCommonTabScreenOptions } from '@/config/navigation';
 
 /**

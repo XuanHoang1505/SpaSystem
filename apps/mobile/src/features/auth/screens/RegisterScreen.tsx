@@ -65,7 +65,11 @@ export function RegisterScreen() {
     <AppScreen contentContainerStyle={styles.screenContent}>
       <View style={styles.bannerContainer}>
         <Image
-          source={require('@/assets/images/register_banner.png')}
+          source={
+            // Metro bundles an image only from a static require().
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            require('@/assets/images/register_banner.png')
+          }
           style={styles.banner}
           resizeMode="contain"
         />
@@ -422,7 +426,12 @@ const styles = StyleSheet.create({
     height: 130,
   },
   heading: { alignItems: 'center', gap: spacing.xs },
-  title: { fontSize: typography.heading, lineHeight: 32, color: colors.primary, textAlign: 'center' },
+  title: {
+    fontSize: typography.heading,
+    lineHeight: 32,
+    color: colors.primary,
+    textAlign: 'center',
+  },
   form: { gap: spacing.sm },
   muted: { color: colors.muted },
   strong: { fontWeight: '600' },
