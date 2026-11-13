@@ -1,4 +1,5 @@
-import { PlaceholderScreen } from '@components/common/PlaceholderScreen';
-export default function Screen() {
-  return <PlaceholderScreen title="Dịch vụ" />;
+import { ServicesListScreen } from '@/features/services/screens/ServicesListScreen';
+
+export default function ServicesPage() {
+  return <ServicesListScreen />;
 }

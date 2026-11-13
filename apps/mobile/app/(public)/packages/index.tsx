@@ -1,4 +1,5 @@
-import { PlaceholderScreen } from '@components/common/PlaceholderScreen';
-export default function Screen() {
-  return <PlaceholderScreen title="Gói chăm sóc" />;
+import { PackagesListScreen } from '@/features/packages/screens/PackagesListScreen';
+
+export default function PackagesPage() {
+  return <PackagesListScreen />;
 }

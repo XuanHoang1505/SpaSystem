@@ -1,4 +1,5 @@
-import { PlaceholderScreen } from '@components/common/PlaceholderScreen';
-export default function Screen() {
-  return <PlaceholderScreen title="Chi tiết dịch vụ" />;
+import { ServiceDetailScreen } from '@/features/services/screens/ServiceDetailScreen';
+
+export default function ServiceDetailPage() {
+  return <ServiceDetailScreen />;
 }
