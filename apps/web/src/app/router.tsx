@@ -35,6 +35,7 @@ import { OwnerStaffPage } from '@/pages/owner/OwnerStaffPage';
 import { StaffAppointmentDetailPage } from '@/pages/staff/StaffAppointmentDetailPage';
 import { StaffAppointmentsPage } from '@/pages/staff/StaffAppointmentsPage';
 import { StaffCareHistoryPage } from '@/pages/staff/StaffCareHistoryPage';
+import { StaffCertificationsPage } from '@/pages/staff/StaffCertificationsPage';
 import { StaffSchedulePage } from '@/pages/staff/StaffSchedulePage';
 import { OwnerTreatmentsPage } from '@/pages/owner/OwnerTreatmentsPage';
 import { OwnerReportsPage } from '@/pages/owner/OwnerReportsPage';
@@ -125,6 +126,7 @@ export const staffPages: Record<string, ReactElement> = {
   '/staff/bookings': <StaffAppointmentsPage />,
   '/staff/bookings/:appointmentId': <StaffAppointmentDetailPage />,
   '/staff/care-history': <StaffCareHistoryPage />,
+  '/staff/certifications': <StaffCertificationsPage />,
 };
 
 /** Owner pages that are built; the other owner routes still show the placeholder. */

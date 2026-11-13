@@ -1,4 +1,5 @@
 import {
+  AwardIcon,
   BarChart3Icon,
   BotIcon,
   CalendarCheckIcon,
@@ -57,6 +58,7 @@ const icons: Record<string, LucideIcon> = {
   '/staff/schedule': CalendarDaysIcon,
   '/staff/bookings': CalendarCheckIcon,
   '/staff/care-history': HistoryIcon,
+  '/staff/certifications': AwardIcon,
   '/owner': LayoutDashboardIcon,
   '/owner/services': SparklesIcon,
   '/owner/packages': PackageIcon,
