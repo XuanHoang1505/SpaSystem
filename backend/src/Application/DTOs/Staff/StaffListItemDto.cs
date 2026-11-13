@@ -13,4 +13,5 @@ public sealed record StaffListItemDto(
     DateOnly HireDate,
     DateOnly? ResignationDate,
     UserStatus AccountStatus,
-    IReadOnlyList<StaffServiceDto> Services);
+    IReadOnlyList<StaffServiceDto> Services,
+    int PendingCertificationCount);
