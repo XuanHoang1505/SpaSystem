@@ -17,6 +17,8 @@ export { BatchResultDialog } from './components/BatchResultDialog';
 export { EditShiftDialog } from './components/EditShiftDialog';
 export { CancelShiftDialog } from './components/CancelShiftDialog';
 export { MyScheduleView } from './components/my-schedule/MyScheduleView';
+export { MyCertificationsView } from './components/certifications/MyCertificationsView';
+export { CertificationList } from './components/certifications/CertificationList';
 
 export * from './hooks/useStaffList';
 export * from './hooks/useStaffDetail';
@@ -24,6 +26,8 @@ export * from './hooks/useStaffMutations';
 export * from './hooks/useWorkSchedules';
 export * from './hooks/useWorkScheduleMutations';
 export * from './hooks/useMySchedule';
+export * from './hooks/useStaffCertifications';
+export * from './certificationStatus';
 export * from './myScheduleRange';
 export * from './staffStatus';
 export * from './scheduleUtils';

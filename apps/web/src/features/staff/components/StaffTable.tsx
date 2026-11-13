@@ -70,7 +70,15 @@ export function StaffTable({
                 <AvatarFallback className="text-xs font-medium">{initials || 'NV'}</AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-col">
-                <span className="truncate font-medium text-foreground">{row.fullName}</span>
+                <span className="flex flex-wrap items-center gap-1.5">
+                  <span className="truncate font-medium text-foreground">{row.fullName}</span>
+                  {row.pendingCertificationCount > 0 && (
+                    <StatusBadge
+                      label={`${row.pendingCertificationCount} chờ duyệt`}
+                      tone="warning"
+                    />
+                  )}
+                </span>
                 <span className="truncate text-xs text-muted-foreground">
                   {row.specialty || 'Chuyên viên trị liệu'}
                 </span>

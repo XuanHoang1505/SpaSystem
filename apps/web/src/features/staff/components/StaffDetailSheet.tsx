@@ -22,9 +22,12 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDateTimeUtc, formatLocalDate } from '@/lib/formatting/formatters';
+import { useStaffCertifications } from '../hooks/useStaffCertifications';
 import { useStaffDetail } from '../hooks/useStaffDetail';
 import { staffAccountBadge, staffWorkingBadge } from '../staffStatus';
+import { OwnerCertificationsPanel } from './certifications/OwnerCertificationsPanel';
 
 export interface StaffDetailSheetProps {
   staffId: string | null;
@@ -42,6 +45,9 @@ export function StaffDetailSheet({
   onResign,
 }: StaffDetailSheetProps) {
   const query = useStaffDetail(staffId);
+  const certifications = useStaffCertifications(staffId);
+  const pendingCount =
+    certifications.data?.filter((item) => item.verificationStatus === 'pending').length ?? 0;
   const detail = query.data;
 
   const initials = detail?.fullName
@@ -58,7 +64,7 @@ export function StaffDetailSheet({
 
   return (
     <Sheet open={Boolean(staffId)} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="flex flex-col gap-0 p-0 sm:max-w-md">
+      <SheetContent className="flex flex-col gap-0 p-0 sm:max-w-2xl">
         <SheetHeader className="border-b p-5">
           <SheetTitle>Chi tiết nhân viên</SheetTitle>
           <SheetDescription>Thông tin hồ sơ, liên hệ và dịch vụ phụ trách</SheetDescription>
@@ -126,90 +132,111 @@ export function StaffDetailSheet({
 
               <Separator />
 
-              {/* Contact & Employment */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                  Thông tin công việc & liên hệ
-                </h4>
-                <div className="space-y-2.5 rounded-xl border bg-card/60 p-3.5 text-sm">
-                  <div className="flex items-center gap-2.5">
-                    <MailIcon className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">Email:</span>
-                    <span className="ml-auto truncate font-medium text-foreground">
-                      {detail.email}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <PhoneIcon className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">Số điện thoại:</span>
-                    <span className="ml-auto font-medium text-foreground">
-                      {detail.phoneNumber}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <CalendarIcon className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="text-muted-foreground">Ngày vào làm:</span>
-                    <span className="ml-auto font-medium text-foreground">
-                      {formatLocalDate(detail.hireDate)}
-                    </span>
-                  </div>
-                  {detail.resignationDate && (
-                    <div className="flex items-center gap-2.5 text-destructive">
-                      <CalendarIcon className="size-4 shrink-0" />
-                      <span>Ngày nghỉ việc:</span>
-                      <span className="ml-auto font-medium">
-                        {formatLocalDate(detail.resignationDate)}
+              <Tabs key={detail.id} defaultValue="info" className="space-y-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="info">Thông tin</TabsTrigger>
+                  <TabsTrigger value="certifications">
+                    Bằng cấp & chứng chỉ
+                    {pendingCount > 0 && (
+                      <span className="ml-1.5 rounded-full bg-status-warning px-1.5 text-[11px] font-semibold text-status-warning-foreground">
+                        {pendingCount}
                       </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Assigned Services */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                    Dịch vụ phụ trách ({detail.services.length})
-                  </h4>
-                  {!isResigned && (
-                    <Button
-                      variant="link"
-                      size="sm"
-                      onClick={() => onUpdateServices(detail)}
-                      className="h-auto p-0 text-xs"
-                    >
-                      Thay đổi
-                    </Button>
-                  )}
-                </div>
-                {detail.services.length === 0 ? (
-                  <p className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground italic">
-                    Chưa gán dịch vụ nào cho nhân viên này.
-                  </p>
-                ) : (
-                  <div className="divide-y rounded-xl border bg-card/60">
-                    {detail.services.map((svc) => (
-                      <div key={svc.id} className="flex items-center justify-between p-3 text-sm">
-                        <span className="font-medium text-foreground">{svc.name}</span>
-                        <StatusBadge
-                          label={svc.status === 'on_sale' ? 'Đang bán' : 'Ngừng bán'}
-                          tone={svc.status === 'on_sale' ? 'success' : 'neutral'}
-                          status={svc.status}
-                          className="text-[11px]"
-                        />
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="info" className="space-y-6">
+                  {/* Contact & Employment */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                      Thông tin công việc & liên hệ
+                    </h4>
+                    <div className="space-y-2.5 rounded-xl border bg-card/60 p-3.5 text-sm">
+                      <div className="flex items-center gap-2.5">
+                        <MailIcon className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="text-muted-foreground">Email:</span>
+                        <span className="ml-auto truncate font-medium text-foreground">
+                          {detail.email}
+                        </span>
                       </div>
-                    ))}
+                      <div className="flex items-center gap-2.5">
+                        <PhoneIcon className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="text-muted-foreground">Số điện thoại:</span>
+                        <span className="ml-auto font-medium text-foreground">
+                          {detail.phoneNumber}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        <CalendarIcon className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="text-muted-foreground">Ngày vào làm:</span>
+                        <span className="ml-auto font-medium text-foreground">
+                          {formatLocalDate(detail.hireDate)}
+                        </span>
+                      </div>
+                      {detail.resignationDate && (
+                        <div className="flex items-center gap-2.5 text-destructive">
+                          <CalendarIcon className="size-4 shrink-0" />
+                          <span>Ngày nghỉ việc:</span>
+                          <span className="ml-auto font-medium">
+                            {formatLocalDate(detail.resignationDate)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
 
-              {/* System Info */}
-              <div className="space-y-2 text-xs text-muted-foreground">
-                <div>Tạo lúc: {formatDateTimeUtc(detail.createdAtUtc)}</div>
-                {detail.updatedAtUtc && (
-                  <div>Cập nhật: {formatDateTimeUtc(detail.updatedAtUtc)}</div>
-                )}
-              </div>
+                  {/* Assigned Services */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                        Dịch vụ phụ trách ({detail.services.length})
+                      </h4>
+                      {!isResigned && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          onClick={() => onUpdateServices(detail)}
+                          className="h-auto p-0 text-xs"
+                        >
+                          Thay đổi
+                        </Button>
+                      )}
+                    </div>
+                    {detail.services.length === 0 ? (
+                      <p className="rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground italic">
+                        Chưa gán dịch vụ nào cho nhân viên này.
+                      </p>
+                    ) : (
+                      <div className="divide-y rounded-xl border bg-card/60">
+                        {detail.services.map((svc) => (
+                          <div
+                            key={svc.id}
+                            className="flex items-center justify-between p-3 text-sm"
+                          >
+                            <span className="font-medium text-foreground">{svc.name}</span>
+                            <StatusBadge
+                              label={svc.status === 'on_sale' ? 'Đang bán' : 'Ngừng bán'}
+                              tone={svc.status === 'on_sale' ? 'success' : 'neutral'}
+                              status={svc.status}
+                              className="text-[11px]"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* System Info */}
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <div>Tạo lúc: {formatDateTimeUtc(detail.createdAtUtc)}</div>
+                    {detail.updatedAtUtc && (
+                      <div>Cập nhật: {formatDateTimeUtc(detail.updatedAtUtc)}</div>
+                    )}
+                  </div>
+                </TabsContent>
+                <TabsContent value="certifications">
+                  <OwnerCertificationsPanel staffMemberId={detail.id} />
+                </TabsContent>
+              </Tabs>
             </>
           )}
         </div>

@@ -116,3 +116,40 @@ export const createBatchShiftsSchema = z
   });
 
 export type CreateBatchShiftsFormValues = z.infer<typeof createBatchShiftsSchema>;
+
+/** BR-STF-12: lengths, issue date not in the future (Vietnam date), expiry not before issue. */
+export const certificationSchema = (today: string) =>
+  z
+    .object({
+      name: z
+        .string()
+        .trim()
+        .min(1, 'Vui lòng nhập tên bằng, chứng chỉ.')
+        .max(200, 'Tên bằng tối đa 200 ký tự.'),
+      issuer: z.string().trim().max(200, 'Nơi cấp tối đa 200 ký tự.'),
+      credentialNumber: z.string().trim().max(100, 'Số hiệu tối đa 100 ký tự.'),
+      issuedOn: z.string(),
+      expiresOn: z.string(),
+      isPublic: z.boolean(),
+      note: z.string().trim().max(500, 'Ghi chú tối đa 500 ký tự.'),
+    })
+    .refine((data) => !data.issuedOn || data.issuedOn <= today, {
+      path: ['issuedOn'],
+      message: 'Ngày cấp không được ở tương lai.',
+    })
+    .refine((data) => !data.issuedOn || !data.expiresOn || data.expiresOn >= data.issuedOn, {
+      path: ['expiresOn'],
+      message: 'Ngày hết hạn phải từ ngày cấp trở đi.',
+    });
+
+export type CertificationFormValues = z.infer<ReturnType<typeof certificationSchema>>;
+
+export const rejectCertificationSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(1, 'Vui lòng nhập lý do từ chối.')
+    .max(500, 'Lý do tối đa 500 ký tự.'),
+});
+
+export type RejectCertificationValues = z.infer<typeof rejectCertificationSchema>;
