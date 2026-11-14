@@ -7,6 +7,7 @@ import {
   LogIn,
   MessageCircle,
   Package,
+  Receipt,
   Sparkles,
   Star,
   UserPlus,
@@ -66,9 +67,7 @@ export function CustomerProfileScreen() {
             subtitle: 'Đăng nhập để giữ chỗ và chọn kỹ thuật viên',
             icon: CalendarCheck,
             onPress: () =>
-              router.push(
-                `/(public)/login?redirect=${encodeURIComponent('/(public)/services')}`,
-              ),
+              router.push(`/(public)/login?redirect=${encodeURIComponent('/(public)/services')}`),
           },
         ],
       },
@@ -110,7 +109,8 @@ export function CustomerProfileScreen() {
                   Chào mừng quý khách
                 </AppText>
                 <AppText style={styles.heroSubtitle}>
-                  Đăng nhập hoặc tạo tài khoản thành viên để trải nghiệm trọn vẹn dịch vụ tại Như Nguyệt Spa.
+                  Đăng nhập hoặc tạo tài khoản thành viên để trải nghiệm trọn vẹn dịch vụ tại Như
+                  Nguyệt Spa.
                 </AppText>
               </View>
             </View>
@@ -139,10 +139,7 @@ export function CustomerProfileScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Đăng nhập"
                 onPress={() => router.push('/(public)/login')}
-                style={({ pressed }) => [
-                  styles.primaryBtn,
-                  pressed && styles.btnPressed,
-                ]}
+                style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
               >
                 <LogIn size={16} color={colors.onPrimary} />
                 <AppText style={styles.primaryBtnText}>Đăng nhập</AppText>
@@ -152,15 +149,10 @@ export function CustomerProfileScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Đăng ký"
                 onPress={() => router.push('/(public)/register')}
-                style={({ pressed }) => [
-                  styles.outlineBtn,
-                  pressed && styles.btnPressed,
-                ]}
+                style={({ pressed }) => [styles.outlineBtn, pressed && styles.btnPressed]}
               >
                 <UserPlus size={16} color={colors.primary} />
-                <AppText style={styles.outlineBtnText}>
-                  Đăng ký tài khoản
-                </AppText>
+                <AppText style={styles.outlineBtnText}>Đăng ký tài khoản</AppText>
               </Pressable>
             </View>
           </View>
@@ -169,9 +161,7 @@ export function CustomerProfileScreen() {
           <ProfileMenu sections={guestSections} />
 
           <AppText style={styles.version}>
-            {version
-              ? `Như Nguyệt Spa · Phiên bản ${version}`
-              : 'Như Nguyệt Spa'}
+            {version ? `Như Nguyệt Spa · Phiên bản ${version}` : 'Như Nguyệt Spa'}
           </AppText>
         </ScrollView>
       </AppScreen>
@@ -205,6 +195,12 @@ export function CustomerProfileScreen() {
               subtitle: 'Dịch vụ và gói còn hiệu lực',
               icon: Package,
               onPress: () => router.push('/(customer)/packages'),
+            },
+            {
+              title: 'Đơn hàng của tôi',
+              subtitle: 'Lịch sử mua hàng và hóa đơn',
+              icon: Receipt,
+              onPress: () => router.push('/my-orders'),
             },
           ],
         },
