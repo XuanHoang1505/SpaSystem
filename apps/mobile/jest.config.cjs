@@ -10,6 +10,8 @@ module.exports = {
     '^@theme/(.*)$': '<rootDir>/src/theme/$1',
     '^@spa/api-client$': '<rootDir>/../../packages/api-client/src/index.ts',
     '^@spa/shared-types$': '<rootDir>/../../packages/shared-types/src/index.ts',
+    '^lucide-react-native$':
+      '<rootDir>/../../node_modules/lucide-react-native/dist/cjs/lucide-react-native.js',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(jest-)?react-native|@react-native(-community)?|expo|@expo|@react-navigation|react-native-safe-area-context|react-native-screens)',
