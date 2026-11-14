@@ -29,6 +29,10 @@ public static class Permissions
     public const string ReportView = "report.view";
     /// <summary>Saved assistant history; guests chat anonymously without it (Q-01), staff and owners not at all (Q-60).</summary>
     public const string AiChat = "ai.chat";
+    /// <summary>A customer reviews what they used (UC-SPA-30).</summary>
+    public const string ReviewWrite = "review.write";
+    /// <summary>The owner replies to, hides and shows reviews (UC-SPA-31).</summary>
+    public const string ReviewManage = "review.manage";
 
     public static readonly IReadOnlyDictionary<string, string[]> Roles = new Dictionary<string, string[]>
     {
@@ -50,5 +54,7 @@ public static class Permissions
         [TreatmentManage] = [SecurityRoles.Owner, SecurityRoles.Staff],
         [ReportView] = [SecurityRoles.Owner],
         [AiChat] = [SecurityRoles.Customer],
+        [ReviewWrite] = [SecurityRoles.Customer],
+        [ReviewManage] = [SecurityRoles.Owner],
     };
 }
