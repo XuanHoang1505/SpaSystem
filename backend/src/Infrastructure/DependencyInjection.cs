@@ -65,6 +65,7 @@ public static class DependencyInjection
         services.AddScoped<ITreatmentRepository, TreatmentRepository>();
         services.AddScoped<ISkinProfileRepository, SkinProfileRepository>();
         services.AddScoped<IStaffCertificationRepository, StaffCertificationRepository>();
+        services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<ICustomerAllergyRepository, CustomerAllergyRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
         services.AddScoped<ICartRepository, CartRepository>();
@@ -163,6 +164,11 @@ public static class DependencyInjection
         services.AddOptions<PurchasesOptions>()
             .Bind(configuration.GetSection(PurchasesOptions.SectionName))
             .Validate(options => options.MaxListItems is >= 1 and <= 1000, "Purchases:MaxListItems must be 1–1000.")
+            .ValidateOnStart();
+        services.AddOptions<ReviewsOptions>()
+            .Bind(configuration.GetSection(ReviewsOptions.SectionName))
+            .Validate(ReviewsOptions.IsValid,
+                "Reviews:MinCompletedPackageSessions must be 1–100, CustomerEditWindowDays 0–365 and MaxReviewableItems 1–1000.")
             .ValidateOnStart();
         services.AddOptions<CareOptions>()
             .Bind(configuration.GetSection(CareOptions.SectionName))

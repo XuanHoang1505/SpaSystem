@@ -3,6 +3,7 @@ using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.UseCases.Auth;
 using NhuNguyetSpa.Application.UseCases.Care;
 using NhuNguyetSpa.Application.UseCases.Catalog;
+using NhuNguyetSpa.Application.UseCases.Reviews;
 using NhuNguyetSpa.Domain.Exceptions;
 using Npgsql;
 
@@ -59,6 +60,8 @@ public sealed class UnitOfWork : IUnitOfWork
             CatalogErrors.ServiceCategoryExists(),
         PostgresErrorCodes.UniqueViolation when exception.ConstraintName == Configurations.UserConfiguration.UniquePhoneNumber =>
             AccountErrors.PhoneExists(),
+        PostgresErrorCodes.UniqueViolation when exception.ConstraintName is ReviewIndexes.UniqueService or ReviewIndexes.UniquePackage =>
+            ReviewErrors.Exists(),
         PostgresErrorCodes.UniqueViolation =>
             new ConflictException("Dữ liệu đã tồn tại.", "duplicate_value"),
         _ => null,

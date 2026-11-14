@@ -17,6 +17,10 @@ internal sealed class ReviewConfiguration : IEntityTypeConfiguration<Review>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.ImageUrl).HasMaxLength(500);
+        builder.HasIndex(x => new { x.CustomerId, x.SpaServiceId }).IsUnique()
+            .HasFilter("spa_service_id IS NOT NULL").HasDatabaseName(ReviewIndexes.UniqueService);
+        builder.HasIndex(x => new { x.CustomerId, x.ServicePackageId }).IsUnique()
+            .HasFilter("service_package_id IS NOT NULL").HasDatabaseName(ReviewIndexes.UniquePackage);
         builder.HasOne(x => x.Customer).WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.SpaService).WithMany().HasForeignKey(x => x.SpaServiceId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.ServicePackage).WithMany().HasForeignKey(x => x.ServicePackageId).OnDelete(DeleteBehavior.Restrict);

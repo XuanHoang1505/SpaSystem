@@ -993,14 +993,21 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_reviews");
 
-                    b.HasIndex("CustomerId")
-                        .HasDatabaseName("ix_reviews_customer_id");
-
                     b.HasIndex("ServicePackageId")
                         .HasDatabaseName("ix_reviews_service_package_id");
 
                     b.HasIndex("SpaServiceId")
                         .HasDatabaseName("ix_reviews_spa_service_id");
+
+                    b.HasIndex("CustomerId", "ServicePackageId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_reviews_customer_package")
+                        .HasFilter("service_package_id IS NOT NULL");
+
+                    b.HasIndex("CustomerId", "SpaServiceId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_reviews_customer_service")
+                        .HasFilter("spa_service_id IS NOT NULL");
 
                     b.ToTable("reviews", null, t =>
                         {
