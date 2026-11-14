@@ -255,8 +255,8 @@ TABLES = [
  ("REV","reviews","Review","DanhGia","Đánh giá dịch vụ hoặc gói",DA,"Sprint 2",[
   "id|uuid|N|PK|Mã đánh giá|Id",
   "customer_id|uuid|N|FK → customers.id|Khách gửi|IdKhachHang",
-  "spa_service_id|uuid|Y|FK → spa_services.id|Dịch vụ được đánh giá|IdDichVu",
-  "service_package_id|uuid|Y|FK → service_packages.id; CHECK num_nonnulls(spa_service_id, service_package_id) = 1|Gói được đánh giá|IdGoiDichVu",
+  "spa_service_id|uuid|Y|FK → spa_services.id; UQ (customer_id, spa_service_id) khi khác null|Dịch vụ được đánh giá|IdDichVu",
+  "service_package_id|uuid|Y|FK → service_packages.id; UQ (customer_id, service_package_id) khi khác null; CHECK num_nonnulls(spa_service_id, service_package_id) = 1|Gói được đánh giá|IdGoiDichVu",
   "comment|text|Y||Nội dung nhận xét|NoiDungDanhGia",
   "owner_reply|text|Y||Phản hồi của spa|PhanHoiTuSpa",
   "replied_at_utc|timestamptz|Y||Thời điểm phản hồi|PhanHoiLuc",

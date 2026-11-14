@@ -55,8 +55,8 @@ erDiagram
     appointments ||--o| skin_profiles : appointment_id
     customers ||--o{ customer_allergies : customer_id
     customers ||--o{ reviews : customer_id
-    spa_services |o--o{ reviews : spa_service_id
-    service_packages |o--o{ reviews : service_package_id
+    spa_services |o--o| reviews : spa_service_id
+    service_packages |o--o| reviews : service_package_id
     customers ||--o{ ai_chat_messages : customer_id
     users ||--o{ notifications : user_id
     users ||--o{ refresh_tokens : user_id
@@ -523,22 +523,22 @@ erDiagram
 
 `Review` · DA: DanhGia · Sprint 2 · Đánh giá dịch vụ hoặc gói. UC: UC-SPA-07, UC-SPA-29, UC-SPA-30, UC-SPA-31.
 
-| Cột                  | PostgreSQL   | C#                       | Null  | Ràng buộc                                                                            | Mô tả                                   | DA             |
-| -------------------- | ------------ | ------------------------ | ----- | ------------------------------------------------------------------------------------ | --------------------------------------- | -------------- |
-| `id`                 | uuid         | `Id`: Guid               | không | PK                                                                                   | Mã đánh giá                             | Id             |
-| `customer_id`        | uuid         | `CustomerId`: Guid       | không | FK → customers.id                                                                    | Khách gửi                               | IdKhachHang    |
-| `spa_service_id`     | uuid         | `SpaServiceId`: Guid     | có    | FK → spa_services.id                                                                 | Dịch vụ được đánh giá                   | IdDichVu       |
-| `service_package_id` | uuid         | `ServicePackageId`: Guid | có    | FK → service_packages.id; CHECK num_nonnulls(spa_service_id, service_package_id) = 1 | Gói được đánh giá                       | IdGoiDichVu    |
-| `comment`            | text         | `Comment`: string        | có    | —                                                                                    | Nội dung nhận xét                       | NoiDungDanhGia |
-| `owner_reply`        | text         | `OwnerReply`: string     | có    | —                                                                                    | Phản hồi của spa                        | PhanHoiTuSpa   |
-| `replied_at_utc`     | timestamptz  | `RepliedAtUtc`: DateTime | có    | —                                                                                    | Thời điểm phản hồi                      | PhanHoiLuc     |
-| `rating`             | integer      | `Rating`: int            | không | CHECK rating BETWEEN 1 AND 5                                                         | Số sao                                  | SoSao          |
-| `image_url`          | varchar(500) | `ImageUrl`: string       | có    | —                                                                                    | Ảnh đính kèm                            | HinhAnh        |
-| `status`             | varchar(30)  | `Status`: ReviewStatus   | không | CHECK enum ReviewStatus                                                              | Trạng thái hiển thị                     | TrangThai      |
-| `created_at_utc`     | timestamptz  | `CreatedAtUtc`: DateTime | không | —                                                                                    | Thời điểm tạo                           | NgayTao        |
-| `updated_at_utc`     | timestamptz  | `UpdatedAtUtc`: DateTime | có    | —                                                                                    | Thời điểm cập nhật gần nhất             | NgayCapNhat    |
-| `created_by`         | uuid         | `CreatedBy`: Guid        | có    | —                                                                                    | Người tạo (từ BaseAuditableEntity)      | —              |
-| `updated_by`         | uuid         | `UpdatedBy`: Guid        | có    | —                                                                                    | Người cập nhật (từ BaseAuditableEntity) | —              |
+| Cột                  | PostgreSQL   | C#                       | Null  | Ràng buộc                                                                                                                                | Mô tả                                   | DA             |
+| -------------------- | ------------ | ------------------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | -------------- |
+| `id`                 | uuid         | `Id`: Guid               | không | PK                                                                                                                                       | Mã đánh giá                             | Id             |
+| `customer_id`        | uuid         | `CustomerId`: Guid       | không | FK → customers.id                                                                                                                        | Khách gửi                               | IdKhachHang    |
+| `spa_service_id`     | uuid         | `SpaServiceId`: Guid     | có    | FK → spa_services.id; UQ (customer_id, spa_service_id) khi khác null                                                                     | Dịch vụ được đánh giá                   | IdDichVu       |
+| `service_package_id` | uuid         | `ServicePackageId`: Guid | có    | FK → service_packages.id; UQ (customer_id, service_package_id) khi khác null; CHECK num_nonnulls(spa_service_id, service_package_id) = 1 | Gói được đánh giá                       | IdGoiDichVu    |
+| `comment`            | text         | `Comment`: string        | có    | —                                                                                                                                        | Nội dung nhận xét                       | NoiDungDanhGia |
+| `owner_reply`        | text         | `OwnerReply`: string     | có    | —                                                                                                                                        | Phản hồi của spa                        | PhanHoiTuSpa   |
+| `replied_at_utc`     | timestamptz  | `RepliedAtUtc`: DateTime | có    | —                                                                                                                                        | Thời điểm phản hồi                      | PhanHoiLuc     |
+| `rating`             | integer      | `Rating`: int            | không | CHECK rating BETWEEN 1 AND 5                                                                                                             | Số sao                                  | SoSao          |
+| `image_url`          | varchar(500) | `ImageUrl`: string       | có    | —                                                                                                                                        | Ảnh đính kèm                            | HinhAnh        |
+| `status`             | varchar(30)  | `Status`: ReviewStatus   | không | CHECK enum ReviewStatus                                                                                                                  | Trạng thái hiển thị                     | TrangThai      |
+| `created_at_utc`     | timestamptz  | `CreatedAtUtc`: DateTime | không | —                                                                                                                                        | Thời điểm tạo                           | NgayTao        |
+| `updated_at_utc`     | timestamptz  | `UpdatedAtUtc`: DateTime | có    | —                                                                                                                                        | Thời điểm cập nhật gần nhất             | NgayCapNhat    |
+| `created_by`         | uuid         | `CreatedBy`: Guid        | có    | —                                                                                                                                        | Người tạo (từ BaseAuditableEntity)      | —              |
+| `updated_by`         | uuid         | `UpdatedBy`: Guid        | có    | —                                                                                                                                        | Người cập nhật (từ BaseAuditableEntity) | —              |
 
 ### ai_chat_messages
 

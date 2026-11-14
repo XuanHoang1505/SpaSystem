@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "de85ca11-29fe-467b-b163-f4dbd158e4c2",
+    "_postman_id": "3f8d38fc-da75-4ddb-b96c-bf32ec3be871",
     "name": "Nhu Nguyet Spa API",
     "description": "Collection thử API backend Spa Như Nguyệt.\n\n**Chuẩn bị:** `npm run db:up`, `npm run db:migrate`, `npm run db:seed`, rồi chạy API (`dotnet run --project backend/src/API --launch-profile http`, hoặc `--launch-profile https` cho cổng 7001).\n\n**Environment:** chọn `Spa – Local HTTP` (cổng 5000) hoặc `Spa – Local HTTPS` (cổng 7001). Điền **Current value** của `loginPassword` bằng `SEED_OWNER_PASSWORD` trong `backend/src/API/.env` (không lưu vào Initial value để mật khẩu không bị chia sẻ).\n\n**Thứ tự gợi ý:** Auth › Đăng nhập (email) → Làm mới phiên → Đăng xuất. Các request đăng nhập/làm mới tự lưu `accessToken`, `refreshToken` vào environment. Có thể chạy cả folder bằng Collection Runner.\n\n**Đăng ký / Quên mật khẩu (OTP email):** gửi mail thật qua Gmail — cần `MAIL_SETTINGS_*` trong `backend/src/API/.env`. Sau bước gửi OTP, mở hộp thư và dán mã 6 số vào biến `otp`. Mật khẩu (`registerPassword`, `newPassword`): 8–128 ký tự, có chữ và số.\n\n**Catalog (UC-SPA-06, 07, 09):** chạy `Catalog › Đăng nhập chủ spa` trước (lưu `ownerAccessToken`), rồi theo thứ tự trong folder: tạo dịch vụ lưu `serviceId`, tạo gói lưu `packageId`. Request tải ảnh dùng form-data: ở field `file` bấm **Select Files** chọn ảnh JPEG/PNG/WebP ≤ 5 MB. Ảnh cần `CLOUDINARY_*` trong `backend/src/API/.env`, thiếu thì trả 503 `image_storage_unavailable`. Spec: `docs/specs/catalog.md`.\n\n**Staff (UC-SPA-22, 23):** chạy `Catalog › Đăng nhập chủ spa` và `Catalog › Thêm dịch vụ` trước (cần `ownerAccessToken`, `serviceId`). `Thêm nhân viên` gửi mật khẩu tạm qua mail thật (cần `MAIL_SETTINGS_*`); điền `staffEmail` trong environment để nhận mail, bỏ trống thì dùng địa chỉ `@example.com` ngẫu nhiên. Phản hồi không chứa mật khẩu. Ngày ca làm tự tính theo giờ Việt Nam (ngày mai). `Ghi nhận nghỉ việc` để cuối folder vì mỗi nhân viên chỉ ghi được một lần. Spec: `docs/specs/staff.md`.\n\n**Lưu ý:** mọi endpoint `/auth/*` ẩn danh dùng chung giới hạn 10 yêu cầu/phút/IP (429 `rate_limited`). Chạy cả collection bằng Collection Runner thì đặt **Delay = 6500 ms**. Request 'E5 – Dùng lại refresh token cũ' thu hồi mọi phiên → đăng nhập lại sau khi chạy. Spec: `docs/specs/auth.md`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -14928,6 +14928,849 @@
                 "v1",
                 "reports",
                 "revenue"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope lỗi', () => { pm.expect(body.success).to.eql(false); pm.expect(body.traceId).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Đánh giá (UC-SPA-29, 30, 31)",
+      "description": "Xem đánh giá công khai, khách đánh giá sản phẩm đã dùng, chủ spa phản hồi và ẩn/hiện. Cần serviceId, packageId, customerAccessToken (khách đã dùng dịch vụ serviceId, ví dụ dữ liệu `npm run db:seed:demo`), ownerAccessToken; spec: docs/specs/reviews.md. Ảnh dùng form-data field `file` (cần CLOUDINARY_*, thiếu thì 503).",
+      "item": [
+        {
+          "name": "Đánh giá của dịch vụ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}/reviews?pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services",
+                "{{serviceId}}",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "rating",
+                  "value": "5",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Chỉ đánh giá visible; summary tính trên mọi đánh giá visible, không theo bộ lọc sao (BR-REV-02, 06).",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Có tóm tắt điểm', () => pm.expect(body.data.summary.ratingCounts).to.have.all.keys('1','2','3','4','5'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đánh giá của gói",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/packages/{{packageId}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "packages",
+                "{{packageId}}",
+                "reviews"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Số sao sai → 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services/{{serviceId}}/reviews?rating=6",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "services",
+                "{{serviceId}}",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "rating",
+                  "value": "6"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope lỗi', () => { pm.expect(body.success).to.eql(false); pm.expect(body.traceId).to.be.a('string'); });",
+                  "pm.test('Lỗi ở trường Rating', () => pm.expect(body.errors.map(e => e.field)).to.include('Rating'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sản phẩm có thể đánh giá",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/reviewable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "reviewable"
+              ]
+            },
+            "description": "eligible + reason: not_used_yet | not_enough_sessions | already_reviewed (BR-REV-01).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gửi đánh giá dịch vụ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "reviews"
+              ]
+            },
+            "description": "Chưa dùng dịch vụ → 400 review_not_eligible; đã đánh giá → 409 review_exists (BR-REV-03).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spaServiceId\": \"{{serviceId}}\",\n  \"rating\": 5,\n  \"comment\": \"Nhân viên nhẹ tay, da mịn hơn.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.environment.set('reviewId', body.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gửi lại → 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "reviews"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spaServiceId\": \"{{serviceId}}\",\n  \"rating\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope lỗi', () => { pm.expect(body.success).to.eql(false); pm.expect(body.traceId).to.be.a('string'); });",
+                  "pm.test('Mã lỗi review_exists', () => pm.expect(body.errors[0].code).to.eql('review_exists'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Đánh giá của tôi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "reviews"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sửa đánh giá",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/reviews/{{reviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "reviews",
+                "{{reviewId}}"
+              ]
+            },
+            "description": "Trong 30 ngày và khi spa chưa phản hồi (BR-REV-04, Q-76), sai → 409 review_locked.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Sửa lại: rất hài lòng.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tải ảnh đánh giá",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/reviews/{{reviewId}}/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "reviews",
+                "{{reviewId}}",
+                "image"
+              ]
+            },
+            "description": "Chọn ảnh JPEG/PNG/WebP ≤ 5 MB ở field file.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chủ spa lọc đánh giá",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews?search=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "rating",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "productType",
+                  "value": "service",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "visible",
+                  "disabled": true
+                },
+                {
+                  "key": "hasReply",
+                  "value": "false",
+                  "disabled": true
+                },
+                {
+                  "key": "fromDate",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "toDate",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "search không dấu trên tên/SĐT/email khách và tên sản phẩm.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Phản hồi đánh giá",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews/{{reviewId}}/reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reviews",
+                "{{reviewId}}",
+                "reply"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reply\": \"Cảm ơn chị đã tin tưởng Như Nguyệt!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope thành công', () => pm.expect(body.success).to.eql(true));",
+                  "pm.test('Có thời điểm phản hồi', () => pm.expect(body.data.repliedAtUtc).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Khách sửa sau phản hồi → 409",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/reviews/{{reviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "reviews",
+                "{{reviewId}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('Envelope lỗi', () => { pm.expect(body.success).to.eql(false); pm.expect(body.traceId).to.be.a('string'); });",
+                  "pm.test('Mã lỗi review_locked', () => pm.expect(body.errors[0].code).to.eql('review_locked'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ẩn đánh giá",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews/{{reviewId}}/visibility",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reviews",
+                "{{reviewId}}",
+                "visibility"
+              ]
+            },
+            "description": "Không xóa (BR-REV-02).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"hidden\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Hiện lại đánh giá",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews/{{reviewId}}/visibility",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reviews",
+                "{{reviewId}}",
+                "visibility"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"visible\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gỡ phản hồi",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews/{{reviewId}}/reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reviews",
+                "{{reviewId}}",
+                "reply"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ownerAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Khách hàng quản lý → 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reviews"
               ]
             },
             "description": "",
