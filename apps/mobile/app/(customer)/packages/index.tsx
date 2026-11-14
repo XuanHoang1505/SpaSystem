@@ -1,4 +1,5 @@
-import { PlaceholderScreen } from '@components/common/PlaceholderScreen';
+import { MyPurchasesScreen } from '@features/purchases';
+
 export default function Screen() {
-  return <PlaceholderScreen title="Gói của tôi" />;
+  return <MyPurchasesScreen />;
 }
