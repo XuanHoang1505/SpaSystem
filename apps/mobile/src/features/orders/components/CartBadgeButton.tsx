@@ -32,9 +32,7 @@ export function CartBadgeButton() {
       <ShoppingCart size={22} color={colors.primary} />
       {count > 0 && (
         <View style={styles.badge}>
-          <AppText style={styles.badgeText}>
-            {count > 99 ? '99+' : count}
-          </AppText>
+          <AppText style={styles.badgeText}>{count > 99 ? '99+' : count}</AppText>
         </View>
       )}
     </Pressable>
@@ -59,7 +57,7 @@ const styles = StyleSheet.create({
     minWidth: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accentRose,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,

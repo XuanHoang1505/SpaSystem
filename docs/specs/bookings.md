@@ -699,3 +699,235 @@ Lịch `held`, `hold_expired`, `completed`, `cancelled`, `no_show` không có n�
 | BKG-UI-T33 | Kéo thả (bằng bàn phím trong test): thả mở hộp xác nhận nêu giờ/nhân viên cũ và mới; xác nhận gửi `reschedule { date, startTime }` hoặc `assign-staff { staffMemberId }`; "Quay lại" không gọi API; lỗi `slot_unavailable`, `staff_not_on_shift`, `appointment_in_past` hiện toast thông điệp backend, thẻ ở chỗ cũ, lịch ngày được tải lại |
 | BKG-UI-T34 | Nhãn `no_show` hiện "Không đến" ở lịch hẹn của chủ spa, lịch hẹn của tôi và lịch sử sử dụng dịch vụ                                                                                                                                                                                                                                         |
 | BKG-UI-T31 | Route `/owner/bookings` yêu cầu chủ spa (khách và nhân viên → `/forbidden`), không còn `PlaceholderPage`, mục "Lịch hẹn" trong sidebar được đánh dấu                                                                                                                                                                                        |
+
+## Giao diện (mobile): UC-SPA-15, UC-SPA-16
+
+### Ánh xạ màn hình & Route (Expo Router)
+
+> **Quy tắc điều hướng Mobile:** Các màn hình luồng đặt lịch có thanh công cụ cố định ở đáy (`/booking/new`, `/booking/success`) được đặt làm **Standalone Stack Screen** ở Root Stack (`app/booking/new.tsx`, `app/booking/success.tsx`, đăng ký trong `app/_layout.tsx` với `headerShown: false`) tương tự `/cart` và `/checkout` để không bị đè bởi thanh Bottom Tab Bar của `(customer)`. Trong khi đó, danh sách và chi tiết lịch hẹn nằm trong tab **Lịch hẹn** (`app/(customer)/bookings/index.tsx` và `app/(customer)/bookings/[bookingId].tsx`).
+
+| Mã màn hình | Route Expo Router | File route | UC | Vai trò |
+| :--- | :--- | :--- | :--- | :--- |
+| **SCR-M18** | `/booking/new` | `apps/mobile/app/booking/new.tsx` | UC-SPA-15 | `customer` |
+| **SCR-M18b** | `/booking/success` | `apps/mobile/app/booking/success.tsx` | UC-SPA-15 | `customer` |
+| **SCR-M11** | `/(customer)/bookings` | `apps/mobile/app/(customer)/bookings/index.tsx` | UC-SPA-16 | `customer` |
+| **SCR-M12** | `/booking/[bookingId]` | `apps/mobile/app/booking/[bookingId].tsx` | UC-SPA-16 | `customer` |
+| **SCR-M02 / M03** *(cập nhật)* | `/(public)/services`, `/(public)/services/[serviceId]` | `ServiceDetailScreen.tsx`, `ServicesListScreen.tsx` | UC-SPA-15 | `guest`, `customer` |
+| **SCR-M19c** *(cập nhật)* | `/payment/result?orderId=` | `PaymentResultScreen.tsx` | UC-SPA-11, 15 | `customer` |
+
+---
+
+### SCR-M18 — Đặt lịch hẹn (`/booking/new`) — UC-SPA-15
+
+- **Route & Tham số truy vấn (`useLocalSearchParams`):**
+  - **Luồng 1 — Đặt ngay & Thanh toán (`book_now`):** `?serviceId=<guid>` (tùy chọn kèm `&date=yyyy-MM-dd&startTime=HH:mm&staffMemberId=<guid>`).
+  - **Luồng 2a — Dùng quyền dịch vụ lẻ đã mua (`entitlement`):** `?serviceEntitlementId=<guid>`.
+  - **Luồng 2b — Dùng buổi trong gói liệu trình (`session`):** `?treatmentSessionId=<guid>&treatmentPlanId=<guid>` (nếu thiếu `treatmentPlanId`, tự dò trong `GET /me/treatments`).
+  - **Tham số không hợp lệ** (không có nguồn nào, có từ 2 nguồn trở lên, hoặc giá trị không phải GUID hợp lệ): hiển thị `AppNotice` lỗi `"Không xác định được dịch vụ hoặc quyền sử dụng cần đặt lịch."` kèm nút `"Khám phá dịch vụ"` (`/(public)/services`).
+- **Bảo vệ route:**
+  - Chưa đăng nhập (`status !== 'authenticated'`): chuyển hướng `/(public)/login?redirect=<encoded_current_url>`.
+  - Đã đăng nhập nhưng `user.role !== 'customer'` (`staff` hoặc `owner`): chuyển hướng `/forbidden`.
+- **Dữ liệu nguồn (`useBookingSource`):**
+  - **Luồng 1 (`serviceId`):** `GET /api/v1/services/{serviceId}` (`CatalogApi.getService`). Nếu dịch vụ có `status === 'discontinued'`, hiển thị `AppNotice` cảnh báo `"Dịch vụ này hiện tạm ngừng nhận đặt lịch mới."` và khóa toàn bộ bước chọn giờ/xác nhận.
+  - **Luồng 2a (`serviceEntitlementId`):** `GET /api/v1/me/purchases/services/{serviceEntitlementId}` (`PurchasesApi.getService`). Nếu `!canBook` (`status !== 'available'`), hiển thị `AppNotice` nêu rõ lý do (đã đặt lịch / đã sử dụng / đã hết hạn); nếu `appointment` khác `null`, hiện nút `"Xem lịch hẹn đã đặt"` → `/(customer)/bookings/${appointment.id}`.
+  - **Luồng 2b (`treatmentSessionId`):** `GET /api/v1/me/treatments/{treatmentPlanId}` (hoặc tìm trong `GET /api/v1/me/treatments`) để lấy thông tin gói và buổi `MyTreatmentSession`. Nếu `!session.canBook`, hiển thị `AppNotice` với thông điệp từ `session.reason` (hoặc mô tả trạng thái buổi) và khóa nút đặt lịch; nếu `session.earliestDate` có giá trị, tự động khởi tạo ngày chọn đầu tiên là `max(todayVn, session.earliestDate)`.
+- **Bố cục màn hình (Standalone Stack Screen, `AppScreen scroll={false}`):**
+  1. **Header cố định trên cùng:** Nút quay lại (`ArrowLeft`, vùng chạm $\ge 48 \times 48\text{dp}$), tiêu đề `"Đặt lịch hẹn"`, phụ đề nhỏ phân biệt luồng (`"Đặt trực tiếp & thanh toán"` hoặc `"Sử dụng gói / dịch vụ đã mua"`).
+  2. **Vùng cuộn (`ScrollView`) gồm các khối theo thứ tự:**
+     - **Thẻ Nguồn đặt lịch (`BookingSourceCard`):**
+       - Luồng 1: Ảnh thu nhỏ dịch vụ (hoặc icon `Sparkles`), tên dịch vụ, thời lượng (`formatDuration(durationMinutes)`), giá niêm yết (`formatCurrency(price)`).
+       - Luồng 2a: Nhãn `"DỊCH VỤ ĐÃ MUA"`, tên dịch vụ, thời lượng, mã đơn gốc (`order.code`), hạn sử dụng (`expiresAtUtc ? formatLocalDate(...) : 'Không giới hạn'`), huy hiệu `"0 ₫ hôm nay"`.
+       - Luồng 2b: Nhãn `"BUỔI LIỆU TRÌNH"`, tên gói (`packageName`), dòng `"Buổi {sequenceNumber}/{totalSessions}: {serviceName}"`, thời lượng, nhân viên phụ trách gợi ý (`primaryStaff?.fullName`), ghi chú khoảng cách ngày tối thiểu nếu có `earliestDate`, huy hiệu `"0 ₫ hôm nay"`.
+     - **Bước 1 — Chọn ngày, giờ và kỹ thuật viên (`DateStripPicker` + `StaffSlotPicker`):**
+       - **Chọn ngày (`DateStripPicker`):** Thanh cuộn ngang hiển thị dải ngày từ `minDate` (`todayVn` theo múi giờ `Asia/Ho_Chi_Minh`, hoặc `earliestDate` nếu lớn hơn `todayVn`) đến `todayVn + 60 ngày` (`BR-BKG-01`). Đổi ngày sẽ xóa khung giờ đã chọn và gọi lại `GET /api/v1/availability`.
+       - **Chọn khung giờ chia Sáng / Chiều (`StaffSlotPicker` — đồng bộ logic với Web):**
+         - Hợp nhất các mốc `startTime` (`anyStaffTimes`) và ẩn các giờ đã qua nếu là ngày hôm nay (`hideElapsedTimes`).
+         - Chia khung giờ thành 2 buổi: **SÁNG** (`time < '12:00'`, kèm icon `Sunrise`) và **CHIỀU** (`time >= '12:00'`, kèm icon `Sunset`), hiển thị dạng lưới 4 cột.
+         - Khi chưa chọn giờ: hiển thị hộp nhắc nét đứt `"Vui lòng chọn một khung giờ phía trên để xem các kỹ thuật viên sẵn sàng phục vụ."`
+         - Khi đã chọn một khung giờ `chosen`: hiển thị khu vực **`"Kỹ thuật viên rảnh lúc {chosen}"`** (kèm icon `UserRound`) gồm:
+           - Nút **`"Kỹ thuật viên bất kỳ"`** (kèm icon `Sparkles`, mặc định được chọn khi vừa bấm giờ — `staffMemberId = undefined`).
+           - Danh sách các kỹ thuật viên thực sự rảnh tại khung giờ `chosen` (`member.slots.some(s => s.startTime === chosen)`), kèm nhãn `"Phụ trách"` nếu trùng `primaryStaffId` hoặc ghi chú `"Đang là kỹ thuật viên của lịch này"` khi đổi giờ hẹn.
+     - **Bước 2 — Ghi chú cho kỹ thuật viên (`note`):**
+       - Hàng chip gợi ý nhanh (`+ Da nhạy cảm, tránh lực mạnh`, `+ Tránh tinh dầu mùi nồng`, `+ Cần soi da trước buổi hẹn`, `+ Có thể đến trễ 5–10 phút`) + ô `TextInput` đa dòng tùy chọn (tối đa 500 ký tự, bộ đếm `{note.length}/500`).
+       - *(Mã khuyến mãi không đặt ở trang chọn lịch mà đặt ở bước **Xác nhận & Thanh toán (`/checkout`)** để khách xem trực tiếp số tiền được giảm qua `useOrderPreview`).*
+     - **Thẻ Tóm tắt lịch hẹn (`BookingSummaryCard`):**
+       - Hiển thị: Dịch vụ/Buổi, Ngày hẹn (`formatLocalDate(date)`), Khung giờ (`HH:mm – HH:mm` hoặc `"Chưa chọn khung giờ"`), Kỹ thuật viên (`fullName` hoặc `"Kỹ thuật viên bất kỳ"`), Giá tạm tính (`formatCurrency(service.price)` ở Luồng 1; `"0 ₫ (Đã thanh toán)"` ở Luồng 2).
+  3. **Thanh công cụ cố định ở đáy (`stickyBottomBar`):**
+     - Bên trái: Tóm tắt giờ chọn (`{startTime} · {dd/MM}`) + số tiền (`formatCurrency(price)` hoặc `"0 ₫"`).
+     - Bên phải: Nút chính (`AppButton`):
+       - Luồng 1: **`"Tiếp tục thanh toán"`** → chuyển sang `/checkout?source=buy_now&spaServiceId=...&bookingDate=...&bookingStartTime=...&bookingStaffId=...&bookingNote=...` (tại `/checkout`, khách có thể áp mã giảm giá qua `PromotionInputCard`, xem tổng tiền sau giảm và bấm **"Thanh toán VNPay"** để gọi `POST /api/v1/me/appointments/book-now` kèm `Idempotency-Key`).
+       - Luồng 2: **`"Xác nhận đặt lịch"`** → gọi `POST /api/v1/me/appointments` và chuyển tới `/booking/success?appointmentId=`.
+
+- **Hành động & Luồng xử lý khi bấm xác nhận:**
+  - **Luồng 1 (`POST /api/v1/me/appointments/book-now`):**
+    - Quản lý `Idempotency-Key` (`BR-ORD-08`): sinh UUID v4 lưu trong `ref` cho tổ hợp `(spaServiceId, date, startTime, staffMemberId ?? '', promotionCode ?? '', note ?? '')`. Nếu thử lại khi lỗi mạng trên cùng tổ hợp thì giữ nguyên key; nếu khách đổi bất kỳ trường nào trong tổ hợp trên thì sinh key mới.
+    - Gọi `AppointmentsApi.bookNow(body, idempotencyKey)`.
+    - Khi thành công (`BookNowResult`):
+      - Làm mới cache: `appointmentsQueryKeys.all`, `ordersQueryKeys.all`, `availabilityQueryKeys.all`.
+      - Nếu `result.order.status === 'paid'` (đơn 0 ₫ sau khuyến mãi, lịch hẹn đã tự động `confirmed`): điều hướng `router.replace('/booking/success?appointmentId=' + result.appointment.id)`.
+      - Nếu `result.order.status === 'pending_payment'`: gọi tiếp `OrdersApi.createPayment(result.order.id, { client: 'mobile' })`:
+        - Mở `payment.paymentUrl` qua `Linking.openURL(payment.paymentUrl)` rồi điều hướng `router.replace('/payment/result?orderId=' + result.order.id)`.
+        - Nếu `createPayment` hoặc `Linking.openURL` thất bại: hiển thị `Alert` thông báo lịch đã được giữ chỗ 15 phút và chuyển sang `router.replace('/checkout?orderId=' + result.order.id)` để khách thanh toán lại.
+  - **Luồng 2 (`POST /api/v1/me/appointments`):**
+    - Gọi `AppointmentsApi.book({ serviceEntitlementId, treatmentSessionId, date, startTime, staffMemberId, note })`.
+    - Khi thành công (`MyAppointment` ở trạng thái `confirmed`):
+      - Làm mới cache: `appointmentsQueryKeys.all`, `purchasesQueryKeys.all`, `treatmentsQueryKeys.all`, `availabilityQueryKeys.all`.
+      - Điều hướng `router.replace('/booking/success?appointmentId=' + appointment.id)`.
+
+---
+
+### SCR-M18b — Đặt lịch thành công (`/booking/success`) & Cập nhật `PaymentResultScreen` (`SCR-M19c`)
+
+- **Màn hình `/booking/success?appointmentId=<guid>` (`BookingSuccessScreen`):**
+  - Tải chi tiết lịch hẹn qua `GET /api/v1/me/appointments/{appointmentId}` (`useMyAppointmentDetail`).
+  - Nếu lịch hẹn thuộc buổi gói (`appointment.treatmentSession !== null`), gọi phụ `GET /api/v1/me/purchases/packages/{customerPackageId}` (nếu lỗi mạng thì ẩn khối tiến độ, không chặn màn hình) để hiển thị thanh tiến độ gói: `"Đã sử dụng / đặt lịch: {usedSessions + bookedSessions}/{totalSessions} buổi"`.
+  - **Nội dung thẻ vé lịch hẹn (Ticket Card):**
+    - Biểu tượng thành công (`CheckCircle2`), tiêu đề `"Đặt lịch hẹn thành công!"`, phụ đề `"Chúng tôi đã ghi nhận lịch hẹn của bạn tại Như Nguyệt Spa."`
+    - Huy hiệu trạng thái (`AppointmentStatusBadge` — `"Đã xác nhận"`).
+    - Dịch vụ (`service.name`), Buổi liệu trình nếu có (`"Buổi {sequenceNumber} · {packageName}"`).
+    - Ngày & Giờ hẹn (`{formatLocalTime(startTime)} – {formatLocalTime(endTime)}, {formatLocalDate(date)}`).
+    - Kỹ thuật viên phụ trách (`staff.fullName`).
+    - Nguồn đặt & Mã đơn hàng (nếu `order !== null`: hiện `order.code`).
+    - Hạn chót đổi/hủy miễn phí (`changeDeadlineAtUtc`: `"Đổi hoặc hủy trước {formatDateTimeUtc(changeDeadlineAtUtc)}"`).
+  - **Các nút điều hướng:**
+    - Nút chính (`primary`): **`"Xem chi tiết lịch hẹn"`** → `router.replace('/booking/' + appointment.id)`.
+    - Nút phụ (`outline`): **`"Xem danh sách lịch hẹn"`** → `router.replace('/(customer)/bookings')`.
+    - Nút phụ (`outline`): **`"Về trang chủ"`** → `router.replace('/(customer)/home')`.
+- **Cập nhật `PaymentResultScreen` (`SCR-M19c` — `/payment/result?orderId=`):**
+  - Khi `order.appointment !== null`:
+    - Hiển thị thêm khối **"Thông tin lịch hẹn đi kèm"** ngay trong thẻ kết quả (Ngày `formatLocalDate(order.appointment.date)`, Giờ `formatLocalTime(startTime) – formatLocalTime(endTime)`, Kỹ thuật viên `order.appointment.staff.fullName`, Trạng thái lịch hẹn).
+    - Khi `order.status === 'paid'`, nút hành động chính đổi thành **`"Xem lịch hẹn vừa đặt"`** → `router.replace('/booking/success?appointmentId=' + order.appointment.id)`.
+
+---
+
+### SCR-M11 — Lịch hẹn của tôi (`/(customer)/bookings`) — UC-SPA-16
+
+- **Bảo vệ route:**
+  - Nếu khách chưa đăng nhập (`status !== 'authenticated'`): hiển thị trạng thái yêu cầu đăng nhập gọn gàng ngay trong tab (`"Đăng nhập để xem và quản lý lịch hẹn của bạn"` + nút `"Đăng nhập"` → `/(public)/login?redirect=%2F(customer)%2Fbookings`).
+- **Bố cục (`MyBookingsScreen`):**
+  1. **Header:** Sử dụng trực tiếp header `"Lịch hẹn"` của `(customer)` Bottom Tabs (không render thêm tiêu đề trùng lặp bên dưới).
+  2. **Thanh công cụ trên cùng (`tabsBar`):**
+     - **3 Tab phạm vi (`MyAppointmentScope`):** **`Sắp tới`** (`scope = 'upcoming'`, mặc định), **`Đã qua`** (`scope = 'past'`), **`Đã hủy`** (`scope = 'cancelled'`).
+     - Nút **`"+ Đặt lịch"`** (`router.push('/(public)/services')`).
+  3. **Danh sách lịch hẹn (`FlatList`):**
+     - Gọi `GET /api/v1/me/appointments?scope={scope}&pageNumber={page}&pageSize=10` (`useMyAppointments`).
+     - Hỗ trợ kéo để làm mới (`RefreshControl`) và phân trang (`Xem thêm` / tải trang kế tiếp).
+     - **Thẻ lịch hẹn (`AppointmentCard`):**
+       - Hàng đầu: Ngày hẹn nổi bật (`formatLocalDate(item.date)`) + khung giờ (`{formatLocalTime(item.startTime)} – {formatLocalTime(item.endTime)}`) + `AppointmentStatusBadge` (`held`: `"Đang giữ chỗ"`, `pending_confirmation`: `"Chờ xác nhận"`, `confirmed`: `"Đã xác nhận"`, `completed`: `"Hoàn thành"`, `cancelled`: `"Đã hủy"`, `no_show`: `"Không đến"`, `hold_expired`: `"Hết hạn giữ chỗ"`).
+       - Thân thẻ:
+         - Tên dịch vụ (`item.service.name`).
+         - Nhãn nguồn đặt:
+           - `source === 'session'` & `treatmentSession`: `"Buổi {sequenceNumber} · {packageName}"`
+           - `source === 'entitlement'`: `"Dịch vụ lẻ đã mua"`
+           - `source === 'book_now'`: `"Đặt trực tiếp"`
+         - Kỹ thuật viên: `"KTV: {item.staff.fullName}"`.
+         - Nếu `item.status === 'held'` và `item.holdExpiresAtUtc`: hiện đồng hồ đếm ngược `"Giữ chỗ còn {mm:ss}"` (tự động làm mới danh sách khi đếm về 0).
+       - Hàng nút thao tác ở chân thẻ:
+         - Nút **`"Chi tiết"`** → `router.push('/booking/' + item.id)`.
+         - Nếu `item.canReschedule === true`: hiện nút **`"Đổi giờ hẹn"`** (mở `RescheduleAppointmentModal` ngay cho lịch hẹn đó).
+         - Nếu `item.canCancel === true`: hiện nút **`"Hủy lịch"`** (mở `CancelAppointmentModal` ngay cho lịch hẹn đó).
+  4. **Trạng thái rỗng theo từng Tab:**
+     - `upcoming`: `"Bạn chưa có lịch hẹn nào sắp tới."` + nút `"Đặt lịch hẹn ngay"` → `/(public)/services`.
+     - `past`: `"Chưa có lịch hẹn nào đã hoàn thành hoặc đã qua."`
+     - `cancelled`: `"Không có lịch hẹn nào đã hủy hoặc hết hạn giữ chỗ."`
+
+---
+
+### SCR-M12 — Chi tiết lịch hẹn (`/booking/[bookingId]`, Root Stack) — UC-SPA-16
+
+- **Dữ liệu:** `GET /api/v1/me/appointments/{bookingId}` (`useMyAppointmentDetail`).
+- **Bố cục (`BookingDetailScreen`, `AppScreen scroll={false}`):**
+  1. **Header:** Nút quay lại (`ArrowLeft`), tiêu đề `"Chi tiết lịch hẹn"`.
+  2. **Vùng cuộn (`ScrollView`) gồm:**
+     - **Thẻ Trạng thái & Thời gian chính:**
+       - `AppointmentStatusBadge` + ngày giờ lớn (`{formatLocalTime(startTime)} – {formatLocalTime(endTime)} · {formatLocalDate(date)}`).
+       - **Khối cảnh báo giữ chỗ (`status === 'held'`):**
+         - Hiển thị đồng hồ đếm ngược tới `holdExpiresAtUtc`.
+         - Nếu `appointment.order?.status === 'pending_payment'`, hiển thị nút chính **`"Thanh toán ngay (VNPay)"`** (gọi `OrdersApi.createPayment(order.id, { client: 'mobile' })` → mở `paymentUrl` → chuyển sang `/payment/result?orderId=${order.id}`) và nút phụ **`"Xem đơn thanh toán"`** (`/checkout?orderId=${order.id}`).
+       - **Khối thông tin hủy (`status === 'cancelled'`):**
+         - Hiển thị thời điểm hủy (`cancelledAtUtc ? formatDateTimeUtc(cancelledAtUtc) : null`) và lý do hủy (`cancellationReason`).
+     - **Thẻ Thông tin dịch vụ & Kỹ thuật viên:**
+       - Dịch vụ: `service.name` + nút `"Xem dịch vụ"` (`/(public)/services/${service.id}`).
+       - Kỹ thuật viên phụ trách: `staff.fullName`.
+       - Nguồn đặt lịch:
+         - `book_now`: `"Đặt trực tiếp"` + Mã đơn hàng (`order?.code`).
+         - `entitlement`: `"Sử dụng quyền dịch vụ lẻ đã mua"`.
+         - `session`: `"Buổi {treatmentSession.sequenceNumber} thuộc gói {treatmentSession.packageName}"`.
+       - Ghi chú của khách (`note`): hiển thị nếu khác `null`/rỗng.
+       - Thời điểm tạo lịch: `formatDateTimeUtc(createdAtUtc)`.
+     - **Thẻ Quy định đổi / hủy lịch (`BR-BKG-15`):**
+       - Dựa hoàn toàn vào cờ `canReschedule`, `canCancel` và mốc `changeDeadlineAtUtc` từ backend (client không tự tính quy tắc 24h):
+       - Nếu `(canReschedule || canCancel)` và `changeDeadlineAtUtc`: hiển thị thông báo `"Bạn có thể đổi giờ hoặc hủy lịch hẹn trước {formatDateTimeUtc(changeDeadlineAtUtc)} (tối thiểu 24 giờ trước giờ hẹn)."`
+       - Nếu trạng thái là `pending_confirmation` hoặc `confirmed` nhưng `!canReschedule && !canCancel`: hiển thị thông báo `"Đã quá thời hạn đổi/hủy trực tuyến (trước giờ hẹn 24 giờ). Nếu có việc đột xuất, vui lòng liên hệ trực tiếp quầy lễ tân spa."`
+  3. **Thanh hành động cố định ở đáy (chỉ hiện khi `canReschedule || canCancel`):**
+     - Nút **`"Đổi giờ hẹn"`** (`variant="primary"`, hiện khi `canReschedule === true`) → mở `RescheduleAppointmentModal`.
+     - Nút **`"Hủy lịch hẹn"`** (`variant="outline"`, viền/chữ màu `colors.error`, hiện khi `canCancel === true`) → mở `CancelAppointmentModal`.
+
+---
+
+### Hộp thoại / Bottom Sheet Đổi giờ hẹn & Hủy lịch hẹn (UC-SPA-16)
+
+1. **`RescheduleAppointmentModal` (Đổi lịch hẹn):**
+   - Hiển thị thông tin lịch hiện tại: Dịch vụ (`service.name`), Giờ hiện tại (`{startTime} – {endTime}, {formatLocalDate(date)}`), Kỹ thuật viên hiện tại (`staff.fullName`).
+   - Cho phép chọn **Ngày mới** (`DateStripPicker`, từ hôm nay đến +60 ngày) và **Kỹ thuật viên / Khung giờ mới** (`StaffSlotPicker`).
+   - Gọi `GET /api/v1/availability?appointmentId={appointment.id}&date={newDate}` (`AvailabilityApi.forSource({ appointmentId: appointment.id }, newDate)` — backend tự loại trừ chính lịch hẹn đang đổi để không tự chặn giờ của mình).
+   - Mặc định chọn chip nhân viên hiện tại (`appointment.staff.id`) nếu nhân viên đó có trong danh sách; khách vẫn có thể chuyển sang `"Kỹ thuật viên bất kỳ"` hoặc nhân viên khác.
+   - Không cho phép bấm `"Xác nhận đổi lịch"` nếu khách chọn trùng ngày + giờ + nhân viên hiện tại.
+   - Khi bấm **`"Xác nhận đổi lịch"`**:
+     - Gọi `POST /api/v1/me/appointments/{id}/reschedule` với `{ date: newDate, startTime: newStartTime, staffMemberId }` (`staffMemberId` để `undefined` nếu chọn `"Kỹ thuật viên bất kỳ"`).
+     - Thành công: đóng modal, làm mới `appointmentsQueryKeys.all`, `availabilityQueryKeys.all`, `treatmentsQueryKeys.all`, `purchasesQueryKeys.all`, hiển thị `Alert` `"Đã cập nhật lịch hẹn thành công."`
+2. **`CancelAppointmentModal` (Hủy lịch hẹn):**
+   - Hiển thị tóm tắt lịch hẹn sắp hủy (Dịch vụ, Ngày giờ, Kỹ thuật viên).
+   - Hiển thị hộp lưu ý hoàn quyền (`BR-BKG-16`):
+     - Nếu `source === 'entitlement'` hoặc `source === 'session'`: `"Sau khi hủy, quyền sử dụng dịch vụ / buổi liệu trình sẽ được hoàn lại để bạn đặt lịch vào thời gian khác."`
+     - Nếu `source === 'book_now'`: `"Lịch hẹn sẽ chuyển sang trạng thái Đã hủy."`
+   - Ô nhập **Lý do hủy (`reason`)**: bắt buộc, `trim().length` từ 1 đến 500 ký tự (kiểm tra bằng Zod schema `cancelAppointmentSchema`), có các chip gợi ý nhanh (`"Bận việc đột xuất"`, `"Muốn đổi sang ngày khác"`, `"Đặt nhầm dịch vụ"`) để khách chạm chọn nhanh trên điện thoại.
+   - Nút **`"Quay lại"`** và **`"Xác nhận hủy lịch"`** (`POST /api/v1/me/appointments/{id}/cancel { reason }`).
+   - Thành công: đóng modal, làm mới `appointmentsQueryKeys.all`, `ordersQueryKeys.all`, `purchasesQueryKeys.all`, `treatmentsQueryKeys.all`, `availabilityQueryKeys.all`, hiển thị `Alert` `"Đã hủy lịch hẹn."`
+
+---
+
+### Bảng xử lý mã lỗi API (UC-SPA-15 & UC-SPA-16 Mobile)
+
+Mọi nhánh lỗi đều phân loại dựa trên `errorCodeOf(error)` (`ApiClientError.errors[0]?.code`) đối chiếu với `appointmentErrorCodes`, tuyệt đối không so khớp chuỗi `error.message`:
+
+| Mã lỗi (`errors[].code`) | Ngữ cảnh | Hành vi giao diện Mobile |
+| :--- | :--- | :--- |
+| `slot_unavailable` (`409`) | Đặt lịch, Đổi lịch | Hiển thị `AppNotice` / `Alert` `"Khung giờ vừa được khách khác đặt hoặc không còn kỹ thuật viên trống. Vui lòng chọn khung giờ khác."`, xóa `startTime` đang chọn và gọi `refetch()` lại `availability`. |
+| `customer_busy` (`409`) | Đặt lịch, Đổi lịch | Hiển thị thông điệp tiếng Việt của backend (khách đã có lịch khác trùng giờ), xóa `startTime` đang chọn và tải lại `availability`. |
+| `outside_work_schedule` (`409`) | Đặt lịch, Đổi lịch | Hiển thị thông điệp backend (`"Khung giờ nằm ngoài ca làm việc của kỹ thuật viên."`), xóa `startTime` đang chọn và tải lại `availability`. |
+| `slot_too_soon` (`400`), `appointment_in_past` (`400`) | Đặt lịch, Đổi lịch | Hiển thị thông điệp backend (`"Giờ bắt đầu phải cách thời điểm hiện tại tối thiểu 60 phút."`), xóa `startTime` đang chọn và tải lại `availability`. |
+| `session_too_early` (`400`), `session_too_late` (`400`) | Đặt lịch buổi gói / Đổi lịch buổi gói | Hiển thị thông điệp backend nêu rõ ngày hợp lệ sớm nhất / muộn nhất theo thứ tự buổi trong gói, giữ màn hình/modal để khách chọn lại ngày. |
+| `staff_not_qualified` (`400`), `staff_not_found` (`404`) | Đặt lịch, Đổi lịch | Hiển thị thông điệp backend, đặt lại bộ lọc nhân viên về `"Kỹ thuật viên bất kỳ"` và tải lại `availability`. |
+| `entitlement_not_eligible` (`409`), `entitlement_not_found` (`404`), `treatment_session_not_found` (`404`) | Đặt lịch Luồng 2 | Hiển thị `Alert` với thông điệp backend và làm mới dữ liệu nguồn (`refetch` nguồn đặt lịch). |
+| `service_not_found` (`404`) | Đặt lịch Luồng 1 | Hiển thị `AppNotice` lỗi dịch vụ không còn mở bán và vô hiệu hóa nút đặt. |
+| `promotion_invalid` (`400`), `promotion_not_applicable` (`409`), `order_amount_too_small` (`409`) | Đặt lịch Luồng 1 | Hiển thị lỗi trực tiếp dưới ô mã khuyến mãi trên màn hình `/booking/new`, giữ nguyên ngày, giờ và nhân viên đã chọn. |
+| `change_window_passed` (`409`) | Đổi lịch, Hủy lịch | Đóng modal, hiển thị `Alert` với thông điệp backend (đã quá hạn 24 giờ trước giờ hẹn), làm mới chi tiết và danh sách lịch hẹn. |
+| `appointment_status_invalid` (`409`) | Đổi lịch, Hủy lịch | Đóng modal, hiển thị `Alert` thông điệp backend (trạng thái lịch hẹn đã thay đổi), làm mới chi tiết và danh sách lịch hẹn. |
+| `appointment_not_found` (`404`) | Chi tiết, Đổi lịch, Hủy lịch | Đóng modal (nếu đang mở), hiển thị thông báo không tìm thấy lịch hẹn và quay về danh sách. |
+| `validation_error` (`400`) | Mọi form | Hiển thị lỗi dưới trường tương ứng (ví dụ: lý do hủy hoặc ghi chú vượt quá 500 ký tự). |
+| `status = 0`, `5xx` | Mọi thao tác | Hiển thị thông báo lỗi kết nối máy chủ, giữ nguyên dữ liệu khách đã chọn để thử lại (với cùng `Idempotency-Key` ở `bookNow`). |
+
+---
+
+### Bảng kiểm thử giao diện Mobile (`BKG-M-UI-T01…T16`)
+
+| Mã test | Nội dung kiểm tra |
+| :--- | :--- |
+| **BKG-M-UI-T01** | `AppointmentsApi` & `AvailabilityApi` mobile wrapper (`apps/mobile/src/lib/api/appointments.ts`): gọi đúng đường dẫn, query, headers (`Idempotency-Key`) và bóc tách `response.data`. |
+| **BKG-M-UI-T02** | `DateStripPicker` & helper lịch ngày VN: sinh đúng dải ngày từ `minDate` (`todayVn` hoặc `earliestDate`) đến `+60 ngày`, vô hiệu hóa các ngày trước `minDate`. |
+| **BKG-M-UI-T03** | `StaffSlotPicker`: hợp nhất đúng danh sách khung giờ khi chọn `"Kỹ thuật viên bất kỳ"` (đếm đúng số KTV trống mỗi giờ) và lọc đúng khung giờ khi chọn từng kỹ thuật viên cụ thể. |
+| **BKG-M-UI-T04** | `/booking/new` với tham số không hợp lệ (thiếu nguồn hoặc truyền cả `serviceId` lẫn `serviceEntitlementId`): hiển thị `AppNotice` lỗi và nút quay về danh sách dịch vụ. |
+| **BKG-M-UI-T05** | `/booking/new` Luồng 1 (`?serviceId=`): hiển thị thông tin dịch vụ, chọn ngày + giờ + KTV bất kỳ + ghi chú → bấm `"Giữ chỗ & Thanh toán"` gọi `bookNow` kèm `Idempotency-Key` → gọi `createPayment({ client: 'mobile' })` → mở `Linking.openURL` và chuyển tới `/payment/result?orderId=`. |
+| **BKG-M-UI-T06** | `/booking/new` Luồng 1 khi đơn 0 ₫ (`order.status === 'paid'`): chuyển thẳng tới `/booking/success?appointmentId=` mà không gọi `createPayment`. |
+| **BKG-M-UI-T07** | `/booking/new` Luồng 2a (`?serviceEntitlementId=`) & Luồng 2b (`?treatmentSessionId=&treatmentPlanId=`): hiển thị `"0 ₫ hôm nay"`, tôn trọng `earliestDate` và `primaryStaff`, bấm `"Xác nhận đặt lịch"` gọi `AppointmentsApi.book` và chuyển tới `/booking/success?appointmentId=`. |
+| **BKG-M-UI-T08** | `/booking/new` xử lý lỗi `slot_unavailable` / `customer_busy`: hiển thị thông báo lỗi tiếng Việt, xóa khung giờ đang chọn và tải lại `availability`; lỗi `promotion_invalid` hiển thị dưới ô mã khuyến mãi và giữ nguyên giờ đã chọn. |
+| **BKG-M-UI-T09** | `/booking/success?appointmentId=`: hiển thị thông tin vé lịch hẹn, tiến độ gói (nếu là buổi liệu trình), hạn chót đổi/hủy 24h và các nút điều hướng. |
+| **BKG-M-UI-T10** | `PaymentResultScreen` khi `order.appointment` tồn tại và `order.status === 'paid'`: hiển thị thông tin lịch hẹn đi kèm và nút `"Xem lịch hẹn vừa đặt"` điều hướng tới `/booking/success?appointmentId=`. |
+| **BKG-M-UI-T11** | `MyBookingsScreen` (`/(customer)/bookings`): chuyển đổi 3 tab `Sắp tới`, `Đã qua`, `Đã hủy` gọi đúng `scope`; hiển thị thẻ lịch hẹn với huy hiệu trạng thái, nguồn đặt, đếm ngược giữ chỗ (`held`) và trạng thái rỗng theo từng tab. |
+| **BKG-M-UI-T12** | `BookingDetailScreen` (`/(customer)/bookings/[bookingId]`): hiển thị đầy đủ chi tiết lịch hẹn, hạn chót `changeDeadlineAtUtc`, khối `"Thanh toán ngay (VNPay)"` khi `status === 'held'`, và ẩn/hiện nút `"Đổi giờ hẹn"` / `"Hủy lịch hẹn"` đúng theo cờ `canReschedule` / `canCancel` từ API. |
+| **BKG-M-UI-T13** | `RescheduleAppointmentModal`: tải giờ trống với `appointmentId`, gửi `POST /me/appointments/{id}/reschedule`, xử lý lỗi `slot_unavailable` và `change_window_passed`. |
+| **BKG-M-UI-T14** | `CancelAppointmentModal`: kiểm tra lý do bắt buộc (1–500 ký tự đã `trim`), chọn nhanh chip gợi ý lý do, gửi `POST /me/appointments/{id}/cancel` và làm mới danh sách/chi tiết. |
+| **BKG-M-UI-T15** | Điểm vào từ Catalog: bấm `"Đặt lịch ngay"` trên `ServiceDetailScreen` (hoặc thẻ dịch vụ) chuyển tới `/booking/new?serviceId=` khi đã đăng nhập hoặc `/(public)/login?redirect=` khi chưa đăng nhập. |
+| **BKG-M-UI-T16** | Không còn `PlaceholderScreen` tại `app/(customer)/bookings/index.tsx` và `app/(customer)/bookings/[bookingId].tsx`. |
+

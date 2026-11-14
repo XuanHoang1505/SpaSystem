@@ -1,12 +1,5 @@
 import { useEffect } from 'react';
-import {
-  Alert,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, ShoppingBag } from 'lucide-react-native';
@@ -25,14 +18,7 @@ import { useRemoveCartItem } from '../hooks/useRemoveCartItem';
 export function CartScreen() {
   const insets = useSafeAreaInsets();
   const { status } = useAuthStore();
-  const {
-    data: cart,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isRefetching,
-  } = useCart();
+  const { data: cart, isLoading, isError, error, refetch, isRefetching } = useCart();
   const removeMutation = useRemoveCartItem();
 
   useEffect(() => {
@@ -42,25 +28,20 @@ export function CartScreen() {
   }, [status]);
 
   const handleRemove = (id: string, name: string) => {
-    Alert.alert(
-      'Xóa khỏi giỏ hàng',
-      `Bạn có chắc chắn muốn bỏ "${name}" khỏi giỏ hàng?`,
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Xóa',
-          style: 'destructive',
-          onPress: () => {
-            removeMutation.mutate(id);
-          },
+    Alert.alert('Xóa khỏi giỏ hàng', `Bạn có chắc chắn muốn bỏ "${name}" khỏi giỏ hàng?`, [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Xóa',
+        style: 'destructive',
+        onPress: () => {
+          removeMutation.mutate(id);
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const hasItems = cart && cart.items.length > 0;
-  const availableItemsCount =
-    cart?.items.filter((item) => item.isAvailable).length ?? 0;
+  const availableItemsCount = cart?.items.filter((item) => item.isAvailable).length ?? 0;
 
   return (
     <AppScreen scroll={false} style={styles.screenContainer}>
@@ -87,10 +68,7 @@ export function CartScreen() {
           <AppNotice
             tone="error"
             title="Không thể tải giỏ hàng"
-            message={
-              error?.message ??
-              'Đã có sự cố khi kết nối tới máy chủ. Vui lòng thử lại.'
-            }
+            message={error?.message ?? 'Đã có sự cố khi kết nối tới máy chủ. Vui lòng thử lại.'}
           />
           <View style={styles.retryButtonWrapper}>
             <AppButton title="Thử lại" onPress={() => refetch()} />
@@ -101,12 +79,10 @@ export function CartScreen() {
           <View style={styles.emptyIconCircle}>
             <ShoppingBag size={56} color={colors.primary} />
           </View>
-          <AppText style={styles.emptyTitle}>
-            Giỏ hàng của bạn đang trống
-          </AppText>
+          <AppText style={styles.emptyTitle}>Giỏ hàng của bạn đang trống</AppText>
           <AppText style={styles.emptySubtitle}>
-            Hãy khám phá các dịch vụ chăm sóc và gói liệu trình ưu đãi đặc biệt
-            của Như Nguyệt Spa nhé!
+            Hãy khám phá các dịch vụ chăm sóc và gói liệu trình ưu đãi đặc biệt của Như Nguyệt Spa
+            nhé!
           </AppText>
           <View style={styles.emptyActions}>
             <AppButton
@@ -130,16 +106,10 @@ export function CartScreen() {
               <CartItemCard
                 item={item}
                 onRemove={handleRemove}
-                isRemoving={
-                  removeMutation.isPending &&
-                  removeMutation.variables === item.id
-                }
+                isRemoving={removeMutation.isPending && removeMutation.variables === item.id}
               />
             )}
-            contentContainerStyle={[
-              styles.listContent,
-              { paddingBottom: 110 + insets.bottom },
-            ]}
+            contentContainerStyle={[styles.listContent, { paddingBottom: 110 + insets.bottom }]}
             refreshControl={
               <RefreshControl
                 refreshing={isRefetching}
@@ -150,12 +120,7 @@ export function CartScreen() {
           />
 
           {/* Sticky Bottom Bar */}
-          <View
-            style={[
-              styles.bottomBar,
-              { paddingBottom: Math.max(insets.bottom, spacing.md) },
-            ]}
-          >
+          <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
             <View style={styles.totalInfo}>
               <AppText style={styles.totalLabel} numberOfLines={1}>
                 Tạm tính ({availableItemsCount} món)
@@ -168,9 +133,7 @@ export function CartScreen() {
               <AppButton
                 title="Tiến hành thanh toán"
                 onPress={() => router.push('/checkout?source=cart')}
-                disabled={
-                  availableItemsCount === 0 || removeMutation.isPending
-                }
+                disabled={availableItemsCount === 0 || removeMutation.isPending}
                 accessibilityLabel="Tiến hành thanh toán giỏ hàng"
               />
             </View>

@@ -26,6 +26,7 @@ export default function CustomerLayout() {
         name="home"
         options={{
           title: 'Trang chủ',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />

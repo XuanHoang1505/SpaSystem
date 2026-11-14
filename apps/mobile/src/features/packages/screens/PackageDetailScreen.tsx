@@ -9,15 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ArrowLeft,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  Layers,
-  ShoppingBag,
-  Sparkles,
-} from 'lucide-react-native';
+import { Calendar, CheckCircle2, Clock, Layers, ShoppingBag, Sparkles } from 'lucide-react-native';
 import { AppButton } from '@components/common/AppButton';
 import { AppNotice } from '@components/common/AppNotice';
 import { AppScreen } from '@components/common/AppScreen';
@@ -28,7 +20,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { colors, radius, spacing, typography } from '@theme/index';
 import { PackageRoadmapItem } from '../components/PackageRoadmapItem';
 import { usePackage } from '../hooks/usePackage';
-import { CartBadgeButton, useAddToCart } from '@/features/orders';
+import { useAddToCart } from '@/features/orders';
 
 export function PackageDetailScreen() {
   const { packageId } = useLocalSearchParams<{ packageId: string }>();
@@ -69,15 +61,11 @@ export function PackageDetailScreen() {
   const isDiscontinued = pkg.status === 'discontinued';
   const hasSavings = pkg.retailPrice > pkg.price;
   const savingsAmount = hasSavings ? pkg.retailPrice - pkg.price : 0;
-  const savingsPercent = hasSavings
-    ? Math.round((savingsAmount / pkg.retailPrice) * 100)
-    : 0;
+  const savingsPercent = hasSavings ? Math.round((savingsAmount / pkg.retailPrice) * 100) : 0;
 
   const handleAddToCart = () => {
     if (authStatus !== 'authenticated') {
-      router.push(
-        `/(public)/login?redirect=${encodeURIComponent(`/(public)/packages/${pkg.id}`)}`,
-      );
+      router.push(`/(public)/login?redirect=${encodeURIComponent(`/(public)/packages/${pkg.id}`)}`);
       return;
     }
     addToCartMutation.mutate(
@@ -98,9 +86,7 @@ export function PackageDetailScreen() {
 
   const handlePurchase = () => {
     if (authStatus === 'authenticated') {
-      router.push(
-        `/checkout?source=buy_now&servicePackageId=${pkg.id}`,
-      );
+      router.push(`/checkout?source=buy_now&servicePackageId=${pkg.id}`);
     } else {
       router.push(
         `/(public)/login?redirect=${encodeURIComponent(`/checkout?source=buy_now&servicePackageId=${pkg.id}`)}`,
@@ -110,25 +96,8 @@ export function PackageDetailScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Floating Header */}
-      <View style={[styles.floatingHeader, { top: insets.top + spacing.xs }]}>
-        <Pressable
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Quay lại"
-          hitSlop={8}
-          style={styles.floatingHeaderButton}
-        >
-          <ArrowLeft size={22} color={colors.text} />
-        </Pressable>
-        <CartBadgeButton />
-      </View>
-
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 84 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 84 }]}
       >
         <View style={styles.heroContainer}>
           {pkg.imageUrl ? (
@@ -179,8 +148,8 @@ export function PackageDetailScreen() {
                 Tổng giá mua lẻ từng buổi:{' '}
                 <AppText style={styles.retailStrikethrough}>
                   {formatCurrency(pkg.retailPrice)}
-                </AppText>
-                {' '}(Tiết kiệm {formatCurrency(savingsAmount)})
+                </AppText>{' '}
+                (Tiết kiệm {formatCurrency(savingsAmount)})
               </AppText>
             )}
 
@@ -207,13 +176,9 @@ export function PackageDetailScreen() {
             </AppText>
             <View style={styles.roadmapList}>
               {pkg.items && pkg.items.length > 0 ? (
-                pkg.items.map((item) => (
-                  <PackageRoadmapItem key={item.sortOrder} item={item} />
-                ))
+                pkg.items.map((item) => <PackageRoadmapItem key={item.sortOrder} item={item} />)
               ) : (
-                <AppText style={styles.emptyRoadmap}>
-                  Chưa có chi tiết danh sách buổi.
-                </AppText>
+                <AppText style={styles.emptyRoadmap}>Chưa có chi tiết danh sách buổi.</AppText>
               )}
             </View>
           </View>
@@ -245,10 +210,7 @@ export function PackageDetailScreen() {
       </ScrollView>
 
       <View
-        style={[
-          styles.stickyBottomBar,
-          { paddingBottom: Math.max(insets.bottom, spacing.sm) },
-        ]}
+        style={[styles.stickyBottomBar, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}
       >
         <View style={styles.bottomPriceColumn}>
           <AppText style={styles.bottomPriceLabel}>Trọn gói {pkg.totalSessions} buổi</AppText>
@@ -385,13 +347,13 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   discountBadge: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.accentRose,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
-    borderRadius: radius.small,
+    borderRadius: 999,
   },
   discountText: {
-    color: colors.primary,
+    color: colors.onPrimary,
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -479,28 +441,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.primary,
-  },
-  floatingHeader: {
-    position: 'absolute',
-    left: spacing.md,
-    right: spacing.md,
-    zIndex: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  floatingHeaderButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
   },
   bottomCtaRow: {
     flexDirection: 'row',

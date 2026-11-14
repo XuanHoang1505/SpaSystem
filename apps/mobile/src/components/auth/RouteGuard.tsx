@@ -8,9 +8,14 @@ import { colors } from '@theme/index';
 
 /**
  * Guards one role group (`(customer)`, `(staff)`, `(owner)`). Experience only, not a security boundary: the API
- * checks every permission.
+ * checks every permission. A route outside the role's group (such as `/booking/*`) passes `redirect`, the full path
+ * and query to come back to after signing in.
  */
-export function RouteGuard({ role, children }: PropsWithChildren<{ role: UserRole }>) {
+export function RouteGuard({
+  role,
+  redirect,
+  children,
+}: PropsWithChildren<{ role: UserRole; redirect?: string }>) {
   const status = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const pathname = usePathname();
@@ -24,7 +29,10 @@ export function RouteGuard({ role, children }: PropsWithChildren<{ role: UserRol
   if (status === 'anonymous')
     return (
       <Redirect
-        href={{ pathname: '/(public)/login', params: { redirect: `/(${role})${pathname}` } }}
+        href={{
+          pathname: '/(public)/login',
+          params: { redirect: redirect ?? `/(${role})${pathname}` },
+        }}
       />
     );
   if (!canAccessRole(user, role)) return <Redirect href="/forbidden" />;

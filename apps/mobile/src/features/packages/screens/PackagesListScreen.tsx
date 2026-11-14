@@ -103,13 +103,8 @@ export function PackagesListScreen() {
             accessibilityLabel="Mở bộ lọc khoảng giá gói"
             style={[styles.filterPill, hasPriceFilter && styles.filterPillActive]}
           >
-            <SlidersHorizontal
-              size={16}
-              color={hasPriceFilter ? colors.onPrimary : colors.muted}
-            />
-            <AppText
-              style={[styles.filterPillText, hasPriceFilter && styles.filterPillTextActive]}
-            >
+            <SlidersHorizontal size={16} color={hasPriceFilter ? colors.onPrimary : colors.muted} />
+            <AppText style={[styles.filterPillText, hasPriceFilter && styles.filterPillTextActive]}>
               Khoảng giá
             </AppText>
           </Pressable>
@@ -140,10 +135,7 @@ export function PackagesListScreen() {
           data={accumulatedItems}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <PackageCard
-              pkg={item}
-              onPress={() => router.push(`/(public)/packages/${item.id}`)}
-            />
+            <PackageCard pkg={item} onPress={() => router.push(`/(public)/packages/${item.id}`)} />
           )}
           contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
