@@ -966,3 +966,116 @@ Phạm vi: Triển khai giao diện Giỏ hàng, Đặt mua & Thanh toán trực
 | **ORD-M-UI-T14** | Màn hình kết quả khi thanh toán thành công (`status = 'paid'`) | Hiển thị icon thành công `CheckCircle2`, mã đơn hàng, số tiền, ngày giờ thanh toán và các nút điều hướng "Đặt lịch ngay", "Về trang chủ".                                                                               |
 | **ORD-M-UI-T15** | Màn hình kết quả khi đơn đang xử lý (`pending_payment`)        | Kích hoạt polling 2s/lần (tối đa 10 lần). Đơn chuyển `paid` giữa chừng thì dừng polling và hiển thị giao diện thành công. Hết 10 lần vẫn pending thì hiện thông báo chờ xử lý và nút "Kiểm tra lại".                    |
 | **ORD-M-UI-T16** | Màn hình kết quả khi thanh toán thất bại (`failed`)            | Hiển thị thông báo giao dịch thất bại, thời hạn giữ đơn và nút "Thanh toán lại" điều hướng về lại `/checkout?orderId=...`.                                                                                              |
+
+---
+
+## Giao diện Quản lý đơn hàng đã mua trên Mobile (UC-SPA-12)
+
+### SCR-M20a — Danh sách đơn hàng của tôi (My Orders List)
+
+- **Mã và route:** `SCR-M20a` · **Route file:** `app/my-orders/index.tsx` (Route `/my-orders`) · **Vai trò:** Khách hàng (`role = customer`).
+- **Layout:** Standalone Stack thuộc Root Stack (ẩn bottom tabs để mở rộng không gian hiển thị thẻ và bộ lọc, nút back `←` điều hướng về trang Tài khoản `app/(customer)/profile.tsx`).
+- **Nút mở từ:** Menu "Đơn hàng của tôi" trong `CustomerProfileScreen.tsx` (`app/(customer)/profile.tsx`), hoặc từ liên kết xem lại đơn sau thanh toán.
+- **Mẫu bố cục:** Danh sách thẻ cuộn dọc (`FlatList`), bộ lọc trạng thái dạng chip cuộn ngang trên cùng, kéo để làm mới (`RefreshControl`), phân trang tự động khi cuộn xuống cuối danh sách (`onEndReached`).
+- **Thanh lọc trạng thái (Status Filter Chips):**
+  - Mặc định: `Tất cả` (`status = undefined`).
+  - Các chip lọc: `Chờ thanh toán` (`status = 'pending_payment'`), `Đã thanh toán` (`status = 'paid'`), `Đã hủy` (`status = 'cancelled'`), `Hết hạn` (`status = 'expired'`).
+  - Chuyển chip tự động reset về trang 1 và refetch query.
+- **Thẻ đơn hàng (`MyOrderCard`):**
+  - _Dòng đầu:_ Mã đơn hàng (chữ đậm font monospace / brand color, vd: `DH261108UHSGCY`), ngày giờ tạo đơn (định dạng `dd/MM/yyyy HH:mm`), và badge trạng thái `OrderStatusBadge` với tông màu theo chuẩn thiết kế:
+    - `pending_payment`: Tông cảnh báo cam/vàng (`warning`), nhãn `Chờ thanh toán`.
+    - `paid`: Tông xanh lá (`success`), nhãn `Đã thanh toán`.
+    - `cancelled`: Tông đỏ (`danger`), nhãn `Đã hủy`.
+    - `expired`: Tông xám (`neutral`), nhãn `Đã hết hạn`.
+  - _Thân thẻ:_ Tóm tắt danh sách tên sản phẩm trong đơn (`productNames.join(', ')`), số lượng món (`{itemCount} sản phẩm`), tổng giá trị thanh toán cuối cùng (`formatCurrency(grandTotal)`).
+  - _Cảnh báo hạn thanh toán (với đơn `pending_payment`):_ Dòng đếm ngược thời gian thanh toán `paymentDueAtUtc` nếu đơn còn hạn thanh toán (`isPayable = true`).
+  - _Hành động trên thẻ:_
+    - Nút phụ "Chi tiết" $\rightarrow$ điều hướng sang `app/my-orders/[orderId].tsx`. Bấm vào vùng thân thẻ cũng mở chi tiết đơn.
+    - Nếu đơn `pending_payment` và `isPayable = true`: Nút chính "Thanh toán lại" (variant `primary`, gọi `createPayment` mở VNPay) và nút "Hủy đơn" (variant `outline`, mở modal xác nhận hủy).
+    - Nếu đơn `paid`: Nút phụ "Xem dịch vụ/gói đã mua" điều hướng nhanh tới `/(customer)/packages` hoặc đặt lịch.
+- **Trạng thái giao diện:**
+  - _Đang tải (Loading):_ Skeleton thẻ đơn hàng với animation nhẹ (`CartSkeleton` biến thể thẻ đơn).
+  - _Lỗi (Error):_ `AppNotice` hiển thị lỗi kèm nút "Thử lại".
+  - _Rỗng (Empty):_ Biểu tượng hộp đơn hàng trống, tiêu đề "Bạn chưa có đơn hàng nào" (kèm mô tả theo bộ lọc nếu đang lọc trạng thái), nút CTA "Khám phá dịch vụ ngay" điều hướng về `/(public)/services`.
+  - _Khách vãng lai (Guest):_ Nếu chưa đăng nhập, hiển thị thẻ mời đăng nhập thân thiện với 2 nút "Đăng nhập" và "Đăng ký".
+
+---
+
+### SCR-M20b — Chi tiết đơn hàng của tôi (Order Detail)
+
+- **Mã và route:** `SCR-M20b` · **Route file:** `app/my-orders/[orderId].tsx` (Route `/my-orders/:orderId`) · **Vai trò:** Khách hàng (`role = customer`).
+- **Layout:** Standalone Stack (Header có nút back `←` quay về `/my-orders`, tiêu đề "Chi tiết đơn hàng").
+- **Mẫu bố cục:** Trang nội dung cuộn dọc (`ScrollView`), chia thành các khối thẻ thông tin theo chiều dọc, thanh chân trang cố định (`StickyBottomBar`) cho các nút thao tác chính.
+- **Nội dung hiển thị:**
+  1. _Thẻ trạng thái đơn hàng:_
+     - Mã đơn hàng, ngày tạo, huy hiệu trạng thái `OrderStatusBadge`.
+     - Nếu `status = 'pending_payment'`: Hộp cảnh báo đếm ngược hạn thanh toán `paymentDueAtUtc` (15 phút từ lúc tạo).
+     - Nếu `status = 'cancelled'`: Hộp thông tin hủy đơn với thời gian hủy `cancelledAtUtc` và lý do hủy `cancellationReason`.
+     - Nếu đơn hàng có giữ chỗ lịch hẹn (`appointment != null` - từ luồng đặt ngay UC-SPA-15): Khối thông tin lịch hẹn giữ chỗ (Dịch vụ, ngày hẹn, khung giờ, chuyên viên thực hiện) kèm dòng lưu ý: "Lịch hẹn đang được giữ chỗ tạm thời cho đến khi thanh toán hoàn tất."
+  2. _Thẻ danh sách sản phẩm trong đơn (`items`):_
+     - Từng dòng sản phẩm: Tên dịch vụ/gói, phân loại (`Dịch vụ lẻ` hoặc `Gói liệu trình`), đơn giá gốc `unitPrice`, số tiền giảm giá theo dòng `discountAmount`, thành tiền `lineTotal`.
+  3. _Thẻ tổng kết thanh toán:_
+     - Tạm tính (`subtotal`).
+     - Giảm giá khuyến mãi (`discountTotal` - hiển thị mã code nếu có, vd: `-50.000 đ (Mã: TRIAN2026)`).
+     - Tổng thanh toán (`grandTotal`).
+  4. _Thẻ lịch sử giao dịch thanh toán (`payments`):_
+     - Danh sách các lượt thử thanh toán qua VNPay: Phương thức thanh toán (VNPay), số tiền, thời gian giao dịch, trạng thái lượt thanh toán (`succeeded` - xanh lá, `pending` - vàng, `failed` - đỏ, `expired` - xám).
+- **Thanh hành động chân trang (`StickyBottomBar`):**
+  - Khi `isPayable = true`: Nút "Thanh toán lại" (kích hoạt mở cổng VNPay qua `openAuthSessionAsync`) và nút "Hủy đơn hàng" (mở modal hủy đơn).
+  - Khi đơn `paid`: Nút "Đặt lịch ngay" hoặc "Xem gói đã mua".
+  - Khi đơn `cancelled` hoặc `expired`: Nút "Đặt mua lại" (điều hướng sang giỏ hàng hoặc catalog).
+
+---
+
+### Modal hủy đơn hàng (`CancelOrderModal`)
+
+- **Bố cục:** Bottom Sheet / Modal phủ trung tâm.
+- **Tiêu đề:** "Hủy đơn hàng {code}".
+- **Cảnh báo rõ ràng:** "Lưu ý: Hủy đơn hàng sẽ hủy toàn bộ các sản phẩm và giải phóng lịch hẹn giữ chỗ (nếu có). Thao tác này không thể hoàn tác."
+- **Ô nhập lý do:** Ô nhập text có gợi ý placeholder, đếm số ký tự (1 – 500 ký tự theo quy định BR-ORD-04 / Q-43).
+- **Các chip lý do nhanh:** Khách có thể bấm chọn nhanh các lý do phổ biến:
+  - *"Đổi ý không mua nữa"*
+  - *"Muốn thay đổi sản phẩm / gói dịch vụ"*
+  - *"Chọn nhầm thông tin hoặc phương thức thanh toán"*
+  - *"Bận đột xuất, không thể đến theo lịch hẹn"*
+- **Hành động:** Nút "Xác nhận hủy" (màu đỏ / danger, gọi `POST /me/orders/{id}/cancel`, hiển thị spinner loading khi đang gửi) và nút "Quay lại" (đóng modal).
+
+---
+
+### Quy trình thanh toán lại trên Mobile (Repayment Flow)
+
+1. Khách bấm "Thanh toán lại" tại thẻ đơn hàng hoặc màn hình chi tiết đơn (`isPayable = true`).
+2. Client gọi `POST /me/orders/{id}/payments` với body `{ client: "mobile" }`.
+3. Hệ thống trả về `paymentUrl` kèm chữ ký hợp lệ của VNPay sandbox.
+4. Client mở phiên trình duyệt `WebBrowser.openAuthSessionAsync(paymentUrl, deepLink)` (tương tự như màn hình Checkout UC-SPA-11).
+5. Khi khách hoàn tất thanh toán hoặc hủy trên cổng VNPay, cổng điều hướng về deep link `app/payment/result.tsx?orderId=...`.
+6. Client đóng phiên duyệt web và chuyển sang màn hình kết quả thanh toán `SCR-M19c`.
+
+---
+
+### Xử lý lỗi API (Error Codes Handling)
+
+| Mã lỗi                          | Ngữ cảnh phát sinh                            | Cách xử lý trên giao diện Mobile                                                                                                                       |
+| :------------------------------ | :-------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `order_not_found`               | Đơn hàng không tồn tại hoặc không thuộc khách | Hiển thị `AppNotice` thông báo "Không tìm thấy đơn hàng" kèm nút "Về danh sách đơn".                                                                   |
+| `order_not_cancellable`         | Đơn đã được thanh toán, hết hạn hoặc đã hủy   | Toast thông báo "Đơn hàng này không còn ở trạng thái chờ thanh toán để hủy." và tự động làm mới lại chi tiết đơn hàng (`invalidateQueries`).         |
+| `order_payment_in_progress`     | Vừa tạo lượt thanh toán chưa quá thời gian cho phép | Toast thông báo "Giao dịch thanh toán đang được xử lý. Vui lòng kiểm tra lại sau ít phút hoặc không hủy đơn lúc này."                                  |
+| `validation_error`              | Lý do hủy bị trống hoặc dài quá 500 ký tự     | Hiển thị thông báo lỗi ngay dưới ô nhập lý do hủy: "Vui lòng nhập lý do hủy (1 – 500 ký tự)."                                                         |
+| `payment_attempts_exceeded`     | Đã vượt quá 5 lần thử thanh toán cho đơn này  | Vô hiệu hóa nút thanh toán lại, hiển thị thông báo "Đã vượt quá số lần thử thanh toán cho phép đối với đơn này. Vui lòng tạo đơn mới hoặc liên hệ spa." |
+| `order_expired`                 | Đơn hàng đã quá hạn thanh toán 15 phút        | Cập nhật badge sang "Hết hạn", ẩn nút thanh toán lại và hiển thị nút "Đặt mua lại".                                                                    |
+
+---
+
+### Bảng kiểm thử giao diện mobile Quản lý đơn hàng (`ORD-M-UI-T17…T25`)
+
+| Mã               | Tình huống kiểm thử                                            | Kết quả mong đợi                                                                                                                                                                          |
+| :--------------- | :------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ORD-M-UI-T17** | Khách xem danh sách đơn hàng rỗng (`/my-orders`)               | Hiển thị trạng thái rỗng thân thiện, thông báo chưa có đơn hàng nào kèm nút CTA "Khám phá dịch vụ ngay" điều hướng về `/services`.                                                       |
+| **ORD-M-UI-T18** | Khách xem danh sách đơn hàng có dữ liệu                        | Hiển thị danh sách thẻ `MyOrderCard` theo thứ tự mới nhất trước, hiển thị đúng mã đơn, ngày tạo, badge trạng thái và tổng tiền định dạng tiền tệ `vi-VN`.                                  |
+| **ORD-M-UI-T19** | Lọc đơn hàng theo chip trạng thái                             | Chọn chip "Chờ thanh toán", "Đã thanh toán", "Đã hủy", "Hết hạn" gửi đúng param `status` lên server và hiển thị đúng các đơn hàng tương ứng. Bấm "Tất cả" trả về danh sách đầy đủ.    |
+| **ORD-M-UI-T20** | Thao tác hủy đơn hàng chưa thanh toán thành công               | Bấm "Hủy đơn" mở `CancelOrderModal`. Chọn chip lý do gợi ý hoặc gõ lý do, bấm "Xác nhận hủy" gọi `POST /me/orders/{id}/cancel`. Đơn chuyển sang `cancelled`, badge cập nhật thành công. |
+| **ORD-M-UI-T21** | Validate lý do hủy đơn hàng                                   | Bỏ trống lý do hoặc nhập toàn khoảng trắng $\rightarrow$ nút "Xác nhận hủy" bị vô hiệu hóa hoặc báo lỗi "Vui lòng nhập lý do hủy".                                                        |
+| **ORD-M-UI-T22** | Thao tác thanh toán lại đơn hàng (`isPayable = true`)          | Bấm "Thanh toán lại" gọi `POST /me/orders/{id}/payments`, nhận URL và mở cổng VNPay qua `openAuthSessionAsync`. Nút hiển thị trạng thái đang xử lý.                                       |
+| **ORD-M-UI-T23** | Xem màn hình chi tiết đơn hàng (`/my-orders/:orderId`)         | Hiển thị đầy đủ thông tin: Mã đơn, badge trạng thái, danh sách từng sản phẩm, dòng tạm tính, giảm giá khuyến mãi, tổng tiền, lịch sử các lần thử thanh toán qua VNPay.                    |
+| **ORD-M-UI-T24** | Đơn hàng đặt ngay có lịch hẹn giữ chỗ                          | Trong chi tiết đơn hiển thị khối thông tin lịch hẹn giữ chỗ (ngày, giờ, chuyên viên) và thông điệp giữ chỗ tạm thời.                                                                     |
+| **ORD-M-UI-T25** | Khách vãng lai truy cập `/my-orders`                           | Hiển thị màn hình nhắc đăng nhập thành viên với 2 nút CTA "Đăng nhập" và "Đăng ký", không bị crash hay hiển thị màn hình trắng.                                                          |

@@ -691,33 +691,273 @@ Không có Stitch MCP: Dựng trực tiếp bằng `DataTable` chuẩn của h�
 
 ### Bảng mã lỗi và cách xử lý giao diện chủ spa (UC-SPA-21)
 
-| Mã lỗi backend | Ngữ cảnh | Cách xử lý trên giao diện |
-| --- | --- | --- |
-| `treatment_plan_not_found` (404) | Xem chi tiết, sửa, chuyển trạng thái | Toast lỗi "Không tìm thấy liệu trình hoặc liệu trình không thuộc phạm vi.", đóng modal/sheet và làm mới bảng. |
-| `treatment_session_not_found` (404) | Cập nhật ghi chú buổi | Toast lỗi "Không tìm thấy buổi chăm sóc trong liệu trình.", đóng modal. |
-| `treatment_not_in_charge` (403) | Nhân viên không phụ trách cố sửa | Toast lỗi: "Bạn không được phân công phụ trách liệu trình này." |
-| `treatment_status_invalid` (409) | Sửa liệu trình đã đóng/hủy hoặc chuyển trạng thái sai | Toast lỗi: "Trạng thái liệu trình không hợp lệ để thực hiện thao tác này.", làm mới dữ liệu (`invalidateQueries`). |
-| `treatment_has_booked_sessions` (409) | Hủy liệu trình còn buổi `booked` | Hiển thị cảnh báo trực tiếp trong dialog: "Không thể hủy liệu trình khi còn lịch hẹn đã đặt. Vui lòng hủy các lịch hẹn của liệu trình này trước." |
-| `treatment_sessions_remaining` (409) | Đóng liệu trình còn buổi chưa xong | Hiển thị cảnh báo trực tiếp trong dialog: "Liệu trình vẫn còn buổi chưa thực hiện hoặc chưa đặt lịch. Chỉ có thể đóng khi tất cả các buổi đã hoàn thành hoặc bỏ qua." |
-| `treatment_session_completed` (409) | Nhân viên sửa ghi chú buổi đã xong | Toast cảnh báo: "Chỉ chủ spa mới có quyền chỉnh sửa ghi chú của buổi đã hoàn thành." |
-| `staff_not_found` (404) / `staff_resigned` (400) | Gán nhân viên đã nghỉ | Báo lỗi dưới ô chọn nhân viên: "Nhân viên không tồn tại hoặc đã nghỉ việc." |
-| `validation_error` (400) | Dữ liệu form nhập sai | Gắn lỗi cụ thể vào từng `FormField` qua React Hook Form + Zod (mục tiêu quá dài, ngày kết thúc nhỏ hơn ngày bắt đầu...). |
+| Mã lỗi backend                                   | Ngữ cảnh                                              | Cách xử lý trên giao diện                                                                                                                                             |
+| ------------------------------------------------ | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `treatment_plan_not_found` (404)                 | Xem chi tiết, sửa, chuyển trạng thái                  | Toast lỗi "Không tìm thấy liệu trình hoặc liệu trình không thuộc phạm vi.", đóng modal/sheet và làm mới bảng.                                                         |
+| `treatment_session_not_found` (404)              | Cập nhật ghi chú buổi                                 | Toast lỗi "Không tìm thấy buổi chăm sóc trong liệu trình.", đóng modal.                                                                                               |
+| `treatment_not_in_charge` (403)                  | Nhân viên không phụ trách cố sửa                      | Toast lỗi: "Bạn không được phân công phụ trách liệu trình này."                                                                                                       |
+| `treatment_status_invalid` (409)                 | Sửa liệu trình đã đóng/hủy hoặc chuyển trạng thái sai | Toast lỗi: "Trạng thái liệu trình không hợp lệ để thực hiện thao tác này.", làm mới dữ liệu (`invalidateQueries`).                                                    |
+| `treatment_has_booked_sessions` (409)            | Hủy liệu trình còn buổi `booked`                      | Hiển thị cảnh báo trực tiếp trong dialog: "Không thể hủy liệu trình khi còn lịch hẹn đã đặt. Vui lòng hủy các lịch hẹn của liệu trình này trước."                     |
+| `treatment_sessions_remaining` (409)             | Đóng liệu trình còn buổi chưa xong                    | Hiển thị cảnh báo trực tiếp trong dialog: "Liệu trình vẫn còn buổi chưa thực hiện hoặc chưa đặt lịch. Chỉ có thể đóng khi tất cả các buổi đã hoàn thành hoặc bỏ qua." |
+| `treatment_session_completed` (409)              | Nhân viên sửa ghi chú buổi đã xong                    | Toast cảnh báo: "Chỉ chủ spa mới có quyền chỉnh sửa ghi chú của buổi đã hoàn thành."                                                                                  |
+| `staff_not_found` (404) / `staff_resigned` (400) | Gán nhân viên đã nghỉ                                 | Báo lỗi dưới ô chọn nhân viên: "Nhân viên không tồn tại hoặc đã nghỉ việc."                                                                                           |
+| `validation_error` (400)                         | Dữ liệu form nhập sai                                 | Gắn lỗi cụ thể vào từng `FormField` qua React Hook Form + Zod (mục tiêu quá dài, ngày kết thúc nhỏ hơn ngày bắt đầu...).                                              |
 
 ---
 
 ### Bảng kiểm thử giao diện quản trị liệu trình (`TRT-MNG-UI-T01...T12`)
 
-| Mã | Tình huống kiểm thử | Kết quả mong đợi |
-| --- | --- | --- |
-| TRT-MNG-UI-T01 | Mở `/owner/treatments` lần đầu | Bảng hiển thị Skeleton khi đang tải, sau đó hiển thị danh sách liệu trình gồm khách, gói, tiến độ, buổi tiếp theo, nhân viên phụ trách, hạn dùng, badge trạng thái. |
-| TRT-MNG-UI-T02 | Lọc liệu trình theo trạng thái, nhân viên và từ khóa tìm kiếm | Request `GET /treatments` mang đúng `status`, `primaryStaffMemberId`, `search`; URL đồng bộ query params; đổi bộ lọc quay về trang 1. |
-| TRT-MNG-UI-T03 | Mở xem chi tiết liệu trình (`TreatmentDetailSheet`) | Drawer hiển thị đầy đủ thông tin khách, cảnh báo dị ứng nếu có, mục tiêu điều trị, timeline các buổi kèm lịch hẹn, danh sách hồ sơ da và lịch sử các lần chăm sóc. |
-| TRT-MNG-UI-T04 | Sửa mục tiêu và phác đồ điều trị (`UpdateTreatmentDialog`) | Form kiểm tra `expectedEndDate >= startDate`; gọi `PUT /treatments/{id}` thành công, toast thông báo và cập nhật dữ liệu. |
-| TRT-MNG-UI-T05 | Đổi nhân viên phụ trách (`AssignTreatmentStaffDialog`) | Danh sách nhân viên lấy từ nhân viên đang làm việc; hỗ trợ chọn nhân viên mới hoặc bỏ phụ trách; gọi `POST /treatments/{id}/assign-staff` thành công. |
-| TRT-MNG-UI-T06 | Tạm dừng liệu trình đang thực hiện | Mở dialog, bắt buộc nhập lý do (1–500 ký tự); gọi `POST /treatments/{id}/pause`; `StatusBadge` đổi sang "Tạm dừng" (`warning`), hiển thị hộp cảnh báo lý do. |
-| TRT-MNG-UI-T07 | Tiếp tục liệu trình đang tạm dừng | Mở dialog xác nhận; gọi `POST /treatments/{id}/resume`; `StatusBadge` chuyển lại "Đang thực hiện" (hoặc "Chưa bắt đầu"), xóa cảnh báo lý do tạm dừng. |
-| TRT-MNG-UI-T08 | Hủy liệu trình khi còn buổi đã đặt lịch (`bookedSessions > 0`) | Dialog hủy cảnh báo đỏ, khóa nút xác nhận; nếu gọi API trả lỗi `409 treatment_has_booked_sessions`, hiển thị thông báo yêu cầu hủy lịch hẹn trước. |
-| TRT-MNG-UI-T09 | Hủy liệu trình hợp lệ khi không còn lịch hẹn đã đặt | Yêu cầu nhập lý do hủy; gọi `POST /treatments/{id}/cancel` thành công; `StatusBadge` chuyển sang "Đã hủy" (`danger`). |
-| TRT-MNG-UI-T10 | Đóng hoàn tất liệu trình khi còn buổi chưa xong | Trả lỗi `409 treatment_sessions_remaining`, hiển thị thông báo giải thích chỉ được đóng khi tất cả các buổi đã hoàn thành hoặc bỏ qua. |
-| TRT-MNG-UI-T11 | Cập nhật ghi chú buổi trị liệu (`UpdateSessionNoteDialog`) | Cho phép sửa ghi chú buổi; gọi `PUT /treatments/{id}/sessions/{sessionId}` thành công và cập nhật timeline buổi. |
-| TRT-MNG-UI-T12 | Kiểm tra phân quyền và điều hướng bảo vệ | Khách vãng lai truy cập `/owner/treatments` chuyển hướng `/login`; khách hàng thông thường truy cập nhận `/forbidden`; menu sidebar "Liệu trình" active. |
+| Mã             | Tình huống kiểm thử                                            | Kết quả mong đợi                                                                                                                                                    |
+| -------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TRT-MNG-UI-T01 | Mở `/owner/treatments` lần đầu                                 | Bảng hiển thị Skeleton khi đang tải, sau đó hiển thị danh sách liệu trình gồm khách, gói, tiến độ, buổi tiếp theo, nhân viên phụ trách, hạn dùng, badge trạng thái. |
+| TRT-MNG-UI-T02 | Lọc liệu trình theo trạng thái, nhân viên và từ khóa tìm kiếm  | Request `GET /treatments` mang đúng `status`, `primaryStaffMemberId`, `search`; URL đồng bộ query params; đổi bộ lọc quay về trang 1.                               |
+| TRT-MNG-UI-T03 | Mở xem chi tiết liệu trình (`TreatmentDetailSheet`)            | Drawer hiển thị đầy đủ thông tin khách, cảnh báo dị ứng nếu có, mục tiêu điều trị, timeline các buổi kèm lịch hẹn, danh sách hồ sơ da và lịch sử các lần chăm sóc.  |
+| TRT-MNG-UI-T04 | Sửa mục tiêu và phác đồ điều trị (`UpdateTreatmentDialog`)     | Form kiểm tra `expectedEndDate >= startDate`; gọi `PUT /treatments/{id}` thành công, toast thông báo và cập nhật dữ liệu.                                           |
+| TRT-MNG-UI-T05 | Đổi nhân viên phụ trách (`AssignTreatmentStaffDialog`)         | Danh sách nhân viên lấy từ nhân viên đang làm việc; hỗ trợ chọn nhân viên mới hoặc bỏ phụ trách; gọi `POST /treatments/{id}/assign-staff` thành công.               |
+| TRT-MNG-UI-T06 | Tạm dừng liệu trình đang thực hiện                             | Mở dialog, bắt buộc nhập lý do (1–500 ký tự); gọi `POST /treatments/{id}/pause`; `StatusBadge` đổi sang "Tạm dừng" (`warning`), hiển thị hộp cảnh báo lý do.        |
+| TRT-MNG-UI-T07 | Tiếp tục liệu trình đang tạm dừng                              | Mở dialog xác nhận; gọi `POST /treatments/{id}/resume`; `StatusBadge` chuyển lại "Đang thực hiện" (hoặc "Chưa bắt đầu"), xóa cảnh báo lý do tạm dừng.               |
+| TRT-MNG-UI-T08 | Hủy liệu trình khi còn buổi đã đặt lịch (`bookedSessions > 0`) | Dialog hủy cảnh báo đỏ, khóa nút xác nhận; nếu gọi API trả lỗi `409 treatment_has_booked_sessions`, hiển thị thông báo yêu cầu hủy lịch hẹn trước.                  |
+| TRT-MNG-UI-T09 | Hủy liệu trình hợp lệ khi không còn lịch hẹn đã đặt            | Yêu cầu nhập lý do hủy; gọi `POST /treatments/{id}/cancel` thành công; `StatusBadge` chuyển sang "Đã hủy" (`danger`).                                               |
+| TRT-MNG-UI-T10 | Đóng hoàn tất liệu trình khi còn buổi chưa xong                | Trả lỗi `409 treatment_sessions_remaining`, hiển thị thông báo giải thích chỉ được đóng khi tất cả các buổi đã hoàn thành hoặc bỏ qua.                              |
+| TRT-MNG-UI-T11 | Cập nhật ghi chú buổi trị liệu (`UpdateSessionNoteDialog`)     | Cho phép sửa ghi chú buổi; gọi `PUT /treatments/{id}/sessions/{sessionId}` thành công và cập nhật timeline buổi.                                                    |
+| TRT-MNG-UI-T12 | Kiểm tra phân quyền và điều hướng bảo vệ                       | Khách vãng lai truy cập `/owner/treatments` chuyển hướng `/login`; khách hàng thông thường truy cập nhận `/forbidden`; menu sidebar "Liệu trình" active.            |
+
+---
+
+## Giao diện (mobile): UC-SPA-18 & UC-SPA-19
+
+### Ánh xạ màn hình & Route (Expo Router)
+
+> **Quy tắc điều hướng Mobile:** Hai màn hình danh sách chính (**Gói của tôi** `/(customer)/packages` và **Liệu trình** `/(customer)/treatments`) nằm trực tiếp trên thanh Bottom Tabs của `(customer)` và sử dụng luôn Header của Tab (không vẽ thêm thanh tiêu đề trùng lặp bên trong màn hình). Hai màn hình đi sâu vào chi tiết (**Chi tiết gói đã mua** `/my-packages/[packageId]` và **Chi tiết liệu trình** `/treatment/[treatmentId]`) được đặt làm **Standalone Stack Screen** ở Root Stack (`app/_layout.tsx` với `headerShown: false`) tương tự `/booking/[bookingId]`, `/cart`, `/checkout` để có không gian toàn màn hình và thanh nút hành động cố định ở đáy (`stickyBottomBar`) không bị đè bởi Bottom Tab Bar.
+
+| Mã màn hình               | Route Expo Router          | File route                                        | UC            | Vai trò    |
+| :------------------------ | :------------------------- | :------------------------------------------------ | :------------ | :--------- |
+| **SCR-M14**               | `/(customer)/packages`     | `apps/mobile/app/(customer)/packages/index.tsx`   | UC-SPA-18     | `customer` |
+| **SCR-M14b**              | `/my-packages/[packageId]` | `apps/mobile/app/my-packages/[packageId].tsx`     | UC-SPA-18     | `customer` |
+| **SCR-M13**               | `/(customer)/treatments`   | `apps/mobile/app/(customer)/treatments/index.tsx` | UC-SPA-19     | `customer` |
+| **SCR-M13b**              | `/treatment/[treatmentId]` | `apps/mobile/app/treatment/[treatmentId].tsx`     | UC-SPA-19     | `customer` |
+| **SCR-M19c** _(cập nhật)_ | `/payment/result?orderId=` | `PaymentResultScreen.tsx`                         | UC-SPA-11, 18 | `customer` |
+
+---
+
+### Hợp đồng dùng chung & API Client (Mobile)
+
+- **Types (`@spa/shared-types`):**
+  - `EntitlementStatus` (`available | booked | used | expired`), `CustomerPackageStatus` (`active | completed | expired | cancelled`), `TreatmentPlanStatus` (`not_started | in_progress | completed | paused | cancelled`), `TreatmentSessionStatus` (`not_booked | booked | completed | skipped`).
+  - `PurchasedService`, `PurchasedPackage`, `PackageItemProgress`, `NextSession`, `Purchases`.
+  - `MyTreatmentListItem`, `MyTreatmentPlan`, `MyTreatmentSession`, `MyTreatmentNextSession`, `SessionAppointment`.
+- **API Client (`@spa/api-client` & `apps/mobile/src/lib/api/appointments.ts`):**
+  - `callPurchases((api) => api.list())` (`purchasesQueryKeys.list`) — `GET /api/v1/me/purchases`.
+  - `callPurchases((api) => api.getPackage(id))` (`purchasesQueryKeys.package(id)`) — `GET /api/v1/me/purchases/packages/{id}`.
+  - `callPurchases((api) => api.getService(id))` — `GET /api/v1/me/purchases/services/{id}`.
+  - `callTreatments((api) => api.list(status))` (`treatmentsQueryKeys.list(status)`) — `GET /api/v1/me/treatments?status=...`.
+  - `callTreatments((api) => api.get(id))` (`treatmentsQueryKeys.detail(id)`) — `GET /api/v1/me/treatments/{id}`.
+  - `callTreatments((api) => api.getSession(id, sessionId))` (`treatmentsQueryKeys.session(id, sessionId)`) — `GET /api/v1/me/treatments/{id}/sessions/{sessionId}`.
+- **Nhãn & tông màu trạng thái (`purchaseStatus.ts` — đồng bộ 100% với Web, áp dụng BR-TRT-04 không tự tính lại hạn ở client):**
+  - **Quyền dịch vụ lẻ (`EntitlementStatus`):** `available` → `"Còn hiệu lực"` (`success`), `booked` → `"Đã đặt lịch"` (`info`), `used` → `"Đã sử dụng"` (`neutral`), `expired` → `"Hết hạn"` (`neutral`).
+  - **Gói đã mua (`CustomerPackageStatus`):** `active` → `"Đang dùng"` (`success`), `completed` → `"Hoàn thành"` (`info`), `expired` → `"Hết hạn"` (`neutral`), `cancelled` → `"Đã hủy"` (`danger`).
+  - **Liệu trình (`TreatmentPlanStatus`):** `not_started` → `"Chưa bắt đầu"` (`neutral`), `in_progress` → `"Đang thực hiện"` (`success`), `completed` → `"Đã hoàn thành"` (`info`), `paused` → `"Tạm dừng"` (`warning`), `cancelled` → `"Đã hủy"` (`danger`).
+  - **Buổi điều trị (`TreatmentSessionStatus`):** `not_booked` → `"Chưa đặt lịch"` (`neutral`), `booked` → `"Đã đặt lịch"` (`info`), `completed` → `"Đã hoàn thành"` (`success`), `skipped` → `"Đã bỏ qua"` (`neutral`).
+
+---
+
+### SCR-M14 — Gói của tôi & Dịch vụ đã mua (`/(customer)/packages`) — UC-SPA-18
+
+- **Bảo vệ route:**
+  - Nếu khách chưa đăng nhập (`status !== 'authenticated'`): hiển thị thẻ mời đăng nhập ngay trong tab (`"Đăng nhập để xem gói liệu trình và dịch vụ bạn đã mua"` + nút `"Đăng nhập"` → `/(public)/login?redirect=%2F(customer)%2Fpackages`).
+- **Dữ liệu:**
+  - Một truy vấn `GET /api/v1/me/purchases` (`useMyPurchases`), trả `{ packages: PurchasedPackage[], services: PurchasedService[] }`.
+  - Hỗ trợ kéo để làm mới (`RefreshControl`).
+- **Bố cục (`MyPurchasesScreen` — Chia làm 2 Tab riêng biệt trên màn hình cho 2 loại):**
+  1. **Header:** Sử dụng trực tiếp header `"Gói của tôi"` của `(customer)` Bottom Tabs.
+  2. **Thanh 2 Tab chuyển loại trên đầu màn hình (`SegmentedTabBar`):**
+     - **Tab 1 — `"Gói liệu trình ({packages.length})"`** (mặc định, hoặc chọn qua query `?tab=packages`).
+     - **Tab 2 — `"Dịch vụ lẻ ({services.length})"`** (hoặc chọn qua query `?tab=services`).
+     - Chuyển đổi giữa 2 tab sẽ hiển thị danh sách và bộ lọc trạng thái riêng tương ứng với loại đó.
+  3. **Thanh công cụ lọc & tìm kiếm theo từng Tab:**
+     - Ô tìm kiếm nhanh theo tên gói / tên dịch vụ (lọc client-side, không phân biệt hoa thường và dấu tiếng Việt).
+     - **Chip lọc trạng thái riêng theo từng Tab:**
+       - Khi đang ở **Tab 1 — Gói liệu trình** (`CustomerPackageStatus`):
+         - **Tất cả ({n})** | **Đang dùng ({n})** (`active`) | **Hoàn thành ({n})** (`completed`) | **Hết hạn ({n})** (`expired`) | **Đã hủy ({n})** (`cancelled`, hiện khi có).
+       - Khi đang ở **Tab 2 — Dịch vụ lẻ** (`EntitlementStatus`):
+         - **Tất cả ({n})** | **Còn hiệu lực ({n})** (`available`) | **Đã đặt lịch ({n})** (`booked`) | **Đã sử dụng ({n})** (`used`) | **Hết hạn ({n})** (`expired`).
+     - Nút chuyển sắp xếp nhanh: **`Mới mua nhất`** (`purchasedAtUtc` giảm dần, mặc định) hoặc **`Sắp hết hạn`** (`expiresAtUtc` tăng dần, không giới hạn xếp cuối).
+  4. **Thẻ gói đã mua (`PurchasedPackageCard`):**
+     - Hàng đầu: `PurchaseStatusBadge` (`pkg.status`) + mã đơn `"Đơn {pkg.order.code}"` + ngày mua (`formatLocalDate(pkg.purchasedAtUtc)`).
+     - Tên gói (`pkg.packageName`).
+     - Hộp 3 chỉ số tiến độ:
+       1. **Tiến độ:** `"{usedSessions}/{totalSessions} buổi đã dùng"` + thanh tiến độ (`accessibilityRole="progressbar"`).
+       2. **Số buổi còn:** `"Còn {totalSessions - usedSessions} buổi"` (kèm dòng phụ `"Đã đặt {bookedSessions} buổi"` khi `bookedSessions > 0`).
+       3. **Thời hạn:** `"Hạn {formatLocalDate(expiresAtUtc)}"` + `"Còn {n} ngày"` (hoặc `"Đã hết hạn"` / `"Không giới hạn"`).
+     - Khối buổi kế tiếp (`pkg.nextSession !== null`):
+       - Hiển thị `"Buổi {nextSession.sequenceNumber} kế tiếp: {nextSession.serviceName}"` + `"Sớm nhất từ {formatLocalDate(nextSession.earliestDate)}"`.
+     - Chân thẻ (hàng nút thao tác):
+       - Nút phụ (`outline`): **`"Chi tiết gói"`** → `router.push('/my-packages/' + pkg.id)`.
+       - Nút chính (`primary`, khi `pkg.nextSession?.canBook === true`): **`"Đặt buổi {nextSession.sequenceNumber}"`** → `router.push('/booking/new?treatmentSessionId=' + pkg.nextSession.id + '&treatmentPlanId=' + pkg.treatmentPlan.id)`.
+       - Khi không thể đặt lịch (`!pkg.nextSession?.canBook`): ẩn nút đặt lịch và hiển thị nhãn lý do ngắn theo trạng thái (`"Gói đã hết hạn"`, `"Gói đã hoàn thành"`, `"Gói đã hủy"`, hoặc `"Liệu trình đang tạm dừng"` khi gói `active` nhưng `treatmentPlan.status === 'paused'`).
+  5. **Thẻ dịch vụ lẻ đã mua (`PurchasedServiceCard`):**
+     - Hàng đầu: `PurchaseStatusBadge` (`item.status`) + mã đơn `"Đơn {item.order.code}"`.
+     - Tên dịch vụ (`item.serviceName`), thời lượng (`"{item.durationMinutes} phút"`).
+     - Thông tin ngày: `"Mua ngày {formatLocalDate(item.purchasedAtUtc)}"` · `"Hạn dùng: {expiresAtUtc ? formatLocalDate(expiresAtUtc) : 'Không giới hạn'}"`.
+     - Nếu `item.status === 'booked'` và `item.appointment !== null`:
+       - Hiển thị hộp lịch hẹn đã đặt: `"{formatLocalDate(item.appointment.date)} · {formatLocalTime(item.appointment.startTime)} – {formatLocalTime(item.appointment.endTime)}"` + nút **`"Xem lịch hẹn"`** → `router.push('/booking/' + item.appointment.id)`.
+     - Nếu `item.canBook === true`:
+       - Nút chính (`primary`): **`"Đặt lịch ngay"`** → `router.push('/booking/new?serviceEntitlementId=' + item.id)`.
+  6. **Trạng thái màn hình:**
+     - **Đang tải:** `ActivityIndicator` kèm thông điệp `"Đang tải gói và dịch vụ đã mua..."`.
+     - **Lỗi tải:** `AppNotice` lỗi + nút `"Thử lại"`.
+     - **Rỗng hoàn toàn** (`packages.length === 0 && services.length === 0`): `"Bạn chưa mua dịch vụ hay gói liệu trình nào."` kèm 2 nút CTA **`"Khám phá dịch vụ"`** (`/(public)/services`) và **`"Xem gói ưu đãi"`** (`/(public)/packages`).
+     - **Rỗng theo tab hoặc bộ lọc:** `"Không có mục nào phù hợp với bộ lọc hiện tại."` kèm nút **`"Xem tất cả"`** (xóa từ khóa và đưa bộ lọc về `all`).
+
+---
+
+### SCR-M14b — Chi tiết gói đã mua (`/my-packages/[packageId]`, Root Stack) — UC-SPA-18
+
+- **Dữ liệu:**
+  - `GET /api/v1/me/purchases/packages/{packageId}` (`usePurchasedPackage(packageId)`).
+- **Bố cục (`PurchasedPackageDetailScreen`, `AppScreen scroll={false}`):**
+  1. **Header cố định:** Nút quay lại (`ArrowLeft`, vùng chạm $\ge 48 \times 48\text{dp}$), tiêu đề `"Chi tiết gói đã mua"`.
+  2. **Vùng cuộn (`ScrollView`) gồm:**
+     - **Thẻ Tổng quan gói:**
+       - `PurchaseStatusBadge` (`pkg.status`) + trạng thái liệu trình đi kèm (`pkg.treatmentPlan.status`).
+       - Tên gói lớn (`pkg.packageName`).
+       - Mã đơn hàng (`pkg.order.code`), Ngày mua (`formatLocalDate(pkg.purchasedAtUtc)`), Ngày kích hoạt (`pkg.activatedAtUtc ? formatLocalDate(pkg.activatedAtUtc) : 'Ngay khi mua'`), Hạn sử dụng (`pkg.expiresAtUtc ? formatLocalDate(pkg.expiresAtUtc) : 'Không giới hạn'`).
+       - Hộp 3 chỉ số tiến độ:
+         - Đã thực hiện: `{usedSessions}/{totalSessions} buổi` + thanh tiến độ (`% hoàn thành`).
+         - Còn lại: `{totalSessions - usedSessions} buổi`.
+         - Đã đặt lịch: `{bookedSessions} buổi`.
+     - **Thẻ Phân rã dịch vụ trong gói (`pkg.items: PackageItemProgress[]`):**
+       - Tiêu đề `"Số buổi theo từng dịch vụ trong gói"`.
+       - Mỗi dịch vụ (`item`) hiển thị:
+         - Tên dịch vụ (`item.serviceName`).
+         - Chỉ số: `"Đã dùng {item.completedSessions}/{item.totalSessions} buổi"` (kèm `"Đang đặt lịch: {item.bookedSessions}"` nếu `item.bookedSessions > 0`, `"Còn trống: {item.totalSessions - item.completedSessions - item.bookedSessions}"`).
+         - Thanh tiến độ nhỏ cho dịch vụ đó.
+     - **Thẻ Buổi kế tiếp & Liên kết Liệu trình:**
+       - Nếu `pkg.nextSession !== null`: hiển thị `"Buổi {nextSession.sequenceNumber} kế tiếp: {nextSession.serviceName} ({nextSession.durationMinutes} phút)"`, `"Ngày đặt sớm nhất: {formatLocalDate(nextSession.earliestDate)}"`.
+       - Nút (`outline`): **`"Xem phác đồ & nhật ký liệu trình"`** → `router.push('/treatment/' + pkg.treatmentPlan.id)`.
+  3. **Thanh hành động cố định ở đáy (`stickyBottomBar`):**
+     - Khi `pkg.nextSession?.canBook === true`: hiển thị nút chính **`"Đặt lịch buổi {pkg.nextSession.sequenceNumber}"`** → `router.push('/booking/new?treatmentSessionId=' + pkg.nextSession.id + '&treatmentPlanId=' + pkg.treatmentPlan.id)`.
+
+---
+
+### SCR-M13 — Danh sách Liệu trình của tôi (`/(customer)/treatments`) — UC-SPA-19
+
+- **Bảo vệ route:**
+  - Nếu khách chưa đăng nhập (`status !== 'authenticated'`): hiển thị thẻ mời đăng nhập ngay trong tab (`"Đăng nhập để theo dõi phác đồ chăm sóc da và đặt lịch các buổi tiếp theo"` + nút `"Đăng nhập"` → `/(public)/login?redirect=%2F(customer)%2Ftreatments`).
+- **Dữ liệu:**
+  - `GET /api/v1/me/treatments?status={status}` (`useMyTreatments(status)`). Mặc định gọi tất cả (`status = undefined`), khi chọn chip trạng thái sẽ lọc theo trạng thái tương ứng; kết hợp ô tìm kiếm nhanh theo tên gói ở client.
+  - Hỗ trợ kéo để làm mới (`RefreshControl`).
+- **Bố cục (`MyTreatmentsScreen`):**
+  1. **Header:** Sử dụng trực tiếp header `"Liệu trình"` của `(customer)` Bottom Tabs.
+  2. **Thanh công cụ tìm kiếm & lọc trạng thái:**
+     - Ô tìm kiếm nhanh theo tên gói liệu trình (không phân biệt hoa thường và dấu tiếng Việt).
+     - Thanh chip lọc trạng thái cuộn ngang (`TreatmentPlanStatus`):
+       - **Tất cả**
+       - **Đang thực hiện** (`in_progress`)
+       - **Chưa bắt đầu** (`not_started`)
+       - **Hoàn thành** (`completed`)
+       - **Tạm dừng** (`paused`)
+       - **Đã hủy** (`cancelled`)
+  3. **Danh sách thẻ liệu trình (`TreatmentPlanCard`):**
+     - Hàng đầu: `TreatmentStatusBadge` (`plan.status`), huy hiệu phụ nếu gói đã hết hạn (`plan.packageStatus === 'expired'`), và tên chuyên viên phụ trách (`plan.primaryStaff ? "KTV: " + plan.primaryStaff.fullName : "Chưa phân công KTV"`).
+     - Tên gói liệu trình (`plan.packageName`).
+     - Hộp tiến độ phác đồ:
+       - `"{usedSessions}/{totalSessions} buổi hoàn thành"` + thanh tiến độ (`accessibilityRole="progressbar"`).
+       - Số buổi còn lại `"{totalSessions - usedSessions} buổi"` (kèm `"Đã đặt {bookedSessions}"` nếu `bookedSessions > 0`).
+       - Hạn dùng gói (`plan.expiresAtUtc ? "Hạn: " + formatLocalDate(plan.expiresAtUtc) : "Không giới hạn"`).
+     - Khối buổi kế tiếp (`plan.nextSession !== null`):
+       - `"Buổi {nextSession.sequenceNumber}: {nextSession.serviceName}"` (kèm `"Từ {formatLocalDate(nextSession.earliestDate)}"` nếu có `earliestDate`).
+     - Hàng nút thao tác ở chân thẻ:
+       - Nút phụ (`outline`): **`"Xem phác đồ"`** → `router.push('/treatment/' + plan.id)`.
+       - Nút chính (`primary`, khi `plan.nextSession?.canBook === true`): **`"Đặt buổi {plan.nextSession.sequenceNumber}"`** → `router.push('/booking/new?treatmentSessionId=' + plan.nextSession.id + '&treatmentPlanId=' + plan.id)`.
+       - Khi không thể đặt lịch: hiển thị dòng trạng thái ngắn (`"Liệu trình đang tạm dừng"`, `"Liệu trình đã hoàn thành"`, `"Gói đã hết hạn"`, `"Liệu trình đã hủy"`).
+  4. **Trạng thái màn hình:**
+     - **Đang tải:** `ActivityIndicator` + `"Đang tải danh sách liệu trình..."`.
+     - **Lỗi:** `AppNotice` lỗi + nút `"Thử lại"`.
+     - **Rỗng hoàn toàn:** `"Bạn chưa có liệu trình chăm sóc da nào."` + nút CTA **`"Khám phá gói liệu trình"`** (`/(public)/packages`).
+     - **Rỗng do lọc / tìm kiếm:** `"Không tìm thấy liệu trình phù hợp."` + nút **`"Xem tất cả"`**.
+
+---
+
+### SCR-M13b — Chi tiết Liệu trình & Nhật ký buổi (`/treatment/[treatmentId]`, Root Stack) — UC-SPA-19
+
+- **Dữ liệu:**
+  - `GET /api/v1/me/treatments/{treatmentId}` (`useMyTreatmentPlan(treatmentId)`).
+  - Khi khách bấm **"Xem ghi chú trị liệu"** ở một buổi đã hoàn thành (`status === 'completed'`): mở `TreatmentSessionDetailModal` và gọi `GET /api/v1/me/treatments/{treatmentId}/sessions/{sessionId}` (`useMyTreatmentSession(treatmentId, sessionId)`).
+- **Bố cục (`TreatmentDetailScreen`, `AppScreen scroll={false}`):**
+  1. **Header cố định:** Nút quay lại (`ArrowLeft`), tiêu đề `"Phác đồ liệu trình"`.
+  2. **Vùng cuộn (`ScrollView`) gồm:**
+     - **Cảnh báo trạng thái (`statusReason`):**
+       - Nếu `plan.status === 'paused'` hoặc `plan.status === 'cancelled'`, hiển thị `AppNotice` (`tone="warning"` khi `paused`, `tone="error"` khi `cancelled`) nêu rõ lý do `plan.statusReason ?? 'Liệu trình hiện không nhận đặt lịch mới.'`.
+     - **Thẻ Tổng quan phác đồ (`TreatmentOverviewCard`):**
+       - Hàng đầu: `TreatmentStatusBadge` (`plan.status`), mã đơn `"Đơn {plan.order.code}"`, liên kết `"Xem gói đã mua"` → `/my-packages/${plan.customerPackageId}`.
+       - Tên gói liệu trình (`plan.packageName`).
+       - **Mục tiêu chăm sóc da (`plan.goal`):** hiển thị trong hộp điểm nhấn (nếu `goal` null thì hiện `"Chuyên viên sẽ cập nhật mục tiêu chăm sóc da sau buổi thăm khám đầu tiên."`).
+       - **Thông tin phụ trách & mốc thời gian:**
+         - Kỹ thuật viên phụ trách chính: `plan.primaryStaff?.fullName ?? 'Chưa phân công'`.
+         - Ngày bắt đầu: `plan.startDate ? formatLocalDate(plan.startDate) : 'Chưa bắt đầu'`.
+         - Ngày dự kiến hoàn thành: `plan.expectedEndDate ? formatLocalDate(plan.expectedEndDate) : 'Đang cập nhật'`.
+         - Ngày hoàn thành thực tế (nếu có): `plan.actualEndDate ? formatLocalDate(plan.actualEndDate) : null`.
+         - Hạn sử dụng gói: `plan.expiresAtUtc ? formatLocalDate(plan.expiresAtUtc) : 'Không giới hạn'`.
+       - **Hộp 3 chỉ số tiến độ:**
+         - Tiến độ: `"{usedSessions}/{totalSessions} buổi ({percent}%)"` + thanh tiến độ.
+         - Còn lại: `"{totalSessions - usedSessions} buổi"`.
+         - Đã đặt lịch: `"{bookedSessions} buổi"`.
+     - **Mục Nhật ký & Lộ trình các buổi (`TreatmentSessionTimeline`):**
+       - Tiêu đề `"Lộ trình {plan.totalSessions} buổi chăm sóc"`, liệt kê các phần tử `plan.sessions` theo thứ tự `sequenceNumber`:
+         - **`completed` (Đã hoàn thành):**
+           - Huy hiệu số buổi màu xanh (`CheckCircle2`), `"Buổi {sequenceNumber}: {serviceName}"`, thời lượng `"{durationMinutes} phút"`, `SessionStatusBadge` (`"Đã hoàn thành"`).
+           - Thông tin thực hiện: Ngày thực hiện (`appointment?.date` hoặc `completedAtUtc`), Kỹ thuật viên (`appointment?.staff.fullName`).
+           - Nút **`"Xem ghi chú trị liệu"`** → mở `TreatmentSessionDetailModal`.
+         - **`booked` (Đã đặt lịch):**
+           - Huy hiệu số buổi màu xanh lá nhạt, `"Buổi {sequenceNumber}: {serviceName}"`, `SessionStatusBadge` (`"Đã đặt lịch"`).
+           - Hộp lịch hẹn: `"{formatLocalDate(appointment.date)} · {formatLocalTime(appointment.startTime)} – {formatLocalTime(appointment.endTime)}"` · `"KTV: {appointment.staff.fullName}"`.
+           - Nút **`"Xem lịch hẹn"`** → `router.push('/booking/' + appointment.id)`.
+         - **`not_booked` (Chưa đặt lịch):**
+           - Huy hiệu số thứ tự `{sequenceNumber}`, `"Buổi {sequenceNumber}: {serviceName}"`, thời lượng `"{durationMinutes} phút"`, `SessionStatusBadge` (`"Chưa đặt lịch"`).
+           - Khi `session.canBook === true`:
+             - Nếu `session.earliestDate` có giá trị: hiện dòng `"Đặt lịch sớm nhất từ {formatLocalDate(session.earliestDate)}"`.
+             - Nút **`"Đặt lịch buổi này"`** → `router.push('/booking/new?treatmentSessionId=' + session.id + '&treatmentPlanId=' + plan.id)`.
+           - Khi `session.canBook === false`:
+             - Hiển thị dòng giải thích lý do từ backend (`session.reason`, ví dụ: `"Cần đặt lịch các buổi trước theo thứ tự."`).
+         - **`skipped` (Đã bỏ qua):**
+           - Huy hiệu xám, `"Buổi {sequenceNumber}: {serviceName}"`, `SessionStatusBadge` (`"Đã bỏ qua"`), dòng ghi chú `"Buổi này đã được bỏ qua trong phác đồ."`.
+  3. **Thanh hành động cố định ở đáy (`stickyBottomBar`):**
+     - Khi `plan.nextSession?.canBook === true`: hiển thị nút chính **`"Đặt lịch buổi tiếp theo (Buổi {plan.nextSession.sequenceNumber})"`** → `router.push('/booking/new?treatmentSessionId=' + plan.nextSession.id + '&treatmentPlanId=' + plan.id)`.
+  4. **Modal Chi tiết kết quả buổi trị liệu (`TreatmentSessionDetailModal`):**
+     - Gọi `GET /api/v1/me/treatments/{treatmentId}/sessions/{sessionId}`.
+     - Hiển thị: `"Buổi {sequenceNumber}: {serviceName}"`, thời lượng, ngày hoàn thành, kỹ thuật viên thực hiện (`appointment?.staff.fullName`), và hộp **Ghi chú & Kết quả chăm sóc của kỹ thuật viên (`result`)** (nếu `result` null hoặc rỗng thì hiện `"Kỹ thuật viên chưa ghi chú kết quả chi tiết cho buổi chăm sóc này."`).
+
+---
+
+### Bảng xử lý mã lỗi API (UC-SPA-18 & UC-SPA-19 Mobile)
+
+| Mã lỗi (`errors[].code`)              | Ngữ cảnh                                 | Hành vi giao diện Mobile                                                                                                        |
+| :------------------------------------ | :--------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------ |
+| `customer_package_not_found` (`404`)  | Mở `/my-packages/[packageId]`            | Hiển thị `AppNotice` `"Không tìm thấy gói dịch vụ đã mua."` kèm nút **`"Về Gói của tôi"`** (`/(customer)/packages`).            |
+| `entitlement_not_found` (`404`)       | Truy vấn quyền dịch vụ lẻ                | Hiển thị `AppNotice` `"Không tìm thấy quyền sử dụng dịch vụ."` kèm nút **`"Về Gói của tôi"`**.                                  |
+| `treatment_plan_not_found` (`404`)    | Mở `/treatment/[treatmentId]`            | Hiển thị `AppNotice` `"Không tìm thấy phác đồ liệu trình."` kèm nút **`"Về danh sách liệu trình"`** (`/(customer)/treatments`). |
+| `treatment_session_not_found` (`404`) | Mở modal ghi chú buổi                    | Hiển thị `AppNotice` `"Không tìm thấy thông tin buổi điều trị."` ngay trong modal kèm nút `"Đóng"`.                             |
+| `validation_error` (`400`)            | Tham số lọc hoặc ID không hợp lệ         | Hiển thị `AppNotice` thông báo dữ liệu truy vấn không hợp lệ và nút đặt lại / quay lại.                                         |
+| `401 Unauthorized`                    | Mọi endpoint `/api/v1/me/*`              | `client.ts` tự động làm mới token một lần; nếu hết phiên thì chuyển hướng `/(public)/login?redirect=...`.                       |
+| `403 Forbidden`                       | Đăng nhập bằng tài khoản `staff`/`owner` | `(customer)/_layout.tsx` tự động chuyển về dashboard của vai trò hoặc `/forbidden`.                                             |
+| Lỗi mạng (`status = 0`, `5xx`)        | Tải danh sách / chi tiết                 | Hiển thị `AppNotice` lỗi kết nối kèm nút **`"Thử lại"`** (`refetch()`).                                                         |
+
+---
+
+### Bảng kiểm thử giao diện Mobile (`PUR-TRT-M-UI-T01…T12`)
+
+| Mã                   | Màn hình     | Tình huống kiểm thử & Kết quả mong đợi                                                                                                                                                                                                                                                                 |
+| :------------------- | :----------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **PUR-TRT-M-UI-T01** | SCR-M14      | Mở `/(customer)/packages` khi đã đăng nhập: gọi `GET /api/v1/me/purchases`, hiển thị thanh chuyển `"Gói liệu trình ({n})"` & `"Dịch vụ lẻ ({n})"`, các chip lọc trạng thái có số đếm đúng.                                                                                                             |
+| **PUR-TRT-M-UI-T02** | SCR-M14      | Thẻ gói đã mua (`PurchasedPackageCard`): hiển thị tên gói, `PurchaseStatusBadge`, mã đơn `order.code`, tiến độ `{used}/{total}` buổi, số buổi còn, hạn dùng, buổi kế tiếp (`nextSession`).                                                                                                             |
+| **PUR-TRT-M-UI-T03** | SCR-M14      | Nút `"Đặt buổi {n}"` trên thẻ gói chỉ hiện khi `nextSession.canBook === true` và điều hướng đúng tới `/booking/new?treatmentSessionId=...&treatmentPlanId=...`; khi không đặt được thì hiện lý do theo trạng thái gói/liệu trình.                                                                      |
+| **PUR-TRT-M-UI-T04** | SCR-M14      | Chuyển sang tab `"Dịch vụ lẻ"`: hiển thị danh sách `PurchasedServiceCard`; quyền `available` (`canBook = true`) có nút `"Đặt lịch ngay"` → `/booking/new?serviceEntitlementId=...`; quyền `booked` hiện lịch hẹn và nút `"Xem lịch hẹn"` → `/booking/{appointmentId}`.                                 |
+| **PUR-TRT-M-UI-T05** | SCR-M14      | Tìm kiếm không phân biệt dấu tiếng Việt và lọc theo chip trạng thái (`Đang dùng`, `Hoàn thành`, `Hết hạn`); khi rỗng hoàn toàn hiện 2 nút CTA (`Khám phá dịch vụ`, `Xem gói ưu đãi`).                                                                                                                  |
+| **PUR-TRT-M-UI-T06** | SCR-M14b     | Mở `/my-packages/[packageId]`: gọi `GET /api/v1/me/purchases/packages/{id}`, hiển thị tổng quan gói, danh sách phân rã từng dịch vụ trong gói (`items: PackageItemProgress[]`), nút `"Xem phác đồ & nhật ký liệu trình"` → `/treatment/{treatmentPlan.id}`, và xử lý `404 customer_package_not_found`. |
+| **PUR-TRT-M-UI-T07** | SCR-M13      | Mở `/(customer)/treatments`: gọi `GET /api/v1/me/treatments`, hiển thị danh sách `TreatmentPlanCard` với `TreatmentStatusBadge`, KTV phụ trách, tiến độ buổi, buổi kế tiếp và nút `"Xem phác đồ"` / `"Đặt buổi {n}"`.                                                                                  |
+| **PUR-TRT-M-UI-T08** | SCR-M13      | Chọn chip trạng thái trên `/(customer)/treatments` (`in_progress`, `not_started`, `completed`, `paused`, `cancelled`) gọi lại API với query `status` tương ứng; tìm kiếm theo tên gói lọc chính xác.                                                                                                   |
+| **PUR-TRT-M-UI-T09** | SCR-M13b     | Mở `/treatment/[treatmentId]`: gọi `GET /api/v1/me/treatments/{id}`, hiển thị mục tiêu `goal`, KTV phụ trách, ngày bắt đầu/dự kiến kết thúc, cảnh báo `statusReason` khi `paused` hoặc `cancelled`, và `404 treatment_plan_not_found`.                                                                 |
+| **PUR-TRT-M-UI-T10** | SCR-M13b     | Timeline các buổi (`TreatmentSessionTimeline`): buổi `completed` có nút `"Xem ghi chú trị liệu"`; buổi `booked` có nút `"Xem lịch hẹn"`; buổi `not_booked` có nút `"Đặt lịch buổi này"` (khi `canBook = true`) hoặc hiện `reason` (khi `canBook = false`); buổi `skipped` hiện đã bỏ qua.              |
+| **PUR-TRT-M-UI-T11** | SCR-M13b     | Bấm `"Xem ghi chú trị liệu"` trên buổi `completed`: mở `TreatmentSessionDetailModal`, gọi `GET /api/v1/me/treatments/{id}/sessions/{sessionId}` và hiển thị nội dung `result` (hoặc thông báo chưa có ghi chú nếu `result === null`).                                                                  |
+| **PUR-TRT-M-UI-T12** | Bảo vệ route | Khách vãng lai (`anonymous`) vào `/(customer)/packages` hoặc `/(customer)/treatments` thấy màn mời đăng nhập kèm redirect đúng; bấm `"Xem gói của tôi"` hoặc `"Xem dịch vụ đã mua"` từ `PaymentResultScreen` điều hướng đúng tới `/(customer)/packages`.                                               |
