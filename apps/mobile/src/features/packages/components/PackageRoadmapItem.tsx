@@ -4,11 +4,7 @@ import { AlertCircle, CalendarClock, Layers } from 'lucide-react-native';
 import { AppText } from '@components/common/AppText';
 import { colors, radius, spacing, typography } from '@theme/index';
 
-export function PackageRoadmapItem({
-  item,
-}: {
-  item: PackageItem;
-}) {
+export function PackageRoadmapItem({ item }: { item: PackageItem }) {
   const isSubServiceDiscontinued = item.serviceStatus === 'discontinued';
 
   return (

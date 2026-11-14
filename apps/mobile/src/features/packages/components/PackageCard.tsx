@@ -5,13 +5,7 @@ import { AppText } from '@components/common/AppText';
 import { formatCurrency } from '@/lib/formatting/formatters';
 import { colors, radius, spacing } from '@theme/index';
 
-export function PackageCard({
-  pkg,
-  onPress,
-}: {
-  pkg: PackageListItem;
-  onPress: () => void;
-}) {
+export function PackageCard({ pkg, onPress }: { pkg: PackageListItem; onPress: () => void }) {
   const isDiscontinued = pkg.status === 'discontinued';
   const hasSavings = pkg.retailPrice > pkg.price;
   const savingsPercent = hasSavings
@@ -94,9 +88,7 @@ export function PackageCard({
           <View style={styles.priceWithDiscountRow}>
             <AppText style={styles.priceValue}>{formatCurrency(pkg.price)}</AppText>
             {hasSavings && (
-              <AppText style={styles.retailPrice}>
-                {formatCurrency(pkg.retailPrice)}
-              </AppText>
+              <AppText style={styles.retailPrice}>{formatCurrency(pkg.retailPrice)}</AppText>
             )}
             {hasSavings && (
               <View style={styles.savingsBadge}>
@@ -106,17 +98,9 @@ export function PackageCard({
           </View>
         </View>
 
-        <View
-          style={[
-            styles.actionButton,
-            isDiscontinued && styles.actionButtonDisabled,
-          ]}
-        >
+        <View style={[styles.actionButton, isDiscontinued && styles.actionButtonDisabled]}>
           <AppText
-            style={[
-              styles.actionButtonText,
-              isDiscontinued && styles.actionButtonTextDisabled,
-            ]}
+            style={[styles.actionButtonText, isDiscontinued && styles.actionButtonTextDisabled]}
           >
             {isDiscontinued ? 'Tạm ngưng' : 'Xem gói'}
           </AppText>
@@ -272,15 +256,15 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   savingsBadge: {
-    backgroundColor: '#fae8eb',
-    paddingHorizontal: 6,
+    backgroundColor: colors.accentRose,
+    paddingHorizontal: 7,
     paddingVertical: 1,
-    borderRadius: 4,
+    borderRadius: 999,
   },
   savingsText: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.error,
+    color: colors.onPrimary,
   },
   actionButton: {
     flexDirection: 'row',
