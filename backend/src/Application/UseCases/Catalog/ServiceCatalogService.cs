@@ -5,6 +5,7 @@ using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Services.Catalog;
 using NhuNguyetSpa.Application.Mapping;
+using NhuNguyetSpa.Application.UseCases.Reviews;
 using NhuNguyetSpa.Application.Validators.Catalog;
 using NhuNguyetSpa.Domain.Entities;
 
@@ -21,6 +22,7 @@ public sealed class ServiceCatalogService : IServiceCatalogService
     private readonly IValidator<UpdateServiceRequest> _updateValidator;
     private readonly IValidator<ChangeCatalogStatusRequest> _statusValidator;
     private readonly IValidator<ServiceFilter> _filterValidator;
+    private readonly CatalogRatings _ratings;
 
     public ServiceCatalogService(
         ISpaServiceRepository services,
@@ -30,7 +32,8 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         IValidator<CreateServiceRequest> createValidator,
         IValidator<UpdateServiceRequest> updateValidator,
         IValidator<ChangeCatalogStatusRequest> statusValidator,
-        IValidator<ServiceFilter> filterValidator)
+        IValidator<ServiceFilter> filterValidator,
+        CatalogRatings ratings)
     {
         _services = services;
         _categories = categories;
@@ -40,6 +43,7 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         _updateValidator = updateValidator;
         _statusValidator = statusValidator;
         _filterValidator = filterValidator;
+        _ratings = ratings;
     }
 
     public async Task<OperationResult<PagedResult<ServiceListItemDto>>> SearchAsync(PagedQuery query, ServiceFilter filter, CancellationToken cancellationToken)
@@ -52,13 +56,14 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             search, filter.CategoryId, filter.MinPrice, filter.MaxPrice,
             isOwner ? CatalogQuery.ParseStatus(filter.Status) : null, PublicOnly: !isOwner,
             sortBy, query.SortDirection, query.PageNumber, query.PageSize);
-        return OperationResult<PagedResult<ServiceListItemDto>>.Success(await _services.SearchAsync(criteria, cancellationToken));
+        var page = await _services.SearchAsync(criteria, cancellationToken);
+        return OperationResult<PagedResult<ServiceListItemDto>>.Success(await _ratings.ApplyAsync(page, cancellationToken));
     }
 
     public async Task<OperationResult<ServiceDetailDto>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         var service = await _services.GetDetailAsync(id, publicOnly: !_viewer.IsOwner, cancellationToken) ?? throw CatalogErrors.ServiceNotFound();
-        return OperationResult<ServiceDetailDto>.Success(service);
+        return OperationResult<ServiceDetailDto>.Success(await _ratings.ApplyAsync(service, cancellationToken));
     }
 
     public async Task<OperationResult<ServiceDetailDto>> CreateAsync(CreateServiceRequest request, CancellationToken cancellationToken)
@@ -113,7 +118,8 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             steps = next;
         }
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        return OperationResult<ServiceDetailDto>.Success(service.ToDetailDto(steps), "Đã cập nhật dịch vụ.");
+        return OperationResult<ServiceDetailDto>.Success(
+            await _ratings.ApplyAsync(service.ToDetailDto(steps), cancellationToken), "Đã cập nhật dịch vụ.");
     }
 
     public async Task ChangeStatusAsync(Guid id, ChangeCatalogStatusRequest request, CancellationToken cancellationToken)

@@ -109,13 +109,13 @@ APIS = [
  ("CARE","Ghi nhận dị ứng","POST",P+"/customers/{id}/allergies","Command","UC-SPA-27","SCR-W27, SCR-M26","STF (đã/đang chăm sóc khách)","{tacNhan, mucDo, ghiChu}","DiUngDto","201","409 ALLERGY_EXISTS (trùng tác nhân, không phân biệt hoa thường/dấu)"),
  ("CARE","Xác nhận hoàn thành buổi chăm sóc","POST",P+"/appointments/{id}/complete","Command","UC-SPA-28","SCR-W27, SCR-M26","STF (được phân công)","{ketQua?}","{lichHen, tienDoGoi?}","200","Giao dịch: LichHen HoanThanh + DichVuKhachHang DaSuDung | BuoiChamSoc HoanThanh, GoiKhachHang.SoBuoiDaDung+1; 400 COMPLETE_TOO_EARLY; 409 APPOINTMENT_STATUS_INVALID / ENTITLEMENT_STATE_INVALID"),
  # ---- REV 098-104
- ("REV","Đánh giá của dịch vụ","GET",P+"/services/{id}/reviews","Query","UC-SPA-29","SCR-W03, SCR-M03","ALL","?soSao&page&pageSize","{diemTrungBinh, soLuong, items[]}","200","Chỉ TrangThai HienThi"),
- ("REV","Đánh giá của gói","GET",P+"/packages/{id}/reviews","Query","UC-SPA-29","SCR-W05, SCR-M05","ALL","?soSao&page&pageSize","{diemTrungBinh, soLuong, items[]}","200",""),
- ("REV","Sản phẩm có thể đánh giá","GET",P+"/me/reviewable","Query","UC-SPA-30","SCR-W20, SCR-W18, SCR-M17","CUS","—","[{loai, id, ten, duDieuKien, lyDo?}]","200",""),
- ("REV","Gửi đánh giá","POST",P+"/me/reviews","Upload","UC-SPA-30","SCR-W20, SCR-M17","CUS","multipart {idDichVu? | idGoiDichVu?, soSao, noiDung, hinhAnh?}","DanhGiaDto","201","400 REVIEW_NOT_ELIGIBLE (E1)"),
- ("REV","Danh sách đánh giá (chủ spa)","GET",P+"/reviews","Query","UC-SPA-31","SCR-W39","OWN","?soSao&idDichVu&idGoiDichVu&trangThai&page&pageSize","PagedResult<DanhGiaDto>","200",""),
- ("REV","Phản hồi đánh giá","POST",P+"/reviews/{id}/reply","Command","UC-SPA-31","SCR-W39","OWN","{phanHoi}","DanhGiaDto","200","Ghi PhanHoiTuSpa, PhanHoiLuc"),
- ("REV","Ẩn / hiện đánh giá","PATCH",P+"/reviews/{id}/visibility","Command","UC-SPA-31","SCR-W39","OWN","{trangThai: HienThi|An}","—","204",""),
+ ("REV","Đánh giá của dịch vụ","GET",P+"/services/{id}/reviews","Query","UC-SPA-29","SCR-W03, SCR-M03","ALL","?rating&pageNumber&pageSize","{summary: {averageRating, reviewCount, ratingCounts}, page: PagedResult<PublicReviewDto>}","200","Chỉ visible; summary tính trên mọi đánh giá visible; reviewerName = họ tên đầy đủ (Q-77); 404 service_not_found khi người xem không thấy dịch vụ"),
+ ("REV","Đánh giá của gói","GET",P+"/packages/{id}/reviews","Query","UC-SPA-29","SCR-W05, SCR-M05","ALL","?rating&pageNumber&pageSize","{summary, page}","200","Như trên; 404 package_not_found"),
+ ("REV","Sản phẩm có thể đánh giá","GET",P+"/me/reviewable","Query","UC-SPA-30","SCR-W20, SCR-W18, SCR-M17","CUS","—","[{productType, productId, name, imageUrl, eligible, reason?, reviewId?}]","200","Quyền review.write; reason: not_used_yet | not_enough_sessions | already_reviewed"),
+ ("REV","Gửi đánh giá","POST",P+"/me/reviews","Command","UC-SPA-30","SCR-W20, SCR-M17","CUS","{spaServiceId? | servicePackageId?, rating, comment?}","MyReviewDto","201","BR-REV-01, 03; ảnh gửi riêng (SPA-API-148); 400 review_not_eligible (E1); 404 service_not_found/package_not_found; 409 review_exists"),
+ ("REV","Danh sách đánh giá (chủ spa)","GET",P+"/reviews","Query","UC-SPA-31","SCR-W39","OWN","?search&rating&productType&spaServiceId&servicePackageId&status&hasReply&fromDate&toDate&pageNumber&pageSize","PagedResult<OwnerReviewDto>","200","Quyền review.manage; search không dấu trên tên/SĐT/email khách và tên sản phẩm"),
+ ("REV","Phản hồi đánh giá","POST",P+"/reviews/{id}/reply","Command","UC-SPA-31","SCR-W39","OWN","{reply}","OwnerReviewDto","200","Ghi owner_reply, replied_at_utc; gửi lại thì ghi đè (BR-REV-08); 404 review_not_found"),
+ ("REV","Ẩn / hiện đánh giá","PATCH",P+"/reviews/{id}/visibility","Command","UC-SPA-31","SCR-W39","OWN","{status: visible|hidden}","—","204","Không xóa (BR-REV-02); 404 review_not_found"),
  # ---- AI 105-106
  ("AI","Lịch sử trò chuyện AI","GET",P+"/me/ai/history","Query","UC-SPA-32","SCR-W21, SCR-M16","CUS","?before (UTC, lượt trước mốc này)&limit (20, tối đa 50)","{items: [{id, question, answer, createdAtUtc}], hasMore} — mới nhất trước","200","Quyền ai.chat; 400 VALIDATION_ERROR (limit); 401; 403"),
  ("AI","Gửi câu hỏi cho trợ lý AI","POST",P+"/ai/chat","Command","UC-SPA-32","SCR-W01, SCR-W02, SCR-W21, SCR-M16","GUEST, CUS","{question}","{answer, suggestions[{productType, productId, name, price, path}], bookingProposals[{kind: book_now|book_entitlement|book_session, spaServiceId?, serviceEntitlementId?, treatmentSessionId?, serviceName, date, startTime, endTime, staffMemberId?, staffName?, path}], saved, messageId?}","200","Chỉ lưu khi là khách hàng (Q-01); câu y khoa/ngoài phạm vi → câu cố định (BR-AI-01, 09); 400 VALIDATION_ERROR (E1, Q-63); 403 nhân viên/chủ spa (Q-60); 429 RATE_LIMITED; 503 AI_UNAVAILABLE (E2)"),
@@ -162,6 +162,13 @@ APIS = [
  ("STF","Xóa ảnh bằng cấp (chủ spa)","DELETE",P+"/staff/{id}/certifications/{certificationId}/image","Command","UC-SPA-22","SCR-W33","OWN","—","StaffCertificationDto","200","BR-STF-15"),
  ("STF","Tải ảnh bằng cấp của tôi","POST",P+"/me/certifications/{certificationId}/image","Command","UC-SPA-22","SCR-W41","STF","multipart file","StaffCertificationDto","200","BR-STF-15; về pending"),
  ("STF","Xóa ảnh bằng cấp của tôi","DELETE",P+"/me/certifications/{certificationId}/image","Command","UC-SPA-22","SCR-W41","STF","—","StaffCertificationDto","200","BR-STF-15; về pending"),
+ # ---- REV bổ sung 146-151 (docs/specs/reviews.md)
+ ("REV","Đánh giá của tôi","GET",P+"/me/reviews","Query","UC-SPA-30","SCR-W20, SCR-M17","CUS","?pageNumber&pageSize","PagedResult<MyReviewDto>","200","Mọi trạng thái, kèm phản hồi spa, canEdit/editDeadlineAtUtc"),
+ ("REV","Sửa đánh giá của tôi","PUT",P+"/me/reviews/{id}","Command","UC-SPA-30","SCR-W20, SCR-M17","CUS","{rating, comment?}","MyReviewDto","200","BR-REV-04 (Q-76); 409 review_locked; 404 review_not_found"),
+ ("REV","Tải ảnh đánh giá","POST",P+"/me/reviews/{id}/image","Upload","UC-SPA-30","SCR-W20, SCR-M17","CUS","multipart file","MyReviewDto","200","BR-REV-07, Cloudinary reviews/{id}; 409 review_locked; 503 thiếu Cloudinary"),
+ ("REV","Xóa ảnh đánh giá","DELETE",P+"/me/reviews/{id}/image","Command","UC-SPA-30","SCR-W20, SCR-M17","CUS","—","—","204","BR-REV-07; 409 review_locked"),
+ ("REV","Gỡ phản hồi đánh giá","DELETE",P+"/reviews/{id}/reply","Command","UC-SPA-31","SCR-W39","OWN","—","—","204","owner_reply, replied_at_utc về null"),
+ ("REV","Chi tiết đánh giá của tôi","GET",P+"/me/reviews/{id}","Query","UC-SPA-30","SCR-W20, SCR-M17","CUS","—","MyReviewDto","200","Đích Location của SPA-API-101; 404 review_not_found"),
 ]
 
 DTO_EXAMPLES = [

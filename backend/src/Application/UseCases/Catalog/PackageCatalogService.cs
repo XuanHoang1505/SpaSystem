@@ -5,6 +5,7 @@ using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Services.Catalog;
 using NhuNguyetSpa.Application.Mapping;
+using NhuNguyetSpa.Application.UseCases.Reviews;
 using NhuNguyetSpa.Application.Validators.Catalog;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
@@ -22,6 +23,7 @@ public sealed class PackageCatalogService : IPackageCatalogService
     private readonly IValidator<UpdatePackageRequest> _updateValidator;
     private readonly IValidator<ChangeCatalogStatusRequest> _statusValidator;
     private readonly IValidator<PackageFilter> _filterValidator;
+    private readonly CatalogRatings _ratings;
 
     public PackageCatalogService(
         IServicePackageRepository packages,
@@ -31,7 +33,8 @@ public sealed class PackageCatalogService : IPackageCatalogService
         IValidator<CreatePackageRequest> createValidator,
         IValidator<UpdatePackageRequest> updateValidator,
         IValidator<ChangeCatalogStatusRequest> statusValidator,
-        IValidator<PackageFilter> filterValidator)
+        IValidator<PackageFilter> filterValidator,
+        CatalogRatings ratings)
     {
         _packages = packages;
         _services = services;
@@ -41,6 +44,7 @@ public sealed class PackageCatalogService : IPackageCatalogService
         _updateValidator = updateValidator;
         _statusValidator = statusValidator;
         _filterValidator = filterValidator;
+        _ratings = ratings;
     }
 
     public async Task<OperationResult<PagedResult<PackageListItemDto>>> SearchAsync(PagedQuery query, PackageFilter filter, CancellationToken cancellationToken)
@@ -55,13 +59,14 @@ public sealed class PackageCatalogService : IPackageCatalogService
         {
             ServiceId = filter.ServiceId,
         };
-        return OperationResult<PagedResult<PackageListItemDto>>.Success(await _packages.SearchAsync(criteria, cancellationToken));
+        var page = await _packages.SearchAsync(criteria, cancellationToken);
+        return OperationResult<PagedResult<PackageListItemDto>>.Success(await _ratings.ApplyAsync(page, cancellationToken));
     }
 
     public async Task<OperationResult<PackageDetailDto>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         var package = await _packages.GetDetailAsync(id, _viewer.PublicOn, cancellationToken) ?? throw CatalogErrors.PackageNotFound();
-        return OperationResult<PackageDetailDto>.Success(package);
+        return OperationResult<PackageDetailDto>.Success(await _ratings.ApplyAsync(package, cancellationToken));
     }
 
     public async Task<OperationResult<PackageDetailDto>> CreateAsync(CreatePackageRequest request, CancellationToken cancellationToken)
@@ -152,5 +157,6 @@ public sealed class PackageCatalogService : IPackageCatalogService
 
     // The detail (service names, fallback image) is read back with the same query as GET so both stay identical.
     private async Task<PackageDetailDto> ReloadAsync(Guid id, CancellationToken cancellationToken) =>
-        await _packages.GetDetailAsync(id, publicOn: null, cancellationToken) ?? throw CatalogErrors.PackageNotFound();
+        await _ratings.ApplyAsync(
+            await _packages.GetDetailAsync(id, publicOn: null, cancellationToken) ?? throw CatalogErrors.PackageNotFound(), cancellationToken);
 }
