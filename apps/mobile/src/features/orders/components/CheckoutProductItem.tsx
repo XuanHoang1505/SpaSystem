@@ -32,19 +32,8 @@ export function CheckoutProductItem({ item }: { item: OrderPreviewItem }) {
         </AppText>
 
         <View style={styles.priceRow}>
-          <AppText style={styles.unitPrice}>
-            {formatCurrency(item.unitPrice)}
-          </AppText>
-
-          {item.discountAmount > 0 && (
-            <AppText style={styles.discount}>
-              -{formatCurrency(item.discountAmount)}
-            </AppText>
-          )}
-
-          <AppText style={styles.lineTotal}>
-            {formatCurrency(item.lineTotal)}
-          </AppText>
+          <AppText style={styles.unitPrice}>Số lượng: 1</AppText>
+          <AppText style={styles.lineTotal}>{formatCurrency(item.unitPrice)}</AppText>
         </View>
       </View>
     </View>
