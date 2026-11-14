@@ -419,8 +419,8 @@ export function getAppointmentStatusMeta(status: AppointmentStatus): Appointment
         label: 'Hết hạn giữ chỗ',
         tone: 'neutral',
         backgroundColor: colors.neutralSoft,
-        textColor: colors.muted,
-        borderColor: colors.border,
+        textColor: colors.neutral,
+        borderColor: colors.neutralBorder,
       };
   }
 }

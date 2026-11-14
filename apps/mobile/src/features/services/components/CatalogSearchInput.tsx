@@ -25,6 +25,8 @@ export function CatalogSearchInput({
         returnKeyType="search"
         autoCapitalize="none"
         autoCorrect={false}
+        numberOfLines={1}
+        multiline={false}
         style={styles.input}
       />
       {value.length > 0 && (

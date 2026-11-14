@@ -1,4 +1,5 @@
-import { PlaceholderScreen } from '@components/common/PlaceholderScreen';
+import { MyTreatmentsScreen } from '@features/treatments';
+
 export default function Screen() {
-  return <PlaceholderScreen title="Liệu trình" />;
+  return <MyTreatmentsScreen />;
 }

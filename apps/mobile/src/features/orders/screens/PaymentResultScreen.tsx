@@ -29,6 +29,7 @@ export function PaymentResultScreen() {
   } = useOrderPolling(orderId);
 
   const hasPackage = order?.items.some((it) => it.type === 'package');
+  const hasService = order?.items.some((it) => it.type === 'service');
   const latestAttempt = order ? latestPayment(order) : undefined;
   const isFailedAttempt = order?.status === 'pending_payment' && latestAttempt?.status === 'failed';
 
@@ -254,6 +255,13 @@ export function PaymentResultScreen() {
                     title="Xem gói của tôi"
                     variant="outline"
                     onPress={() => router.replace('/(customer)/packages')}
+                  />
+                )}
+                {hasService && !order.appointment && (
+                  <AppButton
+                    title="Xem dịch vụ đã mua"
+                    variant="outline"
+                    onPress={() => router.replace('/(customer)/packages?tab=services')}
                   />
                 )}
                 <AppButton

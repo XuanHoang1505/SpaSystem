@@ -23,6 +23,9 @@ export default function RootLayout() {
         <Stack.Screen name="checkout" options={{ headerShown: false }} />
         <Stack.Screen name="payment" options={{ headerShown: false }} />
         <Stack.Screen name="booking" options={{ headerShown: false }} />
+        <Stack.Screen name="my-orders" options={{ headerShown: false }} />
+        <Stack.Screen name="my-packages" options={{ headerShown: false }} />
+        <Stack.Screen name="treatment" options={{ headerShown: false }} />
         <Stack.Screen name="account" options={{ headerShown: false }} />
         <Stack.Screen name="password" options={{ headerShown: false }} />
       </Stack>
