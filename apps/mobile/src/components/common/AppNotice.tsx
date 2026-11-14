@@ -2,10 +2,11 @@ import { StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
 import { colors, radius, spacing, typography } from '@theme/index';
 
-export type NoticeTone = 'error' | 'info' | 'success';
+export type NoticeTone = 'error' | 'warning' | 'info' | 'success';
 
 const toneColor: Record<NoticeTone, string> = {
   error: colors.error,
+  warning: colors.warning,
   info: colors.primary,
   success: colors.success,
 };
