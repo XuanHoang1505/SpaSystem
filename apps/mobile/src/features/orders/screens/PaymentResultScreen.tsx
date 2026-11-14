@@ -6,7 +6,7 @@ import { AppButton } from '@components/common/AppButton';
 import { AppNotice } from '@components/common/AppNotice';
 import { AppScreen } from '@components/common/AppScreen';
 import { AppText } from '@components/common/AppText';
-import { formatCurrency, formatLocalTime } from '@/lib/formatting/formatters';
+import { formatCurrency, formatLocalDate, formatLocalTime } from '@/lib/formatting/formatters';
 import { colors, radius, spacing } from '@theme/index';
 import { PaymentStatusIcon } from '../components/PaymentStatusIcon';
 import { latestPayment, useOrderPolling } from '../hooks/useOrderPolling';
@@ -58,28 +58,20 @@ export function PaymentResultScreen() {
             message="Không tìm thấy thông tin kết quả giao dịch thanh toán."
           />
           <View style={styles.actionButtonWrapper}>
-            <AppButton
-              title="Về trang chủ"
-              onPress={() => router.replace('/(customer)/home')}
-            />
+            <AppButton title="Về trang chủ" onPress={() => router.replace('/(customer)/home')} />
           </View>
         </View>
       ) : isLoading ? (
         <View style={styles.centeredContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <AppText style={styles.loadingText}>
-            Đang tải thông tin kết quả thanh toán...
-          </AppText>
+          <AppText style={styles.loadingText}>Đang tải thông tin kết quả thanh toán...</AppText>
         </View>
       ) : isError ? (
         <View style={styles.centeredContainer}>
           <AppNotice
             tone="error"
             title="Lỗi tải thông tin đơn hàng"
-            message={
-              loadError?.message ??
-              'Đã có sự cố khi kết nối tới máy chủ. Vui lòng thử lại.'
-            }
+            message={loadError?.message ?? 'Đã có sự cố khi kết nối tới máy chủ. Vui lòng thử lại.'}
           />
           <View style={styles.actionButtonWrapper}>
             <AppButton title="Kiểm tra lại" onPress={() => refetch()} />
@@ -107,9 +99,7 @@ export function PaymentResultScreen() {
           {isPolling && (
             <View style={styles.pollingBanner}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <AppText style={styles.pollingText}>
-                Đang xác nhận giao dịch từ ngân hàng...
-              </AppText>
+              <AppText style={styles.pollingText}>Đang xác nhận giao dịch từ ngân hàng...</AppText>
             </View>
           )}
 
@@ -189,9 +179,7 @@ export function PaymentResultScreen() {
 
               <View style={styles.detailRow}>
                 <AppText style={styles.detailLabel}>Tổng thanh toán</AppText>
-                <AppText style={styles.detailAmount}>
-                  {formatCurrency(order.grandTotal)}
-                </AppText>
+                <AppText style={styles.detailAmount}>{formatCurrency(order.grandTotal)}</AppText>
               </View>
 
               <View style={styles.detailRow}>
@@ -217,23 +205,50 @@ export function PaymentResultScreen() {
                   <AppText style={styles.itemName} numberOfLines={1}>
                     • {it.productName}
                   </AppText>
-                  <AppText style={styles.itemPrice}>
-                    {formatCurrency(it.lineTotal)}
-                  </AppText>
+                  <AppText style={styles.itemPrice}>{formatCurrency(it.lineTotal)}</AppText>
                 </View>
               ))}
             </View>
+
+            {/* Linked Appointment Summary (Book Now Flow) */}
+            {order.appointment && (
+              <View style={styles.appointmentSummary}>
+                <AppText style={styles.appointmentHeader}>Thông tin lịch hẹn đi kèm:</AppText>
+                <View style={styles.itemRow}>
+                  <AppText style={styles.detailLabel}>Ngày & Giờ hẹn</AppText>
+                  <AppText style={styles.itemPrice}>
+                    {formatLocalTime(order.appointment.startTime)} –{' '}
+                    {formatLocalTime(order.appointment.endTime)},{' '}
+                    {formatLocalDate(order.appointment.date)}
+                  </AppText>
+                </View>
+                <View style={styles.itemRow}>
+                  <AppText style={styles.detailLabel}>Kỹ thuật viên</AppText>
+                  <AppText style={styles.itemPrice}>{order.appointment.staff.fullName}</AppText>
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionsContainer}>
             {order.status === 'paid' ? (
               <>
-                <AppButton
-                  title="Đặt lịch hẹn ngay"
-                  variant="primary"
-                  onPress={() => router.replace('/(customer)/bookings')}
-                />
+                {order.appointment ? (
+                  <AppButton
+                    title="Xem lịch hẹn vừa đặt"
+                    variant="primary"
+                    onPress={() =>
+                      router.replace(`/booking/success?appointmentId=${order.appointment!.id}`)
+                    }
+                  />
+                ) : (
+                  <AppButton
+                    title="Đặt lịch hẹn ngay"
+                    variant="primary"
+                    onPress={() => router.replace('/(customer)/bookings')}
+                  />
+                )}
                 {hasPackage && (
                   <AppButton
                     title="Xem gói của tôi"
@@ -253,9 +268,7 @@ export function PaymentResultScreen() {
                   <AppButton
                     title="Thử lại thanh toán"
                     variant="primary"
-                    onPress={() =>
-                      router.replace(`/checkout?orderId=${order.id}`)
-                    }
+                    onPress={() => router.replace(`/checkout?orderId=${order.id}`)}
                   />
                 )}
                 <AppButton
@@ -309,7 +322,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
   },
   headerTitle: {
     fontSize: 18,
@@ -351,7 +364,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f5ebe6',
+    backgroundColor: colors.surface,
     padding: spacing.md,
     borderRadius: radius.small,
     marginBottom: spacing.md,
@@ -369,7 +382,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   statusCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: radius.card,
     padding: spacing.lg,
     borderWidth: 1,
@@ -429,7 +442,7 @@ const styles = StyleSheet.create({
   },
   itemsSummary: {
     width: '100%',
-    backgroundColor: '#fafafa',
+    backgroundColor: colors.surface,
     borderRadius: radius.small,
     padding: spacing.md,
   },
@@ -455,6 +468,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: colors.text,
+  },
+  appointmentSummary: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: radius.small,
+    padding: spacing.md,
+    marginTop: spacing.sm,
+    gap: 4,
+  },
+  appointmentHeader: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 2,
   },
   actionsContainer: {
     gap: spacing.sm,

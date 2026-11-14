@@ -7,7 +7,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { ServiceListItem } from '@spa/shared-types';
 import { SearchX, SlidersHorizontal } from 'lucide-react-native';
 import { AppNotice } from '@components/common/AppNotice';
@@ -23,12 +23,21 @@ import { ServiceSkeleton } from '../components/ServiceSkeleton';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useServiceSearch } from '../hooks/useServiceSearch';
 import { CartBadgeButton } from '@/features/orders';
+import { useAuthStore } from '@/stores/authStore';
 
 export function ServicesListScreen() {
+  const params = useLocalSearchParams<{ categoryId?: string }>();
+  const authStatus = useAuthStore((state) => state.status);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
 
-  const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
+  const [categoryId, setCategoryId] = useState<string | undefined>(params.categoryId);
+
+  useEffect(() => {
+    if (params.categoryId) {
+      setCategoryId(params.categoryId);
+    }
+  }, [params.categoryId]);
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -154,6 +163,16 @@ export function ServicesListScreen() {
             <ServiceCard
               service={item}
               onPress={() => router.push(`/(public)/services/${item.id}`)}
+              onBookPress={() => {
+                const bookingUrl = `/booking/new?serviceId=${item.id}`;
+                if (authStatus === 'authenticated') {
+                  router.push(bookingUrl);
+                } else {
+                  router.push(
+                    `/(public)/login?redirect=${encodeURIComponent(bookingUrl)}`,
+                  );
+                }
+              }}
             />
           )}
           contentContainerStyle={styles.listContent}

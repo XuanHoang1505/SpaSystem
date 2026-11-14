@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ServiceStep } from '@spa/shared-types';
-import { ArrowLeft, CheckCircle2, Clock, ShoppingBag, Sparkles, Star, Tag } from 'lucide-react-native';
+import { CheckCircle2, Clock, ShoppingBag, Sparkles, Star, Tag } from 'lucide-react-native';
 import { AppButton } from '@components/common/AppButton';
 import { AppNotice } from '@components/common/AppNotice';
 import { AppScreen } from '@components/common/AppScreen';
@@ -21,7 +21,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { colors, radius, spacing, typography } from '@theme/index';
 import { ServiceStepItem } from '../components/ServiceStepItem';
 import { useService } from '../hooks/useService';
-import { CartBadgeButton, useAddToCart } from '@/features/orders';
+import { useAddToCart } from '@/features/orders';
 
 const FALLBACK_STEPS: ServiceStep[] = [
   {
@@ -125,31 +125,18 @@ export function ServiceDetailScreen() {
   };
 
   const handleBooking = () => {
+    const bookingUrl = `/booking/new?serviceId=${service.id}`;
     if (authStatus === 'authenticated') {
-      router.push(`/(customer)/bookings`);
+      router.push(bookingUrl);
     } else {
       router.push(
-        `/(public)/login?redirect=${encodeURIComponent(`/(public)/services/${service.id}`)}`,
+        `/(public)/login?redirect=${encodeURIComponent(bookingUrl)}`,
       );
     }
   };
 
   return (
     <View style={styles.container}>
-      {/* Floating Header */}
-      <View style={[styles.floatingHeader, { top: insets.top + spacing.xs }]}>
-        <Pressable
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Quay lại"
-          hitSlop={8}
-          style={styles.floatingHeaderButton}
-        >
-          <ArrowLeft size={22} color={colors.text} />
-        </Pressable>
-        <CartBadgeButton />
-      </View>
-
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 90 }]}
       >
@@ -511,28 +498,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.primary,
-  },
-  floatingHeader: {
-    position: 'absolute',
-    left: spacing.md,
-    right: spacing.md,
-    zIndex: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  floatingHeaderButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
   },
   bottomCtaRow: {
     flexDirection: 'row',

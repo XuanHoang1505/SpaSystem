@@ -8,9 +8,11 @@ import { colors, radius, spacing } from '@theme/index';
 export function ServiceCard({
   service,
   onPress,
+  onBookPress,
 }: {
   service: ServiceListItem;
   onPress: () => void;
+  onBookPress?: () => void;
 }) {
   const isDiscontinued = service.status === 'discontinued';
 
@@ -88,7 +90,22 @@ export function ServiceCard({
           <AppText style={styles.priceValue}>{formatCurrency(service.price)}</AppText>
         </View>
 
-        <View
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            if (isDiscontinued) return;
+            if (onBookPress) {
+              onBookPress();
+            } else {
+              onPress();
+            }
+          }}
+          disabled={isDiscontinued}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isDiscontinued ? `${service.name} tạm ngưng` : `Đặt ngay ${service.name}`
+          }
+          hitSlop={6}
           style={[
             styles.actionButton,
             isDiscontinued && styles.actionButtonDisabled,
@@ -103,7 +120,7 @@ export function ServiceCard({
             {isDiscontinued ? 'Tạm ngưng' : 'Đặt ngay'}
           </AppText>
           {!isDiscontinued && <ArrowRight size={14} color={colors.onPrimary} />}
-        </View>
+        </Pressable>
       </View>
     </Pressable>
   );

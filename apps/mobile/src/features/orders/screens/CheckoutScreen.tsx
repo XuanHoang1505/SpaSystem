@@ -5,12 +5,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { OrderPreviewItem, OrderRequest, OrderSource } from '@spa/shared-types';
-import { AlertTriangle, ArrowLeft, Clock, ShoppingBag } from 'lucide-react-native';
+import { AlertTriangle, ArrowLeft, CalendarCheck, Clock, ShoppingBag } from 'lucide-react-native';
 import { AppButton } from '@components/common/AppButton';
 import { AppNotice } from '@components/common/AppNotice';
 import { AppScreen } from '@components/common/AppScreen';
 import { AppText } from '@components/common/AppText';
-import { formatCurrency, formatLocalTime } from '@/lib/formatting/formatters';
+import { useBookNow } from '@/features/bookings/hooks/useBookNow';
+import { classifyBookingError } from '@/features/bookings/utils/bookingHelpers';
+import { formatCurrency, formatLocalDate, formatLocalTime } from '@/lib/formatting/formatters';
 import { useAuthStore } from '@/stores/authStore';
 import { colors, radius, spacing } from '@theme/index';
 import { CheckoutProductItem } from '../components/CheckoutProductItem';
@@ -37,15 +39,30 @@ export function CheckoutScreen() {
     spaServiceId,
     servicePackageId,
     orderId,
+    bookingDate,
+    bookingStartTime,
+    bookingEndTime,
+    bookingStaffId,
+    bookingStaffName,
+    bookingNote,
   } = useLocalSearchParams<{
     source?: 'cart' | 'buy_now';
     spaServiceId?: string;
     servicePackageId?: string;
     orderId?: string;
+    bookingDate?: string;
+    bookingStartTime?: string;
+    bookingEndTime?: string;
+    bookingStaffId?: string;
+    bookingStaffName?: string;
+    bookingNote?: string;
   }>();
 
   const { status } = useAuthStore();
   const isExistingOrder = Boolean(orderId);
+  const isBookingCheckout = Boolean(
+    !isExistingOrder && spaServiceId && bookingDate && bookingStartTime,
+  );
 
   // Auth redirect
   useEffect(() => {
@@ -88,10 +105,15 @@ export function CheckoutScreen() {
   } = useOrder(orderId ?? '', isExistingOrder);
 
   const createOrder = useCreateOrder();
+  const bookNow = useBookNow();
   const createPayment = useCreatePayment();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // The order (and, for book-now, the held slot) created by this screen. A retry after a failed payment step pays
+  // this order instead of creating a second one, and the slot can no longer be changed from here.
+  const createdOrderIdRef = useRef<string | null>(null);
+  const [orderCreated, setOrderCreated] = useState(false);
 
   // Unified data
   const isLoading = isExistingOrder ? isOrderLoading : isPreviewLoading;
@@ -140,20 +162,45 @@ export function CheckoutScreen() {
       setIsSubmitting(true);
       setSubmitError(null);
 
-      let targetOrderId = orderId;
+      let targetOrderId = orderId ?? createdOrderIdRef.current ?? undefined;
 
       if (!targetOrderId) {
-        // Step 1: Create Order
-        const newOrder = await createOrder.mutateAsync({
-          request: previewRequest,
-          idempotencyKey: idempotencyKeyRef.current,
-        });
-        targetOrderId = newOrder.id;
+        if (isBookingCheckout && spaServiceId && bookingDate && bookingStartTime) {
+          // Step 1a: Book Now (Hold Appointment + Create Order with optional Promotion Code)
+          const bookNowResult = await bookNow.mutateAsync({
+            body: {
+              spaServiceId,
+              date: bookingDate,
+              startTime: bookingStartTime,
+              ...(bookingStaffId ? { staffMemberId: bookingStaffId } : {}),
+              ...(appliedPromotionCode ? { promotionCode: appliedPromotionCode } : {}),
+              ...(bookingNote ? { note: bookingNote } : {}),
+            },
+            idempotencyKey: idempotencyKeyRef.current,
+          });
+          targetOrderId = bookNowResult.order.id;
+          createdOrderIdRef.current = targetOrderId;
+          setOrderCreated(true);
 
-        // 0 VND order exception: Backend completes order immediately
-        if (newOrder.grandTotal === 0 || newOrder.status === 'paid') {
-          router.replace(`/payment/result?orderId=${targetOrderId}`);
-          return;
+          if (bookNowResult.order.grandTotal === 0 || bookNowResult.order.status === 'paid') {
+            router.replace(`/booking/success?appointmentId=${bookNowResult.appointment.id}`);
+            return;
+          }
+        } else {
+          // Step 1b: Create Standard Order (Cart or Buy Now Package)
+          const newOrder = await createOrder.mutateAsync({
+            request: previewRequest,
+            idempotencyKey: idempotencyKeyRef.current,
+          });
+          targetOrderId = newOrder.id;
+          createdOrderIdRef.current = targetOrderId;
+          setOrderCreated(true);
+
+          // 0 VND order exception: Backend completes order immediately
+          if (newOrder.grandTotal === 0 || newOrder.status === 'paid') {
+            router.replace(`/payment/result?orderId=${targetOrderId}`);
+            return;
+          }
         }
       }
 
@@ -176,6 +223,19 @@ export function CheckoutScreen() {
       if (err && typeof err === 'object' && 'errors' in err) {
         const apiErr = err as { errors: Array<{ code: string; message: string }> };
         const code = apiErr.errors?.[0]?.code;
+        const slotError = isBookingCheckout ? classifyBookingError(err) : null;
+        if (slotError && (slotError.shouldClearSlot || slotError.shouldResetStaff)) {
+          Alert.alert('Khung giờ hẹn không còn khả dụng', slotError.message, [
+            {
+              text: 'Chọn giờ khác',
+              onPress: () =>
+                router.canGoBack()
+                  ? router.back()
+                  : router.replace(`/booking/new?serviceId=${spaServiceId ?? ''}`),
+            },
+          ]);
+          return;
+        }
         if (code === 'cart_empty') {
           Alert.alert('Giỏ hàng trống', 'Giỏ hàng của bạn đang trống.', [
             { text: 'Về giỏ hàng', onPress: () => router.replace('/cart') },
@@ -261,7 +321,7 @@ export function CheckoutScreen() {
             {/* Unavailable items alert */}
             {unavailableItems.length > 0 && (
               <View style={styles.warningBox}>
-                <AlertTriangle size={18} color="#b45309" />
+                <AlertTriangle size={18} color={colors.warning} />
                 <View style={styles.warningContent}>
                   <AppText style={styles.warningTitle}>Sản phẩm ngừng bán</AppText>
                   <AppText style={styles.warningText}>
@@ -276,6 +336,67 @@ export function CheckoutScreen() {
             {submitError && (
               <View style={styles.errorBanner}>
                 <AppNotice tone="error" message={submitError} />
+              </View>
+            )}
+
+            {/* Booking Appointment Summary Card (when checking out from Book Now) */}
+            {(isBookingCheckout || existingOrder?.appointment) && (
+              <View style={styles.card}>
+                <View style={styles.cardHeaderBetween}>
+                  <View style={styles.cardHeaderLeft}>
+                    <CalendarCheck size={18} color={colors.primary} />
+                    <AppText style={styles.cardTitle}>Thông tin lịch hẹn</AppText>
+                  </View>
+                  {isBookingCheckout && !orderCreated && (
+                    <Pressable
+                      onPress={() =>
+                        router.canGoBack()
+                          ? router.back()
+                          : router.replace(`/booking/new?serviceId=${spaServiceId ?? ''}`)
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel="Đổi giờ hẹn"
+                    >
+                      <AppText style={styles.changeSlotLink}>Đổi giờ</AppText>
+                    </Pressable>
+                  )}
+                </View>
+
+                <View style={styles.bookingRow}>
+                  <AppText style={styles.bookingLabel}>Ngày hẹn</AppText>
+                  <AppText style={styles.bookingValue}>
+                    {formatLocalDate(existingOrder?.appointment?.date ?? bookingDate ?? '')}
+                  </AppText>
+                </View>
+
+                <View style={styles.bookingRow}>
+                  <AppText style={styles.bookingLabel}>Khung giờ</AppText>
+                  <AppText style={styles.bookingValue}>
+                    {existingOrder?.appointment
+                      ? `${formatLocalTime(existingOrder.appointment.startTime)} – ${formatLocalTime(existingOrder.appointment.endTime)}`
+                      : bookingEndTime
+                        ? `${bookingStartTime} – ${bookingEndTime}`
+                        : bookingStartTime}
+                  </AppText>
+                </View>
+
+                <View style={styles.bookingRow}>
+                  <AppText style={styles.bookingLabel}>Kỹ thuật viên</AppText>
+                  <AppText style={styles.bookingValue}>
+                    {existingOrder?.appointment?.staff.fullName ??
+                      bookingStaffName ??
+                      'Kỹ thuật viên bất kỳ'}
+                  </AppText>
+                </View>
+
+                {bookingNote ? (
+                  <View style={styles.bookingRow}>
+                    <AppText style={styles.bookingLabel}>Ghi chú</AppText>
+                    <AppText style={styles.bookingValue} numberOfLines={2}>
+                      {bookingNote}
+                    </AppText>
+                  </View>
+                ) : null}
               </View>
             )}
 
@@ -337,13 +458,19 @@ export function CheckoutScreen() {
               <AppButton
                 title={grandTotal === 0 ? 'Xác nhận đơn (0 đ)' : 'Thanh toán VNPay'}
                 onPress={handleCheckout}
-                loading={isSubmitting || createOrder.isPending || createPayment.isPending}
+                loading={
+                  isSubmitting ||
+                  createOrder.isPending ||
+                  bookNow.isPending ||
+                  createPayment.isPending
+                }
                 disabled={
                   !isPayable ||
                   items.length === 0 ||
                   isBelowMinimum ||
                   isSubmitting ||
                   createOrder.isPending ||
+                  bookNow.isPending ||
                   createPayment.isPending
                 }
                 accessibilityLabel="Xác nhận và tiến hành thanh toán"
@@ -369,7 +496,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
   },
   backButton: {
     width: 48,
@@ -412,7 +539,7 @@ const styles = StyleSheet.create({
   holdBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5ebe6',
+    backgroundColor: colors.surface,
     borderRadius: radius.small,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -427,9 +554,9 @@ const styles = StyleSheet.create({
   },
   warningBox: {
     flexDirection: 'row',
-    backgroundColor: '#fef3c7',
+    backgroundColor: colors.warningSoft,
     borderWidth: 1,
-    borderColor: '#fde68a',
+    borderColor: colors.warningBorder,
     borderRadius: radius.small,
     padding: spacing.md,
     marginBottom: spacing.md,
@@ -441,19 +568,19 @@ const styles = StyleSheet.create({
   warningTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#92400e',
+    color: colors.warning,
     marginBottom: 2,
   },
   warningText: {
     fontSize: 12,
-    color: '#b45309',
+    color: colors.warning,
     lineHeight: 18,
   },
   errorBanner: {
     marginBottom: spacing.md,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: radius.card,
     padding: spacing.md,
     borderWidth: 1,
@@ -465,6 +592,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     marginBottom: spacing.xs,
+  },
+  cardHeaderBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  changeSlotLink: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  bookingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    paddingVertical: 4,
+  },
+  bookingLabel: {
+    fontSize: 13,
+    color: colors.muted,
+  },
+  bookingValue: {
+    flex: 1,
+    textAlign: 'right',
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
   },
   cardTitle: {
     fontSize: 15,
@@ -482,7 +643,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderTopWidth: 1,
     borderTopColor: colors.border,
     paddingHorizontal: spacing.md,
@@ -491,7 +652,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
