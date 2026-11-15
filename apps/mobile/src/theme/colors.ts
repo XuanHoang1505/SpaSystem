@@ -21,6 +21,8 @@ export const colors = {
   card: '#FFFFFF',
   text: '#16261A',
   muted: '#4F6654',
+  /** Inactive tab bar icon and label (soft neutral sage gray with clear contrast distinction from primary). */
+  tabBarInactive: '#728376',
   /** The one warm accent: ratings, "offer" and "best seller" tags. Text on it uses `text`. */
   accentGold: '#D99B26',
   /** Gold as text on white or the background (5.5:1). */

@@ -1,4 +1,5 @@
-import { PlaceholderScreen } from '@components/common/PlaceholderScreen';
+import { StaffAppointmentDetailScreen } from '@/features/care';
+
 export default function Screen() {
-  return <PlaceholderScreen title="Chi tiết buổi chăm sóc" />;
+  return <StaffAppointmentDetailScreen />;
 }

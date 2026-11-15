@@ -1,6 +1,8 @@
-import { Platform } from 'react-native';
+import React from 'react';
+import { Platform, Text, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@theme/index';
+export { TabBarIcon, tabIcon } from '@/components/navigation/TabBarIcon';
 
 export const customerTabs = [
   ['home', 'Trang chủ'],
@@ -48,18 +50,18 @@ export const ownerScreens = [
  */
 export function useCommonTabScreenOptions() {
   const insets = useSafeAreaInsets();
-  const bottomPadding = insets.bottom > 0 ? insets.bottom : 10;
-  const tabHeight = (Platform.OS === 'ios' ? 56 : 64) + bottomPadding;
+  const bottomPadding = insets.bottom > 0 ? insets.bottom : 8;
+  const tabHeight = (Platform.OS === 'ios' ? 58 : 64) + bottomPadding;
 
   return {
-    tabBarActiveTintColor: colors.primary,
-    tabBarInactiveTintColor: colors.muted,
+    tabBarActiveTintColor: colors.primaryPressed,
+    tabBarInactiveTintColor: colors.tabBarInactive,
     tabBarStyle: {
       backgroundColor: colors.surface,
       borderTopColor: colors.border,
       borderTopWidth: 1,
       height: tabHeight,
-      paddingTop: 8,
+      paddingTop: 6,
       paddingBottom: bottomPadding,
       elevation: 8,
       shadowColor: '#000',
@@ -67,13 +69,31 @@ export function useCommonTabScreenOptions() {
       shadowOpacity: 0.05,
       shadowRadius: 4,
     },
-    tabBarLabelStyle: {
-      fontSize: 11,
-      fontWeight: '600' as const,
-      marginTop: 2,
-    },
+    tabBarLabel: ({
+      focused,
+      color,
+      children,
+    }: {
+      focused: boolean;
+      color: ColorValue;
+      position: any;
+      children: string;
+    }) =>
+      React.createElement(
+        Text,
+        {
+          numberOfLines: 1,
+          style: {
+            color: (focused ? colors.primaryPressed : color) as any,
+            fontSize: 11,
+            fontWeight: focused ? '700' : '500',
+            marginTop: 2,
+          },
+        },
+        children,
+      ),
     tabBarIconStyle: {
-      marginTop: 2,
+      marginTop: 0,
     },
     tabBarItemStyle: {
       paddingVertical: 2,

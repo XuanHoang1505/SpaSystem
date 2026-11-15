@@ -1,7 +1,7 @@
 import { Redirect, Tabs } from 'expo-router';
 import { Home, CalendarCheck, Sparkles, Package, User } from 'lucide-react-native';
 import { useAuthStore } from '@/stores/authStore';
-import { useCommonTabScreenOptions } from '@/config/navigation';
+import { useCommonTabScreenOptions, tabIcon } from '@/config/navigation';
 
 /**
  * Customer & Guest Bottom Navigation:
@@ -27,35 +27,35 @@ export default function CustomerLayout() {
         options={{
           title: 'Trang chủ',
           headerShown: false,
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarIcon: tabIcon(Home),
         }}
       />
       <Tabs.Screen
         name="bookings"
         options={{
           title: 'Lịch hẹn',
-          tabBarIcon: ({ color, size }) => <CalendarCheck size={size} color={color} />,
+          tabBarIcon: tabIcon(CalendarCheck),
         }}
       />
       <Tabs.Screen
         name="treatments"
         options={{
           title: 'Liệu trình',
-          tabBarIcon: ({ color, size }) => <Sparkles size={size} color={color} />,
+          tabBarIcon: tabIcon(Sparkles),
         }}
       />
       <Tabs.Screen
         name="packages"
         options={{
           title: 'Gói của tôi',
-          tabBarIcon: ({ color, size }) => <Package size={size} color={color} />,
+          tabBarIcon: tabIcon(Package),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Tài khoản',
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+          tabBarIcon: tabIcon(User),
         }}
       />
       <Tabs.Screen

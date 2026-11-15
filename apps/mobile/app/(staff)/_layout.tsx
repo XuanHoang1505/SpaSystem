@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { RouteGuard } from '@components/auth/RouteGuard';
 import { LayoutDashboard, CalendarDays, CalendarCheck, User } from 'lucide-react-native';
-import { useCommonTabScreenOptions } from '@/config/navigation';
+import { useCommonTabScreenOptions, tabIcon } from '@/config/navigation';
 
 /**
  * Staff Bottom Navigation:
@@ -20,28 +20,29 @@ export default function StaffLayout() {
           name="dashboard"
           options={{
             title: 'Tổng quan',
-            tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
+            tabBarIcon: tabIcon(LayoutDashboard),
           }}
         />
         <Tabs.Screen
           name="schedule"
           options={{
             title: 'Lịch làm việc',
-            tabBarIcon: ({ color, size }) => <CalendarDays size={size} color={color} />,
+            tabBarIcon: tabIcon(CalendarDays),
           }}
         />
         <Tabs.Screen
           name="bookings"
           options={{
             title: 'Lịch hẹn',
-            tabBarIcon: ({ color, size }) => <CalendarCheck size={size} color={color} />,
+            headerShown: false,
+            tabBarIcon: tabIcon(CalendarCheck),
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
             title: 'Cá nhân',
-            tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+            tabBarIcon: tabIcon(User),
           }}
         />
       </Tabs>
