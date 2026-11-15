@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { RouteGuard } from '@components/auth/RouteGuard';
 import { LayoutDashboard, CalendarCheck, BarChart3, Users, User } from 'lucide-react-native';
-import { useCommonTabScreenOptions } from '@/config/navigation';
+import { useCommonTabScreenOptions, tabIcon } from '@/config/navigation';
 
 /**
  * Owner Bottom Navigation:
@@ -21,35 +21,35 @@ export default function OwnerLayout() {
           name="dashboard"
           options={{
             title: 'Tổng quan',
-            tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
+            tabBarIcon: tabIcon(LayoutDashboard),
           }}
         />
         <Tabs.Screen
           name="bookings"
           options={{
             title: 'Lịch hẹn',
-            tabBarIcon: ({ color, size }) => <CalendarCheck size={size} color={color} />,
+            tabBarIcon: tabIcon(CalendarCheck),
           }}
         />
         <Tabs.Screen
           name="reports"
           options={{
             title: 'Báo cáo',
-            tabBarIcon: ({ color, size }) => <BarChart3 size={size} color={color} />,
+            tabBarIcon: tabIcon(BarChart3),
           }}
         />
         <Tabs.Screen
           name="staff"
           options={{
             title: 'Nhân sự',
-            tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
+            tabBarIcon: tabIcon(Users),
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
             title: 'Cá nhân',
-            tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+            tabBarIcon: tabIcon(User),
           }}
         />
         <Tabs.Screen
