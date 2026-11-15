@@ -136,7 +136,7 @@ Tiền tố `/api/v1`, envelope chuẩn.
 
 ## Màn hình
 
-Màn hình đích: SCR-W26 / SCR-M25 (lịch được phân công), SCR-W27 / SCR-M26 (chi tiết buổi chăm sóc: dị ứng nổi bật, form hồ sơ da, modal xác nhận hoàn thành). Web: xem mục "Giao diện (web)" bên dưới. Mobile làm sau.
+Màn hình đích: SCR-W26 / SCR-M25 (lịch được phân công), SCR-W27 / SCR-M26 (chi tiết buổi chăm sóc: dị ứng nổi bật, form hồ sơ da, modal xác nhận hoàn thành). Web: xem mục "Giao diện (web)" bên dưới. Mobile: xem mục "Giao diện (mobile)" bên dưới.
 
 ## Giao diện (web): UC-SPA-25, 27, 28 — Lịch được phân công & buổi chăm sóc
 
@@ -266,6 +266,138 @@ Vitest + Testing Library, `fetch` giả, test đặt cạnh file.
 | CARE-UI-T15 | Lập/sửa gặp `skin_profile_too_early`, `skin_profile_locked`, `skin_profile_exists`                                  | Toast tương ứng; `locked` ẩn nút cập nhật; `exists` chuyển chế độ xem                                                    |
 | CARE-UI-T16 | Dị ứng: thêm hợp lệ; thêm trùng (`allergy_exists`); sửa; xóa qua `AlertDialog`; `customer_not_in_care`              | POST/PUT/DELETE đúng; lỗi dưới "Tác nhân"; danh sách và chi tiết được làm mới; toast + ẩn nút ghi                        |
 | CARE-UI-T17 | Nhãn loại da                                                                                                        | `normal → Da thường` … ; trang liệu trình chủ spa hiển thị đúng nhãn (hồi quy `SkinType`)                                |
+
+## Giao diện (mobile): UC-SPA-25, 27, 28 — Lịch được phân công & buổi chăm sóc
+
+Phạm vi: Hai màn hình dành cho nhân viên (Staff) trên Mobile Expo:
+- `SCR-M25`: Lịch hẹn được phân công (`app/(staff)/bookings/index.tsx`)
+- `SCR-M26`: Chi tiết buổi chăm sóc (`app/(staff)/bookings/[bookingId].tsx`)
+
+Không thuộc phạm vi đợt này: Tổng quan dashboard (`app/(staff)/dashboard.tsx`), Lịch làm việc theo tuần (`app/(staff)/schedule.tsx`, UC-SPA-24), Lịch sử khách đã chăm sóc (`SCR-M27`, UC-SPA-26).
+
+### Kiến trúc & Gói dùng chung
+- Feature code: `apps/mobile/src/features/care/` gồm:
+  - `components/`: `AssignedAppointmentCard.tsx`, `AssignedFiltersBar.tsx`, `AllergyHighlightCard.tsx`, `AllergyItemCard.tsx`, `AllergyModal.tsx`, `SkinProfileCard.tsx`, `SkinProfileModal.tsx`, `CompleteAppointmentModal.tsx`.
+  - `hooks/`: `useAssignedAppointments.ts`, `useStaffAppointmentDetail.ts`, `useCareMutations.ts`.
+  - `schemas.ts`: Zod validation cho bộ lọc ngày, thêm/sửa dị ứng, lập/sửa hồ sơ da, hoàn thành buổi.
+  - `utils/`: `careHelpers.ts` (nhãn loại da, format ngày giờ theo múi giờ VN, helper phân loại tab/status).
+  - `screens/`: `AssignedAppointmentsScreen.tsx`, `StaffAppointmentDetailScreen.tsx`.
+  - `index.ts`: Barrel export.
+- API Wrapper: `apps/mobile/src/lib/api/care.ts` khởi tạo `CareApi` từ `@spa/api-client`.
+- Tái dùng kiểu dữ liệu từ `@spa/shared-types` (`AssignedAppointment`, `SkinProfile`, `CompleteAppointmentResult`, `CustomerAllergy`, `SkinType`, ...).
+- Tái dùng `AppointmentStatusBadge` từ `features/bookings/components/AppointmentStatusBadge.tsx` hoặc tạo helper đồng bộ với bảng màu hệ thống.
+
+### SCR-M25 — Lịch hẹn được phân công (`app/(staff)/bookings/index.tsx`)
+
+- **Vai trò & Layout:** Nhân viên (`RouteGuard role="staff"`), nằm trong tab "Lịch hẹn" của Staff Tab Layout (`app/(staff)/_layout.tsx`).
+- **Mẫu bố cục:** Danh sách thẻ cuộn dọc (ScrollView / FlatList) kèm thanh tab phân đoạn (Segmented Tabs: Hôm nay, Sắp tới, Đã xong) và bộ lọc trạng thái. Hỗ trợ Pull-to-refresh (`RefreshControl`).
+- **Tab khoảng ngày (preset theo giờ Việt Nam):**
+  - **Hôm nay (mặc định):** `fromDate = hôm nay`, `toDate = hôm nay`, `status = all`.
+  - **Sắp tới:** `fromDate = ngày mai`, `toDate = hôm nay + 14 ngày`, `status = all`.
+  - **Đã xong:** `fromDate = hôm nay - 30 ngày`, `toDate = hôm nay`, `status = completed`.
+- **Dữ liệu & Query:**
+  - Endpoint: `GET /api/v1/me/assigned-appointments`.
+  - Query key: `careQueryKeys.assigned(params)`.
+  - Danh sách trả về được nhóm trực quan hoặc hiển thị theo thứ tự thời gian (`date, startTime`).
+- **Thẻ lịch hẹn (`AssignedAppointmentCard`):**
+  - Giờ thực hiện: `{startTime} - {endTime}` (in đậm).
+  - Khách hàng: Họ tên khách hàng (`fullName`), số điện thoại (`phoneNumber`).
+  - Dịch vụ: Tên dịch vụ (`service.name`). Nếu là buổi của gói/liệu trình: hiện thêm nhãn phụ "Buổi {sequenceNumber}/{totalSessions} · {packageName}".
+  - Huy hiệu lưu ý:
+    - Badge cảnh báo "Có dị ứng" (tông `warning`/amber) nếu `hasAllergies = true`.
+    - Badge thông tin "Đã có hồ sơ da" (tông `info`/blue) nếu `hasSkinProfile = true`.
+  - Trạng thái: Badge trạng thái lịch hẹn (`confirmed`, `completed`, `cancelled`, `no_show`).
+  - Hành động: Chạm vào thẻ → điều hướng sang `app/(staff)/bookings/[bookingId]` (truyền `id` của lịch hẹn).
+- **Bộ lọc bổ sung:** Cho phép lọc nhanh trạng thái (`Select`/Chips: Tất cả, Chờ xác nhận, Đã xác nhận, Hoàn thành, Đã hủy, Không đến). Nút "Xóa bộ lọc" khi tùy chỉnh khác preset.
+- **Trạng thái giao diện:**
+  - Đang tải: Skeleton cards hiển thị vị trí thẻ lịch hẹn.
+  - Lỗi: `ErrorState` kèm thông điệp tiếng Việt và nút "Thử lại".
+  - Rỗng: `EmptyState` thân thiện ("Hôm nay bạn chưa có lịch phân công nào." hoặc "Không có lịch hẹn nào khớp với bộ lọc.").
+  - Có dữ liệu: Danh sách thẻ phân cách rõ ràng, vùng chạm ≥ 48dp.
+
+### SCR-M26 — Chi tiết buổi chăm sóc (`app/(staff)/bookings/[bookingId].tsx`)
+
+- **Vai trò & Layout:** Nhân viên được phân công. Nằm trong Staff Stack Navigator (`app/(staff)/bookings/_layout.tsx`), có thanh điều hướng trên cùng (nút quay lại "Lịch hẹn" và tiêu đề ngắn gọn).
+- **Mẫu bố cục:** Màn hình chi tiết dạng cuộn với 3 phân đoạn tab (Khách & Dị ứng, Hồ sơ da, Kết quả & Hoàn thành) kèm khối Cảnh báo dị ứng nổi bật ghim đầu trang khi có dị ứng. Form lập hồ sơ và modal hoàn thành hiển thị qua BottomSheet / Modal chuyên dụng.
+- **Dữ liệu & Query:**
+  - Chi tiết lịch: `GET /api/v1/appointments/{id}` (`careQueryKeys.appointment(id)`).
+  - Hồ sơ da: `GET /api/v1/appointments/{id}/skin-profile` (`careQueryKeys.skinProfile(id)`), chỉ gọi khi `skinProfileId != null`.
+  - Dị ứng khách hàng: `GET /api/v1/customers/{customerId}/allergies` (`careQueryKeys.allergies(customerId)`).
+- **Header thông tin chính:**
+  - Tên dịch vụ (tiêu đề lớn).
+  - Thời gian: `{thứ, ngày/tháng/năm} · {startTime} - {endTime}`.
+  - Badge trạng thái buổi chăm sóc.
+- **Khối Dị ứng nổi bật (trên cùng màn hình, trước các tab):**
+  - Chỉ hiển thị khi khách có ít nhất 1 dị ứng.
+  - Tông màu: Rose/destructive nếu có dị ứng mức `severe` (Nặng); tông Amber/warning nếu mức Nhẹ/Vừa.
+  - Nội dung: "Khách có {n} dị ứng cần lưu ý:", liệt kê từng tác nhân kèm badge mức độ nguy hiểm (BR-CARE-02).
+- **Phân đoạn 1: Khách & Dị ứng**
+  - Thông tin khách hàng (`AppCard`): Họ tên, số điện thoại (chạm gọi trực tiếp qua `Linking.openURL('tel:...')`), buổi gói (nếu có), ghi chú từ lúc đặt lịch (`note`).
+  - Danh sách dị ứng chi tiết:
+    - Hiển thị từng dị ứng: Tác nhân, mức độ (`mild`: Nhẹ, `moderate`: Vừa, `severe`: Nặng), ghi chú, ngày ghi nhận.
+    - Nút "Sửa" và "Xóa" cho từng mục. Xóa dị ứng yêu cầu xác nhận qua Alert ("Xóa dị ứng này? Chỉ xóa khi ghi nhầm.").
+    - Nút "+ Thêm dị ứng": Mở modal `AllergyModal` để nhập Tác nhân (bắt buộc, 1-255 ký tự), Mức độ (Nhẹ/Vừa/Nặng), Ghi chú (tùy chọn, tối đa 1000 ký tự).
+- **Phân đoạn 2: Hồ sơ da (UC-SPA-27)**
+  - Nếu chưa có hồ sơ:
+    - `EmptyState` "Chưa có hồ sơ da cho buổi này".
+    - Nút CTA "Lập hồ sơ da" (chỉ hiện khi lịch `confirmed` hoặc `completed`).
+  - Nếu đã có hồ sơ:
+    - Hiển thị chi tiết: Loại da (badge tiếng Việt), Vấn đề chính, Sản phẩm đang dùng, Mục tiêu chăm sóc, Liệu trình đề xuất, Ghi chú.
+    - Dòng phụ: "Đánh giá bởi {assessedBy.fullName} lúc {ngày giờ}".
+    - Nút "Cập nhật hồ sơ" (cho phép cập nhật nếu còn trong hạn 7 ngày theo BR-CARE-04).
+  - Modal Form Lập/Sửa hồ sơ da (`SkinProfileModal`):
+    - Chọn loại da (Bắt buộc: Da thường, Da khô, Da dầu, Da hỗn hợp, Da nhạy cảm).
+    - Vấn đề chính (tối đa 2000 ký tự).
+    - Sản phẩm đang dùng (tối đa 2000 ký tự).
+    - Mục tiêu chăm sóc (tối đa 2000 ký tự).
+    - Liệu trình đề xuất (tối đa 2000 ký tự).
+    - Ghi chú thêm (tối đa 2000 ký tự).
+    - Dòng khuyến cáo y khoa bắt buộc (BR-CARE-01): "Hồ sơ da ghi nhận tình trạng da để chăm sóc spa, không phải chẩn đoán y khoa."
+- **Phân đoạn 3: Kết quả & Hoàn thành buổi (UC-SPA-28)**
+  - Với lịch `confirmed`:
+    - Thông báo "Buổi chăm sóc chưa hoàn thành."
+    - Nút chính "Xác nhận hoàn thành buổi chăm sóc" (Button lớn màu Primary/Botanical Green).
+    - Modal xác nhận hoàn thành (`CompleteAppointmentModal`):
+      - Tiêu đề: "Xác nhận hoàn thành buổi chăm sóc".
+      - Nội dung cảnh báo: "Sau khi xác nhận, buổi chăm sóc này được tính là đã thực hiện xong và không thể hoàn tác."
+      - Nhắc nhở hồ sơ da: Nếu `hasSkinProfile = false`, hiển thị dòng lưu ý nhẹ "Buổi này chưa có hồ sơ da." (không chặn theo Q-35).
+      - Ô nhập "Kết quả chăm sóc": `AppInput` nhiều dòng, tùy chọn, tối đa 2000 ký tự.
+      - Nút hành động: "Xác nhận hoàn thành" (kèm indicator loading) và "Hủy / Quay lại".
+      - Xử lý thành công: Toast chúc mừng "Đã xác nhận hoàn thành buổi chăm sóc.", cập nhật trạng thái lịch, nếu có tiến độ gói (`packageProgress`) thì toast thêm "Gói {tên gói}: đã dùng {used}/{total} buổi." và "Gói đã hoàn thành!" nếu là buổi cuối.
+  - Với lịch `completed`:
+    - Hiển thị kết quả chăm sóc đã lưu.
+    - Hiển thị thông tin tiến độ liệu trình / buổi gói.
+  - Với lịch `cancelled` / `no_show`:
+    - Hiển thị lý do hủy lịch hoặc ghi chú không đến của khách.
+- **Mã lỗi & Hành vi giao diện (Mobile):**
+  - `appointment_not_found`: `ErrorState` "Không tìm thấy lịch hẹn" + nút "Quay lại danh sách".
+  - `appointment_not_assigned`: `ErrorState` "Lịch này không được phân công cho bạn" + nút "Quay lại danh sách".
+  - `complete_too_early`: Toast thông báo "Chưa tới giờ bắt đầu, chưa xác nhận hoàn thành được." (giữ modal mở).
+  - `appointment_status_invalid`: Toast thông báo trạng thái không hợp lệ + tự động làm mới dữ liệu.
+  - `skin_profile_too_early`: Toast thông báo "Chỉ lập hồ sơ da từ ngày hẹn." (giữ form mở).
+  - `skin_profile_locked`: Toast thông báo "Đã quá thời hạn sửa hồ sơ da." (đóng modal, ẩn nút cập nhật).
+  - `skin_profile_exists`: Toast "Buổi này đã có hồ sơ da." (làm mới và chuyển sang chế độ xem).
+  - `skin_profile_required`: Toast "Cần lập hồ sơ da trước khi hoàn thành." (chuyển sang phân đoạn Hồ sơ da).
+  - `allergy_exists`: Hiển thị lỗi ngay dưới ô Tác nhân "Khách đã có dị ứng này."
+  - `customer_not_in_care`: Toast "Bạn chưa chăm sóc khách này nên không xem/sửa được dị ứng."
+  - `validation_error`: Hiển thị thông báo lỗi dưới từng ô nhập liệu không hợp lệ.
+
+### Bảng Kiểm thử Giao diện (Mobile)
+
+| Mã | Tình huống | Kết quả mong đợi |
+| --- | --- | --- |
+| CARE-M-UI-T01 | `CareApi` di động gọi đúng endpoint & tham số | Gọi đúng `/api/v1/me/assigned-appointments`, `/appointments/{id}`, `/complete` |
+| CARE-M-UI-T02 | Mở màn hình SCR-M25 mặc định | Hiển thị tab "Hôm nay", gọi query `fromDate = toDate = hôm nay (VN)`, danh sách hiển thị đúng |
+| CARE-M-UI-T03 | Chuyển sang tab "Sắp tới" và "Đã xong" | Chuyển preset ngày đúng quy định; tab "Đã xong" có `status=completed` |
+| CARE-M-UI-T04 | SCR-M25 đủ 4 trạng thái | Skeleton khi tải, ErrorState khi lỗi mạng + nút Thử lại, EmptyState khi không có lịch, Card list khi có lịch |
+| CARE-M-UI-T05 | Thẻ lịch hẹn hiển thị đầy đủ thông tin | Giờ hẹn, Tên khách, SĐT, Dịch vụ, buổi gói x/y, badge dị ứng (nếu có), badge hồ sơ da (nếu có), badge trạng thái |
+| CARE-M-UI-T06 | Chạm vào thẻ lịch hẹn | Điều hướng sang màn hình SCR-M26 `app/(staff)/bookings/[bookingId]` |
+| CARE-M-UI-T07 | SCR-M26 tải dữ liệu & khối dị ứng nổi bật | Có dị ứng `severe` → Banner cảnh báo đỏ nổi bật; không dị ứng → không hiện banner |
+| CARE-M-UI-T08 | Lịch `confirmed` hiển thị nút "Xác nhận hoàn thành" | Nút hiện ở trạng thái `confirmed`; ẩn khi lịch `completed`, `cancelled`, `no_show` |
+| CARE-M-UI-T09 | Modal hoàn thành buổi (UC-SPA-28) | Mở modal; hiển thị nhắc nhở nếu chưa có hồ sơ da; nhập kết quả; xác nhận thành công → toast và cập nhật sang `completed` |
+| CARE-M-UI-T10 | Lỗi `complete_too_early` khi hoàn thành sớm | Toast cảnh báo chưa đến giờ bắt đầu; modal không bị đóng |
+| CARE-M-UI-T11 | Quản lý dị ứng khách hàng | Thêm mới tác nhân thành công; báo lỗi khi trùng `allergy_exists`; sửa & xóa dị ứng |
+| CARE-M-UI-T12 | Lập và xem hồ sơ da (UC-SPA-27) | Hiển thị loại da, vấn đề, sản phẩm; form có khuyến cáo phi y tế bắt buộc; lưu thành công |
 
 ## Cấu hình
 
