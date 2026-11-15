@@ -58,7 +58,15 @@ export default function CustomerLayout() {
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
-      <Tabs.Screen name="ai-assistant" options={{ title: 'Trợ lý AI', href: null }} />
+      <Tabs.Screen
+        name="ai-assistant"
+        options={{
+          title: 'Trợ lý AI',
+          href: null,
+          tabBarStyle: { display: 'none' },
+          headerShown: false,
+        }}
+      />
       <Tabs.Screen name="reviews" options={{ title: 'Đánh giá', href: null }} />
     </Tabs>
   );

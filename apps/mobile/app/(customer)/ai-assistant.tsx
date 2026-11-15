@@ -1,4 +1,5 @@
-import { PlaceholderScreen } from '@components/common/PlaceholderScreen';
+import { AiAssistantScreen } from '@/features/ai-assistant';
+
 export default function Screen() {
-  return <PlaceholderScreen title="Trợ lý AI" />;
+  return <AiAssistantScreen />;
 }

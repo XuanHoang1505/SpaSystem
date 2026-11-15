@@ -192,13 +192,15 @@ Tất cả **đã chốt 02/11/2026** (Q-60 là tạm thời).
 
 Xem [open-questions.md](../decisions/open-questions.md) (Q-57…Q-65).
 
-## Giao diện (web)
+## Giao diện (web & mobile)
 
-Phạm vi: UC-SPA-32 trên web (`apps/web`). Mobile (`SCR-M16`) làm sau.
+Phạm vi: UC-SPA-32 trên web (`apps/web` SCR-W21) và mobile (`apps/mobile` SCR-M16).
 
-Feature: `src/features/ai-assistant/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts`, `index.ts`). Trang ở `src/pages/customer/AiAssistantPage.tsx` (dành cho khách hàng) và `src/pages/public/AiAssistantPublicPage.tsx` (dành cho khách vãng lai).
+Feature: `src/features/ai-assistant/` (`components/`, `hooks/`, `schemas.ts`, `errors.ts`, `index.ts`).
+Trang Web ở `src/pages/customer/AiAssistantPage.tsx` (dành cho khách hàng) và `src/pages/public/AiAssistantPublicPage.tsx` (dành cho khách vãng lai).
+Màn hình Mobile ở `apps/mobile/src/features/ai-assistant/screens/AiAssistantScreen.tsx` (gắn vào route `apps/mobile/app/(customer)/ai-assistant.tsx`).
 
-### SCR-W21 — Trợ lý AI tư vấn dịch vụ (UC-SPA-32)
+### SCR-W21 — Trợ lý AI tư vấn dịch vụ trên Web (UC-SPA-32)
 
 - **Route:** `/ai-assistant` · Vai trò: `GUEST` (khách vãng lai), `CUS` (khách hàng); Staff/Owner bị cấm (`403 forbidden`, theo Q-60).
 - **Layout:**
@@ -288,11 +290,84 @@ Feature: `src/features/ai-assistant/` (`components/`, `hooks/`, `schemas.ts`, `e
 | AI-UI-T07 | Server trả `scope = medical` hoặc `out_of_scope`: AI hiển thị câu cố định bảo vệ người dùng, không gợi ý sản phẩm             | Render đúng văn bản bảo vệ                            |
 | AI-UI-T08 | Lỗi `503 ai_unavailable` hoặc `429 rate_limited`: hiển thị thông báo lỗi thân thiện, có nút gửi lại cho lỗi 503               | UI không bị crash, hỗ trợ thử lại                     |
 
+### SCR-M16 — Trợ lý AI tư vấn dịch vụ trên Mobile (UC-SPA-32)
+
+- **Route:** `apps/mobile/app/(customer)/ai-assistant.tsx` (URL: `/(customer)/ai-assistant` hoặc mở từ nút "Tư vấn AI" trên Trang chủ `HomeScreen`).
+- **Layout & Điều hướng:**
+  - Thuộc nhóm `(customer)` nhưng ẩn thanh tab dưới (`tabBarStyle: { display: 'none' }`, `href: null`) và ẩn header mặc định (`headerShown: false`) để nhường toàn bộ không gian dọc cho cuộc hội thoại và bàn phím ảo.
+  - Cho phép cả khách vãng lai (`GUEST`) và khách hàng đã đăng nhập (`CUS`). Nhân viên (`staff`) và chủ spa (`owner`) khi truy cập bị chặn và chuyển sang `/forbidden` (theo Q-60).
+- **Mẫu bố cục:** Màn hình trò chuyện đàm thoại trực tiếp (Mobile Conversational Interface) gồm 4 khu vực:
+
+1. **Header độc lập (Standalone Header):**
+   - Nút quay lại (ArrowLeft, touch target 48x48dp).
+   - Biểu tượng Bot / Sparkles với vòng tròn nền `primarySoft`.
+   - Tiêu đề: "Trợ lý AI Như Nguyệt", dòng phụ: "Tư vấn dịch vụ & đặt lịch".
+   - Khách hàng đã đăng nhập: Nút Làm mới (Refresh / RotateCcw, 48x48dp) để tải lại lịch sử tin nhắn.
+
+2. **Banner lưu ý y khoa cố định (`AiMedicalDisclaimer`, BR-AI-01):**
+   - Đặt cố định ở đầu khung chat, nền vàng nhạt `warningSoft`, viền `warningBorder`.
+   - Nội dung: *"Lưu ý: Trợ lý AI chỉ tư vấn dịch vụ và giờ trống tại Spa Như Nguyệt, không chẩn đoán y khoa hay thay thế bác sĩ da liễu."*
+
+3. **Danh sách tin nhắn hội thoại (`ChatMessageList`):**
+   - Render qua `FlatList` hoặc `ScrollView` bọc trong `KeyboardAvoidingView`.
+   - **Lời chào mặc định:** Lời chào thân thiện từ Trợ lý ảo Như Nguyệt, nêu rõ các chủ đề hỗ trợ (chăm sóc da, bảng giá, gói liệu trình, giờ trống).
+   - **Khách hàng đã đăng nhập:** Tự động gọi `GET /api/v1/me/ai/history` khi vào màn hình, hiển thị các lượt hỏi – đáp gần nhất (đảo lại theo thứ tự thời gian). Nếu có trang cũ (`hasMore = true`), hiện nút "Tải tin nhắn cũ hơn".
+   - **Khách vãng lai:** Không gọi lịch sử. Hiển thị ghi chú gợi ý: *"Đăng nhập để trợ lý có thể tra cứu lịch hẹn và số buổi gói của riêng bạn."*
+   - **Bong bóng tin nhắn:**
+     - Tin nhắn người dùng: Căn phải, nền `primary`, chữ trắng `onPrimary`, bo góc mềm 16dp (góc dưới phải 4dp).
+     - Tin nhắn AI: Căn trái, nền `card`, viền `border`, chữ `text`, hỗ trợ định dạng xuống dòng, gạch đầu dòng rõ ràng.
+   - **Thẻ gợi ý sản phẩm (`AiProductSuggestionCard`, BR-AI-05):**
+     - Hiển thị ngay dưới câu trả lời của AI nếu có `suggestions` (tối đa 3 thẻ).
+     - Hiển thị: Badge loại ("Dịch vụ lẻ" / "Gói liệu trình"), tên sản phẩm, giá tiền `formatCurrency`.
+     - Nhấn vào thẻ $\rightarrow$ điều hướng tới `/services/[serviceId]` hoặc `/packages/[packageId]`.
+   - **Thẻ đề xuất lịch hẹn (`AiBookingProposalCard`, BR-AI-08):**
+     - Hiển thị dưới câu trả lời của AI nếu có `bookingProposals` (tối đa 3 đề xuất).
+     - Hiển thị: Tên dịch vụ, Ngày hẹn (`dd/MM/yyyy`), Giờ hẹn (`HH:mm – HH:mm`), Kỹ thuật viên đề xuất (nếu có).
+     - Nút bấm `AppButton` biến thể "primary": **"Đặt lịch theo đề xuất"** $\rightarrow$ điều hướng tới `/booking/new?serviceId=...&date=...&startTime=...`. Khách vãng lai bấm vào sẽ chuyển sang màn đăng nhập trước khi hoàn tất đặt lịch.
+     - Dòng chú thích minh bạch: *"Giờ hẹn chưa được giữ chỗ. Vui lòng bấm để hoàn tất đặt lịch."*
+   - **Chỉ báo đang trả lời (Typing Indicator):** Khi `isPending` gọi API `POST /ai/chat`, hiển thị bong bóng trợ lý với biểu tượng đang gõ/xoay và chữ *"Trợ lý đang tra cứu thông tin..."*.
+
+4. **Thanh nhập câu hỏi (`ChatInputBar`):**
+   - Đặt ở cuối màn hình, điều chỉnh theo bàn phím bằng `KeyboardAvoidingView` và `useSafeAreaInsets`.
+   - **Hàng chip câu hỏi gợi ý nhanh (Quick Prompts):** Thanh trượt ngang chứa các câu hỏi mẫu:
+     - *"Tư vấn dịch vụ cho da nhạy cảm"*
+     - *"Các gói cấp ẩm phục hồi da"*
+     - *"Bảng giá dịch vụ chăm sóc da"*
+     - *(Nếu đã đăng nhập)*: *"Lịch hẹn sắp tới của tôi"*, *"Gói của tôi còn bao nhiêu buổi?"*
+     - Chạm vào chip sẽ tự động điền vào ô nhập hoặc gửi câu hỏi trực tiếp.
+   - **Hàng nhập tin nhắn:**
+     - Ô `TextInput` tự co giãn 1–3 dòng, giới hạn 1–1000 ký tự (BR-AI-03).
+     - Placeholder: `"Hỏi trợ lý AI về dịch vụ, giá, giờ trống..."`.
+     - Bộ đếm ký tự nhỏ: `0/1000`.
+     - Nút gửi hình tròn (SendHorizontal, touch target $\ge 48\times 48$dp), sáng màu `primary` khi có nội dung và vô hiệu hóa khi đang gửi hoặc chỉ chứa khoảng trắng.
+
+### Mã lỗi & Cách xử lý trên Mobile
+
+| Mã / tình huống          | Thao tác                     | Hành vi UI Mobile                                                                               |
+| :----------------------- | :--------------------------- | :---------------------------------------------------------------------------------------------- |
+| `validation_error` (400) | Gửi câu hỏi                  | Hiển thị dòng lỗi đỏ dưới ô nhập (câu hỏi rỗng hoặc vượt quá 1000 ký tự)                        |
+| `forbidden` (403)        | Gửi câu hỏi hoặc xem lịch sử | Chuyển hướng `/forbidden` hoặc hiện thông báo: "Tài khoản nhân viên/quản lý không dùng tính năng này." |
+| `rate_limited` (429)     | Gửi câu hỏi                  | Hiển thị bong bóng cảnh báo trong luồng chat: "Bạn đã gửi quá giới hạn (10 câu/phút hoặc 50 câu/ngày). Vui lòng đợi trong giây lát." |
+| `ai_unavailable` (503)   | Gửi câu hỏi                  | Hiển thị bong bóng lỗi trong khung chat kèm nút bấm "Thử gửi lại"                               |
+| `unauthorized` (401)     | Tải lịch sử                  | Chuyển sang chế độ khách vãng lai (không báo lỗi gây gián đoạn)                                 |
+| Mất kết nối mạng / 500   | Gửi câu hỏi                  | Bong bóng lỗi kết nối kèm nút "Thử gửi lại"                                                     |
+
+### Kiểm thử giao diện Mobile (AI-M-UI)
+
+| Mã          | Tình huống                                                                                                                    | Kết quả mong đợi                                      |
+| :---------- | :---------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------- |
+| AI-M-UI-T01 | Khách vãng lai vào `ai-assistant`: hiển thị lời chào mặc định, banner y khoa, chip gợi ý, không gọi API lịch sử               | Pass, sẵn sàng chat chế độ khách                      |
+| AI-M-UI-T02 | Khách hàng đăng nhập vào `ai-assistant`: gọi `GET /me/ai/history`, tải danh sách câu hỏi cũ đảo lại theo thứ tự thời gian    | Hiển thị đầy đủ tin nhắn cũ và lịch sử hội thoại      |
+| AI-M-UI-T03 | Gửi câu hỏi: validate ô nhập (chặn rỗng/quá 1000 ký tự); khi gửi hiển thị bong bóng người dùng và typing indicator           | Hiển thị câu hỏi của người dùng và câu trả lời của AI |
+| AI-M-UI-T04 | Câu trả lời kèm gợi ý sản phẩm (`suggestions`): render thẻ sản phẩm, click mở đúng `/services/[serviceId]` hoặc gói           | Hiển thị tối đa 3 thẻ sản phẩm, điều hướng đúng route |
+| AI-M-UI-T05 | Câu trả lời kèm đề xuất lịch (`bookingProposals`): render thẻ lịch hẹn, click mở `/booking/new` với query params điền sẵn     | Hiển thị chi tiết giờ trống và link đặt lịch điền sẵn |
+| AI-M-UI-T06 | Server trả `scope = medical` hoặc `out_of_scope`: AI hiển thị câu cố định bảo vệ người dùng, không gợi ý sản phẩm             | Render đúng văn bản từ chối y khoa / ngoài phạm vi    |
+| AI-M-UI-T07 | Lỗi `503 ai_unavailable` hoặc `429 rate_limited`: hiển thị thông báo lỗi thân thiện, có nút thử lại câu hỏi vừa gửi            | UI không bị crash, hỗ trợ gửi lại thành công          |
+
 ## Việc để sau
 
 - AI-LATER-01: trả lời dạng stream (SSE) để hiện chữ dần.
 - AI-LATER-02: khách hàng xóa lịch sử trò chuyện.
-- AI-LATER-03: mobile SCR-M16 (`app/(customer)/ai-assistant.tsx`).
 - AI-LATER-04: trần số câu hỏi theo ngày / theo chi phí, báo cáo token đã dùng.
 - AI-LATER-05: bộ đánh giá (eval) cho câu hỏi y khoa và độ chính xác dữ liệu.
 - AI-LATER-06: cho nhân viên/chủ spa dùng trợ lý (Q-60 tạm thời).
