@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import {
+  Bell,
   CalendarCheck,
   Gift,
   KeyRound,
@@ -201,6 +202,12 @@ export function CustomerProfileScreen() {
               subtitle: 'Lịch sử mua hàng và hóa đơn',
               icon: Receipt,
               onPress: () => router.push('/my-orders'),
+            },
+            {
+              title: 'Thông báo',
+              subtitle: 'Lịch hẹn, liệu trình và hệ thống',
+              icon: Bell,
+              onPress: () => router.push('/notifications' as Href),
             },
           ],
         },

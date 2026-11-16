@@ -4,6 +4,7 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/shared/ThemeToggle/ThemeToggle';
 import { WorkspaceHeaderAccountMenu } from '@/features/auth/components/WorkspaceAccountMenu';
+import { NotificationBell } from '@/features/notifications/components/NotificationBell';
 import { useThemeScope } from '@/stores/themeScopeStore';
 import { SkipLink } from './SkipLink/SkipLink';
 import { WorkspaceSidebar } from './WorkspaceSidebar/WorkspaceSidebar';
@@ -29,6 +30,7 @@ export function WorkspaceLayout({
           </span>
           <div className="ml-auto flex items-center gap-1">
             <ThemeToggle />
+            <NotificationBell />
             <Separator orientation="vertical" className="mx-1 h-5!" />
             <WorkspaceHeaderAccountMenu />
           </div>

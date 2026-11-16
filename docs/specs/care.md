@@ -453,7 +453,7 @@ Unit test (NSubstitute, đồng hồ giả) cho chuyển trạng thái Domain (`
 | Mã            | Việc                                                                                                                                     | Làm cùng                   |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
 | CARE-LATER-01 | UC-SPA-26: `GET /me/care-history` (lịch sử khách đã chăm sóc, tìm theo tên/SĐT, khoảng ngày) và các hồ sơ da trước của khách             | UC-SPA-26                  |
-| CARE-LATER-02 | Thông báo cho khách khi buổi hoàn thành, mời đánh giá (BR-NTF-01)                                                                        | UC-SPA-34                  |
+| CARE-LATER-02 | ~~Thông báo cho khách khi buổi hoàn thành, mời đánh giá (BR-NTF-01)~~ Đã làm ở UC-SPA-34 (16/11/2026) | UC-SPA-34                  |
 | CARE-LATER-03 | Gói có buổi `skipped` (Q-07 bật): quy tắc kết thúc gói, chủ spa đóng liệu trình                                                          | UC-SPA-21                  |
 | CARE-LATER-04 | `GET /customers/{id}/care-history` (dòng 088 `data_api.py`): mọi lần chăm sóc của một khách cho chủ spa và nhân viên đang chăm sóc khách | Màn khách hàng của chủ spa |
 

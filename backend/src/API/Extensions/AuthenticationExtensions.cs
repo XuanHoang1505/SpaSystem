@@ -52,6 +52,14 @@ public static class AuthenticationExtensions
                 };
                 bearer.Events = new JwtBearerEvents
                 {
+                    // BR-NTF-11: browsers cannot set headers on WebSockets, so the hub (and only the hub) accepts ?access_token=.
+                    OnMessageReceived = context =>
+                    {
+                        if (context.HttpContext.Request.Path.StartsWithSegments(Realtime.NotificationHub.Path) &&
+                            context.Request.Query.TryGetValue("access_token", out var token) && !string.IsNullOrEmpty(token))
+                            context.Token = token;
+                        return Task.CompletedTask;
+                    },
                     OnChallenge = async context =>
                     {
                         context.HandleResponse();

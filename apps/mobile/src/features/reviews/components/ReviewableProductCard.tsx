@@ -1,5 +1,5 @@
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { Star, Sparkles, Package, AlertCircle, CheckCircle2 } from 'lucide-react-native';
+import { Sparkles, Package, AlertCircle, CheckCircle2 } from 'lucide-react-native';
 import type { ReviewableProduct } from '@spa/shared-types';
 import { AppText } from '@components/common/AppText';
 import { AppButton } from '@components/common/AppButton';

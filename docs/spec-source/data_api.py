@@ -124,10 +124,10 @@ APIS = [
  ("RPT","Doanh thu theo sản phẩm","GET",P+"/reports/revenue/by-product","Query","UC-SPA-33","SCR-W38","OWN","?fromDate&toDate&productType&top","{fromDate, toDate, productType, items[{productType, productId, productName, quantity, revenue, sharePercent}]}","200","BR-RPT-04"),
  ("RPT","Xuất báo cáo Excel","GET",P+"/reports/revenue/export","Query","UC-SPA-33","SCR-W38","OWN","cùng tham số SPA-API-107","file .xlsx (doanh-thu_<fromDate>_<toDate>.xlsx)","200","BR-RPT-05"),
  # ---- NTF 110-113
- ("NTF","Thông báo của tôi","GET",P+"/me/notifications","Query","UC-SPA-34","SCR-W23, SCR-M22, SCR-M10","CUS, STF","?chuaDoc&page&pageSize","PagedResult<ThongBaoDto>","200","A1 rỗng"),
- ("NTF","Mở thông báo","GET",P+"/me/notifications/{id}","Query","UC-SPA-34","SCR-W23, SCR-M22","CUS, STF","—","ThongBaoDto","200","Đồng thời ghi DocLuc nếu null"),
- ("NTF","Đánh dấu tất cả đã đọc","POST",P+"/me/notifications/read-all","Command","UC-SPA-34","SCR-W23, SCR-M22","CUS, STF","—","—","204","ĐX"),
- ("NTF","Số thông báo chưa đọc","GET",P+"/me/notifications/unread-count","Query","UC-SPA-34","SCR-W23, SCR-M22","CUS, STF","—","{soLuong}","200","Badge chuông"),
+ ("NTF","Thông báo của tôi","GET",P+"/me/notifications","Query","UC-SPA-34","SCR-W23, SCR-M22, SCR-M10","CUS, STF, OWN","?unreadOnly&type&page&pageSize","PagedResult<NotificationDto>","200","A1 rỗng; mới nhất trước; 400 validation_error (type sai); Q-79"),
+ ("NTF","Mở thông báo","GET",P+"/me/notifications/{id}","Query","UC-SPA-34","SCR-W23, SCR-M22","CUS, STF, OWN","—","NotificationDto","200","Ghi read_at_utc nếu null (BR-NTF-04, Q-82); 404 notification_not_found (cả của người khác)"),
+ ("NTF","Đánh dấu tất cả đã đọc","POST",P+"/me/notifications/read-all","Command","UC-SPA-34","SCR-W23, SCR-M22","CUS, STF, OWN","—","—","204","ĐX; đẩy unreadCountChanged qua SignalR"),
+ ("NTF","Số thông báo chưa đọc","GET",P+"/me/notifications/unread-count","Query","UC-SPA-34","SCR-W23, SCR-M22","CUS, STF, OWN","—","{count}","200","Badge chuông; realtime qua hub /hubs/notifications (Q-83)"),
  # ---- Foundation 114-116
  ("SYS","Ping hệ thống","GET",P+"/system/ping","Query","—","SystemStatus (web, mobile)","ALL","—","{status, timestampUtc}","200","ĐÃ CÓ trong foundation"),
  ("SYS","Liveness","GET","/health/live","Query","—","—","ALL","—","{status: Healthy}","200","ĐÃ CÓ trong foundation"),
@@ -169,6 +169,7 @@ APIS = [
  ("REV","Xóa ảnh đánh giá","DELETE",P+"/me/reviews/{id}/image","Command","UC-SPA-30","SCR-W20, SCR-M17","CUS","—","—","204","BR-REV-07; 409 review_locked"),
  ("REV","Gỡ phản hồi đánh giá","DELETE",P+"/reviews/{id}/reply","Command","UC-SPA-31","SCR-W39","OWN","—","—","204","owner_reply, replied_at_utc về null"),
  ("REV","Chi tiết đánh giá của tôi","GET",P+"/me/reviews/{id}","Query","UC-SPA-30","SCR-W20, SCR-M17","CUS","—","MyReviewDto","200","Đích Location của SPA-API-101; 404 review_not_found"),
+ ("NTF","Đánh dấu một thông báo đã đọc","POST",P+"/me/notifications/{id}/read","Command","UC-SPA-34","SCR-W23, SCR-M22","CUS, STF, OWN","—","—","204","ĐX (Q-82); 404 notification_not_found"),
 ]
 
 DTO_EXAMPLES = [

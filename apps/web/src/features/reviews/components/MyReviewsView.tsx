@@ -10,6 +10,8 @@ import {
 import { toast } from 'sonner';
 import type { MyReview, ReviewableProduct } from '@spa/shared-types';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
+import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
+import { OrdersBreadcrumb } from '@/features/orders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -119,15 +121,18 @@ export function MyReviewsView() {
   const totalPages = myReviewsPage?.totalPages ?? 1;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Đánh giá của tôi
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Theo dõi, chia sẻ cảm nhận và đánh giá các dịch vụ spa bạn đã trải nghiệm
-        </p>
-      </div>
+    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
+      <OrdersBreadcrumb
+        trail={[
+          { label: 'Trang chủ', to: '/' },
+          { label: 'Tài khoản', to: '/account' },
+          { label: 'Đánh giá của tôi' },
+        ]}
+      />
+      <PageHeader
+        title="Đánh giá của tôi"
+        description="Theo dõi, chia sẻ cảm nhận và đánh giá các dịch vụ spa bạn đã trải nghiệm."
+      />
 
       <Tabs
         value={activeTab}
@@ -285,6 +290,6 @@ export function MyReviewsView() {
         imageUrl={previewImageUrl}
         onClose={() => setPreviewImageUrl(null)}
       />
-    </div>
+    </section>
   );
 }

@@ -10,14 +10,12 @@ import {
   SparklesIcon,
   StarIcon,
   Trash2Icon,
-  UserIcon,
 } from 'lucide-react';
 import type { OwnerReview } from '@spa/shared-types';
 import { ImageWithFallback } from '@/components/shared/ImageWithFallback/ImageWithFallback';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
   SheetContent,

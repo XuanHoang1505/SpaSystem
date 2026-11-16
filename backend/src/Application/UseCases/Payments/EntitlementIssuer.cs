@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Logging;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
+using NhuNguyetSpa.Application.UseCases.Notifications;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
 
@@ -20,6 +22,7 @@ public sealed class EntitlementIssuer
     private readonly ICartRepository _carts;
     private readonly IAppointmentRepository _appointments;
     private readonly ILogger<EntitlementIssuer> _logger;
+    private readonly INotificationPublisher _notifications;
 
     public EntitlementIssuer(
         IRepository<ServiceEntitlement> entitlements,
@@ -28,8 +31,10 @@ public sealed class EntitlementIssuer
         IServicePackageRepository packages,
         ICartRepository carts,
         IAppointmentRepository appointments,
-        ILogger<EntitlementIssuer> logger)
+        ILogger<EntitlementIssuer> logger,
+        INotificationPublisher notifications)
     {
+        _notifications = notifications;
         _entitlements = entitlements;
         _customerPackages = customerPackages;
         _plans = plans;
@@ -47,6 +52,8 @@ public sealed class EntitlementIssuer
 
         // Book now (UC-SPA-15): a service line may carry a held appointment.
         var holds = serviceLines.Count > 0 ? await _appointments.GetHoldsForOrdersAsync([order.Id], cancellationToken) : [];
+        AppointmentNotice? holdNotice = null;
+        var holdExpired = false;
         foreach (var line in serviceLines)
         {
             // Q-06: single services have no expiry for now.
@@ -62,9 +69,12 @@ public sealed class EntitlementIssuer
                 // BR-BKG-06: still held (the EXCLUDE constraint kept the slot even past its hold time), so the visit is confirmed.
                 entitlement.Status = EntitlementStatus.Booked;
                 hold.ConfirmPaidHold(entitlement.Id);
+                holdNotice ??= AppointmentNotice.Of(hold, line.SpaServiceId!.Value);
             }
             else if (hold?.Status == AppointmentStatus.HoldExpired)
             {
+                if (holdNotice is null)
+                    (holdNotice, holdExpired) = (AppointmentNotice.Of(hold, line.SpaServiceId!.Value), true);
                 // Q-27: the slot may be someone else's now; the customer keeps the bought service and books again.
                 _logger.LogWarning("Order {OrderCode} paid after hold {AppointmentId} expired; entitlement left available.", order.Code, hold.Id);
             }
@@ -88,6 +98,8 @@ public sealed class EntitlementIssuer
             serviceLines.Select(line => line.SpaServiceId!.Value).Distinct().ToList(),
             packageLines.Select(line => line.ServicePackageId!.Value).Distinct().ToList(),
             cancellationToken);
+        // NTF-E01 (+ E09 for a confirmed hold); issuing runs once per order, so a repeated gateway result adds nothing.
+        await _notifications.OrderPaidAsync(order, holdNotice, holdExpired, cancellationToken);
     }
 
     private async Task IssuePackageAsync(Order order, OrderItem line, ServicePackage package, DateTime paidAtUtc, CancellationToken cancellationToken)

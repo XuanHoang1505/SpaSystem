@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { AppText } from '@components/common/AppText';
-import { AppCard } from '@components/common/AppCard';
 import { EmptyState } from '@components/common/EmptyState';
 import { AppLoader } from '@components/common/AppLoader';
 import { colors } from '@/theme/colors';

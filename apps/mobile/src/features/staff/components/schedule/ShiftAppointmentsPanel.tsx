@@ -1,6 +1,5 @@
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from '@components/common/AppText';
-import { AppCard } from '@components/common/AppCard';
 import { EmptyState } from '@components/common/EmptyState';
 import { AppLoader } from '@components/common/AppLoader';
 import { colors } from '@/theme/colors';
@@ -97,7 +96,7 @@ function AppointmentItem({
   appointment: ShiftAppointment;
   onPress: () => void;
 }) {
-  const { id, startTime, endTime, status, customer, service, treatmentSession } = appointment;
+  const { startTime, endTime, status, customer, service, treatmentSession } = appointment;
 
   const handleCall = () => {
     if (customer.phoneNumber) {

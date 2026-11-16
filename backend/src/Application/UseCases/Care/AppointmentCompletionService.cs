@@ -7,7 +7,9 @@ using NhuNguyetSpa.Application.DTOs.Care;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Services.Care;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
 using NhuNguyetSpa.Application.UseCases.Bookings;
+using NhuNguyetSpa.Application.UseCases.Notifications;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
 
@@ -26,6 +28,7 @@ public sealed class AppointmentCompletionService : IAppointmentCompletionService
     private readonly IDateTimeProvider _clock;
     private readonly IOptions<CareOptions> _options;
     private readonly IValidator<CompleteAppointmentRequest> _validator;
+    private readonly INotificationPublisher _notifications;
 
     public AppointmentCompletionService(
         IAppointmentRepository appointments,
@@ -34,8 +37,10 @@ public sealed class AppointmentCompletionService : IAppointmentCompletionService
         ICurrentUserService currentUser,
         IDateTimeProvider clock,
         IOptions<CareOptions> options,
-        IValidator<CompleteAppointmentRequest> validator)
+        IValidator<CompleteAppointmentRequest> validator,
+        INotificationPublisher notifications)
     {
+        _notifications = notifications;
         _appointments = appointments;
         _purchases = purchases;
         _unitOfWork = unitOfWork;
@@ -55,7 +60,7 @@ public sealed class AppointmentCompletionService : IAppointmentCompletionService
 
         await _unitOfWork.ExecuteInTransactionAsync(async token =>
         {
-            var (appointment, _) = await _appointments.GetForUpdateAsync(id, token) ?? throw BookingErrors.AppointmentNotFound();
+            var (appointment, spaServiceId) = await _appointments.GetForUpdateAsync(id, token) ?? throw BookingErrors.AppointmentNotFound();
             // Checked on the locked row: a reassignment committed meanwhile is seen here (BR-SEC-01).
             if (_currentUser.UserId != appointment.StaffMemberId)
                 throw BookingErrors.NotAssigned();
@@ -71,6 +76,8 @@ public sealed class AppointmentCompletionService : IAppointmentCompletionService
             else
                 throw CareErrors.EntitlementStateInvalid("Lịch hẹn chưa gắn dịch vụ đã mua.");
 
+            // NTF-E10: the customer is invited to review the visit (CARE-LATER-02).
+            await _notifications.AppointmentCompletedAsync(AppointmentNotice.Of(appointment, spaServiceId), _currentUser.UserId, token);
             await _unitOfWork.SaveChangesAsync(token);
         }, cancellationToken);
 

@@ -295,3 +295,4 @@ export * from './promotions';
 export * from './reports';
 export * from './care';
 export * from './reviews';
+export * from './notifications';

@@ -384,9 +384,23 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
 
+                    b.Property<string>("DedupKey")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("dedup_key");
+
                     b.Property<DateTime?>("ReadAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("read_at_utc");
+
+                    b.Property<Guid?>("ReferenceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reference_id");
+
+                    b.Property<string>("ReferenceType")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("reference_type");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -408,10 +422,24 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasName("pk_notifications");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_notifications_user_id");
+                        .HasDatabaseName("ix_notifications_user_id_unread")
+                        .HasFilter("read_at_utc IS NULL");
+
+                    b.HasIndex("UserId", "CreatedAtUtc")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_notifications_user_id_created_at_utc");
+
+                    b.HasIndex("UserId", "DedupKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_notifications_user_id_dedup_key")
+                        .HasFilter("dedup_key IS NOT NULL");
 
                     b.ToTable("notifications", null, t =>
                         {
+                            t.HasCheckConstraint("ck_notifications_reference", "num_nonnulls(reference_type, reference_id) <> 1");
+
+                            t.HasCheckConstraint("ck_notifications_reference_type", "reference_type IN ('appointment', 'order', 'treatment_plan', 'review', 'work_schedule')");
+
                             t.HasCheckConstraint("ck_notifications_type", "type IN ('appointment', 'payment', 'treatment', 'promotion', 'system')");
                         });
                 });

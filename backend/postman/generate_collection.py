@@ -1272,6 +1272,31 @@ collection = {
             ],
         },
         {
+            "name": "Thông báo (UC-SPA-34)",
+            "description": "Thông báo của chính người dùng (khách hàng, nhân viên, chủ spa). Cần customerAccessToken; thông báo được tạo khi "
+                           "đặt/đổi/hủy lịch, thanh toán, hoàn thành buổi… (chạy các thư mục trước). Realtime: SignalR `/hubs/notifications?access_token=…` "
+                           "(sự kiện notificationCreated, unreadCountChanged), Postman không gọi được hub. Spec: docs/specs/notifications.md.",
+            "item": [
+                req("Số chưa đọc", "GET", "/api/v1/me/notifications/unread-count", auth=True, token="customerAccessToken",
+                    tests=expect_ok(extra=["pm.test('Có count', () => pm.expect(body.data.count).to.be.a('number'));"])),
+                req("Danh sách thông báo", "GET", "/api/v1/me/notifications", auth=True, token="customerAccessToken",
+                    query=[("unreadOnly", "false", True), ("type", "appointment", True), ("pageSize", "10")],
+                    tests=expect_ok(extra=["if (body.data.items.length) pm.collectionVariables.set('notificationId', body.data.items[0].id);"]),
+                    desc="Mới nhất trước; type: appointment | payment | treatment | promotion | system; referenceType/referenceId cho biết mở màn hình nào."),
+                req("Mở thông báo", "GET", "/api/v1/me/notifications/{{notificationId}}", auth=True, token="customerAccessToken",
+                    tests=expect_ok(extra=["pm.test('Đã đọc', () => pm.expect(body.data.isRead).to.eql(true));"]),
+                    desc="Ghi read_at_utc lần đầu mở (BR-NTF-04, Q-82). Thông báo của người khác → 404 notification_not_found."),
+                req("Đánh dấu một thông báo đã đọc", "POST", "/api/v1/me/notifications/{{notificationId}}/read", auth=True, token="customerAccessToken",
+                    tests=NO_CONTENT),
+                req("Đánh dấu tất cả đã đọc", "POST", "/api/v1/me/notifications/read-all", auth=True, token="customerAccessToken", tests=NO_CONTENT),
+                req("Không tồn tại → 404", "GET", "/api/v1/me/notifications/00000000-0000-0000-0000-000000000000", auth=True,
+                    token="customerAccessToken", tests=expect_error(404, "notification_not_found")),
+                req("Loại sai → 400", "GET", "/api/v1/me/notifications", auth=True, token="customerAccessToken", query=[("type", "abc")],
+                    tests=expect_error(400)),
+                req("Chưa đăng nhập → 401", "GET", "/api/v1/me/notifications", tests=expect_error(401)),
+            ],
+        },
+        {
             "name": "Trợ lý AI (UC-SPA-32)",
             "description": "Khách vãng lai và khách hàng hỏi trợ lý AI (Gemini). Cần GEMINI_API_KEY trong .env (thiếu thì 503 ai_unavailable), "
                            "customerAccessToken, ownerAccessToken; spec: docs/specs/ai-assistant.md. Giới hạn 10 câu/phút, 50 câu/ngày.",

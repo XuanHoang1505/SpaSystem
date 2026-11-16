@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppScreen } from '@components/common/AppScreen';
 import { AppText } from '@components/common/AppText';
-import { AppCard } from '@components/common/AppCard';
 import { colors } from '@/theme/colors';
 import { useAuthStore } from '@/stores/authStore';
 import { getTodayVnDate } from '@/features/bookings/utils/bookingHelpers';
@@ -12,6 +11,7 @@ import { formatFullVnDate, isCurrentlyInShift } from '../utils/scheduleHelpers';
 import { useMyWorkSchedules } from '../hooks/useMyWorkSchedules';
 import { useAssignedAppointments } from '@/features/care/hooks/useAssignedAppointments';
 import { LogOutButton } from '@/features/auth/components/LogOutButton';
+import { NotificationBellButton } from '@/features/notifications';
 import {
   CalendarDays,
   CalendarCheck,
@@ -56,6 +56,7 @@ export function StaffDashboardScreen() {
           </AppText>
           <AppText style={styles.dateText}>{formatFullVnDate(todayVn)}</AppText>
         </View>
+        <NotificationBellButton />
       </View>
 
       <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
@@ -231,6 +232,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: colors.surface,
     paddingHorizontal: 16,
     paddingBottom: 14,

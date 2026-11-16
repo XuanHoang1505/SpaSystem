@@ -39,6 +39,11 @@ public static class DependencyInjection
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
         services.AddScoped<AuditableEntityInterceptor>();
+        // BR-NTF-10: notifications are pushed in realtime only after their data is committed.
+        services.AddScoped<NotificationPushCollector>();
+        services.AddScoped<NotificationPushDispatcher>();
+        services.AddScoped<NotificationSaveInterceptor>();
+        services.AddScoped<NotificationTransactionInterceptor>();
         // The connection string is read when a DbContext is first needed, so hosts without a database
         // (for example tests that never touch persistence) still start.
         services.AddDbContext<AppDbContext>((provider, options) =>
@@ -47,7 +52,9 @@ public static class DependencyInjection
             if (string.IsNullOrWhiteSpace(connectionString))
                 throw new InvalidOperationException($"Connection string 'ConnectionStrings:{ConnectionStringName}' is not configured.");
             ConfigureDbContext(options, connectionString);
-            options.AddInterceptors(provider.GetRequiredService<AuditableEntityInterceptor>());
+            options.AddInterceptors(provider.GetRequiredService<AuditableEntityInterceptor>(),
+                provider.GetRequiredService<NotificationSaveInterceptor>(),
+                provider.GetRequiredService<NotificationTransactionInterceptor>());
         });
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
@@ -72,6 +79,7 @@ public static class DependencyInjection
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<IRevenueReportRepository, RevenueReportRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddSingleton<IRevenueReportExporter, ClosedXmlRevenueReportExporter>();
 
         // Validated when first resolved (no ValidateOnStart): a missing JWT_KEY must not stop health checks or Swagger.
@@ -184,6 +192,12 @@ public static class DependencyInjection
                 "OrderExpiry:IntervalSeconds must be 5–3600, GraceMinutes 0–120, BatchSize 1–1000.")
             .ValidateOnStart();
         services.AddHostedService<OrderExpiryJob>();
+        services.AddOptions<NotificationOptions>()
+            .Bind(configuration.GetSection(NotificationOptions.SectionName))
+            .Validate(NotificationOptions.IsValid,
+                "Notifications:AppointmentReminderHoursBefore must be 0–72, ReminderJob:IntervalSeconds 30–3600, ReminderJob:BatchSize 1–1000.")
+            .ValidateOnStart();
+        services.AddHostedService<AppointmentReminderJob>();
         services.AddOptions<SeedOptions>().Bind(configuration.GetSection(SeedOptions.SectionName));
         services.AddScoped<DevelopmentSeeder>();
         services.AddScoped<DemoDataSeeder>();

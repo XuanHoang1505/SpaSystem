@@ -8,8 +8,10 @@ using NhuNguyetSpa.Application.DTOs.Orders;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Services.Bookings;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
 using NhuNguyetSpa.Application.Interfaces.Services.Orders;
 using NhuNguyetSpa.Application.UseCases.Catalog;
+using NhuNguyetSpa.Application.UseCases.Notifications;
 using NhuNguyetSpa.Application.UseCases.Orders;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
@@ -39,6 +41,7 @@ public sealed class CustomerBookingService : ICustomerBookingService
     private readonly IOptions<OrderExpiryOptions> _expiryOptions;
     private readonly IValidator<BookNowRequest> _bookNowValidator;
     private readonly IValidator<BookAppointmentRequest> _bookValidator;
+    private readonly INotificationPublisher _notifications;
 
     public CustomerBookingService(
         ISpaServiceRepository services,
@@ -55,8 +58,10 @@ public sealed class CustomerBookingService : ICustomerBookingService
         IOptions<OrderOptions> orderOptions,
         IOptions<OrderExpiryOptions> expiryOptions,
         IValidator<BookNowRequest> bookNowValidator,
-        IValidator<BookAppointmentRequest> bookValidator)
+        IValidator<BookAppointmentRequest> bookValidator,
+        INotificationPublisher notifications)
     {
+        _notifications = notifications;
         _services = services;
         _purchases = purchases;
         _appointments = appointments;
@@ -185,6 +190,9 @@ public sealed class CustomerBookingService : ICustomerBookingService
                 appointment.TreatmentSessionId = session.Id;
             }
             await _appointments.AddAsync(appointment, token);
+            // NTF-E03 + E09, saved with the booking (BR-NTF-02). No actor: the event table gives the customer the confirmation of their
+            // own booking as a receipt (NTF-T13).
+            await _notifications.AppointmentConfirmedAsync(AppointmentNotice.Of(appointment, spaServiceId), null, notifyStaff: true, token);
             await _unitOfWork.SaveChangesAsync(token);
         }, cancellationToken);
         return await GetAsync(appointment.Id, cancellationToken);

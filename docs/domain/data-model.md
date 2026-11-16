@@ -556,15 +556,18 @@ erDiagram
 
 `Notification` · DA: ThongBao · Sprint 3 · Thông báo gửi đến người dùng. UC: UC-SPA-15, UC-SPA-28, UC-SPA-34.
 
-| Cột              | PostgreSQL   | C#                       | Null  | Ràng buộc                   | Mô tả                           | DA          |
-| ---------------- | ------------ | ------------------------ | ----- | --------------------------- | ------------------------------- | ----------- |
-| `id`             | uuid         | `Id`: Guid               | không | PK                          | Mã thông báo                    | Id          |
-| `user_id`        | uuid         | `UserId`: Guid           | không | FK → users.id               | Người nhận                      | IdNguoiDung |
-| `title`          | varchar(200) | `Title`: string          | không | —                           | Tiêu đề                         | TieuDe      |
-| `body`           | text         | `Body`: string           | không | —                           | Nội dung                        | NoiDung     |
-| `type`           | varchar(30)  | `Type`: NotificationType | không | CHECK enum NotificationType | Nhóm thông báo                  | Loai        |
-| `read_at_utc`    | timestamptz  | `ReadAtUtc`: DateTime    | có    | —                           | Thời điểm đọc (null = chưa đọc) | DocLuc      |
-| `created_at_utc` | timestamptz  | `CreatedAtUtc`: DateTime | không | —                           | Thời điểm tạo                   | NgayTao     |
+| Cột              | PostgreSQL   | C#                                         | Null  | Ràng buộc                                                                             | Mô tả                                             | DA          |
+| ---------------- | ------------ | ------------------------------------------ | ----- | ------------------------------------------------------------------------------------- | ------------------------------------------------- | ----------- |
+| `id`             | uuid         | `Id`: Guid                                 | không | PK                                                                                    | Mã thông báo                                      | Id          |
+| `user_id`        | uuid         | `UserId`: Guid                             | không | FK → users.id; IDX (user_id, created_at_utc DESC); IDX (user_id) khi read_at_utc null | Người nhận                                        | IdNguoiDung |
+| `title`          | varchar(200) | `Title`: string                            | không | —                                                                                     | Tiêu đề                                           | TieuDe      |
+| `body`           | text         | `Body`: string                             | không | —                                                                                     | Nội dung                                          | NoiDung     |
+| `type`           | varchar(30)  | `Type`: NotificationType                   | không | CHECK enum NotificationType                                                           | Nhóm thông báo                                    | Loai        |
+| `reference_type` | varchar(30)  | `ReferenceType`: NotificationReferenceType | có    | CHECK enum NotificationReferenceType                                                  | Loại đối tượng liên quan (ĐX, UC-SPA-34)          | —           |
+| `reference_id`   | uuid         | `ReferenceId`: Guid                        | có    | CHECK num_nonnulls(reference_type, reference_id) <> 1                                 | Mã đối tượng liên quan, không FK vì đa hình (ĐX)  | —           |
+| `dedup_key`      | varchar(150) | `DedupKey`: string                         | có    | UQ (user_id, dedup_key) khi khác null                                                 | Khóa chống trùng, ví dụ nhắc lịch (ĐX, BR-NTF-06) | —           |
+| `read_at_utc`    | timestamptz  | `ReadAtUtc`: DateTime                      | có    | —                                                                                     | Thời điểm đọc (null = chưa đọc)                   | DocLuc      |
+| `created_at_utc` | timestamptz  | `CreatedAtUtc`: DateTime                   | không | —                                                                                     | Thời điểm tạo                                     | NgayTao     |
 
 ### otp_codes
 
@@ -632,4 +635,5 @@ erDiagram
 | `AllergySeverity`                 | customer_allergies.severity              | `Mild` → `mild` (Nhe), `Moderate` → `moderate` (TrungBinh), `Severe` → `severe` (Nang)                                                                                                                                                                                                 | —                                                                 |
 | `ReviewStatus`                    | reviews.status                           | `Visible` → `visible` (HienThi), `Hidden` → `hidden` (An)                                                                                                                                                                                                                              | —                                                                 |
 | `NotificationType`                | notifications.type                       | `Appointment` → `appointment` (LichHen), `Payment` → `payment` (ThanhToan), `Treatment` → `treatment` (LieuTrinh), `Promotion` → `promotion` (KhuyenMai), `System` → `system` (HeThong)                                                                                                | —                                                                 |
+| `NotificationReferenceType`       | notifications.reference_type             | `Appointment` → `appointment`, `Order` → `order`, `TreatmentPlan` → `treatment_plan`, `Review` → `review`, `WorkSchedule` → `work_schedule`                                                                                                                                            | Đối tượng thông báo trỏ tới (UC-SPA-34)                           |
 | `OtpPurpose`                      | otp_codes.purpose                        | `Registration` → `registration`, `PasswordReset` → `password_reset`                                                                                                                                                                                                                    | —                                                                 |

@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MyOrderListItem, OrderStatus } from '@spa/shared-types';
-import { ArrowLeft, LogIn, Receipt, ShoppingBag, UserPlus } from 'lucide-react-native';
+import { ArrowLeft, Receipt } from 'lucide-react-native';
 import { AppButton } from '@components/common/AppButton';
 import { AppNotice } from '@components/common/AppNotice';
 import { AppScreen } from '@components/common/AppScreen';

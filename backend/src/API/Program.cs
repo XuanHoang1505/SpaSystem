@@ -23,6 +23,11 @@ if (args.Contains(SeedCommand.Argument) || args.Contains(SeedCommand.DemoArgumen
     await SeedCommand.RunAsync(app, withDemo: args.Contains(SeedCommand.DemoArgument));
     return;
 }
+if (args.Contains(SeedCommand.SeedNotificationsArgument))
+{
+    await SeedCommand.SeedCustomerNotificationsAsync(app, "customer@gmail.com");
+    return;
+}
 
 app.UseSerilogRequestLogging();
 app.UseApiExceptionHandling();
@@ -43,6 +48,9 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+// BR-NTF-11: a connection closes when its access token expires; the client reconnects with a fresh one.
+app.MapHub<NhuNguyetSpa.API.Realtime.NotificationHub>(NhuNguyetSpa.API.Realtime.NotificationHub.Path,
+    options => options.CloseOnAuthenticationExpiration = true);
 app.MapApiHealthChecks();
 app.Run();
 

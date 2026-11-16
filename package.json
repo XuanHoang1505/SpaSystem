@@ -17,6 +17,7 @@
     "db:seed": "dotnet run --project backend/src/API --launch-profile http -- --seed-dev",
     "db:seed:demo": "dotnet run --project backend/src/API --launch-profile http -- --seed-demo",
     "db:seed:catalog": "dotnet run --project backend/src/API --launch-profile http -- --seed-catalog",
+    "db:seed:notifications": "dotnet run --project backend/src/API --launch-profile http -- --seed-notifications",
     "web": "npm run dev --workspace @spa/web",
     "web:build": "npm run build --workspace @spa/web",
     "web:test": "npm run test --workspace @spa/web",

@@ -33,6 +33,8 @@ public static class Permissions
     public const string ReviewWrite = "review.write";
     /// <summary>The owner replies to, hides and shows reviews (UC-SPA-31).</summary>
     public const string ReviewManage = "review.manage";
+    /// <summary>Every signed-in user reads their own notifications; the owner too (RS-13, Q-79).</summary>
+    public const string NotificationSelf = "notification.self";
 
     public static readonly IReadOnlyDictionary<string, string[]> Roles = new Dictionary<string, string[]>
     {
@@ -56,5 +58,6 @@ public static class Permissions
         [AiChat] = [SecurityRoles.Customer],
         [ReviewWrite] = [SecurityRoles.Customer],
         [ReviewManage] = [SecurityRoles.Owner],
+        [NotificationSelf] = [SecurityRoles.Customer, SecurityRoles.Staff, SecurityRoles.Owner],
     };
 }

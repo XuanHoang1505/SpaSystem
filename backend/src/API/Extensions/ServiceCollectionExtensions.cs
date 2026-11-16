@@ -2,12 +2,15 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NhuNguyetSpa.API.Filters;
+using NhuNguyetSpa.API.Realtime;
 using NhuNguyetSpa.API.Responses;
 using NhuNguyetSpa.API.Serialization;
 using NhuNguyetSpa.API.Services;
 using NhuNguyetSpa.Application.Common.Interfaces;
 using NhuNguyetSpa.Application.Common.Models;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
 
 namespace NhuNguyetSpa.API.Extensions;
 
@@ -34,6 +37,14 @@ public static class ServiceCollectionExtensions
                 new ErrorDetail("validation_error", "The supplied value is invalid.", pair.Key)) ?? [] ).ToArray();
             return new BadRequestObjectResult(new ApiResponse<object>(false, "Validation failed.", null, errors, context.HttpContext.TraceIdentifier));
         });
+        // BR-NTF-09: realtime notifications; payloads use the same JSON shape as the REST API.
+        services.AddSignalR().AddJsonProtocol(options =>
+        {
+            options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
+            options.PayloadSerializerOptions.Converters.Add(new HourMinuteTimeOnlyJsonConverter());
+        });
+        services.Replace(ServiceDescriptor.Singleton<INotificationRealtime, SignalRNotificationRealtime>());
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, HttpCurrentUserService>();
         services.AddSingleton<AiChatRateLimiter>();

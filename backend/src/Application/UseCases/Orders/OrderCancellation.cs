@@ -4,6 +4,7 @@ using NhuNguyetSpa.Application.Common.Options;
 using NhuNguyetSpa.Application.DTOs.Orders;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
 using NhuNguyetSpa.Domain.Enums;
 
 namespace NhuNguyetSpa.Application.UseCases.Orders;
@@ -19,10 +20,12 @@ public sealed class OrderCancellation
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDateTimeProvider _clock;
     private readonly IOptions<OrderOptions> _options;
+    private readonly INotificationPublisher _notifications;
 
     public OrderCancellation(IOrderRepository orders, IAppointmentRepository appointments, IUnitOfWork unitOfWork, IDateTimeProvider clock,
-        IOptions<OrderOptions> options)
+        IOptions<OrderOptions> options, INotificationPublisher notifications)
     {
+        _notifications = notifications;
         _orders = orders;
         _appointments = appointments;
         _unitOfWork = unitOfWork;
@@ -60,6 +63,9 @@ public sealed class OrderCancellation
             var holds = await _appointments.GetHoldsForOrdersAsync([order.Id], token);
             foreach (var hold in holds.Where(hold => hold.Status == AppointmentStatus.Held))
                 hold.CancelHold($"Hủy đơn hàng {order.Code}: {trimmed}", now);
+            // NTF-E02: only an owner's cancel is news to the customer; the customer's own cancel is not notified (Q-80).
+            if (!customerId.HasValue)
+                await _notifications.OrderCancelledByOwnerAsync(order, trimmed, null, token);
             await _unitOfWork.SaveChangesAsync(token);
         }, cancellationToken);
     }

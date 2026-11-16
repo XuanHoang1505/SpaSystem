@@ -6,6 +6,7 @@ using NhuNguyetSpa.Application.DTOs.Catalog;
 using NhuNguyetSpa.Application.DTOs.Reviews;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
 using NhuNguyetSpa.Application.Interfaces.Services.Reviews;
 using NhuNguyetSpa.Domain.Enums;
 
@@ -20,6 +21,8 @@ public sealed class ReviewManagementService : IReviewManagementService
     private readonly IValidator<OwnerReviewFilter> _filterValidator;
     private readonly IValidator<ReplyReviewRequest> _replyValidator;
     private readonly IValidator<ChangeReviewVisibilityRequest> _visibilityValidator;
+    private readonly INotificationPublisher _notifications;
+    private readonly ICurrentUserService _currentUser;
 
     public ReviewManagementService(
         IReviewRepository reviews,
@@ -27,8 +30,12 @@ public sealed class ReviewManagementService : IReviewManagementService
         IDateTimeProvider clock,
         IValidator<OwnerReviewFilter> filterValidator,
         IValidator<ReplyReviewRequest> replyValidator,
-        IValidator<ChangeReviewVisibilityRequest> visibilityValidator)
+        IValidator<ChangeReviewVisibilityRequest> visibilityValidator,
+        INotificationPublisher notifications,
+        ICurrentUserService currentUser)
     {
+        _notifications = notifications;
+        _currentUser = currentUser;
         _reviews = reviews;
         _unitOfWork = unitOfWork;
         _clock = clock;
@@ -74,6 +81,9 @@ public sealed class ReviewManagementService : IReviewManagementService
         await _replyValidator.ValidateAndThrowAsync(request, cancellationToken);
         var review = await _reviews.GetByIdAsync(id, cancellationToken) ?? throw ReviewErrors.NotFound();
         review.Reply(request.Reply!.Trim(), _clock.UtcNow);
+        // NTF-E11 (REV-LATER-01); the product name is read untracked, the reply does not change it.
+        var productName = (await _reviews.GetOwnerDtoAsync(id, cancellationToken))?.ProductName ?? "sản phẩm";
+        await _notifications.ReviewRepliedAsync(review, productName, _currentUser.UserId, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         var dto = await _reviews.GetOwnerDtoAsync(id, cancellationToken) ?? throw ReviewErrors.NotFound();
         return OperationResult<OwnerReviewDto>.Success(dto, "Đã lưu phản hồi.");
