@@ -7,6 +7,8 @@ using NhuNguyetSpa.Application.DTOs.Bookings;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Services.Bookings;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
+using NhuNguyetSpa.Application.UseCases.Notifications;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Exceptions;
 
@@ -31,6 +33,7 @@ public sealed class MyAppointmentService : IMyAppointmentService
     private readonly IValidator<MyAppointmentListQuery> _listValidator;
     private readonly IValidator<RescheduleMyAppointmentRequest> _rescheduleValidator;
     private readonly IValidator<CancelAppointmentRequest> _cancelValidator;
+    private readonly INotificationPublisher _notifications;
 
     public MyAppointmentService(
         IAppointmentRepository appointments,
@@ -44,8 +47,10 @@ public sealed class MyAppointmentService : IMyAppointmentService
         IValidator<PagedQuery> pagingValidator,
         IValidator<MyAppointmentListQuery> listValidator,
         IValidator<RescheduleMyAppointmentRequest> rescheduleValidator,
-        IValidator<CancelAppointmentRequest> cancelValidator)
+        IValidator<CancelAppointmentRequest> cancelValidator,
+        INotificationPublisher notifications)
     {
+        _notifications = notifications;
         _appointments = appointments;
         _purchases = purchases;
         _reserver = reserver;
@@ -100,6 +105,7 @@ public sealed class MyAppointmentService : IMyAppointmentService
                 (request.StaffMemberId is null || request.StaffMemberId == appointment.StaffMemberId))
                 return;
 
+            var before = AppointmentNotice.Of(appointment, spaServiceId);
             var duration = appointment.EndTime - appointment.StartTime;
             var end = start.Add(duration);
             await EnsureSourceAllowsAsync(appointment, customerId, date, start, end, nowUtc, token);
@@ -110,6 +116,7 @@ public sealed class MyAppointmentService : IMyAppointmentService
                 await EnsureSourceAllowsAsync(appointment, customerId, date, start, end, nowUtc, token);
             appointment.Reschedule(date, start, slot.End);
             appointment.AssignStaff(slot.StaffMemberId);
+            await _notifications.AppointmentChangedByCustomerAsync(before, AppointmentNotice.Of(appointment, spaServiceId), customerId, token);
             await _unitOfWork.SaveChangesAsync(token);
         }, cancellationToken);
         return OperationResult<MyAppointmentDto>.Success(await _reader.GetAsync(id, customerId, cancellationToken));
@@ -122,12 +129,13 @@ public sealed class MyAppointmentService : IMyAppointmentService
         var customerId = CustomerId;
         await _unitOfWork.ExecuteInTransactionAsync(async token =>
         {
-            var (appointment, _) = await LockMineAsync(id, customerId, token);
+            var (appointment, spaServiceId) = await LockMineAsync(id, customerId, token);
             var nowUtc = _clock.UtcNow;
             AppointmentChangePolicy.EnsureCanChange(appointment.Status, appointment.Date, appointment.StartTime, nowUtc,
                 _options.Value.CustomerChangeCutoffHours);
             appointment.ReleaseBookedSource();
             appointment.Cancel(request.Reason!.Trim(), nowUtc);
+            await _notifications.AppointmentChangedByCustomerAsync(AppointmentNotice.Of(appointment, spaServiceId), null, customerId, token);
             await _unitOfWork.SaveChangesAsync(token);
         }, cancellationToken);
         return OperationResult<MyAppointmentDto>.Success(await _reader.GetAsync(id, customerId, cancellationToken));

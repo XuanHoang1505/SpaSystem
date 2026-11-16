@@ -7,7 +7,9 @@ using NhuNguyetSpa.Application.Common.Options;
 using NhuNguyetSpa.Application.DTOs.WorkSchedules;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
 using NhuNguyetSpa.Application.Interfaces.Services.WorkSchedules;
+using NhuNguyetSpa.Application.UseCases.Notifications;
 using NhuNguyetSpa.Application.UseCases.Staff;
 using NhuNguyetSpa.Application.Validators.WorkSchedules;
 using NhuNguyetSpa.Domain.Entities;
@@ -29,6 +31,8 @@ public sealed class WorkScheduleService : IWorkScheduleService
     private readonly IValidator<UpdateWorkScheduleRequest> _updateValidator;
     private readonly IValidator<ChangeWorkScheduleStatusRequest> _statusValidator;
     private readonly IValidator<CreateWorkScheduleBatchRequest> _batchValidator;
+    private readonly INotificationPublisher _notifications;
+    private readonly ICurrentUserService _currentUser;
 
     public WorkScheduleService(
         IWorkScheduleRepository shifts,
@@ -41,8 +45,12 @@ public sealed class WorkScheduleService : IWorkScheduleService
         IValidator<CreateWorkScheduleRequest> createValidator,
         IValidator<UpdateWorkScheduleRequest> updateValidator,
         IValidator<ChangeWorkScheduleStatusRequest> statusValidator,
-        IValidator<CreateWorkScheduleBatchRequest> batchValidator)
+        IValidator<CreateWorkScheduleBatchRequest> batchValidator,
+        INotificationPublisher notifications,
+        ICurrentUserService currentUser)
     {
+        _notifications = notifications;
+        _currentUser = currentUser;
         _shifts = shifts;
         _staff = staff;
         _appointments = appointments;
@@ -76,8 +84,15 @@ public sealed class WorkScheduleService : IWorkScheduleService
         await EnsureSchedulableAsync(staff, date, start, end, excludeId: null, cancellationToken);
 
         var shift = WorkSchedule.Create(staff.Id, date, start, end);
-        await _shifts.AddAsync(shift, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        // Two concurrent inserts checking the EXCLUDE constraint can wait on each other (40P01 deadlock → 500). Locking the staff row
+        // first, as bookings do, makes them run one after the other, so the loser gets 409 shift_conflict.
+        await _unitOfWork.ExecuteInTransactionAsync(async token =>
+        {
+            await _staff.LockForBookingAsync(staff.Id, token);
+            await _shifts.AddAsync(shift, token);
+            await _notifications.WorkScheduleChangedAsync(shift, WorkScheduleChange.Created, _currentUser.UserId, token);
+            await _unitOfWork.SaveChangesAsync(token);
+        }, cancellationToken);
         return await ResultAsync(shift.Id, cancellationToken);
     }
 
@@ -100,7 +115,10 @@ public sealed class WorkScheduleService : IWorkScheduleService
         if (stranded > 0)
             throw WorkScheduleErrors.ShiftHasAppointments(stranded);
 
+        var changed = shift.Date != date || shift.StartTime != start || shift.EndTime != end;
         shift.Reschedule(date, start, end);
+        if (changed)
+            await _notifications.WorkScheduleChangedAsync(shift, WorkScheduleChange.Updated, _currentUser.UserId, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return await ResultAsync(shift.Id, cancellationToken);
     }
@@ -119,6 +137,7 @@ public sealed class WorkScheduleService : IWorkScheduleService
             throw WorkScheduleErrors.ShiftHasAppointments(inside);
 
         shift.Cancel();
+        await _notifications.WorkScheduleChangedAsync(shift, WorkScheduleChange.Cancelled, _currentUser.UserId, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
@@ -159,6 +178,8 @@ public sealed class WorkScheduleService : IWorkScheduleService
             {
                 foreach (var shift in created)
                     await _shifts.AddAsync(shift, token);
+                // NTF-E14: one summary per staff member for the shifts actually created.
+                await _notifications.WorkSchedulesBatchCreatedAsync(created, _currentUser.UserId, token);
                 await _unitOfWork.SaveChangesAsync(token);
             }, cancellationToken);
         }

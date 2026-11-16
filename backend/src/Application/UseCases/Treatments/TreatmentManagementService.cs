@@ -9,6 +9,7 @@ using NhuNguyetSpa.Application.Common.Security;
 using NhuNguyetSpa.Application.DTOs.Treatments;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
 using NhuNguyetSpa.Application.Interfaces.Services.Treatments;
 using NhuNguyetSpa.Application.UseCases.Bookings;
 using NhuNguyetSpa.Application.UseCases.Purchases;
@@ -37,13 +38,15 @@ public sealed class TreatmentManagementService : ITreatmentManagementService
     private readonly IValidator<UpdateTreatmentPlanRequest> _updateValidator;
     private readonly IValidator<UpdateTreatmentSessionRequest> _sessionValidator;
     private readonly IValidator<TreatmentReasonRequest> _reasonValidator;
+    private readonly INotificationPublisher _notifications;
 
     public TreatmentManagementService(ITreatmentRepository treatments, IPurchaseRepository purchases, IAppointmentRepository appointments,
         IStaffMemberRepository staffMembers, IUnitOfWork unitOfWork, ICurrentUserService currentUser, IDateTimeProvider clock,
         IOptions<TreatmentsOptions> options, IValidator<PagedQuery> pagingValidator, IValidator<TreatmentListQuery> listValidator,
         IValidator<UpdateTreatmentPlanRequest> updateValidator, IValidator<UpdateTreatmentSessionRequest> sessionValidator,
-        IValidator<TreatmentReasonRequest> reasonValidator)
+        IValidator<TreatmentReasonRequest> reasonValidator, INotificationPublisher notifications)
     {
+        _notifications = notifications;
         _treatments = treatments;
         _purchases = purchases;
         _appointments = appointments;
@@ -153,7 +156,7 @@ public sealed class TreatmentManagementService : ITreatmentManagementService
         {
             plan.Pause(request.Reason!.Trim());
             return Task.CompletedTask;
-        }, cancellationToken);
+        }, cancellationToken, notifyStatus: true);
     }
 
     public Task<OperationResult<TreatmentPlanDto>> ResumeAsync(Guid id, CancellationToken cancellationToken) =>
@@ -161,7 +164,7 @@ public sealed class TreatmentManagementService : ITreatmentManagementService
         {
             plan.Resume(package.UsedSessions);
             return Task.CompletedTask;
-        }, cancellationToken);
+        }, cancellationToken, notifyStatus: true);
 
     public async Task<OperationResult<TreatmentPlanDto>> CancelAsync(Guid id, TreatmentReasonRequest request, CancellationToken cancellationToken)
     {
@@ -176,7 +179,7 @@ public sealed class TreatmentManagementService : ITreatmentManagementService
                 throw TreatmentErrors.HasBookedSessions();
             plan.Cancel(request.Reason!.Trim());
             package.Cancel();
-        }, cancellationToken);
+        }, cancellationToken, notifyStatus: true);
     }
 
     public Task<OperationResult<TreatmentPlanDto>> CompleteAsync(Guid id, CancellationToken cancellationToken) =>
@@ -189,7 +192,7 @@ public sealed class TreatmentManagementService : ITreatmentManagementService
             var endDate = await _treatments.LatestCompletedVisitDateAsync(id, token) ?? SpaTime.Today(_clock.UtcNow);
             plan.Close(endDate);
             package.Close();
-        }, cancellationToken);
+        }, cancellationToken, notifyStatus: true);
 
     /// <summary>
     /// Scope check, then one transaction: customer row lock (status commands, so a concurrent booking of a session either commits first or
@@ -197,7 +200,7 @@ public sealed class TreatmentManagementService : ITreatmentManagementService
     /// <c>treatment_status_invalid</c>.
     /// </summary>
     private async Task<OperationResult<TreatmentPlanDto>> ChangeAsync(Guid id, bool ownerOnly, bool lockCustomer,
-        Func<CustomerPackage, TreatmentPlan, CancellationToken, Task> change, CancellationToken cancellationToken)
+        Func<CustomerPackage, TreatmentPlan, CancellationToken, Task> change, CancellationToken cancellationToken, bool notifyStatus = false)
     {
         if (ownerOnly)
             EnsureOwner();
@@ -215,6 +218,10 @@ public sealed class TreatmentManagementService : ITreatmentManagementService
             {
                 throw TreatmentErrors.StatusInvalid(plan.Status);
             }
+            // NTF-E12 (TRT-LATER-05): the owner's status commands tell the customer.
+            if (notifyStatus)
+                await _notifications.TreatmentPlanStatusChangedAsync(plan.Id, package.CustomerId, package.PackageName, plan.Status,
+                    plan.StatusReason, _currentUser.UserId, token);
             await _unitOfWork.SaveChangesAsync(token);
         }, cancellationToken);
         var updated = await _treatments.GetPlanAsync(id, cancellationToken) ?? throw TreatmentErrors.TreatmentPlanNotFound();

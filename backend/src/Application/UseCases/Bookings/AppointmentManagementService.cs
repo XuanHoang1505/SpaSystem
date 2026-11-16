@@ -9,6 +9,8 @@ using NhuNguyetSpa.Application.DTOs.Bookings;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Services.Bookings;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
+using NhuNguyetSpa.Application.UseCases.Notifications;
 using NhuNguyetSpa.Application.UseCases.Staff;
 using NhuNguyetSpa.Application.UseCases.WorkSchedules;
 using NhuNguyetSpa.Domain.Entities;
@@ -35,6 +37,7 @@ public sealed class AppointmentManagementService : IAppointmentManagementService
     private readonly IValidator<AssignAppointmentStaffRequest> _assignValidator;
     private readonly IValidator<CancelAppointmentRequest> _cancelValidator;
     private readonly IValidator<MarkNoShowRequest> _noShowValidator;
+    private readonly INotificationPublisher _notifications;
 
     public AppointmentManagementService(
         IAppointmentRepository appointments,
@@ -49,8 +52,10 @@ public sealed class AppointmentManagementService : IAppointmentManagementService
         IValidator<RescheduleAppointmentRequest> rescheduleValidator,
         IValidator<AssignAppointmentStaffRequest> assignValidator,
         IValidator<CancelAppointmentRequest> cancelValidator,
-        IValidator<MarkNoShowRequest> noShowValidator)
+        IValidator<MarkNoShowRequest> noShowValidator,
+        INotificationPublisher notifications)
     {
+        _notifications = notifications;
         _appointments = appointments;
         _staff = staff;
         _shifts = shifts;
@@ -96,7 +101,7 @@ public sealed class AppointmentManagementService : IAppointmentManagementService
                 throw BookingErrors.StatusInvalid(appointment.Status);
             appointment.Confirm();
             return Task.CompletedTask;
-        }, cancellationToken);
+        }, cancellationToken, (_, after, token) => _notifications.AppointmentConfirmedAsync(after, _currentUser.UserId, notifyStaff: true, token));
 
     public async Task<OperationResult<AppointmentDetailDto>> RescheduleAsync(
         Guid id, RescheduleAppointmentRequest request, CancellationToken cancellationToken)
@@ -133,7 +138,9 @@ public sealed class AppointmentManagementService : IAppointmentManagementService
                 throw BookingErrors.CustomerBusy();
 
             appointment.Reschedule(date, start, end);
-        }, cancellationToken);
+        }, cancellationToken, (before, after, token) => before.Date == after.Date && before.StartTime == after.StartTime
+            ? Task.CompletedTask
+            : _notifications.AppointmentRescheduledByOwnerAsync(before, after, _currentUser.UserId, token));
     }
 
     public async Task<OperationResult<AppointmentDetailDto>> AssignStaffAsync(
@@ -165,7 +172,9 @@ public sealed class AppointmentManagementService : IAppointmentManagementService
                 throw BookingErrors.StaffBusy();
 
             appointment.AssignStaff(staff.Id);
-        }, cancellationToken);
+        }, cancellationToken, (before, after, token) => before.StaffMemberId == after.StaffMemberId
+            ? Task.CompletedTask
+            : _notifications.AppointmentStaffChangedAsync(before, after, _currentUser.UserId, token));
     }
 
     public async Task<OperationResult<AppointmentDetailDto>> CancelAsync(Guid id, CancelAppointmentRequest request, CancellationToken cancellationToken)
@@ -178,7 +187,8 @@ public sealed class AppointmentManagementService : IAppointmentManagementService
             appointment.ReleaseBookedSource();
             appointment.Cancel(request.Reason!.Trim(), _clock.UtcNow);
             return Task.CompletedTask;
-        }, cancellationToken);
+        }, cancellationToken, (before, _, token) =>
+            _notifications.AppointmentCancelledByOwnerAsync(before, request.Reason!.Trim(), _currentUser.UserId, token));
     }
 
     public async Task<OperationResult<AppointmentDetailDto>> MarkNoShowAsync(Guid id, MarkNoShowRequest request, CancellationToken cancellationToken)
@@ -206,13 +216,19 @@ public sealed class AppointmentManagementService : IAppointmentManagementService
         }, cancellationToken);
     }
 
+    /// <param name="notify">Adds the notices for the change (NTF-E03..E06) from snapshots taken before and after it, so they are saved
+    /// with it (BR-NTF-02); null for changes nobody is told about (no-show).</param>
     private async Task<OperationResult<AppointmentDetailDto>> ChangeAsync(
-        Guid id, Func<Appointment, Guid, CancellationToken, Task> change, CancellationToken cancellationToken)
+        Guid id, Func<Appointment, Guid, CancellationToken, Task> change, CancellationToken cancellationToken,
+        Func<AppointmentNotice, AppointmentNotice, CancellationToken, Task>? notify = null)
     {
         await _unitOfWork.ExecuteInTransactionAsync(async token =>
         {
             var (appointment, spaServiceId) = await _appointments.GetForUpdateAsync(id, token) ?? throw BookingErrors.AppointmentNotFound();
+            var before = AppointmentNotice.Of(appointment, spaServiceId);
             await change(appointment, spaServiceId, token);
+            if (notify is not null)
+                await notify(before, AppointmentNotice.Of(appointment, spaServiceId), token);
             await _unitOfWork.SaveChangesAsync(token);
         }, cancellationToken);
         var detail = await _appointments.GetDetailAsync(id, cancellationToken) ?? throw BookingErrors.AppointmentNotFound();
