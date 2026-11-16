@@ -28,6 +28,7 @@ export const routes = {
     ['/my-packages/:packageId', 'Chi tiết gói của tôi'],
     ['/my-orders', 'Đơn hàng'],
     ['/my-reviews', 'Đánh giá'],
+    ['/notifications', 'Thông báo'],
     ['/ai-assistant', 'Trợ lý AI'],
   ],
   staff: [
@@ -37,6 +38,7 @@ export const routes = {
     ['/staff/bookings/:appointmentId', 'Chi tiết buổi chăm sóc'],
     ['/staff/care-history', 'Lịch sử khách đã chăm sóc'],
     ['/staff/certifications', 'Bằng cấp của tôi'],
+    ['/staff/notifications', 'Thông báo'],
   ],
   owner: [
     ['/owner', 'Tổng quan'],
@@ -50,5 +52,6 @@ export const routes = {
     ['/owner/reviews', 'Quản lý đánh giá'],
     ['/owner/reports', 'Báo cáo'],
     ['/owner/accounts', 'Tài khoản người dùng'],
+    ['/owner/notifications', 'Thông báo'],
   ],
 } as const;

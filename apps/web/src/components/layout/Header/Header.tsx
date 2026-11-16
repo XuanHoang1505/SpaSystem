@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { navigation } from '@/config/navigation';
 import { AccountMenu } from '@/features/auth/components/AccountMenu';
 import { CartButton } from '@/features/orders';
+import { NotificationBell } from '@/features/notifications/components/NotificationBell';
 import { cn } from '@/lib/utils';
 import { Brand } from '../Brand/Brand';
 import { MobileNavigation } from '../MobileNavigation/MobileNavigation';
@@ -43,6 +44,7 @@ export function Header() {
         </nav>
         <div className="flex items-center gap-1.5">
           <CartButton />
+          <NotificationBell />
           <AccountMenu />
           <MobileNavigation />
         </div>

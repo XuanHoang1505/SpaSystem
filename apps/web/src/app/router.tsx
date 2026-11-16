@@ -22,6 +22,8 @@ import { MyOrdersPage } from '@/pages/customer/MyOrdersPage';
 import { MyPackageDetailPage } from '@/pages/customer/MyPackageDetailPage';
 import { MyPackagesPage } from '@/pages/customer/MyPackagesPage';
 import { MyReviewsPage } from '@/pages/customer/MyReviewsPage';
+import { NotificationsPage } from '@/pages/customer/NotificationsPage';
+import { WorkspaceNotificationsPage } from '@/pages/workspace/WorkspaceNotificationsPage';
 import { MyServiceHistoryPage } from '@/pages/customer/MyServiceHistoryPage';
 import { MyTreatmentPlanDetailPage } from '@/pages/customer/MyTreatmentPlanDetailPage';
 import { MyTreatmentPlansPage } from '@/pages/customer/MyTreatmentPlansPage';
@@ -122,6 +124,7 @@ export const customerPages: Record<string, ReactElement> = {
   '/my-packages': <MyPackagesPage />,
   '/my-packages/:packageId': <MyPackageDetailPage />,
   '/my-reviews': <MyReviewsPage />,
+  '/notifications': <NotificationsPage />,
   '/ai-assistant': <AiAssistantRoute />,
 };
 
@@ -132,6 +135,7 @@ export const staffPages: Record<string, ReactElement> = {
   '/staff/bookings/:appointmentId': <StaffAppointmentDetailPage />,
   '/staff/care-history': <StaffCareHistoryPage />,
   '/staff/certifications': <StaffCertificationsPage />,
+  '/staff/notifications': <WorkspaceNotificationsPage />,
 };
 
 /** Owner pages that are built; the other owner routes still show the placeholder. */
@@ -147,6 +151,7 @@ export const ownerPages: Record<string, ReactElement> = {
   '/owner/treatments': <OwnerTreatmentsPage />,
   '/owner/reports': <OwnerReportsPage />,
   '/owner/accounts': <OwnerAccountsPage />,
+  '/owner/notifications': <WorkspaceNotificationsPage />,
 };
 
 /** Login, register, forgot-password: own split layout without the site header/footer, guests only. */

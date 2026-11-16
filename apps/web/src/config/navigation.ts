@@ -1,6 +1,7 @@
 import {
   AwardIcon,
   BarChart3Icon,
+  BellIcon,
   BotIcon,
   CalendarCheckIcon,
   CalendarClockIcon,
@@ -53,12 +54,14 @@ const icons: Record<string, LucideIcon> = {
   '/my-history': HistoryIcon,
   '/my-packages': WalletCardsIcon,
   '/my-reviews': StarIcon,
+  '/notifications': BellIcon,
   '/ai-assistant': BotIcon,
   '/staff': LayoutDashboardIcon,
   '/staff/schedule': CalendarDaysIcon,
   '/staff/bookings': CalendarCheckIcon,
   '/staff/care-history': HistoryIcon,
   '/staff/certifications': AwardIcon,
+  '/staff/notifications': BellIcon,
   '/owner': LayoutDashboardIcon,
   '/owner/services': SparklesIcon,
   '/owner/packages': PackageIcon,
@@ -70,6 +73,7 @@ const icons: Record<string, LucideIcon> = {
   '/owner/reviews': StarIcon,
   '/owner/accounts': UserCogIcon,
   '/owner/reports': BarChart3Icon,
+  '/owner/notifications': BellIcon,
 };
 
 const links = (entries: readonly (readonly [string, string])[]): NavigationItem[] =>
