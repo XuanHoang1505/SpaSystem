@@ -35,11 +35,7 @@ import { formatCurrency } from '@/lib/formatting/formatters';
 import { savingPercent } from '../../coursePlan';
 import { usePackage } from '../../hooks/usePackage';
 import { useCreatePackage, useUpdatePackage } from '../../hooks/usePackageMutations';
-import {
-  packageFormSchema,
-  type PackageFormInput,
-  type PackageFormValues,
-} from '../../schemas';
+import { packageFormSchema, type PackageFormInput, type PackageFormValues } from '../../schemas';
 
 const VALIDITY_PRESETS = [30, 60, 90, 180, 365] as const;
 
@@ -65,7 +61,10 @@ export function PackageFormDialog({
   const isEditing = Boolean(currentPackage || packageId);
 
   const servicesQuery = useServiceSearch({ status: 'on_sale', pageSize: 100 });
-  const activeServices = useMemo(() => servicesQuery.data?.items ?? [], [servicesQuery.data?.items]);
+  const activeServices = useMemo(
+    () => servicesQuery.data?.items ?? [],
+    [servicesQuery.data?.items],
+  );
 
   const serviceOptions = useMemo(() => {
     const list = [...activeServices];
@@ -82,6 +81,8 @@ export function PackageFormDialog({
             imageUrl: item.serviceImageUrl,
             status: item.serviceStatus,
             shortDescription: null,
+            averageRating: null,
+            reviewCount: 0,
           });
         }
       }
@@ -338,9 +339,7 @@ export function PackageFormDialog({
                 {...register('name')}
                 disabled={isPending}
               />
-              {errors.name && (
-                <p className="text-xs text-destructive">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
 
             {/* Price & Validity Days */}
@@ -359,11 +358,12 @@ export function PackageFormDialog({
                   disabled={isPending}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Xem trước: <strong className="text-foreground">{formatCurrency(Number(watchedPrice) || 0)}</strong>
+                  Xem trước:{' '}
+                  <strong className="text-foreground">
+                    {formatCurrency(Number(watchedPrice) || 0)}
+                  </strong>
                 </p>
-                {errors.price && (
-                  <p className="text-xs text-destructive">{errors.price.message}</p>
-                )}
+                {errors.price && <p className="text-xs text-destructive">{errors.price.message}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -410,7 +410,9 @@ export function PackageFormDialog({
                   {...register('saleStartDate')}
                   disabled={isPending}
                 />
-                <p className="text-[11px] text-muted-foreground">Để trống nếu mở bán ngay lập tức</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Để trống nếu mở bán ngay lập tức
+                </p>
                 {errors.saleStartDate && (
                   <p className="text-xs text-destructive">{errors.saleStartDate.message}</p>
                 )}
@@ -424,7 +426,9 @@ export function PackageFormDialog({
                   {...register('saleEndDate')}
                   disabled={isPending}
                 />
-                <p className="text-[11px] text-muted-foreground">Để trống nếu không giới hạn ngày kết thúc</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Để trống nếu không giới hạn ngày kết thúc
+                </p>
                 {errors.saleEndDate && (
                   <p className="text-xs text-destructive">{errors.saleEndDate.message}</p>
                 )}
@@ -546,7 +550,11 @@ export function PackageFormDialog({
                         </Select>
                         {matchedService && (
                           <p className="text-[11px] text-muted-foreground">
-                            Đơn giá lẻ: <strong className="text-foreground">{formatCurrency(matchedService.price)}</strong> / buổi
+                            Đơn giá lẻ:{' '}
+                            <strong className="text-foreground">
+                              {formatCurrency(matchedService.price)}
+                            </strong>{' '}
+                            / buổi
                           </p>
                         )}
                         {errors.items?.[index]?.spaServiceId && (
@@ -641,9 +649,7 @@ export function PackageFormDialog({
               <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div>
                   <span className="text-xs text-muted-foreground">Tổng số buổi</span>
-                  <div className="text-base font-bold text-foreground">
-                    {totalSessions} buổi
-                  </div>
+                  <div className="text-base font-bold text-foreground">{totalSessions} buổi</div>
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground">Tổng giá bán lẻ</span>
@@ -684,11 +690,7 @@ export function PackageFormDialog({
               Hủy
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending
-                ? 'Đang lưu...'
-                : isEditing
-                  ? 'Lưu thay đổi'
-                  : 'Tạo gói dịch vụ'}
+              {isPending ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo gói dịch vụ'}
             </Button>
           </DialogFooter>
         </form>

@@ -39,6 +39,7 @@ import { StaffCertificationsPage } from '@/pages/staff/StaffCertificationsPage';
 import { StaffSchedulePage } from '@/pages/staff/StaffSchedulePage';
 import { OwnerTreatmentsPage } from '@/pages/owner/OwnerTreatmentsPage';
 import { OwnerReportsPage } from '@/pages/owner/OwnerReportsPage';
+import { AboutPage } from '@/pages/public/AboutPage';
 import { HomePage } from '@/pages/public/HomePage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@/pages/public/LoginPage';
@@ -94,6 +95,7 @@ function AiAssistantRoute() {
 /** Public pages that are built; the other public routes still show the placeholder. */
 export const publicPages: Record<string, ReactElement> = {
   '/': <HomePage />,
+  '/about': <AboutPage />,
   '/services': <ServicesPage />,
   '/services/:serviceId': <ServiceDetailPage />,
   '/packages': <PackagesPage />,

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { BadgeCheck, CalendarCheck, CalendarDays } from 'lucide-react-native';
+import { BadgeCheck, CalendarCheck, CalendarDays, History } from 'lucide-react-native';
 import { SignedInProfile } from './SignedInProfile';
 
 export function StaffProfileScreen() {
@@ -15,7 +15,7 @@ export function StaffProfileScreen() {
           items: [
             {
               title: 'Lịch làm việc của tôi',
-              subtitle: 'Ca làm theo tuần và tháng',
+              subtitle: 'Ca làm theo tuần và dòng thời gian',
               icon: CalendarDays,
               onPress: () => router.push('/(staff)/schedule'),
             },
@@ -24,6 +24,12 @@ export function StaffProfileScreen() {
               subtitle: 'Buổi chăm sóc được giao cho bạn',
               icon: CalendarCheck,
               onPress: () => router.push('/(staff)/bookings'),
+            },
+            {
+              title: 'Lịch sử khách đã chăm sóc',
+              subtitle: 'Xem lại các buổi chăm sóc và hồ sơ da',
+              icon: History,
+              onPress: () => router.push('/(staff)/care-history'),
             },
           ],
         },

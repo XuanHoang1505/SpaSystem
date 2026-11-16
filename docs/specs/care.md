@@ -535,3 +535,47 @@ Unit test (NSubstitute, đồng hồ giả) cho chuyển trạng thái Domain (`
 | CARE-UI-T32 | Gõ tìm kiếm (debounce) / đổi ngày / `to < from`                                                 | Gửi `search` và về `pageNumber=1`; gửi ngày; lỗi dưới ô, không gọi API                 |
 | CARE-UI-T33 | Bấm dòng → Sheet: hồ sơ da, dị ứng, các lần khác (bỏ buổi đang xem), link lập/cập nhật hồ sơ da | Đúng nội dung; link `/staff/bookings/{id}?tab=skin-profile`                            |
 | CARE-UI-T34 | Buổi chưa có hồ sơ; khách mới chăm sóc lần đầu; bấm một lần khác                                | "Buổi này chưa có hồ sơ da."; "Đây là lần đầu bạn chăm sóc khách này."; Sheet đổi buổi |
+
+### Giao diện (mobile): SCR-M27 — Lịch sử khách đã chăm sóc
+
+- **Mã và route:** `SCR-M27`, file `app/(staff)/care-history.tsx` (mở từ Dashboard nhân viên hoặc trang Cá nhân `StaffProfileScreen`).
+- **Vai trò:** Nhân viên (`role = staff`), `StaffLayout` / Stack Screen có nút quay lại, theme botanical green.
+- **Mẫu bố cục:** Danh sách phân trang (`FlatList` pull-to-refresh & infinite scroll) + Ô tìm kiếm tên/SĐT khách (debounce 300ms) + Lọc khoảng ngày (tùy chọn).
+- **Dữ liệu & Hooks:**
+  - `GET /api/v1/me/care-history?search={search}&fromDate={fromDate}&toDate={toDate}&pageNumber={page}&pageSize=10`
+  - Hook: `useCareHistory({ search, fromDate, toDate })` sử dụng `useInfiniteQuery` của TanStack Query.
+  - Query keys: `careQueryKeys.history(params)`.
+  - DTO: `CareHistoryItem` (`appointmentId`, `date`, `startTime`, `endTime`, `customer`, `service`, `treatmentSession`, `hasAllergies`, `skinProfileId`).
+- **Thanh tìm kiếm & Bộ lọc:**
+  - `AppInput` tìm kiếm với icon kính lúp, placeholder: *"Tìm tên hoặc số điện thoại khách..."*, tự động debounce 300ms, hỗ trợ nút xóa nhanh text tìm kiếm.
+  - Khi có tìm kiếm, tự động reset về trang 1.
+- **Thẻ lịch sử chăm sóc (`CareHistoryCard`):**
+  - **Dòng tiêu đề:** Ngày giờ chăm sóc (VD: `14:00 – 15:00 · 11/11/2026`) + Icon check hoàn thành.
+  - **Dịch vụ:** Tên dịch vụ chăm sóc chữ đậm, phân bổ liệu trình bên dưới (VD: `Buổi 2/6 · Gói cấp ẩm phục hồi`).
+  - **Khách hàng:** Họ tên khách hàng + SĐT (hỗ trợ chạm gọi điện thoại trực tiếp `tel:`).
+  - **Cụm huy hiệu (Badges):**
+    - Hồ sơ da: `Đã có hồ sơ da` (xanh nhạt) nếu `skinProfileId != null`; `Chưa có hồ sơ da` (xám nhạt) nếu `skinProfileId == null`.
+    - Dị ứng: `Có dị ứng` (vàng cảnh báo) nếu `hasAllergies == true`.
+  - **Hành động chạm:** Nhấn vào thẻ chuyển hướng đến chi tiết buổi chăm sóc `/(staff)/bookings/{appointmentId}` (SCR-M26) để xem hồ sơ da chi tiết, danh sách dị ứng, hoặc lập/sửa hồ sơ da nếu trong hạn 7 ngày.
+- **Trạng thái:**
+  - Đang tải: Skeleton các thẻ lịch sử.
+  - Đang tải trang tiếp theo (infinite scroll): Spinner nhỏ ở footer danh sách.
+  - Lỗi: `ErrorState` kèm nút "Thử lại".
+  - Rỗng:
+    - Khi chưa có bất kỳ buổi chăm sóc nào: `EmptyState` với icon `Clock`: *"Bạn chưa hoàn thành buổi chăm sóc nào."*
+    - Khi tìm kiếm không có kết quả: `EmptyState` với icon `SearchX`: *"Không tìm thấy khách hàng nào khớp với '{search}'."* kèm nút *"Xóa tìm kiếm"*.
+  - Có dữ liệu: Danh sách thẻ cuộn mượt mà với pull-to-refresh.
+- **Liên kết màn hình:**
+  - Từ `app/(staff)/dashboard.tsx`: Thêm nút lối tắt "Lịch sử chăm sóc".
+  - Từ `StaffProfileScreen.tsx`: Thêm mục menu "Lịch sử khách đã chăm sóc" mở `/(staff)/care-history`.
+
+| Mã           | Tình huống                                                                                    | Kết quả mong đợi                                                                     |
+| ------------ | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| CARE-M-UI-T10 | Mở màn hình lịch sử chăm sóc: Gọi `GET /me/care-history` với `pageNumber=1, pageSize=10`       | Hiển thị danh sách các buổi chăm sóc hoàn thành, sắp xếp mới nhất trước              |
+| CARE-M-UI-T11 | Nhập từ khóa tìm kiếm (tên / 4 số cuối SĐT)                                                   | Debounce 300ms, gọi API kèm param `search`, reset về trang 1                         |
+| CARE-M-UI-T12 | Cuộn xuống cuối danh sách (Infinite scroll)                                                   | Tự động gọi tiếp trang 2 (`pageNumber=2`), ghép dữ liệu vào danh sách hiện tại        |
+| CARE-M-UI-T13 | Kéo để làm mới (Pull-to-refresh)                                                              | Làm mới dữ liệu từ trang 1                                                           |
+| CARE-M-UI-T14 | Chạm vào thẻ lịch sử chăm sóc                                                                 | Chuyển hướng sang màn chi tiết buổi chăm sóc `/(staff)/bookings/[bookingId]`         |
+| CARE-M-UI-T15 | Hiển thị đủ các huy hiệu: Có hồ sơ da / Chưa có hồ sơ da, Có dị ứng                          | Huy hiệu hiển thị chính xác theo cờ `skinProfileId` và `hasAllergies`                 |
+| CARE-M-UI-T16 | Đủ 4 trạng thái hiển thị (Loading skeleton, ErrorState, EmptyState tìm kiếm, EmptyState gốc)  | Hiển thị giao diện tương ứng chính xác                                               |
+

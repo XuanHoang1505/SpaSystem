@@ -1,7 +1,7 @@
 /**
- * Botanical green palette (trial, 14/11/2026), tuned for contrast: white on `primary` 6.3:1, `text` on `background`
- * 14:1, `muted` on `background` 5.5:1. Green is the brand on mobile only for now; the web and DESIGN.md still use
- * the mauve palette.
+ * Botanical green palette (14/11/2026), tuned for contrast: white on `primary` 6.3:1, `text` on `background`
+ * 14:1, `muted` on `background` 5.5:1. The web uses the same palette (apps/web/src/styles/theme.css, DESIGN.md) since
+ * 16/11/2026.
  */
 export const colors = {
   /** Main buttons, active tab, links. */
