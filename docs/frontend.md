@@ -261,6 +261,31 @@ Staff và chủ spa giữ `WorkspaceLayout` (sidebar). Không còn dải "Bản 
   - `RevenueByProductTable`: Bảng `DataTable` xếp hạng top sản phẩm theo doanh thu thực tế, phân loại bằng `StatusBadge` (dịch vụ lẻ/gói dịch vụ), số lượng bán và thanh tỷ trọng % mini.
 - **Hooks & API:** `ReportsApi` (`@spa/api-client`), wrappers `callReports`, `callReportsBlob` (`apps/web/src/lib/api/reports.ts`), hooks `useRevenueReport`, `useRevenueByProduct`, `useExportRevenueReport` (`features/reports/hooks/`).
 
+## Đánh giá dịch vụ & Quản lý đánh giá (UC-SPA-29, UC-SPA-30, UC-SPA-31)
+
+- **Đặc tả & Plan:** [docs/specs/reviews.md](specs/reviews.md), [plan](../superpowers/plans/2026-11-16-uc-spa-29-30-31-reviews-web.md).
+- **Không gian công khai (UC-SPA-29: SCR-W03 `/services/:serviceId` & SCR-W05 `/packages/:packageId`):**
+  - Khối `ProductReviewsSection` tích hợp cuối trang chi tiết:
+    - `RatingSummaryCard`: Điểm trung bình (1 số thập phân), tổng số đánh giá, 5 thanh tiến trình tỷ lệ phân bố số sao kèm `role="progressbar"`.
+    - `ReviewRatingFilter`: Các chip lọc đánh giá theo số sao ("Tất cả", "5 sao", ..., "1 sao") kèm số lượng.
+    - `PublicReviewCard`: Thẻ đánh giá hiển thị avatar, họ tên đầy đủ, ngày đánh giá, số sao, nhận xét và ảnh chụp thực tế nếu có; phản hồi chính thức từ chủ Spa.
+    - `ReviewImageDialog`: Modal phóng to ảnh chụp đánh giá từ khách hàng.
+    - Phân trang phân đoạn (trang trước, trang sau, chỉ số trang).
+- **Không gian khách hàng (UC-SPA-30: SCR-W20 `/my-reviews`):**
+  - Nằm trong `AccountLayout` với menu tab đôi:
+    - Tab "Chờ đánh giá": Danh sách `ReviewableProductCard` hiển thị sản phẩm đã trải nghiệm, badge dịch vụ lẻ/gói dịch vụ, nút "Viết đánh giá" (nếu `eligible = true`) hoặc lý do chưa đủ điều kiện (`reason`).
+    - Tab "Đã đánh giá": Danh sách `MyReviewCard` các đánh giá đã gửi, badge trạng thái ("Công khai" / "Đã ẩn"), thông báo hạn sửa 30 ngày (`editDeadlineAtUtc`), nút "Chỉnh sửa" (nếu `canEdit = true`).
+    - `ReviewFormDialog`: Modal tạo mới hoặc chỉnh sửa đánh giá: bộ chọn 1-5 sao kèm nhãn cảm xúc, textarea nhận xét đếm ký tự (tối đa 1000 ký tự), kéo thả tải ảnh `ReviewImagePicker` (JPEG/PNG/WebP, tối đa 5MB) với xem trước tức thì và nút đổi/xóa ảnh.
+- **Không gian quản lý chủ Spa (UC-SPA-31: SCR-W39 `/owner/reviews`):**
+  - Nằm trong `OwnerLayout`:
+    - `OwnerReviewFilterBar`: Thanh công cụ tìm kiếm từ khóa (tên khách hàng, SĐT, nội dung) và các bộ lọc: số sao (1-5), loại sản phẩm (dịch vụ lẻ/gói), trạng thái hiển thị (công khai/đã ẩn), trạng thái phản hồi (đã phản hồi/chưa phản hồi), nút đặt lại bộ lọc.
+    - `OwnerReviewsDataTable`: Bảng `DataTable` 7 cột gồm Khách hàng, Dịch vụ/Gói, Đánh giá & Nhận xét (kèm nút xem ảnh), Phản hồi từ Spa, Ngày gửi, Trạng thái, Thao tác dòng (Phản hồi/Sửa phản hồi, Xóa phản hồi, Ẩn/Hiện đánh giá).
+    - `ReplyReviewDialog`: Modal gửi/chỉnh sửa phản hồi chính thức từ spa (tối đa 1000 ký tự).
+    - `AlertDialog`: Hộp thoại xác nhận trước khi xóa phản hồi.
+- **Hooks & API:**
+  - `packages/api-client`: `ReviewsApi` (`search`, `reply`, `removeReply`, `changeVisibility`), `MyReviewsApi` (`listMine`, `listReviewable`, `create`, `update`, `uploadImage`, `deleteImage`), `ProductReviewsApi` (`listForService`, `listForPackage`).
+  - `apps/web/src/features/reviews/hooks/`: `useProductReviews`, `useReviewableProducts`, `useMyReviews`, `useMyReviewMutations`, `useOwnerReviews`, `useOwnerReviewMutations`.
+
 ## Chạy và kiểm tra
 
 ```powershell
