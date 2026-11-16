@@ -22,6 +22,7 @@ import { colors, radius, spacing, typography } from '@theme/index';
 import { ServiceStepItem } from '../components/ServiceStepItem';
 import { useService } from '../hooks/useService';
 import { useAddToCart } from '@/features/orders';
+import { ProductReviewsSection } from '@/features/reviews';
 
 const FALLBACK_STEPS: ServiceStep[] = [
   {
@@ -243,6 +244,9 @@ export function ServiceDetailScreen() {
               </View>
             </View>
           </View>
+
+          {/* Customer Reviews Section (UC-SPA-29) */}
+          <ProductReviewsSection productId={service.id} productType="service" />
         </View>
       </ScrollView>
 
