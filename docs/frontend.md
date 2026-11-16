@@ -11,6 +11,7 @@ React + Vite + TypeScript strict, UI bằng Tailwind CSS v4 + shadcn/ui ([ADR-00
 - `/services/:serviceId` — Chi tiết dịch vụ
 - `/packages` — Gói dịch vụ
 - `/packages/:packageId` — Chi tiết gói dịch vụ
+- `/about` — Giới thiệu spa
 - `/login` — Đăng nhập
 - `/register` — Đăng ký
 - `/forgot-password` — Quên mật khẩu
@@ -83,6 +84,12 @@ Semantic header/nav/main/footer, skip link, focus visible, label/input error ass
 - **Client:** `lib/api/client.ts` tạo `ApiClient` với `credentials: 'include'`, header `X-Auth-Transport: cookie`, Bearer từ store. Request có Bearer nhận 401 (trừ `/api/v1/auth/*`) thì gọi refresh một lần rồi gửi lại. `lib/api/session.ts` giữ client dùng chung, `refreshSession()` (một request dù nhiều nơi gọi) và `restoreSession()` (chạy khi khởi động, 401 thì thử lại một lần sau 300 ms).
 - **Route:** `RouteGuard` bọc Customer/Staff/Owner: đang khôi phục → `PageLoader`; chưa đăng nhập → `/login?redirect=…` (sau khi tự đăng xuất thì về `/`); sai vai trò → `/forbidden`. `GuestOnly` bọc `/login`, `/register`, `/forgot-password`: đã đăng nhập thì chuyển tới `redirect` an toàn (`safeRedirect`) hoặc trang chủ theo vai trò (`/account`, `/staff`, `/owner`).
 - **Kết thúc phiên:** `SessionBootstrap` xóa cache TanStack Query mỗi khi phiên kết thúc và toast khi phiên hết hạn.
+
+## Giới thiệu spa (UC-SPA-08)
+
+- **Trang:** `/about` (SCR-W06, khách vãng lai và khách hàng), toàn chiều rộng như trang chủ (`PublicLayout` bỏ khung cho `/` và `/about`).
+- **Feature:** `features/about`: `AboutIntro` (câu chuyện + ảnh), `AboutNote` (lời nhắn của spa trên dải màu thương hiệu), `AboutValues` (giá trị + ảnh không gian), `AboutJourney` (5 bước của một buổi chăm sóc), `AboutGallery` (ảnh không gian dạng mosaic), `AboutFaq` (câu hỏi trước buổi đầu, `details` gốc; câu về đặt/đổi lịch lấy số từ `catalogPolicies`), `AboutVisit` (địa chỉ, điện thoại `tel:`, email, giờ mở cửa, bản đồ Google Maps nhúng không cần API key, nút "Liên hệ ngay" và "Chỉ đường"). Dùng lại `TeamSection` (`GET /staff` công khai), `ClosingInvite`, `HomeBackdrop` của trang chủ.
+- **Dữ liệu:** không có API riêng. Thông tin liên hệ ở `config/siteInfo.ts`, câu chuyện, lời nhắn, giá trị, các bước, ảnh và câu hỏi thường gặp ở `features/about/aboutDemoContent.ts`; cả hai đều là **DEMO**, thay bằng nội dung thật của spa trước khi phát hành.
 
 ## Danh mục dịch vụ và gói (UC-SPA-06/07)
 
