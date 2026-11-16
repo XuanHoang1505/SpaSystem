@@ -1,4 +1,5 @@
-import { PlaceholderScreen } from '@components/common/PlaceholderScreen';
+import { StaffScheduleScreen } from '@/features/staff/screens/StaffScheduleScreen';
+
 export default function Screen() {
-  return <PlaceholderScreen title="Lịch làm việc" />;
+  return <StaffScheduleScreen />;
 }

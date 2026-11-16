@@ -27,6 +27,7 @@ export default function StaffLayout() {
           name="schedule"
           options={{
             title: 'Lịch làm việc',
+            headerShown: false,
             tabBarIcon: tabIcon(CalendarDays),
           }}
         />
@@ -43,6 +44,15 @@ export default function StaffLayout() {
           options={{
             title: 'Cá nhân',
             tabBarIcon: tabIcon(User),
+          }}
+        />
+        <Tabs.Screen
+          name="care-history"
+          options={{
+            title: 'Lịch sử chăm sóc',
+            href: null,
+            headerShown: false,
+            tabBarStyle: { display: 'none' },
           }}
         />
       </Tabs>

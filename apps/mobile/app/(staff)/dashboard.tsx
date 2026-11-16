@@ -1,14 +1,5 @@
-import { LogOutButton } from '@features/auth/components/LogOutButton';
-import { WorkspaceOverviewScreen } from '@/screens/WorkspaceOverviewScreen';
+import { StaffDashboardScreen } from '@/features/staff/screens/StaffDashboardScreen';
+
 export default function Screen() {
-  return (
-    <WorkspaceOverviewScreen
-      title="Tổng quan nhân viên"
-      links={[
-        { href: '/(staff)/schedule', title: 'Lịch làm việc' },
-        { href: '/(staff)/bookings', title: 'Lịch hẹn được phân công' },
-      ]}
-      footer={<LogOutButton />}
-    />
-  );
+  return <StaffDashboardScreen />;
 }
