@@ -179,7 +179,177 @@ Tiền tố `/api/v1`, envelope chuẩn. Sửa tại chỗ dòng SPA-API-098–1
 | SCR-W20 / SCR-M17 | Web / Android | `/my-reviews`, `app/(customer)/reviews.tsx`      | Tab "Có thể đánh giá" / "Đã đánh giá"; modal đánh giá kèm ảnh |
 | SCR-W39           | Web           | `/owner/reviews`                                 | DataTable, lọc; modal phản hồi; ẩn/hiện                       |
 
-Giao diện làm sau (spec giao diện bổ sung vào file này khi làm).
+## Giao diện (mobile): UC-SPA-29, UC-SPA-30 — Đánh giá dịch vụ
+
+Phạm vi triển khai trên Mobile Expo:
+1. **UC-SPA-29 — Xem đánh giá:** Khối đánh giá trong màn hình chi tiết dịch vụ (`SCR-M03`, `app/(public)/services/[serviceId].tsx`) và chi tiết gói (`SCR-M05`, `app/(public)/packages/[packageId].tsx`).
+2. **UC-SPA-30 — Đánh giá của tôi:** Màn hình quản lý đánh giá của khách hàng (`SCR-M17`, `app/(customer)/reviews.tsx`) kèm modal gửi và chỉnh sửa đánh giá.
+
+### Kiến trúc & Gói dùng chung
+- Feature code: `apps/mobile/src/features/reviews/`
+  - `components/`:
+    - `ProductReviewsSection.tsx`: Khối đánh giá ghim trong trang chi tiết dịch vụ/gói.
+    - `RatingSummaryCard.tsx`: Thẻ tổng quan điểm trung bình, số sao và biểu đồ phân bổ 1–5 sao.
+    - `ReviewRatingFilter.tsx`: Thanh chip lọc đánh giá theo số sao (Tất cả, 5★, 4★, 3★, 2★, 1★).
+    - `PublicReviewCard.tsx`: Thẻ một đánh giá công khai (sao, tên khách, ngày, nội dung, ảnh thumbnail, phản hồi spa).
+    - `ReviewableProductCard.tsx`: Thẻ sản phẩm chờ đánh giá kèm cờ điều kiện.
+    - `MyReviewCard.tsx`: Thẻ đánh giá khách đã gửi kèm nút sửa khi còn hạn.
+    - `ReviewFormModal.tsx`: Modal tạo mới hoặc chỉnh sửa đánh giá kèm tương tác chọn sao và chọn ảnh.
+    - `ReviewImageModal.tsx`: Modal phóng to xem ảnh trải nghiệm của đánh giá.
+  - `hooks/`:
+    - `useProductReviews.ts`: Query hook lấy danh sách đánh giá của sản phẩm (`ProductReviewsApi.list`).
+    - `useReviewableProducts.ts`: Query hook lấy sản phẩm đủ điều kiện đánh giá (`GET /api/v1/me/reviewable`).
+    - `useMyReviews.ts`: Query hook lấy danh sách đánh giá của tôi (`GET /api/v1/me/reviews`).
+    - `useReviewMutations.ts`: Mutation tạo đánh giá, sửa đánh giá, upload ảnh và xóa ảnh.
+  - `schemas.ts`: Zod schema kiểm thực form đánh giá (`rating` 1–5, `comment` tối đa 1000 ký tự).
+  - `utils/reviewHelpers.ts`: Helper định dạng sao, nhãn đánh giá cảm xúc, kiểm tra thời hạn sửa đánh giá.
+  - `screens/MyReviewsScreen.tsx`: Màn hình SCR-M17.
+  - `index.ts`: Barrel export.
+- Gói `packages/shared-types`: Mở rộng export các kiểu `RatingSummary`, `PublicReview`, `ProductReviews`, `ReviewableProduct`, `MyReview`, `CreateReviewRequest`, `UpdateReviewRequest`.
+- Gói `packages/api-client`: Bổ sung `MyReviewsApi` (các phương thức `/me/reviewable`, `/me/reviews`, upload/delete ảnh) và export `reviewsQueryKeys`.
+- API Wrapper mobile: `apps/mobile/src/lib/api/reviews.ts`.
+
+---
+
+### SCR-M03 / SCR-M05 — Khối Đánh giá trên màn hình Chi tiết Dịch vụ & Gói
+
+- **Mã và route:**
+  - `SCR-M03`: `app/(public)/services/[serviceId].tsx` (Chi tiết dịch vụ).
+  - `SCR-M05`: `app/(public)/packages/[packageId].tsx` (Chi tiết gói).
+- **Vai trò:** Khách vãng lai, Khách hàng (Public - Mọi người).
+- **Mẫu bố cục:** Phân đoạn nội dung chuyên biệt (`ProductReviewsSection`) đặt trong danh sách cuộn (`ScrollView`) của màn chi tiết.
+- **Dữ liệu & Query:**
+  - Endpoint: `GET /api/v1/services/{id}/reviews` hoặc `GET /api/v1/packages/{id}/reviews`.
+  - Query key: `reviewsQueryKeys.product(type, id, { rating, pageNumber, pageSize })`.
+  - Tự động nạp điểm trung bình `averageRating`, tổng số `reviewCount`, và bảng phân bổ `ratingCounts`.
+- **Cấu trúc thành phần:**
+  1. **Khối tóm tắt điểm (`RatingSummaryCard`):**
+     - Điểm số to rõ (ví dụ: `4.9 / 5`), hàng 5 ngôi sao lớn.
+     - Dòng phụ: `Dựa trên {reviewCount} đánh giá từ khách hàng đã trải nghiệm`.
+     - Thanh phân bổ sao (5 thanh ngang cho 5★, 4★, 3★, 2★, 1★) hiển thị phần trăm tỷ lệ trực quan.
+  2. **Thanh lọc số sao (`ReviewRatingFilter`):**
+     - Cuộn ngang các chip: `Tất cả ({total})`, `5 ★ ({n})`, `4 ★ ({n})`, `3 ★ ({n})`, `2 ★ ({n})`, `1 ★ ({n})`.
+     - Đổi lọc đưa `pageNumber` về 1.
+  3. **Danh sách nhận xét (`PublicReviewCard`):**
+     - Họ tên đầy đủ người đánh giá (`reviewerName`, không che theo Q-77).
+     - Hàng sao màu vàng thương hiệu (1–5 sao).
+     - Ngày đánh giá (định dạng `dd/MM/yyyy`).
+     - Nội dung cảm nhận (`comment`).
+     - Ảnh đính kèm: Thumbnail bo góc bo tròn, chạm để xem ảnh lớn toàn màn hình (`ReviewImageModal`).
+     - Phản hồi từ Spa (`ownerReply`): Khối trích dẫn trang trọng với màu nền pastel, huy hiệu "Phản hồi từ Như Nguyệt Spa", ngày phản hồi và nội dung phản hồi của quản trị viên.
+  4. **Nút "Xem thêm đánh giá":**
+     - Hiện khi còn trang tiếp theo (`pageNumber < totalPages`).
+- **Trạng thái:**
+  - Đang tải: Skeleton các thanh sao và thẻ nhận xét.
+  - Lỗi: `ErrorState` có nút "Thử lại".
+  - Rỗng (chưa có đánh giá nào): `EmptyState` nhẹ nhàng: "Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên trải nghiệm dịch vụ!"
+  - Rỗng khi lọc: "Chưa có đánh giá nào {n} sao."
+
+---
+
+### SCR-M17 — Màn hình "Đánh giá của tôi" (`app/(customer)/reviews.tsx`)
+
+- **Mã và route:** `SCR-M17`, `app/(customer)/reviews.tsx`.
+- **Vai trò:** Khách hàng (`RouteGuard role="customer"`).
+- **Điều hướng:** Truy cập từ menu "Đánh giá của tôi" trong `CustomerProfileScreen` (`app/(customer)/profile.tsx`).
+- **Mẫu bố cục:** Màn hình danh sách với thanh 2 tab phân đoạn (Segmented Tabs):
+  - **Tab 1: "Chờ đánh giá" (Reviewable Products)**
+  - **Tab 2: "Đã đánh giá" (My Reviews)**
+
+#### 1. Tab "Chờ đánh giá"
+- **Dữ liệu & Query:**
+  - Endpoint: `GET /api/v1/me/reviewable`.
+  - Query key: `reviewsQueryKeys.reviewable()`.
+- **Thẻ sản phẩm (`ReviewableProductCard`):**
+  - Ảnh đại diện sản phẩm (`imageUrl` hoặc ảnh dự phòng).
+  - Tên dịch vụ hoặc gói liệu trình (`name`).
+  - Badge phân loại: "Dịch vụ lẻ" hoặc "Gói liệu trình".
+  - **Điều kiện và Hành động:**
+    - Nếu `eligible === true`: Nút bấm chính `Viết đánh giá` (kích hoạt `ReviewFormModal` với ID sản phẩm).
+    - Nếu `eligible === false`: Huy hiệu trạng thái và lý do:
+      - `not_used_yet`: "Cần hoàn thành buổi chăm sóc để đánh giá" (Màu xám/muted).
+      - `not_enough_sessions`: "Gói cần sử dụng ít nhất 1 buổi để đánh giá" (Màu xám/muted).
+      - `already_reviewed`: "Đã đánh giá" (Kèm nút bấm chuyển sang tab "Đã đánh giá").
+- **Trạng thái rỗng:**
+  - `EmptyState` với icon ngôi sao: "Chưa có dịch vụ nào cần đánh giá. Sau khi hoàn thành các buổi chăm sóc, bạn có thể gửi nhận xét tại đây."
+
+#### 2. Tab "Đã đánh giá"
+- **Dữ liệu & Query:**
+  - Endpoint: `GET /api/v1/me/reviews`.
+  - Query key: `reviewsQueryKeys.mine({ pageNumber, pageSize })`.
+- **Thẻ đánh giá của tôi (`MyReviewCard`):**
+  - Tên sản phẩm đã đánh giá, ảnh sản phẩm.
+  - Số sao đã chấm (1–5 sao), ngày gửi đánh giá.
+  - Nội dung cảm nhận (`comment`).
+  - Ảnh khách đã tải lên (nếu có).
+  - Badge trạng thái kiểm duyệt:
+    - `visible` → "Đang hiển thị công khai" (tông xanh).
+    - `hidden` → "Tạm ẩn bởi quản trị" (tông xám).
+  - Khối phản hồi từ Spa (`ownerReply` và ngày `repliedAtUtc`) nếu chủ spa đã phản hồi.
+  - **Hành động chỉnh sửa:**
+    - Cờ `canEdit`: Nếu `canEdit === true` (trong vòng 30 ngày và spa chưa phản hồi theo BR-REV-04), hiển thị nút `Chỉnh sửa đánh giá`.
+    - Dòng thông tin phụ: "Có thể chỉnh sửa đến {editDeadlineAtUtc} (khi spa chưa phản hồi)".
+    - Nếu `canEdit === false`: Không hiển thị nút sửa; nếu đã có phản hồi, hiển thị thông báo "Đánh giá đã được spa phản hồi và ghi nhận".
+- **Trạng thái rỗng:**
+  - `EmptyState`: "Bạn chưa gửi đánh giá nào. Hãy trải nghiệm dịch vụ và chia sẻ cảm nhận nhé!"
+
+---
+
+### Modal biểu mẫu đánh giá (`ReviewFormModal`)
+
+- **Bố cục:** Modal BottomSheet / Dialog tương tác mượt mà:
+  - Header: Tiêu đề ("Viết đánh giá" hoặc "Chỉnh sửa đánh giá"), tên sản phẩm.
+  - Nút đóng `X` ở góc trên phải.
+- **Trường nhập liệu & Tương tác:**
+  1. **Chọn số sao (Rating Picker):**
+     - 5 ngôi sao lớn (kích thước 40dp, vùng chạm tối thiểu 48dp).
+     - Nhãn cảm xúc tương ứng:
+       - 1 sao: `Rất không hài lòng`
+       - 2 sao: `Chưa hài lòng`
+       - 3 sao: `Bình thường`
+       - 4 sao: `Hài lòng`
+       - 5 sao: `Tuyệt vời, rất hài lòng!`
+  2. **Nội dung nhận xét (`comment`):**
+     - TextInput nhiều dòng (minHeight: 100dp), đếm ký tự thực tế `{comment.length} / 1000`.
+     - Placeholder: "Chia sẻ cảm nhận của bạn về hiệu quả liệu trình, thái độ nhân viên và không gian spa..."
+  3. **Đính kèm ảnh thực tế (`Image Picker`):**
+     - Chọn ảnh từ thiết bị qua `expo-image-picker` (`launchImageLibraryAsync`).
+     - Tối đa 1 ảnh (chuẩn BR-REV-07).
+     - Xem trước ảnh thumbnail với nút xóa ảnh `X`.
+- **Hành động & Mutation:**
+  - **Tạo mới:**
+    - Bước 1: Gọi `POST /api/v1/me/reviews` `{ spaServiceId? | servicePackageId?, rating, comment? }`.
+    - Bước 2: Nếu có chọn ảnh, gọi `POST /api/v1/me/reviews/{id}/image` (multipart).
+  - **Chỉnh sửa:**
+    - Bước 1: Gọi `PUT /api/v1/me/reviews/{id}` `{ rating, comment? }`.
+    - Bước 2: Nếu ảnh đổi mới → `POST /api/v1/me/reviews/{id}/image`; nếu người dùng xóa ảnh cũ → `DELETE /api/v1/me/reviews/{id}/image`.
+  - **Sau khi thành công:**
+    - Đóng modal, hiển thị Alert/Toast thông báo thành công.
+    - Làm mới cache: `reviewsQueryKeys.mine()`, `reviewsQueryKeys.reviewable()`, `reviewsQueryKeys.product(...)`.
+- **Xử lý lỗi từ Backend (`ApiClientError.errors[].code`):**
+  - `review_not_eligible` → Toast báo: "Bạn chưa đủ điều kiện để đánh giá sản phẩm này."
+  - `review_exists` → Toast báo: "Bạn đã đánh giá sản phẩm này rồi. Vui lòng kiểm tra tab Đã đánh giá."
+  - `review_locked` → Toast báo: "Đánh giá đã quá hạn 30 ngày hoặc đã được spa phản hồi, không thể sửa."
+  - `validation_error` → Báo lỗi validate ngay dưới trường sao hoặc nội dung.
+
+---
+
+### Bảng Kiểm thử Giao diện (Mobile UI Test Cases)
+
+| Mã | Tình huống kiểm thử | Kết quả mong đợi |
+| :--- | :--- | :--- |
+| **REV-M-UI-T01** | SCR-M03/M05: Khối đánh giá nạp tóm tắt điểm và phân bố sao | Render số sao trung bình `4.9`, tổng đánh giá và 5 thanh tỷ lệ |
+| **REV-M-UI-T02** | SCR-M03/M05: Chuyển chip lọc sao (5★, 4★, v.v.) | Query params gửi `rating = 5`, danh sách cập nhật chỉ còn đánh giá 5★ |
+| **REV-M-UI-T03** | SCR-M03/M05: Sản phẩm chưa có đánh giá nào | Hiển thị `EmptyState` "Chưa có đánh giá nào" |
+| **REV-M-UI-T04** | SCR-M03/M05: Đánh giá có phản hồi từ Spa | Hiển thị trọn vẹn khối phản hồi `ownerReply` và ngày `repliedAtUtc` |
+| **REV-M-UI-T05** | SCR-M17: Tab "Chờ đánh giá" hiển thị đúng sản phẩm | Sản phẩm đủ điều kiện hiện nút "Viết đánh giá", chưa đủ hiện lý do `reason` |
+| **REV-M-UI-T06** | SCR-M17: Tab "Đã đánh giá" hiển thị danh sách đánh giá | Hiển thị tên sản phẩm, số sao, nhận xét, badge `visible`/`hidden` |
+| **REV-M-UI-T07** | SCR-M17: Quyền sửa đánh giá (`canEdit`) | Chỉ hiện nút "Chỉnh sửa" khi `canEdit = true`; ẩn nút khi `canEdit = false` |
+| **REV-M-UI-T08** | Modal: Tương tác chọn số sao 1..5 | Bấm sao cập nhật giá trị và nhãn cảm xúc tương ứng |
+| **REV-M-UI-T09** | Modal: Kiểm thực form đánh giá | Bắt buộc chọn ít nhất 1 sao; chặn gửi khi vượt quá 1000 ký tự |
+| **REV-M-UI-T10** | Modal: Gửi đánh giá mới thành công | Gọi `POST /me/reviews` (kèm ảnh nếu có), đóng modal, làm mới danh sách |
+| **REV-M-UI-T11** | Modal: Bắt lỗi nghiệp vụ backend | Bắt chính xác mã lỗi `review_locked`, `review_exists`, `review_not_eligible` |
+| **REV-M-UI-T12** | SCR-M17: Khách vãng lai truy cập | `RouteGuard` chuyển hướng về màn hình đăng nhập |
 
 ## Cấu hình
 

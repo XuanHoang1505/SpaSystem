@@ -21,6 +21,7 @@ import { colors, radius, spacing, typography } from '@theme/index';
 import { PackageRoadmapItem } from '../components/PackageRoadmapItem';
 import { usePackage } from '../hooks/usePackage';
 import { useAddToCart } from '@/features/orders';
+import { ProductReviewsSection } from '@/features/reviews';
 
 export function PackageDetailScreen() {
   const { packageId } = useLocalSearchParams<{ packageId: string }>();
@@ -206,6 +207,9 @@ export function PackageDetailScreen() {
               </View>
             </View>
           </View>
+
+          {/* Customer Reviews Section (UC-SPA-29) */}
+          <ProductReviewsSection productId={pkg.id} productType="package" />
         </View>
       </ScrollView>
 

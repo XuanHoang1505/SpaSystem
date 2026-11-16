@@ -28,6 +28,8 @@ export default function RootLayout() {
         <Stack.Screen name="treatment" options={{ headerShown: false }} />
         <Stack.Screen name="account" options={{ headerShown: false }} />
         <Stack.Screen name="password" options={{ headerShown: false }} />
+        <Stack.Screen name="reviews" options={{ headerShown: false }} />
+        <Stack.Screen name="my-reviews" options={{ headerShown: false }} />
       </Stack>
     </AppProviders>
   );
