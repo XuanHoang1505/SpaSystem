@@ -21,6 +21,7 @@ import { MyAppointmentsPage } from '@/pages/customer/MyAppointmentsPage';
 import { MyOrdersPage } from '@/pages/customer/MyOrdersPage';
 import { MyPackageDetailPage } from '@/pages/customer/MyPackageDetailPage';
 import { MyPackagesPage } from '@/pages/customer/MyPackagesPage';
+import { MyReviewsPage } from '@/pages/customer/MyReviewsPage';
 import { MyServiceHistoryPage } from '@/pages/customer/MyServiceHistoryPage';
 import { MyTreatmentPlanDetailPage } from '@/pages/customer/MyTreatmentPlanDetailPage';
 import { MyTreatmentPlansPage } from '@/pages/customer/MyTreatmentPlansPage';
@@ -39,6 +40,7 @@ import { StaffCertificationsPage } from '@/pages/staff/StaffCertificationsPage';
 import { StaffSchedulePage } from '@/pages/staff/StaffSchedulePage';
 import { OwnerTreatmentsPage } from '@/pages/owner/OwnerTreatmentsPage';
 import { OwnerReportsPage } from '@/pages/owner/OwnerReportsPage';
+import { OwnerReviewsPage } from '@/pages/owner/OwnerReviewsPage';
 import { AboutPage } from '@/pages/public/AboutPage';
 import { HomePage } from '@/pages/public/HomePage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
@@ -119,6 +121,7 @@ export const customerPages: Record<string, ReactElement> = {
   '/my-history': <MyServiceHistoryPage />,
   '/my-packages': <MyPackagesPage />,
   '/my-packages/:packageId': <MyPackageDetailPage />,
+  '/my-reviews': <MyReviewsPage />,
   '/ai-assistant': <AiAssistantRoute />,
 };
 
@@ -140,6 +143,7 @@ export const ownerPages: Record<string, ReactElement> = {
   '/owner/packages': <OwnerPackagesPage />,
   '/owner/promotions': <OwnerPromotionsPage />,
   '/owner/orders': <OwnerOrdersPage />,
+  '/owner/reviews': <OwnerReviewsPage />,
   '/owner/treatments': <OwnerTreatmentsPage />,
   '/owner/reports': <OwnerReportsPage />,
   '/owner/accounts': <OwnerAccountsPage />,

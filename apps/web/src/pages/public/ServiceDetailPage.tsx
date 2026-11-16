@@ -3,6 +3,7 @@ import { NextAvailableSlots } from '@/features/bookings';
 import { PackagesWithService } from '@/features/service-packages';
 import { ServiceDetailView } from '@/features/services';
 import { ServiceStaffList } from '@/features/staff';
+import { ProductReviewsSection } from '@/features/reviews';
 
 export function ServiceDetailPage() {
   const { serviceId = '' } = useParams();
@@ -17,6 +18,7 @@ export function ServiceDetailPage() {
         <>
           <ServiceStaffList serviceId={service.id} />
           <PackagesWithService serviceId={service.id} />
+          <ProductReviewsSection productId={service.id} productType="service" />
         </>
       )}
     />

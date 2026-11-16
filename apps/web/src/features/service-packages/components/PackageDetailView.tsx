@@ -29,6 +29,7 @@ import { usePackage } from '../hooks/usePackage';
 import { PackageTimeline } from './PackageTimeline';
 import { PackageUsageSteps } from './PackageUsageSteps';
 import { RelatedPackages } from './RelatedPackages';
+import { ProductReviewsSection } from '@/features/reviews';
 
 /** "Mở bán từ …", "Mở bán đến …" hoặc "Mở bán … – …"; không có ngày nào → undefined (ẩn dòng). */
 function saleWindow({ saleStartDate, saleEndDate }: PackageDetail) {
@@ -283,6 +284,8 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
               </div>
             </aside>
           </div>
+
+          <ProductReviewsSection productId={pkg.id} productType="package" />
 
           <RelatedPackages excludeId={pkg.id} />
           <CatalogFaq kind="package" />

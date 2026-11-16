@@ -67,6 +67,7 @@ const icons: Record<string, LucideIcon> = {
   '/owner/promotions': TagIcon,
   '/owner/treatments': CalendarClockIcon,
   '/owner/orders': ReceiptTextIcon,
+  '/owner/reviews': StarIcon,
   '/owner/accounts': UserCogIcon,
   '/owner/reports': BarChart3Icon,
 };
