@@ -50,7 +50,7 @@ Danh sách **đầy đủ từng cột** của mọi bảng (kiểu PostgreSQL, 
 | _(đề xuất)_ RefreshToken | `RefreshToken`        | `refresh_tokens`        | `Auth`                        | `auth`                   | `/auth/refresh`                                          |
 | _(đề xuất)_ ThongTinSpa  | `SpaProfile`          | `spa_profiles`          | `Services`                    | `services`               | `/spa-info`                                              |
 
-Dịch vụ, gói và chi tiết gói dùng chung thư mục backend `Catalog` (UC-SPA-06, 07, 09 tìm kiếm và quản lý cả hai cùng lúc). Thư mục `Orders`, `Purchases` (UC-SPA-18, 30/10/2026; lịch sử sử dụng UC-SPA-20 `ServiceHistoryService`, 31/10/2026), `Care` (UC-SPA-27, 28, 31/10/2026), `Treatments` (UC-SPA-19, 21, 31/10/2026) `Reports` (UC-SPA-33, 01/11/2026, chỉ đọc) và `AiAssistant` (UC-SPA-32, 02/11/2026; port `IAiChatModel` ở `Interfaces/Ai`, adapter `Infrastructure/Ai`) đã có; `Notifications` chưa có trong skeleton, tạo khi làm tính năng đầu tiên của nhóm đó. Danh sách lịch được phân công của nhân viên (UC-SPA-25) nằm ở thư mục `Staff` (`AssignedAppointmentService`).
+Dịch vụ, gói và chi tiết gói dùng chung thư mục backend `Catalog` (UC-SPA-06, 07, 09 tìm kiếm và quản lý cả hai cùng lúc). Thư mục `Orders`, `Purchases` (UC-SPA-18, 30/10/2026; lịch sử sử dụng UC-SPA-20 `ServiceHistoryService`, 31/10/2026), `Care` (UC-SPA-27, 28, 31/10/2026), `Treatments` (UC-SPA-19, 21, 31/10/2026) `Reports` (UC-SPA-33, 01/11/2026, chỉ đọc) và `AiAssistant` (UC-SPA-32, 02/11/2026; port `IAiChatModel` ở `Interfaces/Ai`, adapter `Infrastructure/Ai`) đã có; `Notifications` (UC-SPA-34, 16/11/2026: xem thông báo, `NotificationPublisher` phát sinh thông báo từ các nghiệp vụ, job nhắc lịch, hub SignalR `/hubs/notifications`). Danh sách lịch được phân công của nhân viên (UC-SPA-25) nằm ở thư mục `Staff` (`AssignedAppointmentService`).
 
 ## Thuộc tính hay gặp
 
@@ -105,6 +105,7 @@ C# dùng PascalCase; CSDL và JSON lưu chuỗi `snake_case`.
 | `AllergySeverity`                 | Nhe → `Mild`, TrungBinh → `Moderate`, Nang → `Severe`                                                                                                                         |
 | `ReviewStatus`                    | HienThi → `Visible`, An → `Hidden`                                                                                                                                            |
 | `NotificationType`                | LichHen → `Appointment`, ThanhToan → `Payment`, LieuTrinh → `Treatment`, KhuyenMai → `Promotion`, HeThong → `System`                                                          |
+| `NotificationReferenceType`       | (ĐX, UC-SPA-34) đối tượng thông báo trỏ tới: `Appointment`, `Order`, `TreatmentPlan`, `Review`, `WorkSchedule`                                                                |
 
 ## Thuật ngữ nghiệp vụ
 

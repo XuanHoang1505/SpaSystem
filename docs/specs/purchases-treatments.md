@@ -353,7 +353,7 @@ Unit test hàm trạng thái hiệu lực và `nextSession`/`canBook` (đồng h
 | TRT-LATER-02 | ~~`GET /me/treatments`, `/me/treatments/{id}`~~ — làm trong đợt 2 (UC-SPA-19)                                                                                                        | ✔ đợt 2                                |
 | TRT-LATER-03 | shared-types, api-client, màn hình SCR-W16, SCR-M14, SCR-M10, SCR-W17, SCR-M13, SCR-W18, SCR-M21, SCR-W29, SCR-W36                                                                   | Đợt FE                                 |
 | TRT-LATER-04 | `GET /customers/{id}/care-history` (lịch sử chăm sóc mọi lần của một khách, kể cả dịch vụ lẻ) — SPA-API-088                                                                          | UC-SPA-26 (CARE-LATER-01)              |
-| TRT-LATER-05 | Hoàn tiền/bù buổi khi hủy liệu trình; thông báo cho khách khi liệu trình tạm dừng/hủy (BR-NTF)                                                                                       | UC-SPA-13, 34                          |
+| TRT-LATER-05 | ~~Hoàn tiền/bù buổi khi hủy liệu trình; thông báo cho khách khi liệu trình tạm dừng/hủy (BR-NTF)~~ Đã làm ở UC-SPA-34 (16/11/2026, phần thông báo; xem notifications.md)             | UC-SPA-13, 34                          |
 | TRT-LATER-06 | Đánh giá từ lịch sử sử dụng (SCR-W18 "Đánh giá", `hasReview`)                                                                                                                        | UC-SPA-30                              |
 
 ## Giao diện (web): UC-SPA-18 (kèm chi tiết gói và nhật ký liệu trình)

@@ -72,7 +72,7 @@ BRS = [
  ("BR-RPT-03","Báo cáo","Khoảng thời gian","[fromDate, toDate] theo ngày VN gồm hai đầu, tối đa Reports:MaxRangeYears (5) năm, ngày trong năm 2000–2100; bỏ trống → đầu năm đến hôm nay; trả đủ mọi kỳ, kỳ đầu/cuối cắt theo khoảng; nhãn MM/yyyy, Qn/yyyy, yyyy","Application","UC-SPA-33","ĐX (Q-49)"),
  ("BR-RPT-04","Báo cáo","Theo sản phẩm","Gom theo dịch vụ/gói, tên hiện tại, quantity = số dòng đơn, sắp doanh thu giảm dần rồi tên, top mặc định 10, tối đa Reports:MaxTopProducts (50); sharePercent 1 chữ số","Query","UC-SPA-33","DA (SCR-W38) + ĐX"),
  ("BR-RPT-05","Báo cáo","Xuất Excel","File .xlsx cùng số liệu và kiểm tra tham số với báo cáo theo kỳ; 3 sheet Tổng quan, Theo kỳ, Theo sản phẩm (mọi sản phẩm); số tiền kiểu số #,##0","Application + Infrastructure","UC-SPA-33","DA (FL-06) + ĐX (Q-48)"),
- ("BR-NTF-01","Thông báo","Sự kiện tạo thông báo","Đặt/đổi/hủy/xác nhận lịch, thanh toán thành công, nhắc lịch trước giờ hẹn (email hoặc thông báo), phân công lịch cho nhân viên; DocLuc null = chưa đọc","Application + Job","UC-SPA-34","DA (Mở đầu: email/thông báo nhắc lịch)"),
+ ("BR-NTF-01","Thông báo","Sự kiện tạo thông báo","Danh mục NTF-E01..E14 (docs/specs/notifications.md): đặt/đổi/hủy/xác nhận lịch, thanh toán thành công, chủ spa hủy đơn, nhắc lịch trước giờ hẹn (24 giờ, chỉ trong ứng dụng, Q-81), phân công lịch/ca cho nhân viên, hoàn thành buổi, phản hồi đánh giá, đổi trạng thái liệu trình; lưu cùng transaction với nghiệp vụ, đẩy realtime sau commit (Q-83); DocLuc null = chưa đọc","Application + Job","UC-SPA-34","DA (Mở đầu: email/thông báo nhắc lịch) + ĐX (Q-80)"),
  ("BR-SEC-01","Bảo mật","Phạm vi dữ liệu","Khách hàng chỉ dữ liệu của mình; nhân viên chỉ lịch được phân công/khách đã chăm sóc/liệu trình phụ trách; chủ spa toàn quyền. Kiểm tra ở API, không dựa vào FE","API Authorization","Tất cả","DA (phân quyền theo vai trò)"),
 ]
 
@@ -220,7 +220,7 @@ RBAC = [
  ("review.manage","Phản hồi, ẩn đánh giá","UC-SPA-31","","","","✓"),
  ("ai.chat","Trò chuyện với trợ lý AI","UC-SPA-32","✓ (không lưu lịch sử, Q-01)","✓","",""),
  ("report.view","Thống kê báo cáo doanh thu","UC-SPA-33","","","","✓"),
- ("notification.self","Xem thông báo","UC-SPA-34","","✓","✓","(DA chưa liệt kê)"),
+ ("notification.self","Xem thông báo của chính mình, nhận realtime","UC-SPA-34","","✓","✓","✓ (RS-13, Q-79)"),
 ]
 
 UAT = [

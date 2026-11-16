@@ -272,10 +272,13 @@ TABLES = [
   "created_at_utc|timestamptz|N||Thời điểm ghi nhận|ThoiGian"]),
  ("NTF","notifications","Notification","ThongBao","Thông báo gửi đến người dùng",DA,"Sprint 3",[
   "id|uuid|N|PK|Mã thông báo|Id",
-  "user_id|uuid|N|FK → users.id|Người nhận|IdNguoiDung",
+  "user_id|uuid|N|FK → users.id; IDX (user_id, created_at_utc DESC); IDX (user_id) khi read_at_utc null|Người nhận|IdNguoiDung",
   "title|varchar(200)|N||Tiêu đề|TieuDe",
   "body|text|N||Nội dung|NoiDung",
   "type|varchar(30)|N|CHECK enum NotificationType|Nhóm thông báo|Loai",
+  "reference_type|varchar(30)|Y|CHECK enum NotificationReferenceType|Loại đối tượng liên quan (ĐX, UC-SPA-34)|",
+  "reference_id|uuid|Y|CHECK num_nonnulls(reference_type, reference_id) <> 1|Mã đối tượng liên quan, không FK vì đa hình (ĐX)|",
+  "dedup_key|varchar(150)|Y|UQ (user_id, dedup_key) khi khác null|Khóa chống trùng, ví dụ nhắc lịch (ĐX, BR-NTF-06)|",
   "read_at_utc|timestamptz|Y||Thời điểm đọc (null = chưa đọc)|DocLuc",
   "created_at_utc|timestamptz|N||Thời điểm tạo|NgayTao"]),
  # ----- Đề xuất bổ sung
@@ -327,6 +330,7 @@ ENUMS = [
  ("customer_allergies","severity","AllergySeverity",[("Nhe","Mild","mild"),("TrungBinh","Moderate","moderate"),("Nang","Severe","severe")],""),
  ("reviews","status","ReviewStatus",[("HienThi","Visible","visible"),("An","Hidden","hidden")],""),
  ("notifications","type","NotificationType",[("LichHen","Appointment","appointment"),("ThanhToan","Payment","payment"),("LieuTrinh","Treatment","treatment"),("KhuyenMai","Promotion","promotion"),("HeThong","System","system")],""),
+ ("notifications","reference_type","NotificationReferenceType",[("(đề xuất)","Appointment","appointment"),("(đề xuất)","Order","order"),("(đề xuất)","TreatmentPlan","treatment_plan"),("(đề xuất)","Review","review"),("(đề xuất)","WorkSchedule","work_schedule")],"Đối tượng thông báo trỏ tới (UC-SPA-34)"),
  ("otp_codes","purpose","OtpPurpose",[("(đề xuất)","Registration","registration"),("(đề xuất)","PasswordReset","password_reset")],""),
 ]
 

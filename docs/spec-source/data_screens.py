@@ -67,7 +67,7 @@ SCREENS = [
  ("SCR-M19","Android","Customer (ẩn tab)","—","Giỏ hàng & thanh toán","app/(customer)/cart.tsx, checkout.tsx",NEW,"Danh sách + WebBrowser cổng","—","—","Tổng tiền","Xóa; Áp mã; Thanh toán (deep-link về app)","—","UC-SPA-10, 11","CUS","Sprint 2"),
  ("SCR-M20","Android","Customer (ẩn tab)","—","Đơn hàng của tôi","app/(customer)/orders/index.tsx, [orderId].tsx",NEW,"Danh sách","—","—","Mã; Tổng; Trạng thái","Thanh toán lại; Hủy","—","UC-SPA-12","CUS","Sprint 2"),
  ("SCR-M21","Android","Customer (ẩn tab)","—","Lịch sử sử dụng","app/(customer)/history.tsx",NEW,"Danh sách","—","—","Ngày; Dịch vụ","Xem","—","UC-SPA-20","CUS","Sprint 2"),
- ("SCR-M22","Android","Customer / Staff","—","Thông báo","app/(customer)/notifications.tsx, app/(staff)/notifications.tsx",NEW,"Danh sách","—","—","Tiêu đề; Thời gian","Mở","—","UC-SPA-34","CUS, STF","Sprint 3"),
+ ("SCR-M22","Android","Customer / Staff","—","Thông báo","app/notifications.tsx",NEW,"Danh sách","—","—","Tiêu đề; Thời gian","Mở","—","UC-SPA-34","CUS, STF","Sprint 3"),
  ("SCR-M23","Android","Staff Stack","—","Tổng quan nhân viên","app/(staff)/dashboard.tsx",HAS,"Thẻ hôm nay","—","—","Ca; Lịch hẹn","Mở lịch","—","UC-SPA-24, 25","STF","Sprint 2"),
  ("SCR-M24","Android","Staff Stack","—","Lịch làm việc","app/(staff)/schedule.tsx",HAS,"Lịch tuần","—","—","Ca","—","—","UC-SPA-24","STF","Sprint 2"),
  ("SCR-M25","Android","Staff Stack","—","Lịch hẹn được phân công","app/(staff)/bookings/index.tsx",HAS,"Danh sách","—","Ngày; Trạng thái","Giờ; Khách; Dịch vụ","Mở","—","UC-SPA-25","STF","Sprint 2"),

@@ -553,7 +553,7 @@ Unit (Application, NSubstitute, đồng hồ giả) và integration (`PostgresFi
 
 ## Việc để sau
 
-- REV-LATER-01: thông báo cho khách khi spa phản hồi, và mời đánh giá sau khi hoàn thành buổi (UC-SPA-34, CARE-LATER-02).
+- ~~REV-LATER-01: thông báo cho khách khi spa phản hồi, và mời đánh giá sau khi hoàn thành buổi (UC-SPA-34, CARE-LATER-02).~~ Đã làm ở UC-SPA-34 (16/11/2026).
 - REV-LATER-02: `reviewId`/`canReview` trong lịch sử sử dụng dịch vụ (`/me/service-history`, UC-SPA-20).
 - REV-LATER-03: điểm đánh giá trong thẻ sản phẩm của trợ lý AI (`search_catalog`, `get_product_detail`).
 - REV-LATER-04: giao diện web (SCR-W03/W05 mục đánh giá, SCR-W20, SCR-W39) và mobile (SCR-M03/M05, SCR-M17).

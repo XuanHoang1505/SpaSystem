@@ -27,6 +27,8 @@ BaseEntity chỉ có Guid identity. BaseAuditableEntity thêm UTC timestamps và
 
 Exception middleware: Validation/BusinessRule 400, NotFound 404, Conflict 409, Unauthorized 401, unexpected 500. ILogger ghi log với trace ID; client không nhận exception stack hoặc nội dung exception bất ngờ. Thông báo Domain exception dành cho client; không đưa secret/nội dung hạ tầng vào Domain exception. Model binding và API 404 cũng dùng envelope thống nhất. Health checks có contract riêng `{status}` và chỉ kiểm tra tiến trình.
 
+Thông báo realtime (UC-SPA-34, [spec](specs/notifications.md)): nghiệp vụ thêm dòng `notifications` vào cùng unit of work qua `INotificationPublisher`; interceptor EF trong Infrastructure (`NotificationSaveInterceptor` khi không có transaction, `NotificationTransactionInterceptor` khi transaction commit) gọi port `INotificationRealtime` **sau khi commit**, rollback thì bỏ. Adapter SignalR (`SignalRNotificationRealtime`, hub `/hubs/notifications`) nằm ở API vì cần ASP.NET Core; host khác dùng bản không làm gì. Hub chỉ đẩy server → client, một phiên bản API (chưa có Redis backplane). Job nền thứ hai `AppointmentReminderJob` theo mẫu `OrderExpiryJob`.
+
 ## Tham khảo FIXY
 
 Đã đọc FIXY.sln, Program, controller base, middleware, API extensions, Application Common/DTO/interfaces/validators, Domain Common/entity/enum, Infrastructure DI/persistence/repository/service và CODING_GUIDE theo chế độ chỉ đọc. Giữ ý tưởng chia layer, DI extensions, nhóm module, PascalCase và controller helper. Không sao chép entity, migration hoặc nghiệp vụ.

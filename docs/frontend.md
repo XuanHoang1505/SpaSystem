@@ -33,10 +33,12 @@ React + Vite + TypeScript strict, UI bằng Tailwind CSS v4 + shadcn/ui ([ADR-00
 - `/my-packages/:packageId` — Chi tiết gói của tôi
 - `/my-reviews` — Đánh giá
 - `/ai-assistant` — Trợ lý AI
+- `/notifications` — Thông báo (SCR-W23, `features/notifications`: chuông header + trang xem danh sách, lọc Tất cả/Chưa đọc, realtime SignalR)
 
 ### staff
 
 - `/staff` — Tổng quan nhân viên
+- `/staff/notifications` — Thông báo nhân viên (SCR-W23)
 - `/staff/schedule` — Lịch làm việc (SCR-W25, `features/staff/components/my-schedule`: lưới tuần/tháng, `?view=week|month&date=`, Sheet chi tiết ca)
 - `/staff/bookings` — Lịch hẹn được phân công (SCR-W26, `features/care`: tab Hôm nay/Sắp tới/Đã xong, lọc khoảng ngày ≤ 42 ngày và trạng thái trên URL)
 - `/staff/bookings/:appointmentId` — Chi tiết buổi chăm sóc (SCR-W27: dị ứng nổi bật, tab Khách & dị ứng / Hồ sơ da / Kết quả buổi, xác nhận hoàn thành)
@@ -55,6 +57,7 @@ React + Vite + TypeScript strict, UI bằng Tailwind CSS v4 + shadcn/ui ([ADR-00
 - `/owner/orders` — Đơn hàng (UC-SPA-13; thay route placeholder `/owner/payments`)
 - `/owner/reports` — Báo cáo
 - `/owner/accounts` — Tài khoản người dùng (SCR-W40, UC-SPA-05, `features/users/components/owner`: DataTable phân trang server, lọc vai trò/trạng thái, Sheet chi tiết, sửa họ tên/ngày sinh/giới tính, khóa/mở khóa)
+- `/owner/notifications` — Thông báo quản trị (SCR-W23)
 
 - `/forbidden` — Không có quyền truy cập.
 - `*` — Không tìm thấy trang.
