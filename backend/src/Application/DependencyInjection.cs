@@ -1,11 +1,13 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NhuNguyetSpa.Application.Common.Storage;
 using NhuNguyetSpa.Application.Interfaces.Services.AiAssistant;
 using NhuNguyetSpa.Application.Interfaces.Services.Auth;
 using NhuNguyetSpa.Application.Interfaces.Services.Bookings;
 using NhuNguyetSpa.Application.Interfaces.Services.Care;
 using NhuNguyetSpa.Application.Interfaces.Services.Catalog;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
 using NhuNguyetSpa.Application.Interfaces.Services.Orders;
 using NhuNguyetSpa.Application.Interfaces.Services.Payments;
 using NhuNguyetSpa.Application.Interfaces.Services.Purchases;
@@ -21,6 +23,7 @@ using NhuNguyetSpa.Application.UseCases.Auth;
 using NhuNguyetSpa.Application.UseCases.Bookings;
 using NhuNguyetSpa.Application.UseCases.Care;
 using NhuNguyetSpa.Application.UseCases.Catalog;
+using NhuNguyetSpa.Application.UseCases.Notifications;
 using NhuNguyetSpa.Application.UseCases.Orders;
 using NhuNguyetSpa.Application.UseCases.Payments;
 using NhuNguyetSpa.Application.UseCases.Promotions;
@@ -43,6 +46,11 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<INotificationPublisher, NotificationPublisher>();
+        services.AddScoped<IMyNotificationService, MyNotificationService>();
+        services.AddScoped<IAppointmentReminderService, AppointmentReminderService>();
+        // The API swaps in SignalR (BR-NTF-09); other hosts push nothing.
+        services.TryAddSingleton<INotificationRealtime, NullNotificationRealtime>();
         services.AddScoped<CatalogViewer>();
         services.AddScoped<CatalogRatings>();
         services.AddScoped<IProductReviewService, ProductReviewService>();
