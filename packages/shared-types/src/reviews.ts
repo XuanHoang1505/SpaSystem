@@ -86,3 +86,53 @@ export interface UpdateReviewRequest {
   rating: number;
   comment?: string | null;
 }
+
+/** UC-SPA-31: Customer info in owner's review list. */
+export interface OwnerReviewCustomer {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+}
+
+/** UC-SPA-31: A review in the owner's list (`GET /reviews`). */
+export interface OwnerReview {
+  id: string;
+  productType: 'service' | 'package';
+  productId: string;
+  productName: string;
+  customer: OwnerReviewCustomer;
+  rating: number;
+  comment: string | null;
+  imageUrl: string | null;
+  status: ReviewStatus;
+  ownerReply: string | null;
+  repliedAtUtc: string | null;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
+}
+
+/** Filters of `GET /reviews` (UC-SPA-31). */
+export interface OwnerReviewFilter {
+  rating?: number;
+  productType?: 'service' | 'package';
+  spaServiceId?: string;
+  servicePackageId?: string;
+  status?: ReviewStatus;
+  hasReply?: boolean;
+  fromDate?: string;
+  toDate?: string;
+  search?: string;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+/** Body of `POST /reviews/{id}/reply` (UC-SPA-31). */
+export interface ReplyReviewRequest {
+  reply: string;
+}
+
+/** Body of `PATCH /reviews/{id}/visibility` (UC-SPA-31). */
+export interface ChangeReviewVisibilityRequest {
+  status: ReviewStatus;
+}

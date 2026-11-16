@@ -8,6 +8,10 @@ import type {
   MyReviewParams,
   CreateReviewRequest,
   UpdateReviewRequest,
+  OwnerReview,
+  OwnerReviewFilter,
+  ReplyReviewRequest,
+  ChangeReviewVisibilityRequest,
 } from '@spa/shared-types';
 import type { ApiClient, RequestOptions } from './index';
 
@@ -30,6 +34,7 @@ export const reviewsQueryKeys = {
   reviewable: () => ['reviews', 'me', 'reviewable'] as const,
   mine: (params: MyReviewParams = {}) => ['reviews', 'me', 'list', params] as const,
   detail: (id: string) => ['reviews', 'me', 'detail', id] as const,
+  owner: (filter: OwnerReviewFilter = {}) => ['reviews', 'owner', 'list', filter] as const,
 };
 
 /** UC-SPA-29: the visible reviews of one service or package, for everyone (no sign-in needed). */
@@ -100,5 +105,51 @@ export class MyReviewsApi {
 
   deleteImage(id: string, options?: RequestOptions): Promise<void> {
     return this.client.delete<void>(`/api/v1/me/reviews/${encodeURIComponent(id)}/image`, options);
+  }
+}
+
+/** UC-SPA-31: Owner reviews management. */
+export class ReviewsApi {
+  constructor(private readonly client: ApiClient) {}
+
+  search(
+    filter: OwnerReviewFilter = {},
+    options?: RequestOptions,
+  ): Promise<ApiResponse<PagedResponse<OwnerReview>>> {
+    return this.client.get<ApiResponse<PagedResponse<OwnerReview>>>('/api/v1/reviews', {
+      query: { ...filter },
+      ...options,
+    });
+  }
+
+  reply(
+    id: string,
+    body: ReplyReviewRequest,
+    options?: RequestOptions,
+  ): Promise<ApiResponse<OwnerReview>> {
+    return this.client.post<ReplyReviewRequest, ApiResponse<OwnerReview>>(
+      `/api/v1/reviews/${encodeURIComponent(id)}/reply`,
+      body,
+      options,
+    );
+  }
+
+  removeReply(id: string, options?: RequestOptions): Promise<void> {
+    return this.client.delete<void>(
+      `/api/v1/reviews/${encodeURIComponent(id)}/reply`,
+      options,
+    );
+  }
+
+  changeVisibility(
+    id: string,
+    body: ChangeReviewVisibilityRequest,
+    options?: RequestOptions,
+  ): Promise<void> {
+    return this.client.patch<ChangeReviewVisibilityRequest, void>(
+      `/api/v1/reviews/${encodeURIComponent(id)}/visibility`,
+      body,
+      options,
+    );
   }
 }
