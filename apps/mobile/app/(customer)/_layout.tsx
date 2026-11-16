@@ -67,7 +67,6 @@ export default function CustomerLayout() {
           headerShown: false,
         }}
       />
-      <Tabs.Screen name="reviews" options={{ title: 'Đánh giá', href: null }} />
     </Tabs>
   );
 }
