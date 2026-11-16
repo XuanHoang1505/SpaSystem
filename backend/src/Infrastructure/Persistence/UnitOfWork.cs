@@ -3,6 +3,7 @@ using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.UseCases.Auth;
 using NhuNguyetSpa.Application.UseCases.Care;
 using NhuNguyetSpa.Application.UseCases.Catalog;
+using NhuNguyetSpa.Application.UseCases.Notifications;
 using NhuNguyetSpa.Application.UseCases.Reviews;
 using NhuNguyetSpa.Domain.Exceptions;
 using Npgsql;
@@ -62,6 +63,9 @@ public sealed class UnitOfWork : IUnitOfWork
             AccountErrors.PhoneExists(),
         PostgresErrorCodes.UniqueViolation when exception.ConstraintName is ReviewIndexes.UniqueService or ReviewIndexes.UniquePackage =>
             ReviewErrors.Exists(),
+        // Internal only: the reminder job catches it (BR-NTF-06), it never reaches the API.
+        PostgresErrorCodes.UniqueViolation when exception.ConstraintName == Configurations.NotificationConfiguration.UniqueDedupKey =>
+            new ConflictException("Thông báo đã tồn tại.", AppointmentReminderService.DuplicateCode),
         PostgresErrorCodes.UniqueViolation =>
             new ConflictException("Dữ liệu đã tồn tại.", "duplicate_value"),
         _ => null,
