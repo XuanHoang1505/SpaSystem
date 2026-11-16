@@ -15,6 +15,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~57.0.16",
     "@hookform/resolvers": "~5.2.2",
+    "@microsoft/signalr": "^11.0.0",
     "@react-native-community/datetimepicker": "9.1.0",
     "@spa/api-client": "0.1.0",
     "@spa/shared-types": "0.1.0",

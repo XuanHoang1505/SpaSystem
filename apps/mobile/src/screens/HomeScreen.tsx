@@ -21,6 +21,7 @@ import { useMyAppointments } from '@/features/bookings';
 import { useCart } from '@/features/orders';
 import { usePackageSearch } from '@/features/packages';
 import { useServiceCategories, useServiceSearch } from '@/features/services';
+import { NotificationBellButton } from '@/features/notifications';
 import { formatCurrency, formatLocalTime } from '@/lib/formatting/formatters';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -334,22 +335,25 @@ export function HomeScreen() {
             </AppText>
           </View>
 
-          <Pressable
-            onPress={() =>
-              isAuthenticated ? router.push('/cart') : router.push('/(public)/login?redirect=/cart')
-            }
-            accessibilityRole="button"
-            accessibilityLabel={`Giỏ hàng, ${cartCount} sản phẩm`}
-            hitSlop={8}
-            style={styles.cartBtn}
-          >
-            <ShoppingCart size={23} color={colors.text} />
-            <View style={styles.cartBadge}>
-              <AppText style={styles.cartBadgeText}>
-                {cartCount > 99 ? '99+' : String(cartCount)}
-              </AppText>
-            </View>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <NotificationBellButton />
+            <Pressable
+              onPress={() =>
+                isAuthenticated ? router.push('/cart') : router.push('/(public)/login?redirect=/cart')
+              }
+              accessibilityRole="button"
+              accessibilityLabel={`Giỏ hàng, ${cartCount} sản phẩm`}
+              hitSlop={8}
+              style={styles.cartBtn}
+            >
+              <ShoppingCart size={23} color={colors.text} />
+              <View style={styles.cartBadge}>
+                <AppText style={styles.cartBadgeText}>
+                  {cartCount > 99 ? '99+' : String(cartCount)}
+                </AppText>
+              </View>
+            </Pressable>
+          </View>
         </View>
 
         {/* 2. Search Bar */}

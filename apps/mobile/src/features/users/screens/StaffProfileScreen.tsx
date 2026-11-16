@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { BadgeCheck, CalendarCheck, CalendarDays, History } from 'lucide-react-native';
+import { router, type Href } from 'expo-router';
+import { BadgeCheck, Bell, CalendarCheck, CalendarDays, History } from 'lucide-react-native';
 import { SignedInProfile } from './SignedInProfile';
 
 export function StaffProfileScreen() {
@@ -30,6 +30,12 @@ export function StaffProfileScreen() {
               subtitle: 'Xem lại các buổi chăm sóc và hồ sơ da',
               icon: History,
               onPress: () => router.push('/(staff)/care-history'),
+            },
+            {
+              title: 'Thông báo',
+              subtitle: 'Lịch hẹn, ca làm và tin nhắn hệ thống',
+              icon: Bell,
+              onPress: () => router.push('/notifications' as Href),
             },
           ],
         },
