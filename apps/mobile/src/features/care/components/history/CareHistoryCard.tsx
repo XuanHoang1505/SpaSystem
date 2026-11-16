@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function CareHistoryCard({ item, onPress }: Props) {
-  const { appointmentId, date, startTime, endTime, customer, service, treatmentSession, hasAllergies, skinProfileId } = item;
+  const { date, startTime, endTime, customer, service, treatmentSession, hasAllergies, skinProfileId } = item;
 
   const handleCall = () => {
     if (customer.phoneNumber) {

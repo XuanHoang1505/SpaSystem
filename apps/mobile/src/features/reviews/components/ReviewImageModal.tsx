@@ -1,6 +1,5 @@
 import { Image, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { X } from 'lucide-react-native';
-import { colors } from '@/theme/colors';
 
 interface Props {
   imageUrl: string | null;

@@ -44,7 +44,10 @@ export function MyReviewsScreen() {
   const reviewablesQuery = useReviewableProducts(isAuthenticated);
   const myReviewsQuery = useMyReviews({ pageNumber: 1, pageSize: 50, enabled: isAuthenticated });
 
-  const reviewables: readonly ReviewableProduct[] = reviewablesQuery.data ?? [];
+  const reviewables = useMemo<readonly ReviewableProduct[]>(
+    () => reviewablesQuery.data ?? [],
+    [reviewablesQuery.data],
+  );
   const myReviews = myReviewsQuery.data?.items ?? [];
 
   // Count items eligible to review

@@ -1,5 +1,5 @@
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { Star, Sparkles, Edit3, MessageCircle } from 'lucide-react-native';
+import { Star, Sparkles, MessageCircle } from 'lucide-react-native';
 import type { MyReview } from '@spa/shared-types';
 import { AppText } from '@components/common/AppText';
 import { AppButton } from '@components/common/AppButton';

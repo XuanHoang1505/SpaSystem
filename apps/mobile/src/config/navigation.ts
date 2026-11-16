@@ -76,7 +76,7 @@ export function useCommonTabScreenOptions() {
     }: {
       focused: boolean;
       color: ColorValue;
-      position: any;
+      position: unknown;
       children: string;
     }) =>
       React.createElement(
@@ -84,7 +84,7 @@ export function useCommonTabScreenOptions() {
         {
           numberOfLines: 1,
           style: {
-            color: (focused ? colors.primaryPressed : color) as any,
+            color: focused ? colors.primaryPressed : color,
             fontSize: 11,
             fontWeight: focused ? '700' : '500',
             marginTop: 2,

@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { Calendar, Clock, UserRound } from 'lucide-react-native';
 import type { AiBookingProposal } from '@spa/shared-types';
 import { AppButton } from '@components/common/AppButton';
@@ -15,10 +15,10 @@ export function AiBookingProposalCard({ proposal }: { proposal: AiBookingProposa
 
   const handleBook = () => {
     if (isAuthenticated) {
-      router.push(proposal.path as any);
+      router.push(proposal.path as Href);
     } else {
       router.push(
-        `/(public)/login?redirect=${encodeURIComponent(proposal.path)}` as any,
+        `/(public)/login?redirect=${encodeURIComponent(proposal.path)}` as Href,
       );
     }
   };

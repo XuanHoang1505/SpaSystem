@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { ChevronRight, Package, Sparkles } from 'lucide-react-native';
 import type { AiProductSuggestion } from '@spa/shared-types';
 import { AppText } from '@components/common/AppText';
@@ -14,7 +14,7 @@ export function AiProductSuggestionCard({ suggestion }: { suggestion: AiProductS
     const targetUrl = isPackage
       ? `/(public)/packages/${suggestion.productId}`
       : `/(public)/services/${suggestion.productId}`;
-    router.push(targetUrl as any);
+    router.push(targetUrl as Href);
   };
 
   return (

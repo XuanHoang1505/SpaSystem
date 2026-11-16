@@ -19,7 +19,6 @@ import {
   CreditCard,
   Receipt,
   ShoppingBag,
-  Sparkles,
   Tag,
   UserRound,
   XCircle,
