@@ -56,3 +56,4 @@ export * from './workSchedules';
 export * from './promotions';
 export * from './reports';
 export * from './care';
+export * from './reviews';

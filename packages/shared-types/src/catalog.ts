@@ -27,6 +27,9 @@ export interface ServiceListItem {
   durationMinutes: number;
   imageUrl: string | null;
   status: CatalogStatus;
+  /** Average of visible reviews (1 decimal), null when there are none (UC-SPA-29). */
+  averageRating: number | null;
+  reviewCount: number;
 }
 
 /** One step of a service's procedure (Q-71), ordered by `sortOrder`. */
@@ -59,6 +62,9 @@ export interface PackageListItem {
   status: CatalogStatus;
   saleStartDate: string | null;
   saleEndDate: string | null;
+  /** Average of visible reviews (1 decimal), null when there are none (UC-SPA-29). */
+  averageRating: number | null;
+  reviewCount: number;
 }
 
 export interface PackageItem {
@@ -186,4 +192,3 @@ export interface UpdateServiceCategoryRequest {
 export interface CatalogImageUploadResponse {
   imageUrl: string;
 }
-
