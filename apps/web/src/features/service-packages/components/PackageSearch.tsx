@@ -13,7 +13,6 @@ import {
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePackageSearch } from '../hooks/usePackageSearch';
 import { ServicePackageCard } from './ServicePackageCard';
-import { PackageTrustStrip } from './PackageTrustStrip';
 
 /** SCR-W04 — Tìm kiếm gói dịch vụ (UC-SPA-06). Gói không có danh mục (RS-14): `categoryId` không gửi lên. */
 export function PackageSearch() {
@@ -42,8 +41,6 @@ export function PackageSearch() {
           label="Tìm gói dịch vụ"
         />
       </CatalogPageHeader>
-
-      <PackageTrustStrip />
 
       <CatalogGrid
         query={packages}

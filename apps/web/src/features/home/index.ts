@@ -1,0 +1,10 @@
+export { HomeHero } from './components/HomeHero';
+export { HomeBackdrop } from './components/HomeBackdrop';
+export { CategoryShowcase } from './components/CategoryShowcase';
+export { FeaturedServices } from './components/FeaturedServices';
+export { TeamSection } from './components/TeamSection';
+export { PackageDeals } from './components/PackageDeals';
+export { ReviewsSection } from './components/ReviewsSection';
+export { HomePromise } from './components/HomePromise';
+export { ClosingInvite } from './components/ClosingInvite';
+export { HomeContainer } from './components/HomeContainer';
