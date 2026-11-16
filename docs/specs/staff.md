@@ -566,6 +566,73 @@ Feature: `apps/web/src/features/staff/` (đã có `ServiceStaffList`, `useServic
 | STF-UI-T33 | Tải / lỗi + Thử lại / rỗng / có dữ liệu (ca `cancelled` có "Đã hủy", "2 lịch hẹn")                         | Đúng 4 trạng thái                                                                 |
 | STF-UI-T34 | Bấm thẻ ca → Sheet có lịch hẹn và link `/staff/bookings/{id}`; ca không có lịch; `work_schedule_not_found` | Đúng nội dung; "Chưa có lịch hẹn trong ca này."; "Không tìm thấy ca làm"          |
 
+### Giao diện (mobile): SCR-M24 — Lịch làm việc cá nhân & SCR-M23 — Tổng quan nhân viên
+
+Phạm vi:
+- `SCR-M24`: `app/(staff)/schedule.tsx` (Lịch làm việc của tôi theo tuần/ngày, chi tiết ca).
+- `SCR-M23`: `app/(staff)/dashboard.tsx` (Tổng quan nhân viên: ca làm việc hôm nay, lịch hẹn hôm nay, lối tắt).
+
+#### 1. `SCR-M24` — Lịch làm việc cá nhân (`app/(staff)/schedule.tsx`)
+- **Vai trò:** Nhân viên (`role = staff`), `StaffLayout` (tab "Lịch làm việc"), theme botanical green.
+- **Mẫu bố cục: Chế độ kép (Dual View Switcher)** với công tắc chuyển đổi:
+  - **Chế độ 1: Lưới ma trận tuần (`WeeklyShiftMatrix`)**:
+    - Hiển thị 7 cột đại diện Thứ 2 → Chủ Nhật trên một màn hình cuộn ngang nhẹ hoặc vừa vặn màn hình.
+    - Mỗi ngày hiển thị các khối ca làm việc (Capsule block): Giờ ca (`08:00 – 12:00`), số lượng lịch hẹn, badge nổi bật `Đang trong ca` nếu đang trong giờ làm việc hôm nay.
+    - Ngày không có ca: Hiển thị khối nghỉ `Day Off` màu xám nhẹ thư giãn.
+    - Ca đã hủy: Hiển thị mờ, gạch ngang giờ và badge `Đã hủy`.
+    - Chạm vào một ca làm: Trượt mở chi tiết ca và danh sách các lịch hẹn bên dưới (`ShiftAppointmentsPanel`).
+  - **Chế độ 2: Dòng thời gian trong ngày (`DayTimelineView`)**:
+    - Dải chọn ngày 7 ngày ở trên (`WeekStripPicker`) để chọn ngày cần xem timeline chi tiết.
+    - Trục thời gian trực quan từ `07:00` đến `21:00`.
+    - Khối ca làm việc bao trùm toàn bộ dải giờ làm (VD: dải màu pastel từ 08:00 đến 12:00).
+    - Các cuộc hẹn của khách được định vị chính xác theo tọa độ thời gian thực tế bên trong ca (VD: 08:30 - 09:30 có hẹn chị Trâm, khoảng trống 30 phút nghỉ ngơi, 10:00 - 11:00 có hẹn chị Lan).
+    - Giúp kỹ thuật viên thấy rõ thời gian trống giữa các ca khách để chuẩn bị dụng cụ.
+    - Chạm vào một cuộc hẹn trên timeline: Mở trực tiếp màn chi tiết buổi chăm sóc `/(staff)/bookings/{appointmentId}`.
+- **Dữ liệu & Hooks:**
+  - `GET /api/v1/me/work-schedules?fromDate={monday}&toDate={sunday}`: `useMyWorkSchedules({ fromDate, toDate, status })`.
+  - `GET /api/v1/me/work-schedules/{id}`: `useMyWorkScheduleDetail(id)` khi xem chi tiết ca.
+  - Query keys: `myWorkSchedulesQueryKeys.list(params)`, `myWorkSchedulesQueryKeys.detail(id)`.
+  - Map status:
+    - `active`: Badge thành công/xanh botanical `Đang xếp ca` (`colors.primarySoft` / `colors.primary`).
+    - `cancelled`: Badge trung tính/hủy `Đã hủy` (`colors.errorSoft` / `colors.error`), gạch ngang khung giờ.
+- **Thanh điều hướng thời gian (Tuần):**
+  - Cụm điều hướng tuần: Nút "Tuần trước", "Tuần này", "Tuần sau" + Nhãn dải tuần hiển thị (VD: "09/11 - 15/11/2026").
+  - Nút chuyển chế độ xem: Icon Lưới (`LayoutGrid`) ⟷ Icon Dòng thời gian (`Clock` / `CalendarRange`).
+- **Trạng thái:**
+  - Đang tải: Skeleton dải tuần và ma trận ca.
+  - Lỗi: `ErrorState` kèm nút "Thử lại".
+  - Rỗng: `EmptyState` với icon `CalendarOff`: "Bạn không có ca làm việc nào trong tuần này."
+  - Có dữ liệu: Ma trận lưới tuần hoặc Dòng thời gian chi tiết.
+- **Responsive & a11y:**
+  - Vùng chạm tối thiểu 48dp cho tất cả nút bấm và thẻ ngày.
+  - Hỗ trợ cuộn mượt mà với `AppScreen scroll={false}` và `FlatList flex: 1`.
+
+#### 2. `SCR-M23` — Nâng cấp Tổng quan nhân viên (`app/(staff)/dashboard.tsx`)
+- **Vai trò:** Nhân viên (`role = staff`), `StaffLayout` (tab "Tổng quan").
+- **Mẫu bố cục:** Dashboard tóm tắt công việc ngày hôm nay.
+- **Nội dung hiển thị:**
+  - **Lời chào & Ngày hiện tại:** "Xin chào, {họ tên}" + Ngày hôm nay theo giờ Việt Nam.
+  - **Khối Ca làm việc hôm nay:**
+    - Nếu có ca: Giờ ca, trạng thái, số lịch hẹn trong ca, nút mở chi tiết ca hoặc chuyển tab `Lịch làm việc`.
+    - Nếu không có ca: Thông báo "Hôm nay bạn không có ca làm việc" nhẹ nhàng.
+  - **Khối Lịch hẹn hôm nay:**
+    - Tóm tắt số lịch hẹn được giao hôm nay (lấy từ `useAssignedAppointments({ preset: 'today' })`).
+    - Danh sách rút gọn 2-3 lịch hẹn sắp diễn ra gần nhất hôm nay kèm nút "Xem tất cả" chuyển sang tab `Lịch hẹn`.
+  - **Lối tắt nhanh:**
+    - Lịch làm việc (`/(staff)/schedule`).
+    - Lịch hẹn được phân công (`/(staff)/bookings`).
+    - Lịch sử chăm sóc khách (`/(staff)/care-history`).
+
+| Mã          | Tình huống                                                                                     | Kết quả mong đợi                                                                     |
+| ----------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| STF-M-UI-T01 | Mở tab Lịch làm việc: Tự động tính thứ Hai đầu tuần và Chủ Nhật cuối tuần                       | Gọi `GET /me/work-schedules` đúng dải ngày 7 ngày của tuần hiện tại                   |
+| STF-M-UI-T02 | Điều hướng tuần trước / tuần sau                                                               | Dải ngày cập nhật ±7 ngày, tự động làm mới danh sách ca tương ứng                     |
+| STF-M-UI-T03 | Lọc theo ngày cụ thể trên dải ngày                                                             | Chỉ hiển thị các ca diễn ra trong ngày được chọn; bấm lại hiển thị lại toàn bộ tuần   |
+| STF-M-UI-T04 | Chạm thẻ ca mở `ShiftDetailModal`                                                              | Modal hiển thị đúng giờ ca, trạng thái và danh sách lịch hẹn bên trong                |
+| STF-M-UI-T05 | Chạm lịch hẹn trong modal chi tiết ca                                                          | Đóng modal và chuyển hướng sang màn chi tiết buổi chăm sóc `/(staff)/bookings/[id]`   |
+| STF-M-UI-T06 | Đủ 4 trạng thái trên màn hình lịch làm việc (loading, error, empty, data)                      | Skeleton khi tải, ErrorState khi lỗi mạng, EmptyState khi tuần không có ca            |
+| STF-M-UI-T07 | Dashboard nhân viên hiển thị đúng ca làm hôm nay và liên kết chuyển nhanh đến các chức năng     | Ca hôm nay hiển thị đúng giờ; các nút chuyển hướng hoạt động chính xác                |
+
 ## UC-SPA-22 bổ sung — Bằng cấp, chứng chỉ của nhân viên (backend + web)
 
 Đề xuất mở rộng (ĐX) cho UC-SPA-22, đặc tả ngày 12/11/2026. DA không có thông tin này; hiện chỉ có `staff_members.specialty` (chữ tự do). Ảnh chụp bằng bổ sung 13/11/2026 (BR-STF-15), tạm lưu công khai trên Cloudinary (Q-74). Không làm lần này: link ảnh riêng tư có chữ ký, nhắc hạn tự động (thông báo, UC-SPA-34), mobile.
