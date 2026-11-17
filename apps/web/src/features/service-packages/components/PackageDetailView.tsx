@@ -267,7 +267,7 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
 
                   <div className="grid gap-2.5 pt-2">
                     <BuyNowButton packageId={pkg.id} />
-                    <AddToCartButton product={{ type: 'package', id: pkg.id }} />
+                    <AddToCartButton product={{ type: 'package', id: pkg.id }} productName={pkg.name} />
                   </div>
 
                   <div className="space-y-2 border-t pt-4 text-[11px] text-muted-foreground">
