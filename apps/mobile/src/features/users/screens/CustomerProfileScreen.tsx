@@ -4,6 +4,7 @@ import {
   Bell,
   CalendarCheck,
   Gift,
+  History,
   KeyRound,
   LogIn,
   MessageCircle,
@@ -190,6 +191,12 @@ export function CustomerProfileScreen() {
               subtitle: 'Tiến độ từng buổi trong gói',
               icon: Sparkles,
               onPress: () => router.push('/(customer)/treatments'),
+            },
+            {
+              title: 'Lịch sử sử dụng',
+              subtitle: 'Các lần chăm sóc đã hoàn thành và kết quả',
+              icon: History,
+              onPress: () => router.push('/(customer)/history' as Href),
             },
             {
               title: 'Gói dịch vụ đã mua',
