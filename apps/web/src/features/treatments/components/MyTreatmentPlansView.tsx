@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { OrdersBreadcrumb } from '@/features/orders';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { foldText } from '@/lib/text';
 import { cn } from '@/lib/utils';
@@ -77,15 +78,22 @@ export function MyTreatmentPlansView() {
   };
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
+      <OrdersBreadcrumb
+        trail={[
+          { label: 'Trang chủ', to: '/' },
+          { label: 'Tài khoản', to: '/account' },
+          { label: 'Liệu trình của tôi' },
+        ]}
+      />
+
       <PageHeader
-        eyebrow="Tài khoản khách hàng"
         title="Liệu trình của tôi"
         description="Theo dõi tiến độ phác đồ chăm sóc da và đặt lịch cho các buổi tiếp theo."
       />
 
       {/* Filter toolbar */}
-      <div className="space-y-4 rounded-2xl border bg-card p-4 shadow-xs sm:p-5">
+      <div className="space-y-4 rounded-xl border bg-muted/20 p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {filterOptions.map((opt) => {
@@ -118,7 +126,7 @@ export function MyTreatmentPlansView() {
               placeholder="Tìm theo tên gói..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-9 text-xs sm:text-sm"
+              className="bg-card pl-9 text-xs sm:text-sm"
             />
           </div>
         </div>
@@ -179,6 +187,6 @@ export function MyTreatmentPlansView() {
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

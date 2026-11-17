@@ -6,7 +6,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge';
 import { DataTable } from '@/components/shared/DataTable/DataTable';
 import type { DataTableColumn } from '@/components/shared/DataTable/dataTable.types';
 import { Button } from '@/components/ui/button';
-import { OrderDetailSheet } from '@/features/orders';
+import { OrderDetailSheet, OrdersBreadcrumb } from '@/features/orders';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { formatLocalDate } from '@/lib/formatting/formatters';
 import { serviceHistoryStatusBadge } from '../historyStatus';
@@ -161,9 +161,16 @@ export function ServiceHistoryView() {
   );
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
+      <OrdersBreadcrumb
+        trail={[
+          { label: 'Trang chủ', to: '/' },
+          { label: 'Tài khoản', to: '/account' },
+          { label: 'Lịch sử sử dụng' },
+        ]}
+      />
+
       <PageHeader
-        eyebrow="Tài khoản khách hàng"
         title="Lịch sử sử dụng dịch vụ"
         description="Xem lại các lần sử dụng dịch vụ và kết quả chăm sóc da của bạn."
       />
@@ -217,6 +224,6 @@ export function ServiceHistoryView() {
 
       {/* Order detail sheet */}
       <OrderDetailSheet order={selectedOrder} onClose={() => setSelectedOrder(null)} />
-    </div>
+    </section>
   );
 }

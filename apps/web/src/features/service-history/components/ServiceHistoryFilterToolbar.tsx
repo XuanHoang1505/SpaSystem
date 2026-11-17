@@ -27,7 +27,7 @@ export function ServiceHistoryFilterToolbar({
   );
 
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-2xl border bg-card p-4 shadow-xs sm:p-5">
+    <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-muted/20 p-4 sm:p-5">
       <div className="space-y-1.5">
         <label htmlFor="from-date" className="text-xs font-medium text-muted-foreground">
           Từ ngày
@@ -37,7 +37,7 @@ export function ServiceHistoryFilterToolbar({
           type="date"
           value={filters.fromDate ?? ''}
           onChange={(e) => onChange({ ...filters, fromDate: e.target.value || undefined })}
-          className="w-36 text-xs sm:text-sm"
+          className="w-36 bg-card text-xs sm:text-sm"
         />
       </div>
 
@@ -50,7 +50,7 @@ export function ServiceHistoryFilterToolbar({
           type="date"
           value={filters.toDate ?? ''}
           onChange={(e) => onChange({ ...filters, toDate: e.target.value || undefined })}
-          className="w-36 text-xs sm:text-sm"
+          className="w-36 bg-card text-xs sm:text-sm"
         />
       </div>
 
@@ -62,7 +62,7 @@ export function ServiceHistoryFilterToolbar({
           id="service-select"
           value={filters.spaServiceId ?? ''}
           onChange={(e) => onChange({ ...filters, spaServiceId: e.target.value || undefined })}
-          className="h-9 w-44 rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-xs transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none sm:text-sm"
+          className="h-9 w-44 rounded-md border border-input bg-card px-3 py-1 text-xs shadow-xs transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none sm:text-sm"
         >
           <option value="">Tất cả dịch vụ</option>
           {serviceCatalog?.items.map((svc) => (
@@ -86,7 +86,7 @@ export function ServiceHistoryFilterToolbar({
               status: (e.target.value as AppointmentStatus) || undefined,
             })
           }
-          className="h-9 w-36 rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-xs transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none sm:text-sm"
+          className="h-9 w-36 rounded-md border border-input bg-card px-3 py-1 text-xs shadow-xs transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none sm:text-sm"
         >
           <option value="">Tất cả trạng thái</option>
           <option value="completed">Đã hoàn thành</option>
