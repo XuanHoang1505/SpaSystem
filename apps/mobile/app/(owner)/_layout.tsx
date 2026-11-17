@@ -35,7 +35,7 @@ export default function OwnerLayout() {
           name="reports"
           options={{
             title: 'Báo cáo',
-            tabBarIcon: tabIcon(BarChart3),
+            href: null,
           }}
         />
         <Tabs.Screen

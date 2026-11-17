@@ -1,4 +1,5 @@
-import { PlaceholderScreen } from '@components/common/PlaceholderScreen';
-export default function Screen() {
-  return <PlaceholderScreen title="Báo cáo" />;
+import { OwnerReportsScreen } from '@/features/reports';
+
+export default function ReportsRoute() {
+  return <OwnerReportsScreen />;
 }
