@@ -67,6 +67,15 @@ export default function CustomerLayout() {
           headerShown: false,
         }}
       />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: 'Lịch sử sử dụng',
+          href: null,
+          tabBarStyle: { display: 'none' },
+          headerShown: false,
+        }}
+      />
     </Tabs>
   );
 }
