@@ -13,8 +13,10 @@ import {
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
 import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
 import { OrdersBreadcrumb } from '@/features/orders';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export function PlaceholderPage({ title }: { title: string }) {
+  useDocumentTitle(title);
   const trail =
     title === 'Tài khoản'
       ? [{ label: 'Trang chủ', to: '/' }, { label: 'Tài khoản' }]

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
 import { OrdersBreadcrumb } from '@/features/orders';
 import { useAuthStore } from '@/stores/authStore';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useNotifications } from '../hooks/useNotifications';
 import { useUnreadNotificationCount } from '../hooks/useUnreadNotificationCount';
 import { useNotificationMutations } from '../hooks/useNotificationMutations';
@@ -15,6 +16,7 @@ import { getNotificationTargetRoute } from '../types';
 import type { NotificationDto, NotificationType } from '@spa/shared-types';
 
 export function NotificationsView() {
+  useDocumentTitle('Thông báo');
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
