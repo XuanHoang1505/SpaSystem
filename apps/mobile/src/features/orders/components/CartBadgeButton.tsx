@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     right: 4,
     minWidth: 18,
     height: 18,
-    borderRadius: 9,
+    borderRadius: 9999,
     backgroundColor: colors.accentRose,
     alignItems: 'center',
     justifyContent: 'center',
@@ -66,5 +66,9 @@ const styles = StyleSheet.create({
     color: colors.onPrimary,
     fontSize: 10,
     fontWeight: 'bold',
+    lineHeight: 12,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    textAlign: 'center',
   },
 });

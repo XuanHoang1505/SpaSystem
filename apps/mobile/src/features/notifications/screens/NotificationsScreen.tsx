@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   },
   tabBadge: {
     backgroundColor: colors.primary,
-    borderRadius: 10,
+    borderRadius: 9999,
     minWidth: 18,
     height: 18,
     paddingHorizontal: 5,
@@ -295,6 +295,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: '#FFFFFF',
+    lineHeight: 12,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    textAlign: 'center',
   },
   listContent: {
     padding: 16,

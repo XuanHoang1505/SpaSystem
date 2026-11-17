@@ -892,7 +892,7 @@ const styles = StyleSheet.create({
     right: 0,
     minWidth: 18,
     height: 18,
-    borderRadius: 9,
+    borderRadius: 9999,
     backgroundColor: colors.accentRose,
     alignItems: 'center',
     justifyContent: 'center',
@@ -905,6 +905,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.onPrimary,
     lineHeight: 12,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    textAlign: 'center',
   },
   searchBar: {
     flexDirection: 'row',
