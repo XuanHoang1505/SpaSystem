@@ -22,7 +22,6 @@ export const staffTabs = [
 export const ownerTabs = [
   ['dashboard', 'Tổng quan'],
   ['bookings', 'Lịch hẹn'],
-  ['reports', 'Báo cáo'],
   ['staff', 'Nhân sự'],
   ['profile', 'Cá nhân'],
 ] as const;
