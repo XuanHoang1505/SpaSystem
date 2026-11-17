@@ -961,3 +961,104 @@ Không có Stitch MCP: Dựng trực tiếp bằng `DataTable` chuẩn của h�
 | **PUR-TRT-M-UI-T10** | SCR-M13b     | Timeline các buổi (`TreatmentSessionTimeline`): buổi `completed` có nút `"Xem ghi chú trị liệu"`; buổi `booked` có nút `"Xem lịch hẹn"`; buổi `not_booked` có nút `"Đặt lịch buổi này"` (khi `canBook = true`) hoặc hiện `reason` (khi `canBook = false`); buổi `skipped` hiện đã bỏ qua.              |
 | **PUR-TRT-M-UI-T11** | SCR-M13b     | Bấm `"Xem ghi chú trị liệu"` trên buổi `completed`: mở `TreatmentSessionDetailModal`, gọi `GET /api/v1/me/treatments/{id}/sessions/{sessionId}` và hiển thị nội dung `result` (hoặc thông báo chưa có ghi chú nếu `result === null`).                                                                  |
 | **PUR-TRT-M-UI-T12** | Bảo vệ route | Khách vãng lai (`anonymous`) vào `/(customer)/packages` hoặc `/(customer)/treatments` thấy màn mời đăng nhập kèm redirect đúng; bấm `"Xem gói của tôi"` hoặc `"Xem dịch vụ đã mua"` từ `PaymentResultScreen` điều hướng đúng tới `/(customer)/packages`.                                               |
+
+---
+
+## Giao diện (mobile): UC-SPA-20 — Xem lịch sử sử dụng dịch vụ
+
+### Ánh xạ màn hình & Route (Expo Router)
+
+- **Mã màn hình:** `SCR-M21`
+- **Tên màn hình:** Lịch sử sử dụng dịch vụ
+- **Route file:** `app/(customer)/history.tsx` (hoặc Root Stack `app/service-history.tsx`), vai trò `customer` (`purchase.self`).
+- **Điểm truy cập:** Menu *"Dịch vụ của tôi"* > *"Lịch sử sử dụng"* trên `CustomerProfileScreen.tsx` (`app/(customer)/profile.tsx`).
+- **Layout & Điều hướng:** 
+  - Khung màn hình tràn viền edge-to-edge sử dụng `AppScreen scroll={false}`.
+  - Thanh header tùy biến với nút Back (`router.back()`), tiêu đề *"Lịch sử sử dụng"*, và nút icon bộ lọc nâng cao.
+  - Khách vãng lai (`anonymous`): Hiển thị thẻ thông báo mời đăng nhập (`AppNotice` / Guest Card) kèm nút CTA dẫn tới `/(public)/login?redirect=...`.
+  - Nhân viên hoặc chủ spa: Chuyển hướng tự động về dashboard tương ứng.
+
+### Mẫu bố cục & Component
+
+1. **Thanh lọc trạng thái nhanh (Status Filter Chips):**
+   - Thanh cuộn ngang gồm 3 chip:
+     - `Tất cả` (`all`)
+     - `Hoàn thành` (`completed`)
+     - `Không đến` (`no_show`)
+   - Bấm chip: cập nhật state `status`, tự động làm mới danh sách và cuộn về đầu trang.
+
+2. **Danh sách thẻ lần sử dụng (`ServiceHistoryCard`):**
+   - Hiển thị danh sách cuộn dọc bằng `FlatList` với `RefreshControl` hỗ trợ kéo để làm mới (`refetch`).
+   - Thông tin trên mỗi thẻ:
+     - Ngày tháng (`formatLocalDate(item.date)`) và khung giờ (`startTime – endTime`).
+     - Tên dịch vụ (`serviceName`) in đậm.
+     - Badge trạng thái `StatusBadge`:
+       - `completed`: Nhãn `"Hoàn thành"` · Tông màu `success`.
+       - `no_show`: Nhãn `"Không đến"` · Tông màu `danger`.
+     - Nhãn nguồn dịch vụ:
+       - Dịch vụ lẻ: Badge xám `"Dịch vụ lẻ"`.
+       - Gói liệu trình: Badge `"Gói: {packageName}"` kèm `"Buổi {sequenceNumber}"`.
+     - Tên kỹ thuật viên phụ trách (`staff.fullName`).
+     - Nút `"Chi tiết"` hoặc chạm vào thẻ để mở `ServiceHistoryDetailModal`.
+
+3. **Modal chi tiết lần chăm sóc (`ServiceHistoryDetailModal`):**
+   - Mở dạng Bottom Sheet hoặc Modal tràn viền, gọi `GET /api/v1/me/service-history/{appointmentId}`.
+   - Bố cục nội dung:
+     - Tiêu đề dịch vụ, thời lượng (`durationMinutes` phút), badge trạng thái.
+     - Khối thông tin thời gian & Kỹ thuật viên phụ trách.
+     - Khối nguồn dịch vụ:
+       - Nếu là gói: Có link dẫn sang xem phác đồ và nhật ký liệu trình (`/treatment/[treatmentPlanId]`).
+     - Khối kết quả chăm sóc (`result`):
+       - Với `completed`: Hiển thị ghi chú kết quả chăm sóc của KTV (hoặc thông báo *"Kỹ thuật viên chưa ghi chú kết quả"* nếu `result == null`).
+       - Với `no_show`: Hiển thị cảnh báo màu đỏ *"Khách không đến buổi hẹn theo lịch đã đăng ký"*.
+     - Khối thông tin đơn hàng liên quan: Mã đơn hàng `order.code`, phương thức thanh toán, nút bấm mở chi tiết đơn hàng `/my-orders/[orderId]`.
+     - Nút hành động đáy:
+       - Với lần sử dụng `completed`: Hiển thị nút **`"Đánh giá dịch vụ"`** dẫn sang màn hình/modal đánh giá của `UC-SPA-29`/`UC-SPA-30` (`/reviews`).
+       - Nút `"Đóng"` modal.
+
+4. **Sheet / Modal bộ lọc nâng cao (`ServiceHistoryFilterModal`):**
+   - Lọc theo khoảng thời gian: `fromDate`, `toDate`.
+   - Lọc theo dịch vụ spa cụ thể (`spaServiceId`).
+   - Nút `"Áp dụng"` và `"Đặt lại"`.
+
+---
+
+### Dữ liệu & Query Keys
+
+- **Endpoints:**
+  - Danh sách: `GET /api/v1/me/service-history?fromDate=&toDate=&spaServiceId=&status=&pageNumber=&pageSize=`
+  - Chi tiết: `GET /api/v1/me/service-history/{appointmentId}`
+- **Query Keys (`serviceHistoryQueryKeys` từ `@spa/api-client`):**
+  - Danh sách: `serviceHistoryQueryKeys.list(params)`
+  - Chi tiết: `serviceHistoryQueryKeys.detail(appointmentId)`
+- **Xử lý phân trang:**
+  - `pageNumber` mặc định `1`, `pageSize` mặc định `10` hoặc `20`.
+  - Hỗ trợ tải thêm trang tiếp theo khi cuộn đến cuối (`onEndReached`).
+
+---
+
+### Bảng xử lý mã lỗi API (UC-SPA-20 Mobile)
+
+| Mã lỗi (`errors[].code`)             | Ngữ cảnh                     | Hành vi giao diện Mobile                                                                                              |
+| :----------------------------------- | :--------------------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| `appointment_not_found` (`404`)      | Mở chi tiết lần sử dụng      | Hiển thị `AppNotice` `"Không tìm thấy thông tin lần sử dụng dịch vụ."` ngay trong modal kèm nút `"Đóng"`.             |
+| `validation_error` (`400`)           | Tham số ngày hoặc ID sai     | Hiển thị `AppNotice` cảnh báo bộ lọc không hợp lệ, nút `"Đặt lại bộ lọc"`.                                           |
+| `401 Unauthorized`                   | Mọi endpoint `/me/*`         | Tự động refresh token; nếu phiên hết hạn chuyển hướng `/(public)/login?redirect=...`.                                 |
+| `403 Forbidden`                      | Tài khoản không phải khách   | Chuyển hướng về workspace/dashboard phù hợp.                                                                          |
+| Lỗi mạng (`status = 0`, `5xx`)       | Tải danh sách hoặc chi tiết  | Hiển thị `AppNotice` lỗi kết nối kèm nút **`"Thử lại"`** (`refetch()`).                                               |
+
+---
+
+### Bảng kiểm thử giao diện Mobile (`HIS-M-UI-T01…T08`)
+
+| Mã                | Màn hình | Tình huống kiểm thử & Kết quả mong đợi                                                                                                                                              |
+| :---------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **HIS-M-UI-T01**  | SCR-M21  | Mở `/(customer)/history` khi đã đăng nhập: gọi `GET /api/v1/me/service-history`, hiển thị danh sách các thẻ `ServiceHistoryCard` sắp xếp mới nhất trước, đúng số lượng phân trang. |
+| **HIS-M-UI-T02**  | SCR-M21  | Chip lọc trạng thái: Bấm `"Hoàn thành"` gọi API với `status=completed`; bấm `"Không đến"` gọi API với `status=no_show`; bấm `"Tất cả"` xóa param `status`. Danh sách cập nhật đúng.   |
+| **HIS-M-UI-T03**  | SCR-M21  | Trạng thái rỗng: Nếu chưa có lịch sử sử dụng nào, hiển thị empty state kèm nút CTA `"Khám phá dịch vụ"` / `"Đặt lịch ngay"`; nếu rỗng do bộ lọc hiển thị nút `"Xóa bộ lọc"`.   |
+| **HIS-M-UI-T04**  | SCR-M21  | Hiển thị nguồn dịch vụ trên thẻ: Dịch vụ lẻ có badge `"Dịch vụ lẻ"`; buổi trong gói có badge `"Gói: {packageName}"` kèm số buổi `"Buổi {n}"`.                                      |
+| **HIS-M-UI-T05**  | SCR-M21  | Bấm vào thẻ: Mở `ServiceHistoryDetailModal`, gọi `GET /api/v1/me/service-history/{appointmentId}`, hiển thị đầy đủ thời lượng, KTV, nguồn, mã đơn hàng `order.code` và kết quả.   |
+| **HIS-M-UI-T06**  | SCR-M21  | Chi tiết buổi `completed`: Hiển thị kết quả chăm sóc `result`, hiển thị nút `"Đánh giá dịch vụ"` dẫn sang luồng đánh giá (`/reviews`).                                             |
+| **HIS-M-UI-T07**  | SCR-M21  | Chi tiết buổi `no_show`: Hiển thị badge màu đỏ `"Không đến"`, thông báo khách vắng mặt, không hiển thị nút đánh giá.                                                               |
+| **HIS-M-UI-T08**  | SCR-M21  | Khách vãng lai (`anonymous`): Truy cập `/(customer)/history` hiển thị màn mời đăng nhập kèm nút CTA chuyển hướng đúng sang `/(public)/login?redirect=...`.                          |
+
