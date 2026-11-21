@@ -15,40 +15,41 @@ Danh sách **đầy đủ từng cột** của mọi bảng (kiểu PostgreSQL, 
 
 ## Thực thể
 
-| Báo cáo (bảng)           | Entity C#             | Bảng PostgreSQL         | Thư mục backend (`<Feature>`) | Thư mục FE (`features/`) | Tài nguyên API                                           |
-| ------------------------ | --------------------- | ----------------------- | ----------------------------- | ------------------------ | -------------------------------------------------------- |
-| NguoiDung                | `User`                | `users`                 | `Users`                       | `auth`                   | `/users`, `/me`                                          |
-| ChuSpa                   | `OwnerProfile`        | `owner_profiles`        | `Users`                       | —                        | —                                                        |
-| KhachHang                | `Customer`            | `customers`             | `Customers`                   | `customers`              | `/customers`                                             |
-| NhanVien                 | `StaffMember`         | `staff_members`         | `Staff`                       | `staff`                  | `/staff`                                                 |
-| NhanVien_DichVu          | `StaffSkill`          | `staff_skills`          | `Staff`                       | `staff`                  | `/staff/{id}/services`                                   |
-| BangCapNhanVien          | `StaffCertification`  | `staff_certifications`  | `Staff`                       | `staff`                  | `/staff/{id}/certifications`, `/me/certifications`       |
-| LichLamViec              | `WorkSchedule`        | `work_schedules`        | `Staff`                       | `staff`                  | `/work-schedules`                                        |
-| DanhMucDichVu            | `ServiceCategory`     | `service_categories`    | `Catalog`                     | `services`               | `/service-categories`                                    |
-| DichVu                   | `SpaService`          | `spa_services`          | `Catalog`                     | `services`               | `/services`                                              |
-| BuocDichVu               | `ServiceStep`         | `service_steps`         | `Catalog`                     | `services`               | (lồng trong `/services/{id}`)                            |
-| GoiDichVu                | `ServicePackage`      | `service_packages`      | `Catalog`                     | `service-packages`       | `/packages`                                              |
-| GoiDichVuChiTiet         | `ServicePackageItem`  | `service_package_items` | `Catalog`                     | `service-packages`       | (lồng trong `/packages`)                                 |
-| KhuyenMai                | `Promotion`           | `promotions`            | `Promotions`                  | `promotions`             | `/promotions`                                            |
-| ApDungKhuyenMai          | `PromotionRedemption` | `promotion_redemptions` | `Promotions`                  | `promotions`             | —                                                        |
-| GioHang                  | `Cart`                | `carts`                 | `Orders`                      | `orders`                 | `/me/cart`                                               |
-| ChiTietGioHang           | `CartItem`            | `cart_items`            | `Orders`                      | `orders`                 | `/me/cart/items`                                         |
-| DonHang                  | `Order`               | `orders`                | `Orders`                      | `orders`                 | `/orders`, `/me/orders`                                  |
-| ChiTietDonHang           | `OrderItem`           | `order_items`           | `Orders`                      | `orders`                 | (lồng trong order)                                       |
-| ThanhToan                | `Payment`             | `payments`              | `Payments`                    | `payments`               | `/me/orders/{id}/payments`, `/payments/vnpay/ipn`        |
-| DichVuKhachHang          | `ServiceEntitlement`  | `service_entitlements`  | `Purchases`                   | `purchases`              | `/me/purchases/services`                                 |
-| GoiKhachHang             | `CustomerPackage`     | `customer_packages`     | `Purchases`                   | `purchases`              | `/me/purchases/packages`                                 |
-| LieuTrinh                | `TreatmentPlan`       | `treatment_plans`       | `Treatments`                  | `treatments`             | `/treatments`, `/me/treatments`                          |
-| BuoiChamSoc              | `TreatmentSession`    | `treatment_sessions`    | `Treatments`                  | `treatments`             | `/treatments/{id}/sessions`                              |
-| LichHen                  | `Appointment`         | `appointments`          | `Bookings`                    | `bookings`               | `/appointments`, `/me/appointments`                      |
-| HoSoDa                   | `SkinProfile`         | `skin_profiles`         | `Care`                        | `care`                   | `/appointments/{id}/skin-profile`, `/skin-profiles/{id}` |
-| DiUngKhachHang           | `CustomerAllergy`     | `customer_allergies`    | `Care`                        | `care`                   | `/customers/{id}/allergies[/{allergyId}]`                |
-| DanhGia                  | `Review`              | `reviews`               | `Reviews`                     | `reviews`                | `/reviews`, `/me/reviews`                                |
-| LichSuTroChuyenAI        | `AiChatMessage`       | `ai_chat_messages`      | `AiAssistant`                 | `ai-assistant`           | `/ai/chat`, `/me/ai/history`                             |
-| ThongBao                 | `Notification`        | `notifications`         | `Notifications`               | `notifications`          | `/me/notifications`                                      |
-| _(đề xuất)_ MaOtp        | `OtpCode`             | `otp_codes`             | `Auth`                        | `auth`                   | `/auth/*/request-otp`                                    |
-| _(đề xuất)_ RefreshToken | `RefreshToken`        | `refresh_tokens`        | `Auth`                        | `auth`                   | `/auth/refresh`                                          |
-| _(đề xuất)_ ThongTinSpa  | `SpaProfile`          | `spa_profiles`          | `Services`                    | `services`               | `/spa-info`                                              |
+| Báo cáo (bảng)              | Entity C#             | Bảng PostgreSQL         | Thư mục backend (`<Feature>`) | Thư mục FE (`features/`) | Tài nguyên API                                           |
+| --------------------------- | --------------------- | ----------------------- | ----------------------------- | ------------------------ | -------------------------------------------------------- |
+| NguoiDung                   | `User`                | `users`                 | `Users`                       | `auth`                   | `/users`, `/me`                                          |
+| ChuSpa                      | `OwnerProfile`        | `owner_profiles`        | `Users`                       | —                        | —                                                        |
+| KhachHang                   | `Customer`            | `customers`             | `Customers`                   | `customers`              | `/customers`                                             |
+| NhanVien                    | `StaffMember`         | `staff_members`         | `Staff`                       | `staff`                  | `/staff`                                                 |
+| NhanVien_DichVu             | `StaffSkill`          | `staff_skills`          | `Staff`                       | `staff`                  | `/staff/{id}/services`                                   |
+| BangCapNhanVien             | `StaffCertification`  | `staff_certifications`  | `Staff`                       | `staff`                  | `/staff/{id}/certifications`, `/me/certifications`       |
+| LichLamViec                 | `WorkSchedule`        | `work_schedules`        | `Staff`                       | `staff`                  | `/work-schedules`                                        |
+| DanhMucDichVu               | `ServiceCategory`     | `service_categories`    | `Catalog`                     | `services`               | `/service-categories`                                    |
+| DichVu                      | `SpaService`          | `spa_services`          | `Catalog`                     | `services`               | `/services`                                              |
+| BuocDichVu                  | `ServiceStep`         | `service_steps`         | `Catalog`                     | `services`               | (lồng trong `/services/{id}`)                            |
+| GoiDichVu                   | `ServicePackage`      | `service_packages`      | `Catalog`                     | `service-packages`       | `/packages`                                              |
+| GoiDichVuChiTiet            | `ServicePackageItem`  | `service_package_items` | `Catalog`                     | `service-packages`       | (lồng trong `/packages`)                                 |
+| KhuyenMai                   | `Promotion`           | `promotions`            | `Promotions`                  | `promotions`             | `/promotions`                                            |
+| ApDungKhuyenMai             | `PromotionRedemption` | `promotion_redemptions` | `Promotions`                  | `promotions`             | —                                                        |
+| GioHang                     | `Cart`                | `carts`                 | `Orders`                      | `orders`                 | `/me/cart`                                               |
+| ChiTietGioHang              | `CartItem`            | `cart_items`            | `Orders`                      | `orders`                 | `/me/cart/items`                                         |
+| DonHang                     | `Order`               | `orders`                | `Orders`                      | `orders`                 | `/orders`, `/me/orders`                                  |
+| ChiTietDonHang              | `OrderItem`           | `order_items`           | `Orders`                      | `orders`                 | (lồng trong order)                                       |
+| ThanhToan                   | `Payment`             | `payments`              | `Payments`                    | `payments`               | `/me/orders/{id}/payments`, `/payments/vnpay/ipn`        |
+| DichVuKhachHang             | `ServiceEntitlement`  | `service_entitlements`  | `Purchases`                   | `purchases`              | `/me/purchases/services`                                 |
+| GoiKhachHang                | `CustomerPackage`     | `customer_packages`     | `Purchases`                   | `purchases`              | `/me/purchases/packages`                                 |
+| LieuTrinh                   | `TreatmentPlan`       | `treatment_plans`       | `Treatments`                  | `treatments`             | `/treatments`, `/me/treatments`                          |
+| BuoiChamSoc                 | `TreatmentSession`    | `treatment_sessions`    | `Treatments`                  | `treatments`             | `/treatments/{id}/sessions`                              |
+| LichHen                     | `Appointment`         | `appointments`          | `Bookings`                    | `bookings`               | `/appointments`, `/me/appointments`                      |
+| HoSoDa                      | `SkinProfile`         | `skin_profiles`         | `Care`                        | `care`                   | `/appointments/{id}/skin-profile`, `/skin-profiles/{id}` |
+| DiUngKhachHang              | `CustomerAllergy`     | `customer_allergies`    | `Care`                        | `care`                   | `/customers/{id}/allergies[/{allergyId}]`                |
+| DanhGia                     | `Review`              | `reviews`               | `Reviews`                     | `reviews`                | `/reviews`, `/me/reviews`                                |
+| LichSuTroChuyenAI           | `AiChatMessage`       | `ai_chat_messages`      | `AiAssistant`                 | `ai-assistant`           | `/ai/chat`, `/me/ai/history`                             |
+| ThongBao                    | `Notification`        | `notifications`         | `Notifications`               | `notifications`          | `/me/notifications`                                      |
+| _(đề xuất)_ MaOtp           | `OtpCode`             | `otp_codes`             | `Auth`                        | `auth`                   | `/auth/*/request-otp`                                    |
+| _(đề xuất)_ RefreshToken    | `RefreshToken`        | `refresh_tokens`        | `Auth`                        | `auth`                   | `/auth/refresh`                                          |
+| _(đề xuất)_ LienKetDangNhap | `UserExternalLogin`   | `user_external_logins`  | `Auth`                        | `auth`                   | `/auth/google`, `/auth/google/complete`                  |
+| _(đề xuất)_ ThongTinSpa     | `SpaProfile`          | `spa_profiles`          | `Services`                    | `services`               | `/spa-info`                                              |
 
 Dịch vụ, gói và chi tiết gói dùng chung thư mục backend `Catalog` (UC-SPA-06, 07, 09 tìm kiếm và quản lý cả hai cùng lúc). Thư mục `Orders`, `Purchases` (UC-SPA-18, 30/10/2026; lịch sử sử dụng UC-SPA-20 `ServiceHistoryService`, 31/10/2026), `Care` (UC-SPA-27, 28, 31/10/2026), `Treatments` (UC-SPA-19, 21, 31/10/2026) `Reports` (UC-SPA-33, 01/11/2026, chỉ đọc) và `AiAssistant` (UC-SPA-32, 02/11/2026; port `IAiChatModel` ở `Interfaces/Ai`, adapter `Infrastructure/Ai`) đã có; `Notifications` (UC-SPA-34, 16/11/2026: xem thông báo, `NotificationPublisher` phát sinh thông báo từ các nghiệp vụ, job nhắc lịch, hub SignalR `/hubs/notifications`). Danh sách lịch được phân công của nhân viên (UC-SPA-25) nằm ở thư mục `Staff` (`AssignedAppointmentService`).
 

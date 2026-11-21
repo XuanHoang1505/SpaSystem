@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Options;
 using FluentValidation;
-using NhuNguyetSpa.Application.Common;
 using NhuNguyetSpa.Application.Common.Interfaces;
 using NhuNguyetSpa.Application.Common.Options;
 using NhuNguyetSpa.Application.Common.Models;
@@ -57,15 +56,18 @@ public sealed class AuthService : IAuthService
             _passwordHasher.Verify(_passwordHasher.DummyHash, request.Password);
             throw AuthErrors.InvalidCredentials();
         }
+        if (!user.HasPassword)
+        {
+            // Q-84: an account made by Google sign-in has no password until one is set through password reset.
+            _passwordHasher.Verify(_passwordHasher.DummyHash, request.Password);
+            throw AuthErrors.InvalidCredentials();
+        }
         if (!_passwordHasher.Verify(user.PasswordHash, request.Password))
             throw AuthErrors.InvalidCredentials();
-        if (user.Status != UserStatus.Active)
-            throw AuthErrors.NotActive(user.Status);
         var now = _clock.UtcNow;
-        if (await HasResignedAsync(user, now, cancellationToken))
-            throw AuthErrors.NotActive(UserStatus.Inactive);
+        await AuthSessions.EnsureCanSignInAsync(_users, user, now, cancellationToken);
 
-        var result = await IssueTokensAsync(user, now, cancellationToken);
+        var result = await AuthSessions.IssueAsync(_tokens, _refreshTokens, user, now, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return OperationResult<AuthResultDto>.Success(result);
     }
@@ -94,7 +96,7 @@ public sealed class AuthService : IAuthService
             await _refreshTokens.DeleteAsync(stored.Id, cancellationToken);
             throw AuthErrors.NotActive(stored.User.Status);
         }
-        if (await HasResignedAsync(stored.User, now, cancellationToken))
+        if (await AuthSessions.HasResignedAsync(_users, stored.User, now, cancellationToken))
         {
             await _refreshTokens.DeleteAsync(stored.Id, cancellationToken);
             throw AuthErrors.NotActive(UserStatus.Inactive);
@@ -105,7 +107,7 @@ public sealed class AuthService : IAuthService
         {
             if (!await _refreshTokens.TryRevokeAsync(stored.Id, now, token))
                 throw AuthErrors.InvalidRefreshToken();
-            result = await IssueTokensAsync(stored.User, now, token);
+            result = await AuthSessions.IssueAsync(_tokens, _refreshTokens, stored.User, now, token);
             await _unitOfWork.SaveChangesAsync(token);
         }, cancellationToken);
         return OperationResult<AuthResultDto>.Success(result!);
@@ -119,26 +121,4 @@ public sealed class AuthService : IAuthService
         if (stored is { RevokedAtUtc: null } && (currentUserId is null || stored.UserId == currentUserId))
             await _refreshTokens.DeleteAsync(stored.Id, cancellationToken);
     }
-
-    private async Task<AuthResultDto> IssueTokensAsync(User user, DateTime now, CancellationToken cancellationToken)
-    {
-        var access = _tokens.CreateAccessToken(user, now);
-        var refresh = _tokens.CreateRefreshToken(now);
-        await _refreshTokens.AddAsync(new RefreshToken
-        {
-            UserId = user.Id,
-            TokenHash = refresh.TokenHash,
-            ExpiresAtUtc = refresh.ExpiresAtUtc,
-            CreatedAtUtc = now,
-        }, cancellationToken);
-        return new AuthResultDto(access.Token, access.ExpiresAtUtc, refresh.Token, refresh.ExpiresAtUtc,
-            new AuthUserDto(user.Id, user.FullName, user.Email, user.Role));
-    }
-
-    /// <summary>
-    /// BR-STF-05: a resignation recorded for a future date leaves the account active (no background job), so staff are
-    /// refused from that date (Vietnam calendar) even while <c>users.status</c> is still active.
-    /// </summary>
-    private async Task<bool> HasResignedAsync(User user, DateTime nowUtc, CancellationToken cancellationToken) =>
-        user.Role == UserRole.Staff && await _users.IsResignedStaffAsync(user.Id, SpaTime.Today(nowUtc), cancellationToken);
 }

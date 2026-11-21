@@ -49,6 +49,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<OtpCode> OtpCodes => Set<OtpCode>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<UserExternalLogin> UserExternalLogins => Set<UserExternalLogin>();
     public DbSet<SpaProfile> SpaProfiles => Set<SpaProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

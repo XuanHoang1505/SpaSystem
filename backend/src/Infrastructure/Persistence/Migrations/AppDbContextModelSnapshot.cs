@@ -1886,6 +1886,54 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.UserExternalLogin", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("citext")
+                        .HasColumnName("email");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("provider");
+
+                    b.Property<string>("ProviderKey")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("provider_key");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_external_logins");
+
+                    b.HasIndex("Provider", "ProviderKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_user_external_logins_provider_provider_key");
+
+                    b.HasIndex("UserId", "Provider")
+                        .IsUnique()
+                        .HasDatabaseName("ux_user_external_logins_user_id_provider");
+
+                    b.ToTable("user_external_logins", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_user_external_logins_provider", "provider IN ('google')");
+                        });
+                });
+
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.WorkSchedule", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2393,6 +2441,18 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.Navigation("SpaService");
 
                     b.Navigation("TreatmentPlan");
+                });
+
+            modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.UserExternalLogin", b =>
+                {
+                    b.HasOne("NhuNguyetSpa.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_external_logins_users_user_id");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.WorkSchedule", b =>

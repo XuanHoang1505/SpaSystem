@@ -16,6 +16,7 @@ public static class EnvLoader
             ["PAYMENT_WEB_RETURN_URL"] = "Payment:ClientReturnUrls:Web",
             ["PAYMENT_MOBILE_RETURN_URL"] = "Payment:ClientReturnUrls:Mobile",
             ["GEMINI_API_KEY"] = "Ai:ApiKey",
+            ["GOOGLE_CLIENT_ID"] = "GoogleSignIn:ClientId",
         };
 
     private static readonly IReadOnlyDictionary<string, string> JwtKeyAliases =

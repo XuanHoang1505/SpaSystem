@@ -1,6 +1,7 @@
 using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Users;
 using NhuNguyetSpa.Domain.Entities;
+using NhuNguyetSpa.Domain.Enums;
 
 namespace NhuNguyetSpa.Application.Interfaces.Repositories;
 
@@ -14,6 +15,12 @@ public interface IUserRepository : IRepository<User>
 
     /// <summary>Case-insensitive (citext).</summary>
     Task<User?> FindByEmailAsync(string email, CancellationToken cancellationToken);
+
+    /// <summary>The user linked to an external account (<c>user_external_logins</c>), tracked.</summary>
+    Task<User?> FindByExternalLoginAsync(ExternalLoginProvider provider, string providerKey, CancellationToken cancellationToken);
+
+    /// <summary>True when the user already has an account of <paramref name="provider"/> linked (one per provider).</summary>
+    Task<bool> HasExternalLoginAsync(Guid userId, ExternalLoginProvider provider, CancellationToken cancellationToken);
 
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken);
 

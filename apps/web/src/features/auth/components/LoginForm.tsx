@@ -15,6 +15,7 @@ import { loginSchema, type LoginValues } from '../schemas';
 import { AuthCard } from './AuthCard';
 import { ConfigurationAlert, useApiConfigured } from './ConfigurationAlert';
 import { FormAlert } from './FormAlert';
+import { GoogleSignInSection } from './GoogleSignInSection';
 import { PasswordInput } from './PasswordInput';
 
 const alertCodes = new Set<string>([
@@ -122,6 +123,7 @@ export function LoginForm() {
           Đăng nhập
         </Button>
       </form>
+      <GoogleSignInSection mode="signin" />
     </AuthCard>
   );
 }

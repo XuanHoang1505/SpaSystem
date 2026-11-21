@@ -2,7 +2,7 @@ using NhuNguyetSpa.Domain.Enums;
 
 namespace NhuNguyetSpa.Application.DTOs.Users;
 
-/// <summary>The signed-in user's own account (<c>GET /me</c>, UC-SPA-04). Never carries the password hash.</summary>
+/// <summary>The signed-in user's own account (<c>GET /me</c>, UC-SPA-04). Never carries the password hash; <c>HasPassword</c> is false for a Google-only account (Q-84).</summary>
 public sealed record MeDto(
     Guid Id,
     string FullName,
@@ -13,4 +13,5 @@ public sealed record MeDto(
     string? AvatarUrl,
     DateOnly? DateOfBirth,
     Gender? Gender,
-    DateTime CreatedAtUtc);
+    DateTime CreatedAtUtc,
+    bool HasPassword);

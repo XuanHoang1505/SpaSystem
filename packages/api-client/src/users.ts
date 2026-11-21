@@ -68,6 +68,7 @@ export const usersErrorCodes = {
   rateLimited: 'rate_limited',
   currentPasswordIncorrect: 'current_password_incorrect',
   passwordUnchanged: 'password_unchanged',
+  passwordNotSet: 'password_not_set',
   imageRequired: 'image_required',
   imageTooLarge: 'image_too_large',
   imageTypeNotSupported: 'image_type_not_supported',

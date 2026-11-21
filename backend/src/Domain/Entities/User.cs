@@ -28,6 +28,9 @@ public sealed class User : BaseAuditableEntity
         Gender = gender;
     }
 
+    /// <summary>False for an account created through Google sign-in until a password is set by password reset (Q-84).</summary>
+    public bool HasPassword => !string.IsNullOrEmpty(PasswordHash);
+
     public void ChangePasswordHash(string passwordHash) => PasswordHash = passwordHash;
 
     public void SetAvatar(string url) => AvatarUrl = url;

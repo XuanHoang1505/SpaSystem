@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ShieldAlert } from 'lucide-react';
 import { ApiClientError, usersErrorCodes } from '@spa/api-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,36 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { changePasswordSchema, type ChangePasswordFormValues } from '../schemas';
 import { useChangePassword } from '../hooks/useChangePassword';
 
-export function ChangePasswordCard() {
+/**
+ * An account created by Google sign-in has no password yet (Q-84): it cannot "change" one, so the card explains how to
+ * set one through password reset instead of showing a form that would always fail.
+ */
+export function ChangePasswordCard({ hasPassword = true }: { hasPassword?: boolean }) {
+  return hasPassword ? <ChangePasswordForm /> : <NoPasswordCard />;
+}
+
+function NoPasswordCard() {
+  return (
+    <Card id="doi-mat-khau" className="scroll-mt-24">
+      <CardHeader>
+        <CardTitle>Mật khẩu</CardTitle>
+        <CardDescription>Bạn đang đăng nhập bằng tài khoản Google.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Alert>
+          <ShieldAlert aria-hidden="true" />
+          <AlertDescription>
+            Tài khoản chưa có mật khẩu. Nếu muốn đăng nhập bằng email hoặc số điện thoại, hãy đăng
+            xuất rồi chọn &quot;Quên mật khẩu?&quot; ở trang đăng nhập để tạo mật khẩu qua mã gửi
+            tới email.
+          </AlertDescription>
+        </Alert>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ChangePasswordForm() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);

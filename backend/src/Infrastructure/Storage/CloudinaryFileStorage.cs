@@ -42,6 +42,27 @@ public sealed class CloudinaryFileStorage : IFileStorage
         return result.SecureUrl.ToString();
     }
 
+    public async Task<string> UploadImageFromUrlAsync(Uri sourceUrl, string publicId, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(sourceUrl);
+        var (client, fullId) = Connect(publicId);
+        var parameters = new ImageUploadParams
+        {
+            // Cloudinary downloads the remote file itself.
+            File = new FileDescription(sourceUrl.AbsoluteUri),
+            PublicId = fullId,
+            Overwrite = true,
+            Invalidate = true,
+            UseFilename = false,
+            UniqueFilename = false,
+        };
+        var result = await CallAsync(() => client.UploadAsync(parameters, cancellationToken), "upload", fullId, cancellationToken);
+        if (result.Error is not null || result.SecureUrl is null)
+            throw Failed("upload", fullId, result.Error?.Message ?? $"HTTP {(int)result.StatusCode}");
+        _logger.LogInformation("Uploaded image {PublicId} from {Host} ({Bytes} bytes)", fullId, sourceUrl.Host, result.Bytes);
+        return result.SecureUrl.ToString();
+    }
+
     public async Task DeleteAsync(string publicId, CancellationToken cancellationToken)
     {
         var (client, fullId) = Connect(publicId);

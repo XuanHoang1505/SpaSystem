@@ -17,13 +17,16 @@ public sealed class AuthController : ApiController
 {
     private readonly IAuthService _authService;
     private readonly IAccountService _accountService;
+    private readonly IGoogleSignInService _googleSignIn;
     private readonly ICurrentUserService _currentUser;
     private readonly RefreshTokenCookie _cookie;
 
-    public AuthController(IAuthService authService, IAccountService accountService, ICurrentUserService currentUser, RefreshTokenCookie cookie)
+    public AuthController(IAuthService authService, IAccountService accountService, IGoogleSignInService googleSignIn,
+        ICurrentUserService currentUser, RefreshTokenCookie cookie)
     {
         _authService = authService;
         _accountService = accountService;
+        _googleSignIn = googleSignIn;
         _currentUser = currentUser;
         _cookie = cookie;
     }
@@ -38,6 +41,39 @@ public sealed class AuthController : ApiController
     [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken) =>
         HandleResult(MoveRefreshTokenToCookie(await _authService.LoginAsync(request, cancellationToken)));
+
+    /// <summary>Sign-in with Google (web, Q-84): a session, or <c>profileRequired</c> with the sign-up token for a new customer.</summary>
+    [HttpPost("google")]
+    [AllowAnonymous]
+    [EnableRateLimiting(AuthenticationExtensions.AuthRateLimitPolicy)]
+    [ProducesResponseType<ApiResponse<GoogleSignInResultDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> Google(GoogleSignInRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _googleSignIn.SignInAsync(request, cancellationToken);
+        if (result is not { IsSuccess: true, Data.Session: { } session })
+            return HandleResult(result);
+        var moved = MoveRefreshTokenToCookie(OperationResult<AuthResultDto>.Success(session));
+        return HandleResult(OperationResult<GoogleSignInResultDto>.Success(GoogleSignInResultDto.SignedIn(moved.Data!), result.Message));
+    }
+
+    /// <summary>Creates the customer account of a first Google sign-in with its phone number, then signs it in.</summary>
+    [HttpPost("google/complete")]
+    [AllowAnonymous]
+    [EnableRateLimiting(AuthenticationExtensions.AuthRateLimitPolicy)]
+    [ProducesResponseType<ApiResponse<AuthResultDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> CompleteGoogleSignup(GoogleSignupCompleteRequest request, CancellationToken cancellationToken) =>
+        HandleResult(MoveRefreshTokenToCookie(await _googleSignIn.CompleteSignupAsync(request, cancellationToken)));
 
     [HttpPost("refresh")]
     [AllowAnonymous]

@@ -65,3 +65,29 @@ export interface ResetPasswordRequest {
   newPassword: string;
   confirmPassword: string;
 }
+
+/** `POST /auth/google` (web only, Q-84): `idToken` is the `credential` Google Identity Services returns. */
+export interface GoogleSignInRequest {
+  idToken: string;
+}
+
+/** First Google sign-in: no account matches yet, so the web asks for a phone number and sends the token back. */
+export interface GoogleSignup {
+  signupToken: string;
+  expiresAtUtc: string;
+  email: string;
+  fullName: string;
+}
+
+/** Either `session` (signed in) or, when `profileRequired`, `signup` for `POST /auth/google/complete`. */
+export interface GoogleSignInResult {
+  profileRequired: boolean;
+  session: AuthResult | null;
+  signup: GoogleSignup | null;
+}
+
+export interface GoogleSignupCompleteRequest {
+  signupToken: string;
+  fullName: string;
+  phoneNumber: string;
+}

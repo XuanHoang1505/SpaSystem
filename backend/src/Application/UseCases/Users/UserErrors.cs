@@ -9,10 +9,14 @@ public static class UserErrors
     public const string CurrentPasswordIncorrectCode = "current_password_incorrect";
     public const string PasswordUnchangedCode = "password_unchanged";
     public const string CannotLockSelfCode = "cannot_lock_self";
+    public const string PasswordNotSetCode = "password_not_set";
 
     public static NotFoundException UserNotFound() => new("Không tìm thấy tài khoản.", UserNotFoundCode);
 
     public static BusinessRuleException CurrentPasswordIncorrect() => new("Mật khẩu hiện tại không đúng.", CurrentPasswordIncorrectCode);
+
+    public static BusinessRuleException PasswordNotSet() =>
+        new("Tài khoản đăng nhập bằng Google chưa có mật khẩu. Hãy dùng \"Quên mật khẩu\" để tạo mật khẩu.", PasswordNotSetCode);
 
     public static ConflictException CannotLockSelf() => new("Bạn không thể tự khóa tài khoản của mình.", CannotLockSelfCode);
 }

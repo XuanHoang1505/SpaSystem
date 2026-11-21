@@ -205,6 +205,13 @@ public static class DependencyInjection
         services.AddScoped<FullDataSeeder>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
+        // GOOGLE_CLIENT_ID is checked on each sign-in, so the API starts without it (like Cloudinary and VNPay).
+        services.AddOptions<GoogleSignInOptions>()
+            .Bind(configuration.GetSection(GoogleSignInOptions.SectionName))
+            .Validate(options => options.SignupTokenExpirationMinutes is >= 1 and <= 60, "GoogleSignIn:SignupTokenExpirationMinutes must be 1–60.")
+            .ValidateOnStart();
+        // Singleton: it caches Google's signing keys.
+        services.AddSingleton<IGoogleTokenValidator, GoogleIdTokenValidator>();
 
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database", tags: [ReadinessTag]);
         return services;
