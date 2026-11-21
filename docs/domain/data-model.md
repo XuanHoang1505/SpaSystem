@@ -60,44 +60,46 @@ erDiagram
     customers ||--o{ ai_chat_messages : customer_id
     users ||--o{ notifications : user_id
     users ||--o{ refresh_tokens : user_id
+    users ||--o| user_external_logins : user_id
 ```
 
 ## Danh sách bảng
 
-| Nhóm                       | Bảng                                              | Entity                | DA                       | Mục đích                                                                       | Nguồn |
-| -------------------------- | ------------------------------------------------- | --------------------- | ------------------------ | ------------------------------------------------------------------------------ | ----- |
-| Tài khoản                  | [`users`](#users)                                 | `User`                | NguoiDung                | Tài khoản dùng chung cho khách hàng, nhân viên, chủ spa                        | DA    |
-| Tài khoản                  | [`owner_profiles`](#owner_profiles)               | `OwnerProfile`        | ChuSpa                   | Thông tin riêng của chủ spa (1-1 với users, dùng chung khóa chính)             | DA    |
-| Tài khoản                  | [`customers`](#customers)                         | `Customer`            | KhachHang                | Thông tin riêng của khách hàng (1-1 với users, dùng chung khóa chính)          | DA    |
-| Nhân viên                  | [`staff_members`](#staff_members)                 | `StaffMember`         | NhanVien                 | Thông tin riêng của nhân viên (1-1 với users, dùng chung khóa chính)           | DA    |
-| Dịch vụ & gói              | [`service_categories`](#service_categories)       | `ServiceCategory`     | DanhMucDichVu            | Danh mục (loại) dịch vụ, dùng làm bộ lọc (Q-13)                                | ĐX    |
-| Dịch vụ & gói              | [`spa_services`](#spa_services)                   | `SpaService`          | DichVu                   | Dịch vụ chăm sóc da lẻ                                                         | DA    |
-| Dịch vụ & gói              | [`service_steps`](#service_steps)                 | `ServiceStep`         | BuocDichVu               | Quy trình từng bước của một dịch vụ (Q-71)                                     | ĐX    |
-| Dịch vụ & gói              | [`service_packages`](#service_packages)           | `ServicePackage`      | GoiDichVu                | Gói dịch vụ nhiều buổi                                                         | DA    |
-| Dịch vụ & gói              | [`service_package_items`](#service_package_items) | `ServicePackageItem`  | GoiDichVuChiTiet         | Dịch vụ thành phần của gói: số buổi, thứ tự, khoảng cách                       | DA    |
-| Nhân viên                  | [`staff_skills`](#staff_skills)                   | `StaffSkill`          | NhanVien_DichVu          | Nhân viên thực hiện được dịch vụ nào (khóa chính ghép)                         | DA    |
-| Nhân viên                  | [`staff_certifications`](#staff_certifications)   | `StaffCertification`  | BangCapNhanVien          | Bằng cấp, chứng chỉ của nhân viên; nhân viên tự khai báo, chủ spa duyệt (Q-74) | ĐX    |
-| Nhân viên                  | [`work_schedules`](#work_schedules)               | `WorkSchedule`        | LichLamViec              | Ca làm việc của nhân viên (giờ Việt Nam — ADR-0003)                            | DA    |
-| Khuyến mãi                 | [`promotions`](#promotions)                       | `Promotion`           | KhuyenMai                | Chương trình khuyến mãi                                                        | DA    |
-| Giỏ, đơn, thanh toán       | [`carts`](#carts)                                 | `Cart`                | GioHang                  | Giỏ hàng (mỗi khách 1 giỏ)                                                     | DA    |
-| Giỏ, đơn, thanh toán       | [`cart_items`](#cart_items)                       | `CartItem`            | ChiTietGioHang           | Sản phẩm trong giỏ                                                             | DA    |
-| Giỏ, đơn, thanh toán       | [`orders`](#orders)                               | `Order`               | DonHang                  | Đơn hàng                                                                       | DA    |
-| Giỏ, đơn, thanh toán       | [`order_items`](#order_items)                     | `OrderItem`           | ChiTietDonHang           | Sản phẩm trong đơn (lưu tên, giá lúc mua)                                      | DA    |
-| Giỏ, đơn, thanh toán       | [`payments`](#payments)                           | `Payment`             | ThanhToan                | Lần thanh toán qua cổng (một đơn có thể nhiều lần thử)                         | DA    |
-| Khuyến mãi                 | [`promotion_redemptions`](#promotion_redemptions) | `PromotionRedemption` | ApDungKhuyenMai          | Khuyến mãi áp dụng cho đơn (1 đơn tối đa 1 mã)                                 | DA    |
-| Quyền sử dụng & liệu trình | [`service_entitlements`](#service_entitlements)   | `ServiceEntitlement`  | DichVuKhachHang          | Quyền sử dụng một dịch vụ lẻ đã mua                                            | DA    |
-| Quyền sử dụng & liệu trình | [`customer_packages`](#customer_packages)         | `CustomerPackage`     | GoiKhachHang             | Gói dịch vụ khách đã mua                                                       | DA    |
-| Quyền sử dụng & liệu trình | [`treatment_plans`](#treatment_plans)             | `TreatmentPlan`       | LieuTrinh                | Liệu trình gắn với gói đã mua (1-1)                                            | DA    |
-| Quyền sử dụng & liệu trình | [`treatment_sessions`](#treatment_sessions)       | `TreatmentSession`    | BuoiChamSoc              | Các buổi trong liệu trình theo thứ tự                                          | DA    |
-| Lịch hẹn                   | [`appointments`](#appointments)                   | `Appointment`         | LichHen                  | Lịch hẹn — bảng trung tâm của thuật toán chống trùng lịch (ADR-0003)           | DA    |
-| Chăm sóc                   | [`skin_profiles`](#skin_profiles)                 | `SkinProfile`         | HoSoDa                   | Hồ sơ da lập theo từng lần chăm sóc                                            | DA    |
-| Chăm sóc                   | [`customer_allergies`](#customer_allergies)       | `CustomerAllergy`     | DiUngKhachHang           | Thông tin dị ứng của khách                                                     | DA    |
-| Đánh giá                   | [`reviews`](#reviews)                             | `Review`              | DanhGia                  | Đánh giá dịch vụ hoặc gói                                                      | DA    |
-| Trợ lý AI                  | [`ai_chat_messages`](#ai_chat_messages)           | `AiChatMessage`       | LichSuTroChuyenAI        | Lịch sử hỏi – đáp với trợ lý AI                                                | DA    |
-| Thông báo                  | [`notifications`](#notifications)                 | `Notification`        | ThongBao                 | Thông báo gửi đến người dùng                                                   | DA    |
-| Tài khoản                  | [`otp_codes`](#otp_codes)                         | `OtpCode`             | (MaOtp — đề xuất)        | OTP đăng ký / quên mật khẩu (UC-SPA-01, 03)                                    | ĐX    |
-| Tài khoản                  | [`refresh_tokens`](#refresh_tokens)               | `RefreshToken`        | (RefreshToken — đề xuất) | Phiên đăng nhập JWT, refresh token xoay vòng                                   | ĐX    |
-| Dịch vụ & gói              | [`spa_profiles`](#spa_profiles)                   | `SpaProfile`          | (ThongTinSpa — đề xuất)  | Thông tin giới thiệu, liên hệ, giờ mở cửa (UC-SPA-08)                          | ĐX    |
+| Nhóm                       | Bảng                                              | Entity                | DA                          | Mục đích                                                                        | Nguồn |
+| -------------------------- | ------------------------------------------------- | --------------------- | --------------------------- | ------------------------------------------------------------------------------- | ----- |
+| Tài khoản                  | [`users`](#users)                                 | `User`                | NguoiDung                   | Tài khoản dùng chung cho khách hàng, nhân viên, chủ spa                         | DA    |
+| Tài khoản                  | [`owner_profiles`](#owner_profiles)               | `OwnerProfile`        | ChuSpa                      | Thông tin riêng của chủ spa (1-1 với users, dùng chung khóa chính)              | DA    |
+| Tài khoản                  | [`customers`](#customers)                         | `Customer`            | KhachHang                   | Thông tin riêng của khách hàng (1-1 với users, dùng chung khóa chính)           | DA    |
+| Nhân viên                  | [`staff_members`](#staff_members)                 | `StaffMember`         | NhanVien                    | Thông tin riêng của nhân viên (1-1 với users, dùng chung khóa chính)            | DA    |
+| Dịch vụ & gói              | [`service_categories`](#service_categories)       | `ServiceCategory`     | DanhMucDichVu               | Danh mục (loại) dịch vụ, dùng làm bộ lọc (Q-13)                                 | ĐX    |
+| Dịch vụ & gói              | [`spa_services`](#spa_services)                   | `SpaService`          | DichVu                      | Dịch vụ chăm sóc da lẻ                                                          | DA    |
+| Dịch vụ & gói              | [`service_steps`](#service_steps)                 | `ServiceStep`         | BuocDichVu                  | Quy trình từng bước của một dịch vụ (Q-71)                                      | ĐX    |
+| Dịch vụ & gói              | [`service_packages`](#service_packages)           | `ServicePackage`      | GoiDichVu                   | Gói dịch vụ nhiều buổi                                                          | DA    |
+| Dịch vụ & gói              | [`service_package_items`](#service_package_items) | `ServicePackageItem`  | GoiDichVuChiTiet            | Dịch vụ thành phần của gói: số buổi, thứ tự, khoảng cách                        | DA    |
+| Nhân viên                  | [`staff_skills`](#staff_skills)                   | `StaffSkill`          | NhanVien_DichVu             | Nhân viên thực hiện được dịch vụ nào (khóa chính ghép)                          | DA    |
+| Nhân viên                  | [`staff_certifications`](#staff_certifications)   | `StaffCertification`  | BangCapNhanVien             | Bằng cấp, chứng chỉ của nhân viên; nhân viên tự khai báo, chủ spa duyệt (Q-74)  | ĐX    |
+| Nhân viên                  | [`work_schedules`](#work_schedules)               | `WorkSchedule`        | LichLamViec                 | Ca làm việc của nhân viên (giờ Việt Nam — ADR-0003)                             | DA    |
+| Khuyến mãi                 | [`promotions`](#promotions)                       | `Promotion`           | KhuyenMai                   | Chương trình khuyến mãi                                                         | DA    |
+| Giỏ, đơn, thanh toán       | [`carts`](#carts)                                 | `Cart`                | GioHang                     | Giỏ hàng (mỗi khách 1 giỏ)                                                      | DA    |
+| Giỏ, đơn, thanh toán       | [`cart_items`](#cart_items)                       | `CartItem`            | ChiTietGioHang              | Sản phẩm trong giỏ                                                              | DA    |
+| Giỏ, đơn, thanh toán       | [`orders`](#orders)                               | `Order`               | DonHang                     | Đơn hàng                                                                        | DA    |
+| Giỏ, đơn, thanh toán       | [`order_items`](#order_items)                     | `OrderItem`           | ChiTietDonHang              | Sản phẩm trong đơn (lưu tên, giá lúc mua)                                       | DA    |
+| Giỏ, đơn, thanh toán       | [`payments`](#payments)                           | `Payment`             | ThanhToan                   | Lần thanh toán qua cổng (một đơn có thể nhiều lần thử)                          | DA    |
+| Khuyến mãi                 | [`promotion_redemptions`](#promotion_redemptions) | `PromotionRedemption` | ApDungKhuyenMai             | Khuyến mãi áp dụng cho đơn (1 đơn tối đa 1 mã)                                  | DA    |
+| Quyền sử dụng & liệu trình | [`service_entitlements`](#service_entitlements)   | `ServiceEntitlement`  | DichVuKhachHang             | Quyền sử dụng một dịch vụ lẻ đã mua                                             | DA    |
+| Quyền sử dụng & liệu trình | [`customer_packages`](#customer_packages)         | `CustomerPackage`     | GoiKhachHang                | Gói dịch vụ khách đã mua                                                        | DA    |
+| Quyền sử dụng & liệu trình | [`treatment_plans`](#treatment_plans)             | `TreatmentPlan`       | LieuTrinh                   | Liệu trình gắn với gói đã mua (1-1)                                             | DA    |
+| Quyền sử dụng & liệu trình | [`treatment_sessions`](#treatment_sessions)       | `TreatmentSession`    | BuoiChamSoc                 | Các buổi trong liệu trình theo thứ tự                                           | DA    |
+| Lịch hẹn                   | [`appointments`](#appointments)                   | `Appointment`         | LichHen                     | Lịch hẹn — bảng trung tâm của thuật toán chống trùng lịch (ADR-0003)            | DA    |
+| Chăm sóc                   | [`skin_profiles`](#skin_profiles)                 | `SkinProfile`         | HoSoDa                      | Hồ sơ da lập theo từng lần chăm sóc                                             | DA    |
+| Chăm sóc                   | [`customer_allergies`](#customer_allergies)       | `CustomerAllergy`     | DiUngKhachHang              | Thông tin dị ứng của khách                                                      | DA    |
+| Đánh giá                   | [`reviews`](#reviews)                             | `Review`              | DanhGia                     | Đánh giá dịch vụ hoặc gói                                                       | DA    |
+| Trợ lý AI                  | [`ai_chat_messages`](#ai_chat_messages)           | `AiChatMessage`       | LichSuTroChuyenAI           | Lịch sử hỏi – đáp với trợ lý AI                                                 | DA    |
+| Thông báo                  | [`notifications`](#notifications)                 | `Notification`        | ThongBao                    | Thông báo gửi đến người dùng                                                    | DA    |
+| Tài khoản                  | [`otp_codes`](#otp_codes)                         | `OtpCode`             | (MaOtp — đề xuất)           | OTP đăng ký / quên mật khẩu (UC-SPA-01, 03)                                     | ĐX    |
+| Tài khoản                  | [`refresh_tokens`](#refresh_tokens)               | `RefreshToken`        | (RefreshToken — đề xuất)    | Phiên đăng nhập JWT, refresh token xoay vòng                                    | ĐX    |
+| Tài khoản                  | [`user_external_logins`](#user_external_logins)   | `UserExternalLogin`   | (LienKetDangNhap — đề xuất) | Tài khoản Google liên kết với người dùng, đăng nhập bằng Google trên web (Q-84) | ĐX    |
+| Dịch vụ & gói              | [`spa_profiles`](#spa_profiles)                   | `SpaProfile`          | (ThongTinSpa — đề xuất)     | Thông tin giới thiệu, liên hệ, giờ mở cửa (UC-SPA-08)                           | ĐX    |
 
 ## Chi tiết bảng
 
@@ -105,22 +107,22 @@ erDiagram
 
 `User` · DA: NguoiDung · Sprint 1 · Tài khoản dùng chung cho khách hàng, nhân viên, chủ spa. UC: UC-SPA-01, UC-SPA-02, UC-SPA-03, UC-SPA-04, UC-SPA-05, UC-SPA-22, UC-SPA-25.
 
-| Cột              | PostgreSQL   | C#                       | Null  | Ràng buộc             | Mô tả                                   | DA          |
-| ---------------- | ------------ | ------------------------ | ----- | --------------------- | --------------------------------------- | ----------- |
-| `id`             | uuid         | `Id`: Guid               | không | PK                    | Mã người dùng                           | MaNguoiDung |
-| `full_name`      | varchar(100) | `FullName`: string       | không | —                     | Họ và tên                               | HoTen       |
-| `email`          | citext       | `Email`: string          | không | UQ                    | Email đăng nhập                         | Email       |
-| `phone_number`   | varchar(15)  | `PhoneNumber`: string    | không | UQ                    | Số điện thoại                           | SDT         |
-| `password_hash`  | varchar(255) | `PasswordHash`: string   | không | —                     | Mật khẩu đã băm (ASP.NET Core Identity) | MatKhauHash |
-| `role`           | varchar(30)  | `Role`: UserRole         | không | CHECK enum UserRole   | Vai trò                                 | VaiTro      |
-| `avatar_url`     | varchar(500) | `AvatarUrl`: string      | có    | —                     | Ảnh đại diện                            | AnhDaiDien  |
-| `status`         | varchar(30)  | `Status`: UserStatus     | không | CHECK enum UserStatus | Trạng thái tài khoản                    | TrangThai   |
-| `date_of_birth`  | date         | `DateOfBirth`: DateOnly  | có    | —                     | Ngày sinh                               | NgaySinh    |
-| `gender`         | varchar(30)  | `Gender`: Gender         | có    | CHECK enum Gender     | Giới tính                               | GioiTinh    |
-| `created_at_utc` | timestamptz  | `CreatedAtUtc`: DateTime | không | —                     | Thời điểm tạo                           | NgayTao     |
-| `updated_at_utc` | timestamptz  | `UpdatedAtUtc`: DateTime | có    | —                     | Thời điểm cập nhật gần nhất             | NgayCapNhat |
-| `created_by`     | uuid         | `CreatedBy`: Guid        | có    | —                     | Người tạo (từ BaseAuditableEntity)      | —           |
-| `updated_by`     | uuid         | `UpdatedBy`: Guid        | có    | —                     | Người cập nhật (từ BaseAuditableEntity) | —           |
+| Cột              | PostgreSQL   | C#                       | Null  | Ràng buộc             | Mô tả                                                                                                      | DA          |
+| ---------------- | ------------ | ------------------------ | ----- | --------------------- | ---------------------------------------------------------------------------------------------------------- | ----------- |
+| `id`             | uuid         | `Id`: Guid               | không | PK                    | Mã người dùng                                                                                              | MaNguoiDung |
+| `full_name`      | varchar(100) | `FullName`: string       | không | —                     | Họ và tên                                                                                                  | HoTen       |
+| `email`          | citext       | `Email`: string          | không | UQ                    | Email đăng nhập                                                                                            | Email       |
+| `phone_number`   | varchar(15)  | `PhoneNumber`: string    | không | UQ                    | Số điện thoại                                                                                              | SDT         |
+| `password_hash`  | varchar(255) | `PasswordHash`: string   | không | —                     | Mật khẩu đã băm (ASP.NET Core Identity); chuỗi rỗng khi tài khoản tạo bằng Google chưa đặt mật khẩu (Q-84) | MatKhauHash |
+| `role`           | varchar(30)  | `Role`: UserRole         | không | CHECK enum UserRole   | Vai trò                                                                                                    | VaiTro      |
+| `avatar_url`     | varchar(500) | `AvatarUrl`: string      | có    | —                     | Ảnh đại diện                                                                                               | AnhDaiDien  |
+| `status`         | varchar(30)  | `Status`: UserStatus     | không | CHECK enum UserStatus | Trạng thái tài khoản                                                                                       | TrangThai   |
+| `date_of_birth`  | date         | `DateOfBirth`: DateOnly  | có    | —                     | Ngày sinh                                                                                                  | NgaySinh    |
+| `gender`         | varchar(30)  | `Gender`: Gender         | có    | CHECK enum Gender     | Giới tính                                                                                                  | GioiTinh    |
+| `created_at_utc` | timestamptz  | `CreatedAtUtc`: DateTime | không | —                     | Thời điểm tạo                                                                                              | NgayTao     |
+| `updated_at_utc` | timestamptz  | `UpdatedAtUtc`: DateTime | có    | —                     | Thời điểm cập nhật gần nhất                                                                                | NgayCapNhat |
+| `created_by`     | uuid         | `CreatedBy`: Guid        | có    | —                     | Người tạo (từ BaseAuditableEntity)                                                                         | —           |
+| `updated_by`     | uuid         | `UpdatedBy`: Guid        | có    | —                     | Người cập nhật (từ BaseAuditableEntity)                                                                    | —           |
 
 ### owner_profiles
 
@@ -598,6 +600,19 @@ erDiagram
 | `revoked_at_utc` | timestamptz  | `RevokedAtUtc`: DateTime | có    | —             | Thu hồi khi đăng xuất, đổi mật khẩu, bị khóa | —   |
 | `created_at_utc` | timestamptz  | `CreatedAtUtc`: DateTime | không | —             | Thời điểm tạo                                | —   |
 
+### user_external_logins
+
+`UserExternalLogin` · DA: (LienKetDangNhap — đề xuất) · Sprint 1 · Tài khoản Google liên kết với người dùng, đăng nhập bằng Google trên web (Q-84). UC: UC-SPA-02.
+
+| Cột              | PostgreSQL   | C#                                | Null  | Ràng buộc                                                     | Mô tả                                                         | DA  |
+| ---------------- | ------------ | --------------------------------- | ----- | ------------------------------------------------------------- | ------------------------------------------------------------- | --- |
+| `id`             | uuid         | `Id`: Guid                        | không | PK                                                            | Mã                                                            | —   |
+| `user_id`        | uuid         | `UserId`: Guid                    | không | FK → users.id; UQ (user_id, provider)                         | Người dùng được liên kết (mỗi nhà cung cấp một tài khoản)     | —   |
+| `provider`       | varchar(30)  | `Provider`: ExternalLoginProvider | không | CHECK enum ExternalLoginProvider; UQ (provider, provider_key) | Nhà cung cấp đăng nhập                                        | —   |
+| `provider_key`   | varchar(255) | `ProviderKey`: string             | không | —                                                             | Mã tài khoản bất biến của nhà cung cấp (claim sub của Google) | —   |
+| `email`          | citext       | `Email`: string                   | không | —                                                             | Email của tài khoản Google lúc liên kết (chỉ để tham khảo)    | —   |
+| `created_at_utc` | timestamptz  | `CreatedAtUtc`: DateTime          | không | —                                                             | Thời điểm liên kết                                            | —   |
+
 ### spa_profiles
 
 `SpaProfile` · DA: (ThongTinSpa — đề xuất) · Sprint 1 · Thông tin giới thiệu, liên hệ, giờ mở cửa (UC-SPA-08). UC: UC-SPA-08.
@@ -637,3 +652,4 @@ erDiagram
 | `NotificationType`                | notifications.type                       | `Appointment` → `appointment` (LichHen), `Payment` → `payment` (ThanhToan), `Treatment` → `treatment` (LieuTrinh), `Promotion` → `promotion` (KhuyenMai), `System` → `system` (HeThong)                                                                                                | —                                                                 |
 | `NotificationReferenceType`       | notifications.reference_type             | `Appointment` → `appointment`, `Order` → `order`, `TreatmentPlan` → `treatment_plan`, `Review` → `review`, `WorkSchedule` → `work_schedule`                                                                                                                                            | Đối tượng thông báo trỏ tới (UC-SPA-34)                           |
 | `OtpPurpose`                      | otp_codes.purpose                        | `Registration` → `registration`, `PasswordReset` → `password_reset`                                                                                                                                                                                                                    | —                                                                 |
+| `ExternalLoginProvider`           | user_external_logins.provider            | `Google` → `google`                                                                                                                                                                                                                                                                    | Đăng nhập bằng Google trên web (Q-84)                             |

@@ -21,7 +21,7 @@ TABLES = [
   "full_name|varchar(100)|N||Họ và tên|HoTen",
   "email|citext|N|UQ|Email đăng nhập|Email",
   "phone_number|varchar(15)|N|UQ|Số điện thoại|SDT",
-  "password_hash|varchar(255)|N||Mật khẩu đã băm (ASP.NET Core Identity)|MatKhauHash",
+  "password_hash|varchar(255)|N||Mật khẩu đã băm (ASP.NET Core Identity); chuỗi rỗng khi tài khoản tạo bằng Google chưa đặt mật khẩu (Q-84)|MatKhauHash",
   "role|varchar(30)|N|CHECK enum UserRole|Vai trò|VaiTro",
   "avatar_url|varchar(500)|Y||Ảnh đại diện|AnhDaiDien",
   "status|varchar(30)|N|CHECK enum UserStatus|Trạng thái tài khoản|TrangThai",
@@ -299,6 +299,13 @@ TABLES = [
   "expires_at_utc|timestamptz|N||Hết hạn|",
   "revoked_at_utc|timestamptz|Y||Thu hồi khi đăng xuất, đổi mật khẩu, bị khóa|",
   "created_at_utc|timestamptz|N||Thời điểm tạo|"]),
+ ("AUTH","user_external_logins","UserExternalLogin","(LienKetDangNhap — đề xuất)","Tài khoản Google liên kết với người dùng, đăng nhập bằng Google trên web (Q-84)",DX,"Sprint 1",[
+  "id|uuid|N|PK|Mã|",
+  "user_id|uuid|N|FK → users.id; UQ (user_id, provider)|Người dùng được liên kết (mỗi nhà cung cấp một tài khoản)|",
+  "provider|varchar(30)|N|CHECK enum ExternalLoginProvider; UQ (provider, provider_key)|Nhà cung cấp đăng nhập|",
+  "provider_key|varchar(255)|N||Mã tài khoản bất biến của nhà cung cấp (claim sub của Google)|",
+  "email|citext|N||Email của tài khoản Google lúc liên kết (chỉ để tham khảo)|",
+  "created_at_utc|timestamptz|N||Thời điểm liên kết|"]),
  ("CAT","spa_profiles","SpaProfile","(ThongTinSpa — đề xuất)","Thông tin giới thiệu, liên hệ, giờ mở cửa (UC-SPA-08)",DX,"Sprint 1",[
   "id|uuid|N|PK|Một dòng duy nhất|",
   "name|varchar(150)|N||Tên spa|",
@@ -332,10 +339,11 @@ ENUMS = [
  ("notifications","type","NotificationType",[("LichHen","Appointment","appointment"),("ThanhToan","Payment","payment"),("LieuTrinh","Treatment","treatment"),("KhuyenMai","Promotion","promotion"),("HeThong","System","system")],""),
  ("notifications","reference_type","NotificationReferenceType",[("(đề xuất)","Appointment","appointment"),("(đề xuất)","Order","order"),("(đề xuất)","TreatmentPlan","treatment_plan"),("(đề xuất)","Review","review"),("(đề xuất)","WorkSchedule","work_schedule")],"Đối tượng thông báo trỏ tới (UC-SPA-34)"),
  ("otp_codes","purpose","OtpPurpose",[("(đề xuất)","Registration","registration"),("(đề xuất)","PasswordReset","password_reset")],""),
+ ("user_external_logins","provider","ExternalLoginProvider",[("(đề xuất)","Google","google")],"Đăng nhập bằng Google trên web (Q-84)"),
 ]
 
 UC_TABLES = {
- "UC-SPA-01":("users","customers, otp_codes"),"UC-SPA-02":("users","refresh_tokens"),"UC-SPA-03":("users","otp_codes, refresh_tokens"),
+ "UC-SPA-01":("users","customers, otp_codes"),"UC-SPA-02":("users","refresh_tokens, user_external_logins"),"UC-SPA-03":("users","otp_codes, refresh_tokens"),
  "UC-SPA-04":("users","customers, staff_members, owner_profiles"),"UC-SPA-05":("users","customers, staff_members, refresh_tokens"),
  "UC-SPA-06":("spa_services","service_categories, service_packages, service_package_items, service_entitlements, customer_packages"),"UC-SPA-07":("spa_services","service_steps, service_packages, service_package_items, reviews"),
  "UC-SPA-08":("spa_profiles",""),"UC-SPA-09":("spa_services","service_categories, service_steps, service_packages, service_package_items"),

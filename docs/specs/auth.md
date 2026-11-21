@@ -1,9 +1,9 @@
 # Tài khoản & xác thực — đặc tả
 
 - **Nhóm:** `Auth`, `Users` · **Sprint:** 1 · **Nguồn:** DA §2.2.3 (UC Đăng nhập) / ĐX
-- **Entity:** `User` (bảng `users`), `RefreshToken` (bảng `refresh_tokens`), `OwnerProfile` (bảng `owner_profiles`), `Customer` (bảng `customers`), `StaffMember` (bảng `staff_members`, chỉ đọc), `OtpCode` (bảng `otp_codes`) — xem [glossary](../domain/glossary.md), [data-model](../domain/data-model.md)
+- **Entity:** `User` (bảng `users`), `RefreshToken` (bảng `refresh_tokens`), `OwnerProfile` (bảng `owner_profiles`), `Customer` (bảng `customers`), `StaffMember` (bảng `staff_members`, chỉ đọc), `OtpCode` (bảng `otp_codes`), `UserExternalLogin` (bảng `user_external_logins`) — xem [glossary](../domain/glossary.md), [data-model](../domain/data-model.md)
 - **Trạng thái triển khai:** xem [progress.md](../progress.md)
-- **Đã đặc tả:** UC-SPA-02 và seed tài khoản chủ spa (dev) — **đã triển khai backend 25/10/2026** (kế hoạch: `docs/superpowers/plans/2026-10-25-uc-spa-02-login.md`). UC-SPA-01 và UC-SPA-03 — **đã triển khai backend 25/10/2026** (gửi mail thật qua Gmail SMTP; kế hoạch: `docs/superpowers/plans/2026-10-25-uc-spa-01-03-otp.md`). BE-1 (phiên web bằng cookie, `resendAvailableAtUtc`) — **đã triển khai backend 05/11/2026**. UC-SPA-04, 05 — **đã triển khai backend 01/11/2026** (thư mục backend `Users`; kế hoạch: `docs/superpowers/plans/2026-11-01-uc-spa-04-05-accounts.md`).
+- **Đã đặc tả:** UC-SPA-02 và seed tài khoản chủ spa (dev) — **đã triển khai backend 25/10/2026** (kế hoạch: `docs/superpowers/plans/2026-10-25-uc-spa-02-login.md`). UC-SPA-01 và UC-SPA-03 — **đã triển khai backend 25/10/2026** (gửi mail thật qua Gmail SMTP; kế hoạch: `docs/superpowers/plans/2026-10-25-uc-spa-01-03-otp.md`). BE-1 (phiên web bằng cookie, `resendAvailableAtUtc`) — **đã triển khai backend 05/11/2026**. UC-SPA-04, 05 — **đã triển khai backend 01/11/2026** (thư mục backend `Users`; kế hoạch: `docs/superpowers/plans/2026-11-01-uc-spa-04-05-accounts.md`). Đăng nhập bằng Google (chỉ web, Q-84) — **đã triển khai backend và web 19/11/2026**, xem mục "Đăng nhập bằng Google".
 
 ## Use case
 
@@ -895,6 +895,63 @@ Jest + Testing Library Native, `fetch` giả. `AUTH-UI-T60`…`T69` giữ cho đ
 | AUTH-UI-T79 | Đã có ảnh, bấm máy ảnh rồi "Xóa ảnh"                                                         | `Alert` có ba lựa chọn; `DELETE /me/avatar`, thông báo đã xóa                                                                                                                    |
 | AUTH-UI-T80 | Mở lịch ngày sinh rồi bấm Hủy                                                                | Ngày sinh giữ nguyên (không thành hôm nay)                                                                                                                                       |
 | AUTH-UI-T78 | Tab khách đã đăng nhập, tab nhân viên, tab chủ spa                                           | Cả ba không hiện form trên tab. Bấm cụm thông tin mở `/account` trên stack gốc. Tab vẫn còn lối tắt cũ cùng Đăng xuất. Khách chưa đăng nhập không có form và không gọi `GET /me` |
+
+## Đăng nhập bằng Google (web, Q-84)
+
+Mở rộng UC-SPA-01/02, **chỉ web**. Mobile không có nút Google; endpoint nhận ID token nên mobile dùng lại được sau này.
+
+**Luồng**
+
+1. Trang `/login` (SCR-W07) và bước 1 của `/register` (SCR-W08) hiện nút "Đăng nhập với Google" của Google Identity Services (popup), dưới form. Không có `VITE_GOOGLE_CLIENT_ID` thì không hiện nút.
+2. Google trả `credential` (ID token). Web gọi `POST /api/v1/auth/google { idToken }` ở chế độ cookie (`X-Auth-Transport: cookie`), giống `/auth/login`.
+3. API kiểm ID token theo khóa công khai của Google (tải từ OpenID discovery, có cache): chữ ký RS256, issuer `accounts.google.com`, audience = `GoogleSignIn:ClientId`, còn hạn. Sai → `401 google_token_invalid`. `email_verified` không đúng → `400 google_email_unverified`.
+4. Tìm tài khoản: theo `(provider = google, provider_key = sub)` trong `user_external_logins`, không có thì theo email (không phân biệt hoa thường).
+   - Có tài khoản: kiểm như đăng nhập mật khẩu (`account_locked`, `account_inactive`, nhân viên đã nghỉ việc BR-STF-05). Nhân viên/chủ spa chỉ được khi `GoogleSignIn:AllowStaffAndOwner` = `true`, nếu không `403 google_sign_in_not_allowed`. Tìm theo email thì liên kết luôn (thêm dòng `user_external_logins`), sau khi đã qua mọi kiểm tra. Email đó đã liên kết với Google khác → `409 google_account_conflict`. Trả `{ profileRequired: false, session }`, `session` như `/auth/login`.
+   - Không có: trả `{ profileRequired: true, signup: { signupToken, expiresAtUtc, email, fullName } }`. Chưa tạo gì trong CSDL. `signupToken` là JWT ký bằng khóa của API, audience `NhuNguyetSpa.GoogleSignup`, sống `GoogleSignIn:SignupTokenExpirationMinutes` (10) phút.
+5. Web mở hộp thoại "Hoàn tất đăng ký": email chỉ đọc, họ tên điền sẵn từ Google, nhập số điện thoại. Gửi `POST /api/v1/auth/google/complete { signupToken, fullName, phoneNumber }`.
+6. API kiểm token (`400 google_signup_token_invalid` nếu sai/hết hạn), kiểm họ tên và SĐT như đăng ký (`409 phone_exists`). Nếu lúc này đã có tài khoản của Google/email đó (gửi hai lần, hoặc vừa đăng ký) thì đăng nhập tài khoản đó. Nếu chưa: trong một transaction tạo `users` (vai trò `customer`, `active`, `password_hash` rỗng), `customers`, `user_external_logins` và refresh token. Trả phiên như `/auth/login`.
+
+**Quy tắc**
+
+- Chỉ tạo **khách hàng**. Nhân viên, chủ spa không bao giờ được tạo qua Google.
+- Mỗi người dùng tối đa một tài khoản Google (`ux_user_external_logins_user_id_provider`); một tài khoản Google chỉ thuộc một người dùng (`ux_user_external_logins_provider_provider_key`).
+- Tìm theo `sub`, không theo email: đổi email Google vẫn vào đúng tài khoản. `user_external_logins.email` chỉ để tham khảo.
+- Ảnh đại diện: khi **tạo tài khoản** hoặc **lần đầu liên kết** Google mà tài khoản chưa có ảnh, API nhờ Cloudinary tự tải ảnh Google (claim `picture`, chỉ host `*.googleusercontent.com`, cỡ 512 px) về `avatars/{userId}`, nên đổi/xóa ảnh như UC-SPA-04. Làm sau khi phiên đã lưu, lỗi chỉ ghi log, không chặn đăng nhập. Các lần đăng nhập Google sau không chép lại, nên ảnh đã xóa không bị gắn lại.
+- Tài khoản tạo bằng Google không có mật khẩu: `POST /auth/login` trả `401 invalid_credentials` (vẫn băm giả để thời gian trả lời như nhau), `PUT /me/password` trả `400 password_not_set`, `GET /me` có `hasPassword: false`. Muốn có mật khẩu thì đăng xuất và dùng Quên mật khẩu (UC-SPA-03), sau đó cả hai cách đều đăng nhập được.
+- Thiếu `GOOGLE_CLIENT_ID` thì API vẫn chạy, hai endpoint trả `503 google_sign_in_unavailable`. Không tải được khóa của Google cũng trả 503.
+- Hai endpoint dùng chung giới hạn `auth`.
+
+**Cấu hình**
+
+| Khóa                                         | Mặc định | Ghi chú                                                     |
+| -------------------------------------------- | -------- | ----------------------------------------------------------- |
+| `GoogleSignIn:ClientId` (`GOOGLE_CLIENT_ID`) | rỗng     | OAuth client loại Web application; không cần client secret  |
+| `GoogleSignIn:SignupTokenExpirationMinutes`  | 10       | 1–60                                                        |
+| `GoogleSignIn:AllowStaffAndOwner`            | `true`   | `false`: chỉ khách hàng đăng nhập bằng Google               |
+| `VITE_GOOGLE_CLIENT_ID` (web)                | rỗng     | Cùng giá trị `GOOGLE_CLIENT_ID`, công khai; rỗng thì ẩn nút |
+
+Google Cloud Console: tạo OAuth client ID loại **Web application**, thêm Authorized JavaScript origins `http://localhost:5173`, `http://localhost:8080` và domain thật. Google không nhận origin là IP LAN, nên mở web bằng `localhost` khi thử nút Google.
+
+**Kiểm thử** (`GoogleSignInEndpointsTests`, Google thay bằng `FakeGoogleTokenValidator`; web `GoogleSignInSection.test.tsx`)
+
+| Mã       | Tình huống                                                                   | Kết quả mong đợi                                                       |
+| -------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| AUTH-T60 | Google mới                                                                   | `profileRequired`, chưa có user; hoàn tất → khách hàng, không mật khẩu |
+| AUTH-T61 | Đăng nhập Google lần sau                                                     | Vào thẳng, cùng user                                                   |
+| AUTH-T62 | Email trùng tài khoản có sẵn                                                 | Liên kết và đăng nhập; đổi email Google vẫn vào đúng tài khoản         |
+| AUTH-T63 | Chủ spa dùng Google của email mình                                           | Đăng nhập được                                                         |
+| AUTH-T64 | `AllowStaffAndOwner` = `false`, nhân viên                                    | `403 google_sign_in_not_allowed`, không liên kết                       |
+| AUTH-T65 | Tài khoản bị khóa                                                            | `403 account_locked`, không liên kết                                   |
+| AUTH-T66 | Token sai, email chưa xác minh, token rỗng                                   | 401 `google_token_invalid`, 400 `google_email_unverified`, 400         |
+| AUTH-T67 | Email đã liên kết Google khác                                                | `409 google_account_conflict`                                          |
+| AUTH-T68 | Hoàn tất với SĐT đã dùng, token giả, SĐT sai, token hết hạn                  | 409 `phone_exists`, 400 `google_signup_token_invalid`, 400, 400        |
+| AUTH-T69 | Hoàn tất hai lần                                                             | Lần hai đăng nhập cùng tài khoản                                       |
+| AUTH-T70 | Tài khoản Google đăng nhập bằng mật khẩu, đổi mật khẩu                       | 401 `invalid_credentials`; `hasPassword` false; 400 `password_not_set` |
+| AUTH-T71 | Chế độ cookie                                                                | Refresh token chỉ ở cookie HttpOnly                                    |
+| AUTH-T72 | Không có client ID                                                           | `503 google_sign_in_unavailable`                                       |
+| AUTH-T73 | Tài khoản mới có ảnh Google                                                  | Ảnh 512 px chép về `avatars/{userId}`                                  |
+| AUTH-T74 | Liên kết tài khoản đã có ảnh / chưa có ảnh; xóa ảnh rồi đăng nhập Google lại | Giữ ảnh cũ / lấy ảnh Google; không gắn lại                             |
+| AUTH-T75 | Ảnh không phải của Google, Cloudinary lỗi                                    | Không lấy ảnh, vẫn đăng nhập được                                      |
 
 ## Câu hỏi còn mở
 
