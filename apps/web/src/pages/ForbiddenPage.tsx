@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export function ForbiddenPage() {
+  useDocumentTitle('Không có quyền truy cập');
   return (
     <section className="flex flex-col items-center gap-3 py-20 text-center">
       <p className="text-sm font-semibold tracking-[0.3em] text-primary">403</p>

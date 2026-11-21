@@ -13,6 +13,11 @@ builder.Services.AddApiFoundation(builder.Configuration);
 builder.Services.AddApiAuthentication();
 
 var app = builder.Build();
+if (args.Contains(SeedCommand.FullArgument))
+{
+    await SeedCommand.RunFullAsync(app);
+    return;
+}
 if (args.Contains(SeedCommand.CatalogArgument))
 {
     await SeedCommand.RunCatalogAsync(app);

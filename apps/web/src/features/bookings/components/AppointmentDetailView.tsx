@@ -13,12 +13,12 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
+import { AccountPage } from '@/components/layout/AccountLayout/AccountPage';
 import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { OrdersBreadcrumb, OrdersErrorState } from '@/features/orders';
+import { OrdersErrorState } from '@/features/orders';
 import { catalogPolicies } from '@/features/services/catalogPolicies';
 import { useCountdown } from '@/hooks/useCountdown';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -77,17 +77,15 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
   const session = appointment.treatmentSession;
 
   return (
-    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
-      <OrdersBreadcrumb
-        trail={[
-          { label: 'Trang chủ', to: '/' },
-          { label: 'Tài khoản', to: '/account' },
-          { label: 'Lịch hẹn của tôi', to: '/my-bookings' },
-          { label: 'Chi tiết lịch hẹn' },
-        ]}
-      />
-      <PageHeader title="Chi tiết lịch hẹn" className="border-b pb-5" />
-
+    <AccountPage
+      breadcrumbs={[
+        { label: 'Trang chủ', to: '/' },
+        { label: 'Tài khoản', to: '/account' },
+        { label: 'Lịch hẹn của tôi', to: '/my-bookings' },
+        { label: 'Chi tiết lịch hẹn' },
+      ]}
+      title="Chi tiết lịch hẹn"
+    >
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-8">
         {/* Left Column: Spa Appointment Pass */}
         <div className="space-y-6">
@@ -344,6 +342,6 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
         appointment={cancelling ? appointment : null}
         onClose={() => setCancelling(false)}
       />
-    </section>
+    </AccountPage>
   );
 }

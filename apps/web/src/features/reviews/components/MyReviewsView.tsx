@@ -10,8 +10,7 @@ import {
 import { toast } from 'sonner';
 import type { MyReview, ReviewableProduct } from '@spa/shared-types';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
-import { OrdersBreadcrumb } from '@/features/orders';
+import { AccountPage } from '@/components/layout/AccountLayout/AccountPage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -121,19 +120,15 @@ export function MyReviewsView() {
   const totalPages = myReviewsPage?.totalPages ?? 1;
 
   return (
-    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
-      <OrdersBreadcrumb
-        trail={[
-          { label: 'Trang chủ', to: '/' },
-          { label: 'Tài khoản', to: '/account' },
-          { label: 'Đánh giá của tôi' },
-        ]}
-      />
-      <PageHeader
-        title="Đánh giá của tôi"
-        description="Theo dõi, chia sẻ cảm nhận và đánh giá các dịch vụ spa bạn đã trải nghiệm."
-      />
-
+    <AccountPage
+      breadcrumbs={[
+        { label: 'Trang chủ', to: '/' },
+        { label: 'Tài khoản', to: '/account' },
+        { label: 'Đánh giá của tôi' },
+      ]}
+      title="Đánh giá của tôi"
+      description="Theo dõi, chia sẻ cảm nhận và đánh giá các dịch vụ spa bạn đã trải nghiệm."
+    >
       <Tabs
         value={activeTab}
         onValueChange={(val) => setActiveTab(val as 'pending' | 'reviewed')}
@@ -166,10 +161,10 @@ export function MyReviewsView() {
           {isLoadingPending ? (
             <div className="space-y-3">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="rounded-2xl border p-5 space-y-3">
+                <div key={n} className="space-y-3 rounded-2xl border p-5">
                   <div className="flex items-center gap-3">
                     <Skeleton className="size-16 rounded-xl" />
-                    <div className="space-y-2 flex-1">
+                    <div className="flex-1 space-y-2">
                       <Skeleton className="h-4 w-28" />
                       <Skeleton className="h-5 w-48" />
                     </div>
@@ -178,8 +173,10 @@ export function MyReviewsView() {
               ))}
             </div>
           ) : isPendingError ? (
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6 text-center space-y-3">
-              <p className="text-sm text-destructive">Không thể tải danh sách dịch vụ chờ đánh giá.</p>
+            <div className="space-y-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-6 text-center">
+              <p className="text-sm text-destructive">
+                Không thể tải danh sách dịch vụ chờ đánh giá.
+              </p>
               <Button variant="outline" size="sm" onClick={() => void refetchPending()}>
                 Thử lại
               </Button>
@@ -208,7 +205,7 @@ export function MyReviewsView() {
           {isLoadingReviews ? (
             <div className="space-y-3">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="rounded-2xl border p-5 space-y-3">
+                <div key={n} className="space-y-3 rounded-2xl border p-5">
                   <div className="flex items-center justify-between">
                     <Skeleton className="h-5 w-24" />
                     <Skeleton className="h-5 w-16" />
@@ -220,7 +217,7 @@ export function MyReviewsView() {
               ))}
             </div>
           ) : isReviewsError ? (
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6 text-center space-y-3">
+            <div className="space-y-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-6 text-center">
               <p className="text-sm text-destructive">Không thể tải danh sách đánh giá của bạn.</p>
               <Button variant="outline" size="sm" onClick={() => void refetchReviews()}>
                 Thử lại
@@ -286,10 +283,7 @@ export function MyReviewsView() {
       />
 
       {/* Full image preview dialog */}
-      <ReviewImageDialog
-        imageUrl={previewImageUrl}
-        onClose={() => setPreviewImageUrl(null)}
-      />
-    </section>
+      <ReviewImageDialog imageUrl={previewImageUrl} onClose={() => setPreviewImageUrl(null)} />
+    </AccountPage>
   );
 }

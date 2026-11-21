@@ -39,6 +39,7 @@ export function CategoryShowcase() {
   return (
     <HomeSection
       id="home-categories"
+      badge="Danh mục liệu pháp"
       title="Chọn liệu pháp hợp với bạn"
       description="Từ chăm sóc da mặt đến thư giãn toàn thân, mỗi nhóm dịch vụ được thiết kế cho một nhu cầu riêng."
       seeAllTo="/services"

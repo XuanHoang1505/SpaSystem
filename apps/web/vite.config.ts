@@ -12,10 +12,20 @@ const alias = Object.fromEntries(
     '@lib': './src/lib',
   }).map(([key, path]) => [key, fileURLToPath(new URL(path, import.meta.url))]),
 );
+const apiProxyTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:5000';
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: { alias },
-  server: { host: true },
+  server: {
+    host: true,
+    // npm run dev: the web calls its own origin (VITE_API_SAME_ORIGIN) and this proxy forwards to the backend, so the
+    // page and the API are one site on localhost and on the LAN IP alike (SameSite=Strict refresh cookie, UX-04).
+    proxy: {
+      '/api': { target: apiProxyTarget, changeOrigin: true },
+      '/hubs': { target: apiProxyTarget, changeOrigin: true, ws: true },
+    },
+  },
   build: {
     rolldownOptions: {
       output: {

@@ -154,7 +154,10 @@ try {
     [viteCli, '--host', '0.0.0.0', '--port', '5173', '--strictPort'],
     web,
     {
-      VITE_API_BASE_URL: apiUrl,
+      // The web calls its own origin and Vite proxies /api and /hubs to the backend on this machine, so the session
+      // survives a reload whether the page is opened on localhost or the LAN IP (UX-04).
+      VITE_API_SAME_ORIGIN: 'true',
+      VITE_API_PROXY_TARGET: 'http://localhost:5000',
     },
   );
   start(

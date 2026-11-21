@@ -19,6 +19,34 @@ public static class SeedCommand
     public const string DemoArgument = "--seed-demo";
     public const string CatalogArgument = "--seed-catalog";
     public const string SeedNotificationsArgument = "--seed-notifications";
+    public const string FullArgument = "--seed-full";
+
+    /// <summary>
+    /// Empties the database and fills every table with a complete sample (<see cref="FullDataSeeder"/>): owner@gmail.com,
+    /// staff@gmail.com and customer@gmail.com share the password <see cref="FullDataSeeder.Password"/>.
+    /// </summary>
+    public static async Task RunFullAsync(WebApplication app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+        if (!app.Environment.IsDevelopment())
+        {
+            app.Logger.LogError("{Argument} only runs in the Development environment (current: {Environment})",
+                FullArgument, app.Environment.EnvironmentName);
+            Environment.ExitCode = 1;
+            return;
+        }
+
+        await using var scope = app.Services.CreateAsyncScope();
+        try
+        {
+            await scope.ServiceProvider.GetRequiredService<FullDataSeeder>().SeedAsync(CancellationToken.None);
+        }
+        catch (InvalidOperationException exception)
+        {
+            app.Logger.LogError("Full seed failed: {Reason}", exception.Message);
+            Environment.ExitCode = 1;
+        }
+    }
 
     /// <summary>Sample categories, services and packages for testing the catalog screens; no account is needed.</summary>
     public static async Task RunCatalogAsync(WebApplication app)

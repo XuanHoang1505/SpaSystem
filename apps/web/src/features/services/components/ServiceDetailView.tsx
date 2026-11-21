@@ -127,7 +127,7 @@ export function ServiceDetailView({
                     Hỏi trợ lý tư vấn
                   </ComingSoonButton>
                   <div className="sm:col-span-2">
-                    <AddToCartButton product={{ type: 'service', id: service.id }} />
+                    <AddToCartButton product={{ type: 'service', id: service.id }} productName={service.name} />
                   </div>
                 </div>
               </div>

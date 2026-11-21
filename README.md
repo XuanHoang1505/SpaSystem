@@ -53,7 +53,7 @@ cd E:\UTE\HK126\Code\SpaSystem
 npm run dev
 ```
 
-Lệnh tự chọn IPv4 LAN (ưu tiên Wi-Fi), chạy backend ở port 5000, web ở 5173 và Expo Go ở 8081. API URL cho web/mobile và CORS được cấu hình theo IP này. Điện thoại cần cùng Wi-Fi với máy tính; mở Expo Go hỗ trợ SDK 57 và quét QR trong terminal. Nhấn **Ctrl+C** để dừng cả ba tiến trình.
+Lệnh tự chọn IPv4 LAN (ưu tiên Wi-Fi), chạy backend ở port 5000, web ở 5173 và Expo Go ở 8081. Mobile gọi API qua IP này. Web gọi chính origin của trang và Vite proxy `/api`, `/hubs` sang backend (`VITE_API_SAME_ORIGIN=true`), nên mở `http://localhost:5173` hay `http://<IP LAN>:5173` đều giữ được phiên sau khi tải lại (cookie refresh `SameSite=Strict` chỉ đi khi trang và API cùng site). Riêng khi thử thanh toán VNPay trên web, mở bằng IP LAN vì trang kết quả quay về địa chỉ đó. Điện thoại cần cùng Wi-Fi với máy tính; mở Expo Go hỗ trợ SDK 57 và quét QR trong terminal. Nhấn **Ctrl+C** để dừng cả ba tiến trình.
 
 Nếu máy có nhiều card mạng, chỉ định IP Wi-Fi:
 
@@ -85,7 +85,7 @@ Swagger chỉ mở trong Development hoặc khi đặt `Swagger__Enabled=true`. 
 
 HTTPS redirection hoạt động khi profile khai báo HTTPS port/endpoint. HTTP profile cho emulator và container không chuyển hướng sang certificate localhost mà Android không tin cậy. Khi đưa vào môi trường khác, cấu hình HTTPS hoặc TLS tại reverse proxy.
 
-AutoMapper **15.1.3** được chọn vì bản 14 bị [CVE-2026-32933](https://github.com/advisories/GHSA-rvv3-g6hj-g44x). Dòng 15 yêu cầu giấy phép; skeleton đăng ký mapper và kiểm tra configuration nhưng chưa có mapping nghiệp vụ. Không có license key trong repository. Khi cần dùng mapper, cấu hình giấy phép hợp lệ qua `AUTOMAPPER_LICENSE_KEY` theo [tài liệu AutoMapper](https://docs.automapper.io/en/stable/License-configuration.html). Không tắt log giấy phép.
+Backend không dùng AutoMapper: ánh xạ DTO viết tay (ADR-0004). Gói AutoMapper 15.1.3 đã được gỡ ngày 17/11/2026 vì không có chỗ nào dùng và bị NuGet audit báo lỗ hổng mức cao (GHSA-6vhm-j9h7-f9gh, GHSA-gpwp-5797-mjff), làm build thất bại.
 
 ## Npm workspaces và web
 

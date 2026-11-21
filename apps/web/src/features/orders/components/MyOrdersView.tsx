@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { MyOrderListItem, OrderStatus } from '@spa/shared-types';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
+import { AccountPage } from '@/components/layout/AccountLayout/AccountPage';
 import { SimplePager } from '@/components/shared/SimplePager/SimplePager';
 import { FormField } from '@/components/shared/FormField/FormField';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,6 @@ import { orderStatusBadge } from '../orderStatus';
 import { CancelOrderDialog } from './CancelOrderDialog';
 import { OrderCard } from './OrderCard';
 import { OrderDetailSheet } from './OrderDetailSheet';
-import { OrdersBreadcrumb } from './OrdersBreadcrumb';
 import { OrdersErrorState } from './OrdersErrorState';
 
 const PAGE_SIZE = 10;
@@ -75,20 +74,15 @@ export function MyOrdersView() {
   };
 
   return (
-    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
-      <OrdersBreadcrumb
-        trail={[
-          { label: 'Trang chủ', to: '/' },
-          { label: 'Tài khoản', to: '/account' },
-          { label: 'Đơn hàng của bạn' },
-        ]}
-      />
-      <PageHeader
-        title="Đơn hàng của bạn"
-        description="Theo dõi, thanh toán hoặc hủy các đơn bạn đã đặt."
-        className="border-b pb-5"
-      />
-      <div className="flex flex-col gap-3.5 rounded-xl bg-muted/40 p-3.5 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
+    <AccountPage
+      breadcrumbs={[
+        { label: 'Trang chủ', to: '/' },
+        { label: 'Tài khoản', to: '/account' },
+        { label: 'Đơn hàng của bạn' },
+      ]}
+      title="Đơn hàng của bạn"
+      description="Theo dõi, thanh toán hoặc hủy các đơn bạn đã đặt."
+      toolbar={
         <div
           role="group"
           aria-label="Lọc theo trạng thái"
@@ -111,7 +105,9 @@ export function MyOrdersView() {
             </button>
           ))}
         </div>
-        <div className="grid shrink-0 grid-cols-2 gap-2 sm:gap-3 lg:w-[19rem]">
+      }
+      filters={
+        <div className="grid grid-cols-1 gap-3 sm:max-w-md sm:grid-cols-2">
           <FormField label="Từ ngày">
             <Input
               type="date"
@@ -129,8 +125,9 @@ export function MyOrdersView() {
             />
           </FormField>
         </div>
-      </div>
-
+      }
+      activeFilterCount={[fromDate, toDate].filter(Boolean).length}
+    >
       {query.isPending ? (
         <div data-testid="orders-skeleton" className="space-y-4">
           {[0, 1, 2].map((key) => (
@@ -193,6 +190,6 @@ export function MyOrdersView() {
         onClose={() => setCancelling(null)}
         cancel={cancelOrder}
       />
-    </section>
+    </AccountPage>
   );
 }

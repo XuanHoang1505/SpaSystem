@@ -88,5 +88,5 @@ Middleware hiện có ánh xạ exception → HTTP. Quy tắc chọn:
 
 - Dùng `ILogger<T>` với message template có tham số (`"Appointment {AppointmentId} completed"`), không nối chuỗi.
 - Không log mật khẩu, OTP, token, dữ liệu da/dị ứng, payload thanh toán đầy đủ.
-- Secret (chuỗi kết nối, khóa JWT, khóa cổng thanh toán, khóa AI, `AUTOMAPPER_LICENSE_KEY`) chỉ đặt trong `backend/src/API/.env` (không commit) hoặc biến môi trường; `appsettings*.json` trong repo không chứa giá trị thật.
+- Secret (chuỗi kết nối, khóa JWT, khóa cổng thanh toán, khóa AI) chỉ đặt trong `backend/src/API/.env` (không commit) hoặc biến môi trường; `appsettings*.json` trong repo không chứa giá trị thật.
 - Biến cấu hình mới viết `UPPER_SNAKE_CASE`, thêm vào bảng ánh xạ của `API/Configuration/EnvLoader.cs` (khóa riêng hoặc tiền tố như `JWT_`, `MAIL_SETTINGS_`) và vào `.env.example` có chú thích. Code đọc qua `IOptions<T>` theo section đã ánh xạ, không gọi `Environment.GetEnvironmentVariable` rải rác.

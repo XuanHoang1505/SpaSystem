@@ -2,11 +2,11 @@ import { SearchIcon, WalletCardsIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
+import { AccountPage } from '@/components/layout/AccountLayout/AccountPage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { OrderDetailSheet, OrdersBreadcrumb, OrdersErrorState } from '@/features/orders';
+import { OrderDetailSheet, OrdersErrorState } from '@/features/orders';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { cn } from '@/lib/utils';
 import {
@@ -107,20 +107,95 @@ export function MyPackagesView() {
     : 0;
 
   return (
-    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
-      <OrdersBreadcrumb
-        trail={[
-          { label: 'Trang chủ', to: '/' },
-          { label: 'Tài khoản', to: '/account' },
-          { label: 'Gói của tôi' },
-        ]}
-      />
-      <PageHeader
-        title="Gói của tôi"
-        description="Quản lý quyền lợi các gói dịch vụ và dịch vụ lẻ bạn đã sở hữu cùng thời hạn sử dụng."
-        className="border-b pb-5"
-      />
-
+    <AccountPage
+      breadcrumbs={[
+        { label: 'Trang chủ', to: '/' },
+        { label: 'Tài khoản', to: '/account' },
+        { label: 'Gói của tôi' },
+      ]}
+      title="Gói của tôi"
+      description="Quản lý quyền lợi các gói dịch vụ và dịch vụ lẻ bạn đã sở hữu cùng thời hạn sử dụng."
+      toolbar={
+        purchases.isSuccess &&
+        bought > 0 &&
+        result && (
+          <div role="group" aria-label="Loại đã mua" className="flex gap-6 border-b">
+            {(Object.keys(tabLabels) as PurchaseTab[]).map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={tab === value}
+                onClick={() => switchTab(value)}
+                className={cn(
+                  '-mb-px border-b-2 px-1 pb-2.5 text-sm font-medium transition-colors',
+                  tab === value
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {`${tabLabels[value]} (${purchases.data?.[value].length ?? 0})`}
+              </button>
+            ))}
+          </div>
+        )
+      }
+      filters={
+        purchases.isSuccess &&
+        bought > 0 &&
+        result &&
+        result.counts.all > 0 && (
+          <div className="space-y-3">
+            <div role="group" aria-label="Lọc theo trạng thái" className="flex flex-wrap gap-2">
+              {purchaseFilters.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={filter === value}
+                  onClick={() => update({ filter: value })}
+                  className={pill(filter === value)}
+                >
+                  {`${filterLabels[value]} (${result.counts[value]})`}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative sm:w-72">
+                <SearchIcon
+                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <Input
+                  aria-label="Tìm theo tên"
+                  placeholder="Tìm theo tên"
+                  className="bg-card pl-9"
+                  value={text}
+                  onChange={(event) => {
+                    setText(event.target.value);
+                    update({ q: event.target.value });
+                  }}
+                />
+              </div>
+              <div role="group" aria-label="Sắp xếp" className="flex gap-2">
+                {(Object.keys(sortLabels) as PurchaseSort[]).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={sort === value}
+                    onClick={() => update({ sort: value })}
+                    className={pill(sort === value)}
+                  >
+                    {sortLabels[value]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+      }
+      activeFilterCount={
+        [filter !== 'all', Boolean(query.trim()), sort !== 'recent'].filter(Boolean).length
+      }
+    >
       {purchases.isPending ? (
         <div data-testid="purchases-skeleton" className="space-y-4">
           {[0, 1, 2].map((key) => (
@@ -153,24 +228,6 @@ export function MyPackagesView() {
       ) : (
         result && (
           <>
-            <div role="group" aria-label="Loại đã mua" className="flex gap-6 border-b">
-              {(Object.keys(tabLabels) as PurchaseTab[]).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={tab === value}
-                  onClick={() => switchTab(value)}
-                  className={cn(
-                    '-mb-px border-b-2 px-1 pb-2.5 text-sm font-medium transition-colors',
-                    tab === value
-                      ? 'border-primary text-foreground'
-                      : 'border-transparent text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {`${tabLabels[value]} (${purchases.data?.[value].length ?? 0})`}
-                </button>
-              ))}
-            </div>
             {result.counts.all === 0 ? (
               <EmptyState
                 icon={WalletCardsIcon}
@@ -183,57 +240,6 @@ export function MyPackagesView() {
               />
             ) : (
               <>
-                <div className="space-y-3 rounded-xl bg-muted/40 p-3.5 sm:p-4">
-                  <div
-                    role="group"
-                    aria-label="Lọc theo trạng thái"
-                    className="flex flex-wrap gap-2"
-                  >
-                    {purchaseFilters.map((value) => (
-                      <button
-                        key={value}
-                        type="button"
-                        aria-pressed={filter === value}
-                        onClick={() => update({ filter: value })}
-                        className={pill(filter === value)}
-                      >
-                        {`${filterLabels[value]} (${result.counts[value]})`}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="relative sm:w-72">
-                      <SearchIcon
-                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                        aria-hidden="true"
-                      />
-                      <Input
-                        aria-label="Tìm theo tên"
-                        placeholder="Tìm theo tên"
-                        className="bg-card pl-9"
-                        value={text}
-                        onChange={(event) => {
-                          setText(event.target.value);
-                          update({ q: event.target.value });
-                        }}
-                      />
-                    </div>
-                    <div role="group" aria-label="Sắp xếp" className="flex gap-2">
-                      {(Object.keys(sortLabels) as PurchaseSort[]).map((value) => (
-                        <button
-                          key={value}
-                          type="button"
-                          aria-pressed={sort === value}
-                          onClick={() => update({ sort: value })}
-                          className={pill(sort === value)}
-                        >
-                          {sortLabels[value]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
                 {result.packages.length === 0 && result.services.length === 0 ? (
                   <EmptyState
                     icon={WalletCardsIcon}
@@ -271,6 +277,6 @@ export function MyPackagesView() {
       )}
 
       <OrderDetailSheet order={viewing} onClose={() => setViewing(null)} />
-    </section>
+    </AccountPage>
   );
 }

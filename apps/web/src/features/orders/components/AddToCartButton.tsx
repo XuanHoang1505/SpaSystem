@@ -1,5 +1,5 @@
 import { CheckIcon, ShoppingCartIcon } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { orderErrorCode, orderErrorMessage } from '../errors';
@@ -17,6 +17,7 @@ export function AddToCartButton({
   productName?: string;
 }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { visible, run } = useCustomerAction();
   const add = useAddToCart();
   const cart = useCart();
@@ -42,7 +43,15 @@ export function AddToCartButton({
     add.mutate(
       product.type === 'service' ? { spaServiceId: product.id } : { servicePackageId: product.id },
       {
-        onSuccess: () => toast.success('Đã thêm vào giỏ hàng'),
+        onSuccess: () => {
+          const itemLabel = productName ? `Đã thêm "${productName}" vào giỏ hàng` : 'Đã thêm vào giỏ hàng';
+          toast.success(itemLabel, {
+            action: {
+              label: 'Xem giỏ hàng',
+              onClick: () => navigate('/cart'),
+            },
+          });
+        },
         onError: (error) => {
           if (orderErrorCode(error) !== 'cart_item_exists') toast.error(orderErrorMessage(error));
         },

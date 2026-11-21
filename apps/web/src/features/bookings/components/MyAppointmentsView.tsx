@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { MyAppointmentListItem, MyAppointmentScope } from '@spa/shared-types';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
+import { AccountPage } from '@/components/layout/AccountLayout/AccountPage';
 import { SimplePager } from '@/components/shared/SimplePager/SimplePager';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { OrdersBreadcrumb, OrdersErrorState } from '@/features/orders';
+import { OrdersErrorState } from '@/features/orders';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { cn } from '@/lib/utils';
 import { useMyAppointments } from '../hooks/useMyAppointments';
@@ -53,43 +53,40 @@ export function MyAppointmentsView() {
   };
 
   return (
-    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
-      <OrdersBreadcrumb
-        trail={[
-          { label: 'Trang chủ', to: '/' },
-          { label: 'Tài khoản', to: '/account' },
-          { label: 'Lịch hẹn của tôi' },
-        ]}
-      />
-      <PageHeader
-        title="Lịch hẹn của tôi"
-        description="Xem, đổi giờ hoặc hủy các lịch hẹn của bạn."
-        className="border-b pb-5"
-        actions={
-          <Button asChild>
-            <Link to="/services">Đặt lịch hẹn mới</Link>
-          </Button>
-        }
-      />
-      <div role="group" aria-label="Nhóm lịch hẹn" className="flex gap-6 border-b">
-        {scopes.map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={scope === value}
-            onClick={() => update({ scope: value })}
-            className={cn(
-              '-mb-px border-b-2 px-1 pb-3 text-sm font-medium transition-colors',
-              scope === value
-                ? 'border-primary font-semibold text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
+    <AccountPage
+      breadcrumbs={[
+        { label: 'Trang chủ', to: '/' },
+        { label: 'Tài khoản', to: '/account' },
+        { label: 'Lịch hẹn của tôi' },
+      ]}
+      title="Lịch hẹn của tôi"
+      description="Xem, đổi giờ hoặc hủy các lịch hẹn của bạn."
+      actions={
+        <Button asChild>
+          <Link to="/services">Đặt lịch hẹn mới</Link>
+        </Button>
+      }
+      toolbar={
+        <div role="group" aria-label="Nhóm lịch hẹn" className="flex gap-6 border-b">
+          {scopes.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={scope === value}
+              onClick={() => update({ scope: value })}
+              className={cn(
+                '-mb-px border-b-2 px-1 pb-3 text-sm font-medium transition-colors',
+                scope === value
+                  ? 'border-primary font-semibold text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      }
+    >
       {query.isPending ? (
         <div data-testid="appointments-skeleton" className="space-y-4">
           {[0, 1, 2].map((key) => (
@@ -137,6 +134,6 @@ export function MyAppointmentsView() {
 
       <RescheduleDialog appointment={rescheduling} onClose={() => setRescheduling(null)} />
       <CancelAppointmentDialog appointment={cancelling} onClose={() => setCancelling(null)} />
-    </section>
+    </AccountPage>
   );
 }

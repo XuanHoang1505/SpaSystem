@@ -26,6 +26,7 @@ export function FeaturedServices() {
   return (
     <HomeSection
       id="home-services"
+      badge="Dịch vụ tiêu biểu"
       title="Dịch vụ nổi bật"
       description="Những liệu pháp được chọn nhiều tại spa, đặt lịch theo giờ bạn muốn."
       seeAllTo="/services"

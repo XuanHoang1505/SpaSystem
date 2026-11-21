@@ -42,6 +42,7 @@ export function PackageDeals() {
   return (
     <HomeSection
       id="home-packages"
+      badge="Ưu đãi liệu trình"
       title="Liệu trình theo gói, giá tốt hơn"
       description="Nhiều buổi liên tục cho kết quả bền hơn, chi phí mỗi buổi thấp hơn mua lẻ."
       seeAllTo="/packages"

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { AppointmentStatus, ServiceHistoryItem } from '@spa/shared-types';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
+import { AccountPage } from '@/components/layout/AccountLayout/AccountPage';
 import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge';
 import { DataTable } from '@/components/shared/DataTable/DataTable';
 import type { DataTableColumn } from '@/components/shared/DataTable/dataTable.types';
@@ -161,19 +161,23 @@ export function ServiceHistoryView() {
   );
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        eyebrow="Tài khoản khách hàng"
-        title="Lịch sử sử dụng dịch vụ"
-        description="Xem lại các lần sử dụng dịch vụ và kết quả chăm sóc da của bạn."
-      />
-
-      <ServiceHistoryFilterToolbar
-        filters={filters}
-        onChange={handleFilterChange}
-        onReset={handleResetFilters}
-      />
-
+    <AccountPage
+      breadcrumbs={[
+        { label: 'Trang chủ', to: '/' },
+        { label: 'Tài khoản', to: '/account' },
+        { label: 'Lịch sử sử dụng' },
+      ]}
+      title="Lịch sử sử dụng dịch vụ"
+      description="Xem lại các lần sử dụng dịch vụ và kết quả chăm sóc da của bạn."
+      filters={
+        <ServiceHistoryFilterToolbar
+          filters={filters}
+          onChange={handleFilterChange}
+          onReset={handleResetFilters}
+        />
+      }
+      activeFilterCount={Object.values(filters).filter(Boolean).length}
+    >
       <DataTable<ServiceHistoryItem>
         caption="Bảng lịch sử sử dụng dịch vụ"
         columns={columns}
@@ -217,6 +221,6 @@ export function ServiceHistoryView() {
 
       {/* Order detail sheet */}
       <OrderDetailSheet order={selectedOrder} onClose={() => setSelectedOrder(null)} />
-    </div>
+    </AccountPage>
   );
 }

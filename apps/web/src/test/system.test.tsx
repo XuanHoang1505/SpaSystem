@@ -54,4 +54,5 @@ test('Missing configuration is visible and does not call network', () => {
 test('Environment validates HTTP(S) and avoids fallback', () => {
   expect(readEnvironment('ftp://example').error).toContain('Configuration Error');
   expect(readEnvironment('https://example/').apiBaseUrl).toBe('https://example');
+  expect(readEnvironment('https://example/', true).apiBaseUrl).toBe(window.location.origin);
 });

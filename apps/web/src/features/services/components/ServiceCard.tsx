@@ -16,12 +16,17 @@ export function ServiceCard({ service }: { service: ServiceListItem }) {
   const rating = placeholderRating(service.id);
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border bg-card transition-colors hover:border-primary/40">
-      <Link to={to} tabIndex={-1} aria-hidden="true" className="relative block aspect-[16/10]">
+      <Link
+        to={to}
+        tabIndex={-1}
+        aria-hidden="true"
+        className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden bg-muted"
+      >
         <ImageWithFallback
           src={service.imageUrl}
           alt=""
           fallbackIcon={SparklesIcon}
-          className="size-full transition-transform duration-300 motion-safe:group-hover:scale-105"
+          className="size-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-105"
         />
         <span className="absolute top-3 left-3 flex flex-wrap gap-1.5">
           <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">

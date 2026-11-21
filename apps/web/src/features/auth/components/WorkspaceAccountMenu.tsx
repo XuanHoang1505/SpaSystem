@@ -12,6 +12,7 @@ import {
 import { useTheme } from 'next-themes';
 import type { AuthUser } from '@spa/shared-types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { CurrentUserAvatarImage } from '@/features/users/components/CurrentUserAvatarImage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +35,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useAuthStore } from '@/stores/authStore';
+import { cn } from '@/lib/utils';
 import { useLogout } from '../hooks/useLogout';
 import { roleLabels } from '../navigation';
 import { initialOf } from './AccountMenu';
@@ -46,8 +48,9 @@ const themes = [
 
 function UserAvatar({ user, className }: { user: AuthUser; className?: string }) {
   return (
-    <Avatar className={className}>
-      <AvatarFallback className="bg-accent font-medium text-accent-foreground">
+    <Avatar className={cn('border-2 border-background shadow-xs ring-1 ring-border/80', className)}>
+      <CurrentUserAvatarImage userId={user.id} />
+      <AvatarFallback className="bg-primary/10 font-medium text-primary">
         {initialOf(user.fullName)}
       </AvatarFallback>
     </Avatar>
@@ -128,8 +131,13 @@ export function WorkspaceHeaderAccountMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full" aria-label="Menu tài khoản">
-          <UserAvatar user={user} className="size-8" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-9 rounded-full p-0 transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label="Menu tài khoản"
+        >
+          <UserAvatar user={user} className="size-9" />
         </Button>
       </DropdownMenuTrigger>
       <AccountMenuContent user={user} side="bottom" align="end" />
