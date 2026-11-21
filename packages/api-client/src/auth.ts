@@ -2,6 +2,9 @@ import type {
   ApiResponse,
   AuthResult,
   ForgotPasswordRequest,
+  GoogleSignInRequest,
+  GoogleSignInResult,
+  GoogleSignupCompleteRequest,
   LoginRequest,
   OtpSent,
   PasswordResetToken,
@@ -30,6 +33,12 @@ export const authErrorCodes = {
   emailSendFailed: 'email_send_failed',
   invalidResetToken: 'invalid_reset_token',
   validationError: 'validation_error',
+  googleTokenInvalid: 'google_token_invalid',
+  googleEmailUnverified: 'google_email_unverified',
+  googleSignInNotAllowed: 'google_sign_in_not_allowed',
+  googleSignupTokenInvalid: 'google_signup_token_invalid',
+  googleAccountConflict: 'google_account_conflict',
+  googleSignInUnavailable: 'google_sign_in_unavailable',
 } as const;
 
 export class AuthApi {
@@ -37,6 +46,20 @@ export class AuthApi {
 
   login(body: LoginRequest) {
     return this.client.post<LoginRequest, ApiResponse<AuthResult>>(`${base}/login`, body);
+  }
+  /** Web only (Q-84): signs in the account of a Google ID token, or returns the sign-up step. */
+  googleSignIn(body: GoogleSignInRequest) {
+    return this.client.post<GoogleSignInRequest, ApiResponse<GoogleSignInResult>>(
+      `${base}/google`,
+      body,
+    );
+  }
+  /** Creates the customer account of a first Google sign-in (with its phone number) and signs it in. */
+  completeGoogleSignup(body: GoogleSignupCompleteRequest) {
+    return this.client.post<GoogleSignupCompleteRequest, ApiResponse<AuthResult>>(
+      `${base}/google/complete`,
+      body,
+    );
   }
   /** Without a body the API reads the token from the cookie (cookie mode). */
   refresh(body?: RefreshTokenRequest) {

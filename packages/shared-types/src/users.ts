@@ -15,6 +15,8 @@ export interface MeDto {
   dateOfBirth: string | null;
   gender: Gender | null;
   createdAtUtc: string;
+  /** False for an account created by Google sign-in: it sets a password through "forgot password" (Q-84). */
+  hasPassword: boolean;
 }
 
 export interface UpdateProfileRequest {
