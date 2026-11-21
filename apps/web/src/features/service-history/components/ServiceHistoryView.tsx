@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { AppointmentStatus, ServiceHistoryItem } from '@spa/shared-types';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
+import { AccountPage } from '@/components/layout/AccountLayout/AccountPage';
 import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge';
 import { DataTable } from '@/components/shared/DataTable/DataTable';
 import type { DataTableColumn } from '@/components/shared/DataTable/dataTable.types';
 import { Button } from '@/components/ui/button';
-import { OrderDetailSheet, OrdersBreadcrumb } from '@/features/orders';
+import { OrderDetailSheet } from '@/features/orders';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { formatLocalDate } from '@/lib/formatting/formatters';
 import { serviceHistoryStatusBadge } from '../historyStatus';
@@ -161,26 +161,23 @@ export function ServiceHistoryView() {
   );
 
   return (
-    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
-      <OrdersBreadcrumb
-        trail={[
-          { label: 'Trang chủ', to: '/' },
-          { label: 'Tài khoản', to: '/account' },
-          { label: 'Lịch sử sử dụng' },
-        ]}
-      />
-
-      <PageHeader
-        title="Lịch sử sử dụng dịch vụ"
-        description="Xem lại các lần sử dụng dịch vụ và kết quả chăm sóc da của bạn."
-      />
-
-      <ServiceHistoryFilterToolbar
-        filters={filters}
-        onChange={handleFilterChange}
-        onReset={handleResetFilters}
-      />
-
+    <AccountPage
+      breadcrumbs={[
+        { label: 'Trang chủ', to: '/' },
+        { label: 'Tài khoản', to: '/account' },
+        { label: 'Lịch sử sử dụng' },
+      ]}
+      title="Lịch sử sử dụng dịch vụ"
+      description="Xem lại các lần sử dụng dịch vụ và kết quả chăm sóc da của bạn."
+      filters={
+        <ServiceHistoryFilterToolbar
+          filters={filters}
+          onChange={handleFilterChange}
+          onReset={handleResetFilters}
+        />
+      }
+      activeFilterCount={Object.values(filters).filter(Boolean).length}
+    >
       <DataTable<ServiceHistoryItem>
         caption="Bảng lịch sử sử dụng dịch vụ"
         columns={columns}
@@ -224,6 +221,6 @@ export function ServiceHistoryView() {
 
       {/* Order detail sheet */}
       <OrderDetailSheet order={selectedOrder} onClose={() => setSelectedOrder(null)} />
-    </section>
+    </AccountPage>
   );
 }

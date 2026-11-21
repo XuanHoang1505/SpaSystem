@@ -4,11 +4,10 @@ import { Link, useSearchParams } from 'react-router-dom';
 import type { TreatmentPlanStatus } from '@spa/shared-types';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState/ErrorState';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
+import { AccountPage } from '@/components/layout/AccountLayout/AccountPage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { OrdersBreadcrumb } from '@/features/orders';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { foldText } from '@/lib/text';
 import { cn } from '@/lib/utils';
@@ -78,59 +77,59 @@ export function MyTreatmentPlansView() {
   };
 
   return (
-    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
-      <OrdersBreadcrumb
-        trail={[
-          { label: 'Trang chủ', to: '/' },
-          { label: 'Tài khoản', to: '/account' },
-          { label: 'Liệu trình của tôi' },
-        ]}
-      />
+    <AccountPage
+      breadcrumbs={[
+        { label: 'Trang chủ', to: '/' },
+        { label: 'Tài khoản', to: '/account' },
+        { label: 'Liệu trình của tôi' },
+      ]}
+      title="Liệu trình của tôi"
+      description="Theo dõi tiến độ phác đồ chăm sóc da và đặt lịch cho các buổi tiếp theo."
+      filters={
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              {filterOptions.map((opt) => {
+                const active = currentStatus === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleStatusChange(opt.value)}
+                    className={cn(
+                      'rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors sm:text-sm',
+                      active
+                        ? 'border-primary bg-primary text-primary-foreground shadow-xs'
+                        : 'border-border/70 bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground',
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
 
-      <PageHeader
-        title="Liệu trình của tôi"
-        description="Theo dõi tiến độ phác đồ chăm sóc da và đặt lịch cho các buổi tiếp theo."
-      />
-
-      {/* Filter toolbar */}
-      <div className="space-y-4 rounded-xl border bg-muted/20 p-4 sm:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            {filterOptions.map((opt) => {
-              const active = currentStatus === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleStatusChange(opt.value)}
-                  className={cn(
-                    'rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors sm:text-sm',
-                    active
-                      ? 'border-primary bg-primary text-primary-foreground shadow-xs'
-                      : 'border-border/70 bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground',
-                  )}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="relative w-full sm:w-64">
-            <SearchIcon
-              className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              type="search"
-              placeholder="Tìm theo tên gói..."
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="bg-card pl-9 text-xs sm:text-sm"
-            />
+            <div className="relative w-full sm:w-64">
+              <SearchIcon
+                className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Input
+                type="search"
+                placeholder="Tìm theo tên gói..."
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="bg-card pl-9 text-xs sm:text-sm"
+              />
+            </div>
           </div>
         </div>
-      </div>
+      }
+      activeFilterCount={
+        [currentStatus !== 'all', Boolean(searchQuery.trim())].filter(Boolean).length
+      }
+    >
+      {/* Filter toolbar */}
 
       {/* State rendering */}
       {isLoading ? (
@@ -187,6 +186,6 @@ export function MyTreatmentPlansView() {
           ))}
         </div>
       )}
-    </section>
+    </AccountPage>
   );
 }

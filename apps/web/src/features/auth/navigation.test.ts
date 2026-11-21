@@ -2,7 +2,7 @@ import { expect, test } from 'vitest';
 import { homePathFor, loginPathFor, safeRedirect } from './navigation';
 
 test('homePathFor maps each role to its area', () => {
-  expect(homePathFor('customer')).toBe('/account');
+  expect(homePathFor('customer')).toBe('/');
   expect(homePathFor('staff')).toBe('/staff');
   expect(homePathFor('owner')).toBe('/owner');
 });
@@ -13,10 +13,10 @@ test.each([
   ['/my-bookings/abc', 'customer', '/my-bookings/abc'],
   ['/services', 'customer', '/services'],
   ['//evil.com', 'owner', '/owner'],
-  ['https://evil.com', 'customer', '/account'],
-  ['/owner', 'customer', '/account'],
+  ['https://evil.com', 'customer', '/'],
+  ['/owner', 'customer', '/'],
   ['/login', 'staff', '/staff'],
-  ['/register?x=1', 'customer', '/account'],
+  ['/register?x=1', 'customer', '/'],
   ['/forgot-password', 'owner', '/owner'],
   ['/nowhere', 'owner', '/owner'],
   [null, 'staff', '/staff'],

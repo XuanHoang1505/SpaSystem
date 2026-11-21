@@ -1,10 +1,14 @@
 import type { UserRole } from '@spa/shared-types';
 import { routes } from '@app/routes';
 
-const homePaths = { customer: '/account', staff: '/staff', owner: '/owner' } as const;
+const homePaths = { customer: '/', staff: '/staff', owner: '/owner' } as const;
 
 /** Where each role lands after login (UC-SPA-02 bước 6). */
 export const homePathFor = (role: UserRole) => homePaths[role];
+
+/** Workspace area for each role (view personal profile, orders, appointments or dashboard). */
+export const workspacePathFor = (role: UserRole) =>
+  role === 'customer' ? '/account' : homePathFor(role);
 
 export const roleLabels: Record<UserRole, string> = {
   customer: 'Khách hàng',

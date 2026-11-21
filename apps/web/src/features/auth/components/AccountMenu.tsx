@@ -13,8 +13,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/stores/authStore';
+import { CurrentUserAvatarImage } from '@/features/users/components/CurrentUserAvatarImage';
 import { useLogout } from '../hooks/useLogout';
-import { homePathFor } from '../navigation';
+import { workspacePathFor } from '../navigation';
 
 /** Vietnamese names end with the given name: "Nguyễn Thị Lan" → "L". */
 export const initialOf = (fullName: string) =>
@@ -25,9 +26,15 @@ function SignedInMenu({ user }: { user: AuthUser }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full" aria-label="Tài khoản của bạn">
-          <Avatar className="size-8">
-            <AvatarFallback className="bg-accent text-accent-foreground">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-9 rounded-full p-0 transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label="Tài khoản của bạn"
+        >
+          <Avatar className="size-9 border-2 border-background shadow-xs ring-1 ring-border/80 transition-all hover:ring-2 hover:ring-primary/40">
+            <CurrentUserAvatarImage userId={user.id} />
+            <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
               {initialOf(user.fullName)}
             </AvatarFallback>
           </Avatar>
@@ -40,7 +47,7 @@ function SignedInMenu({ user }: { user: AuthUser }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to={homePathFor(user.role)}>
+          <Link to={workspacePathFor(user.role)}>
             <LayoutDashboardIcon aria-hidden="true" />
             Không gian của tôi
           </Link>
@@ -83,7 +90,7 @@ export function MobileAccountActions({ onNavigate }: { onNavigate: () => void })
     return (
       <div className="mt-4 grid gap-2">
         <Button asChild variant="outline">
-          <Link to={homePathFor(user.role)} onClick={onNavigate}>
+          <Link to={workspacePathFor(user.role)} onClick={onNavigate}>
             Không gian của tôi
           </Link>
         </Button>

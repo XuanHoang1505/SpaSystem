@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Loader2, ShieldAlert } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { ApiClientError, usersErrorCodes } from '@spa/api-client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -108,13 +108,6 @@ export function ChangePasswordCard() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="flex items-start gap-3 rounded-md border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-200">
-          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p>
-            Đổi mật khẩu sẽ đăng xuất tất cả các phiên đăng nhập khác của bạn trên mọi thiết bị.
-          </p>
-        </div>
-
         {rateLimitAlert && (
           <Alert variant="destructive">
             <AlertDescription>{rateLimitAlert}</AlertDescription>

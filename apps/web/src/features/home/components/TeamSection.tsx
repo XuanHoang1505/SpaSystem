@@ -21,6 +21,7 @@ export function TeamSection() {
   return (
     <HomeSection
       id="home-team"
+      badge="Đội ngũ chuyên nghiệp"
       title="Đội ngũ kỹ thuật viên"
       description="Người trực tiếp chăm sóc bạn, với chứng chỉ đã được spa xác minh."
     >

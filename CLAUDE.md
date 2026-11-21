@@ -86,6 +86,7 @@ npm run db:migrate                   # dotnet tool restore + dotnet ef database 
 npm run db:seed                      # Development only: create the owner account from SEED_* in .env (idempotent)
 npm run db:seed:demo                 # Development only: owner + demo catalog/staff/customers/purchases for booking tests (recreated relative to today; Postman folder "Kịch bản demo")
 npm run db:seed:catalog              # Development only: sample catalog (8 categories, 22 services, 9 packages, every edge case; fixed ids `0c…`, rerun resets them, never deletes)
+npm run db:seed:full                 # Development only: EMPTIES EVERY TABLE, then fills all of them (catalog with Unsplash photos, 5 staff, 16 customers, ~14 months of orders/visits/plans/reviews/notifications, relative to today); owner@gmail.com, staff@gmail.com, customer@gmail.com / Abc123456 (FullDataSeeder)
 # IntegrationTests under Auth/ and Catalog/ use Testcontainers PostgreSQL: Docker Desktop must be running.
 dotnet ef migrations add <Name> --project backend/src/Infrastructure --startup-project backend/src/API --output-dir Persistence/Migrations
 # PersistenceModelTests fails if entities/configurations change without a new migration, or drift from docs/domain/data-model.md.
@@ -146,6 +147,6 @@ Follow `docs/conventions/workflow.md`. In short:
 - C#: file-scoped namespaces, one main public type per file, `net9.0` with nullable and implicit usings enabled (see `Directory.Build.props`).
 - TypeScript: strict mode. Don't use `any` or `@ts-ignore` to silence errors. Run the formatter before finishing.
 - Store and return times in UTC (`DateTime`, names ending in `AtUtc`). The one exception is appointment and work-schedule date and times, which are `DateOnly` + `TimeOnly` in `Asia/Ho_Chi_Minh` local time (ADR-0003).
-- AutoMapper is pinned to 15.1.3 for a CVE fix. That line needs a license via `AUTOMAPPER_LICENSE_KEY`: never commit the key and don't suppress the license log.
+- No AutoMapper: it was removed on 17/11/2026 (unused, and 15.1.3 got high-severity advisories that fail the build through NuGet audit). Map by hand (ADR-0004).
 - Don't eject or generate native projects for mobile.
 - FIXY is an external reference project and must never be modified.

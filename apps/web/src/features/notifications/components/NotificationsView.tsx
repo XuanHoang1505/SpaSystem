@@ -2,8 +2,7 @@ import { useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCheckIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
-import { OrdersBreadcrumb } from '@/features/orders';
+import { AccountPage } from '@/components/layout/AccountLayout/AccountPage';
 import { useAuthStore } from '@/stores/authStore';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useNotifications } from '../hooks/useNotifications';
@@ -40,13 +39,12 @@ export function NotificationsView() {
       pageNumber: page,
       pageSize,
     }),
-    [unreadOnly, type, page, pageSize]
+    [unreadOnly, type, page, pageSize],
   );
 
   const { data, isLoading, isError, refetch } = useNotifications(queryParams);
   const { data: unreadData } = useUnreadNotificationCount();
-  const { markRead, markAllRead, isMarkingAllRead, isMarkingRead } =
-    useNotificationMutations();
+  const { markRead, markAllRead, isMarkingAllRead, isMarkingRead } = useNotificationMutations();
 
   const unreadCount = unreadData?.count ?? 0;
   const items = data?.items ?? [];
@@ -113,36 +111,35 @@ export function NotificationsView() {
       ];
 
   return (
-    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
-      <OrdersBreadcrumb trail={breadcrumbTrail} />
+    <AccountPage
+      breadcrumbs={breadcrumbTrail}
+      title="Thông báo"
+      description="Theo dõi các thông tin cập nhật về lịch hẹn, liệu trình, thanh toán và thông báo hệ thống."
+      actions={
+        unreadCount > 0 ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => markAllRead()}
+            disabled={isMarkingAllRead}
+            className="flex items-center gap-1.5"
+          >
+            <CheckCheckIcon className="h-4 w-4" />
+            <span>Đánh dấu tất cả đã đọc</span>
+          </Button>
+        ) : undefined
+      }
 
-      <PageHeader
-        title="Thông báo"
-        description="Theo dõi các thông tin cập nhật về lịch hẹn, liệu trình, thanh toán và thông báo hệ thống."
-        actions={
-          unreadCount > 0 ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => markAllRead()}
-              disabled={isMarkingAllRead}
-              className="flex items-center gap-1.5"
-            >
-              <CheckCheckIcon className="h-4 w-4" />
-              <span>Đánh dấu tất cả đã đọc</span>
-            </Button>
-          ) : undefined
-        }
-      />
-
-      <NotificationFilterTabs
-        unreadOnly={unreadOnly}
-        onUnreadOnlyChange={handleTabChange}
-        type={type}
-        onTypeChange={handleTypeChange}
-        unreadCount={unreadCount}
-      />
-
+      toolbar={
+        <NotificationFilterTabs
+          unreadOnly={unreadOnly}
+          onUnreadOnlyChange={handleTabChange}
+          type={type}
+          onTypeChange={handleTypeChange}
+          unreadCount={unreadCount}
+        />
+      }
+    >
       <NotificationFeed
         items={items}
         isLoading={isLoading}
@@ -156,6 +153,6 @@ export function NotificationsView() {
         isMarkingRead={isMarkingRead}
         unreadOnly={unreadOnly}
       />
-    </section>
+    </AccountPage>
   );
 }

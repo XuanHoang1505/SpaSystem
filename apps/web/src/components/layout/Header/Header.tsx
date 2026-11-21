@@ -3,6 +3,8 @@ import { navigation } from '@/config/navigation';
 import { AccountMenu } from '@/features/auth/components/AccountMenu';
 import { CartButton } from '@/features/orders';
 import { NotificationBell } from '@/features/notifications/components/NotificationBell';
+import { Separator } from '@/components/ui/separator';
+import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
 import { Brand } from '../Brand/Brand';
 import { MobileNavigation } from '../MobileNavigation/MobileNavigation';
@@ -19,6 +21,7 @@ const navLinkClasses = (active: boolean) =>
 
 export function Header() {
   const { pathname } = useLocation();
+  const isAuthenticated = useAuthStore((s) => s.status === 'authenticated');
   const isCustomerActive = pathname.startsWith('/account') || pathname.startsWith('/my-');
 
   return (
@@ -42,10 +45,19 @@ export function Header() {
             Cá nhân
           </NavLink>
         </nav>
-        <div className="flex items-center gap-1.5">
-          <CartButton />
-          <NotificationBell />
-          <AccountMenu />
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {isAuthenticated && (
+            <>
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <CartButton />
+                <NotificationBell />
+              </div>
+              <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
+            </>
+          )}
+          <div className={cn('flex items-center', isAuthenticated && 'pl-1 sm:pl-0')}>
+            <AccountMenu />
+          </div>
           <MobileNavigation />
         </div>
       </div>

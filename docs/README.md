@@ -11,6 +11,7 @@
 | Viết test                  | [conventions/testing.md](conventions/testing.md)                                                                                                                                    |
 | Gặp điểm nghiệp vụ chưa rõ | [decisions/open-questions.md](decisions/open-questions.md)                                                                                                                          |
 | Xem tiến độ                | [progress.md](progress.md)                                                                                                                                                          |
+| Deploy lên VPS             | [deploy-vps.md](deploy-vps.md) — Ubuntu, SSH, Git, Docker, PostgreSQL, HTTPS, backup và rollback                                                                                     |
 
 ## Cấu trúc
 

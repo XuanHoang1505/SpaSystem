@@ -42,13 +42,13 @@ export function AiChatWidget() {
         size="icon"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-label={isOpen ? 'Đóng trợ lý ảo AI' : 'Mở trợ lý ảo AI'}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 hover:bg-primary/90 active:scale-95"
+        className="relative flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 hover:bg-primary/90 active:scale-95"
       >
-        {isOpen ? <X className="h-6 w-6" /> : <Bot className="h-7 w-7" />}
+        {isOpen ? <X className="size-6" /> : <Bot className="size-8" />}
         {!isOpen && (
-          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-emerald-500" />
+          <span aria-hidden="true" className="absolute top-0.5 right-0.5 flex size-3">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex size-3 rounded-full bg-emerald-500 ring-2 ring-background" />
           </span>
         )}
       </Button>

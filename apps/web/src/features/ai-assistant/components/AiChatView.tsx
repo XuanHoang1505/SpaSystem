@@ -13,41 +13,44 @@ interface AiChatViewProps {
 export function AiChatView({ compact = false }: AiChatViewProps) {
   useDocumentTitle('Trợ lý AI tư vấn dịch vụ');
   const { messages, sendMessage, isSending, isLoadingHistory, isAuthenticated } = useAiChat();
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesRef.current;
+    container?.scrollTo?.({ top: container.scrollHeight, behavior: 'smooth' });
   }, [messages, isSending]);
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm ${
-        compact ? 'h-[540px]' : 'h-[calc(100vh-12rem)] min-h-[580px]'
+      className={`flex flex-col overflow-hidden bg-card ${
+        compact ? 'h-[540px]' : 'h-[calc(100vh-12rem)] min-h-[580px] rounded-2xl border shadow-sm'
       }`}
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 border-b bg-card p-4">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Bot className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h2 className="truncate text-sm font-semibold text-foreground sm:text-base">
-              Trợ lý ảo Như Nguyệt Spa
-            </h2>
-            <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-              <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
-              Sẵn sàng
-            </span>
+      {/* The floating widget provides its own title bar and close button. */}
+      {!compact && (
+        <div className="flex items-center gap-3 border-b bg-card p-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Bot className="h-5 w-5" />
           </div>
-          <p className="truncate text-xs text-muted-foreground">
-            Tư vấn dịch vụ · Bảng giá · Tra cứu giờ trống · Gợi ý đặt lịch
-          </p>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h2 className="truncate text-sm font-semibold text-foreground sm:text-base">
+                Trợ lý ảo Như Nguyệt Spa
+              </h2>
+              <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
+                Sẵn sàng
+              </span>
+            </div>
+            <p className="truncate text-xs text-muted-foreground">
+              Tư vấn dịch vụ · Bảng giá · Tra cứu giờ trống · Gợi ý đặt lịch
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Chat Scroll Area */}
-      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+      <div ref={messagesRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
         <AiMedicalDisclaimer />
 
         {isLoadingHistory && (
@@ -73,7 +76,6 @@ export function AiChatView({ compact = false }: AiChatViewProps) {
               </div>
             </div>
           )}
-          <div ref={bottomRef} />
         </div>
       </div>
 

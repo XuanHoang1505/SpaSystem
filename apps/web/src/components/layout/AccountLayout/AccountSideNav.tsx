@@ -5,6 +5,7 @@ import { navigation } from '@/config/navigation';
 import { siteContact } from '@/features/services/catalogPolicies';
 import { initialOf } from '@/features/auth/components/AccountMenu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { CurrentUserAvatarImage } from '@/features/users/components/CurrentUserAvatarImage';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
@@ -19,9 +20,15 @@ export function AccountSideNav() {
   const { pathname } = useLocation();
   // Small screens: keep the current page's pill in view inside the scrollable row.
   useEffect(() => {
-    navRef.current
-      ?.querySelector('[aria-current="page"]')
-      ?.scrollIntoView?.({ inline: 'center', block: 'nearest' });
+    const nav = navRef.current;
+    const activeLink = nav?.querySelector('[aria-current="page"]');
+    if (!nav || !activeLink || nav.scrollWidth <= nav.clientWidth) return;
+
+    const navRect = nav.getBoundingClientRect();
+    const linkRect = activeLink.getBoundingClientRect();
+    nav.scrollTo({
+      left: nav.scrollLeft + linkRect.left - navRect.left - (nav.clientWidth - linkRect.width) / 2,
+    });
   }, [pathname]);
   return (
     <aside className="min-w-0 space-y-4 lg:sticky lg:top-24">
@@ -29,6 +36,7 @@ export function AccountSideNav() {
         {user && (
           <div className="mb-4 hidden flex-col items-center gap-2 border-b pb-5 text-center lg:flex">
             <Avatar className="size-16">
+              <CurrentUserAvatarImage userId={user.id} />
               <AvatarFallback className="bg-secondary font-heading text-2xl text-secondary-foreground">
                 {initialOf(user.fullName)}
               </AvatarFallback>

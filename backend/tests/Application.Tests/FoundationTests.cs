@@ -1,4 +1,3 @@
-using AutoMapper;
 using FluentAssertions;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,10 +51,9 @@ public sealed class FoundationTests
     }
 
     [Fact]
-    public void ApplicationRegistersMapperAndValidators()
+    public void ApplicationRegistersValidators()
     {
         using var services = new ServiceCollection().AddApplication().BuildServiceProvider();
-        services.GetRequiredService<IMapper>().ConfigurationProvider.AssertConfigurationIsValid();
         var validator = services.GetRequiredService<IValidator<PagedQuery>>();
         validator.Validate(new PagedQuery { Search = new string('a', 201) }).IsValid.Should().BeFalse();
     }

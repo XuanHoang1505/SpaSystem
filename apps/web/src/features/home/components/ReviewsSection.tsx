@@ -55,26 +55,24 @@ export function ReviewsSection() {
   return (
     <section aria-labelledby="home-reviews" className="border-y bg-card py-16 md:py-24">
       <HomeContainer className="space-y-10">
-        <div className="grid gap-6 lg:grid-cols-[7fr_5fr] lg:items-end">
-          <div className="space-y-3">
-            {averageRating !== null && (
-              <p className="flex flex-wrap items-center gap-2 text-sm">
-                <Stars rating={Math.round(averageRating)} />
-                <span className="font-semibold">{formatRating(averageRating)} / 5</span>
-                <span className="text-muted-foreground">({reviewCount} đánh giá công khai)</span>
-              </p>
-            )}
-            <h2
-              id="home-reviews"
-              className="font-heading text-3xl leading-tight tracking-tight md:text-[2.75rem]"
-            >
-              Cảm nhận từ khách hàng
-            </h2>
-          </div>
-          <p className="max-w-md text-muted-foreground lg:justify-self-end">
-            Mỗi đánh giá được gửi sau buổi chăm sóc đã hoàn thành và hiển thị công khai, không qua
-            chỉnh sửa.
+        <div className="mx-auto flex max-w-2xl flex-col items-center text-center space-y-3.5">
+          {averageRating !== null && (
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary shadow-xs">
+              <Stars rating={Math.round(averageRating)} />
+              <span>{formatRating(averageRating)} / 5</span>
+              <span className="text-muted-foreground font-normal">({reviewCount} đánh giá công khai)</span>
+            </div>
+          )}
+          <h2
+            id="home-reviews"
+            className="pb-1 font-heading text-3xl leading-[1.2] tracking-tight sm:text-4xl md:text-[2.65rem] bg-gradient-to-r from-[#1c472d] via-primary to-[#b4566f] bg-clip-text text-transparent"
+          >
+            Cảm nhận từ khách hàng
+          </h2>
+          <p className="mx-auto max-w-xl text-base text-muted-foreground leading-relaxed">
+            Mỗi đánh giá được gửi sau buổi chăm sóc đã hoàn thành và hiển thị công khai, không qua chỉnh sửa.
           </p>
+          <div className="mx-auto h-1 w-12 rounded-full bg-gradient-to-r from-primary to-[#b4566f] opacity-80" />
         </div>
 
         {loading ? (

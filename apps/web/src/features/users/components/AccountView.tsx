@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
+import { AccountPage } from '@/components/layout/AccountLayout/AccountPage';
 import { ErrorState } from '@/components/shared/ErrorState/ErrorState';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useMe } from '../hooks/useMe';
@@ -20,12 +20,11 @@ export function AccountView() {
   }, [user, hash]);
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <PageHeader
-        title="Thông tin tài khoản"
-        description="Quản lý thông tin cá nhân, ảnh đại diện và bảo mật tài khoản của bạn."
-      />
-
+    <AccountPage
+      breadcrumbs={[{ label: 'Trang chủ', to: '/' }, { label: 'Tài khoản' }]}
+      title="Thông tin tài khoản"
+      description="Quản lý thông tin cá nhân, ảnh đại diện và bảo mật tài khoản của bạn."
+    >
       {isLoading ? (
         <div className="space-y-6">
           <Skeleton className="h-72 w-full rounded-xl" />
@@ -46,6 +45,6 @@ export function AccountView() {
           <ChangePasswordCard />
         </div>
       )}
-    </div>
+    </AccountPage>
   );
 }

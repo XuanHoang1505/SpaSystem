@@ -39,7 +39,7 @@ export function CatalogCard({
         to={to}
         className="group flex h-full flex-col overflow-hidden rounded-xl border bg-card transition-colors outline-none hover:border-primary/40 focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-muted">
           <ImageWithFallback
             src={imageUrl}
             alt={name}

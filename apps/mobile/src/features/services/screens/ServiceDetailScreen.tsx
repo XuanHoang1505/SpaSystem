@@ -233,7 +233,7 @@ export function ServiceDetailScreen() {
               <View style={styles.policyItem}>
                 <CheckCircle2 size={16} color={colors.success} />
                 <AppText style={styles.policyText}>
-                  Hỗ trợ đổi lịch hẹn trước tối thiểu 2 giờ hoàn toàn miễn phí.
+                  Hỗ trợ đổi lịch hẹn trước tối thiểu 24 giờ hoàn toàn miễn phí.
                 </AppText>
               </View>
               <View style={styles.policyItem}>

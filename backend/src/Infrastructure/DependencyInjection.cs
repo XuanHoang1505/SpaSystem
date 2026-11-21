@@ -202,6 +202,7 @@ public static class DependencyInjection
         services.AddScoped<DevelopmentSeeder>();
         services.AddScoped<DemoDataSeeder>();
         services.AddScoped<CatalogDataSeeder>();
+        services.AddScoped<FullDataSeeder>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 
