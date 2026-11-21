@@ -76,6 +76,9 @@ public sealed class ProfileService : IProfileService
         ArgumentNullException.ThrowIfNull(request);
         await _passwordValidator.ValidateAndThrowAsync(request, cancellationToken);
         var user = await CurrentUserAsync(cancellationToken);
+        // Q-84: an account made by Google sign-in sets its first password through "forgot password" (email OTP).
+        if (!user.HasPassword)
+            throw UserErrors.PasswordNotSet();
         if (!_passwordHasher.Verify(user.PasswordHash, request.CurrentPassword))
             throw UserErrors.CurrentPasswordIncorrect();
 
@@ -91,7 +94,7 @@ public sealed class ProfileService : IProfileService
         await using var image = await _imageReader.ReadAsync(file, cancellationToken);
         var user = await CurrentUserAsync(cancellationToken);
         // The stored URL changes only after the upload succeeds, so a storage failure keeps the current avatar (BR-AUTH-19).
-        var url = await _storage.UploadImageAsync(image.Content, AvatarPublicId(user.Id), image.ContentType, cancellationToken);
+        var url = await _storage.UploadImageAsync(image.Content, AvatarImages.PublicId(user.Id), image.ContentType, cancellationToken);
         user.SetAvatar(url);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return OperationResult<AvatarUrlDto>.Success(new AvatarUrlDto(url), "Đã cập nhật ảnh đại diện.");
@@ -102,12 +105,10 @@ public sealed class ProfileService : IProfileService
         var user = await CurrentUserAsync(cancellationToken);
         if (user.AvatarUrl is null)
             return;
-        await _storage.DeleteAsync(AvatarPublicId(user.Id), cancellationToken);
+        await _storage.DeleteAsync(AvatarImages.PublicId(user.Id), cancellationToken);
         user.RemoveAvatar();
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
-
-    private static string AvatarPublicId(Guid userId) => $"avatars/{userId}";
 
     private async Task<User> CurrentUserAsync(CancellationToken cancellationToken) =>
         _currentUser.UserId is { } id && await _users.GetByIdAsync(id, cancellationToken) is { } user
@@ -116,5 +117,5 @@ public sealed class ProfileService : IProfileService
 
     private static MeDto ToDto(User user) => new(
         user.Id, user.FullName, user.Email, user.PhoneNumber, user.Role, user.Status, user.AvatarUrl, user.DateOfBirth, user.Gender,
-        user.CreatedAtUtc);
+        user.CreatedAtUtc, user.HasPassword);
 }

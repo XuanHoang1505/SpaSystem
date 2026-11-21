@@ -42,10 +42,10 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddLogging();
-        services.AddAutoMapper(_ => { }, typeof(DependencyInjection).Assembly);
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<IGoogleSignInService, GoogleSignInService>();
         services.AddScoped<INotificationPublisher, NotificationPublisher>();
         services.AddScoped<IMyNotificationService, MyNotificationService>();
         services.AddScoped<IAppointmentReminderService, AppointmentReminderService>();

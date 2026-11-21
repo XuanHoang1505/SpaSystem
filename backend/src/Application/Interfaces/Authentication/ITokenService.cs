@@ -18,4 +18,10 @@ public interface ITokenService
 
     /// <summary>Fingerprint of a password hash; changes whenever the password changes, so a used reset token stops matching.</summary>
     string ComputePasswordStamp(string passwordHash);
+
+    /// <summary>Short-lived JWT carrying a verified Google identity until the first sign-up is completed (Q-84).</summary>
+    AccessToken CreateGoogleSignupToken(GoogleIdentity identity, DateTime nowUtc, DateTime expiresAtUtc);
+
+    /// <summary>Returns null unless the token is a Google sign-up token signed with our key and still valid at <paramref name="nowUtc"/>.</summary>
+    Task<GoogleIdentity?> ReadGoogleSignupTokenAsync(string token, DateTime nowUtc);
 }
