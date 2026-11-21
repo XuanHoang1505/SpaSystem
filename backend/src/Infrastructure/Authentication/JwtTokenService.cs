@@ -17,6 +17,7 @@ public sealed class JwtTokenService : ITokenService
 {
     private const int RefreshTokenBytes = 64;
     public const string PasswordResetAudience = "NhuNguyetSpa.PasswordReset";
+    public const string GoogleSignupAudience = "NhuNguyetSpa.GoogleSignup";
     private const string PasswordStampClaim = "pwd";
     private static readonly JsonWebTokenHandler Handler = new();
 
@@ -94,6 +95,53 @@ public sealed class JwtTokenService : ITokenService
             || !Guid.TryParse(reset.Subject, out var userId) || !reset.TryGetPayloadValue<string>(PasswordStampClaim, out var stamp))
             return null;
         return new PasswordResetClaims(userId, stamp);
+    }
+
+    public AccessToken CreateGoogleSignupToken(GoogleIdentity identity, DateTime nowUtc, DateTime expiresAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        var jwt = _options.Value;
+        var descriptor = new SecurityTokenDescriptor
+        {
+            Issuer = jwt.Issuer,
+            Audience = GoogleSignupAudience,
+            IssuedAt = nowUtc,
+            NotBefore = nowUtc,
+            Expires = expiresAtUtc,
+            Claims = new Dictionary<string, object>
+            {
+                [JwtRegisteredClaimNames.Sub] = identity.Subject,
+                [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
+                [JwtRegisteredClaimNames.Email] = identity.Email,
+                ["name"] = identity.Name ?? string.Empty,
+                ["picture"] = identity.PictureUrl ?? string.Empty,
+            },
+            SigningCredentials = new SigningCredentials(CreateSigningKey(jwt.SecretKey), SecurityAlgorithms.HmacSha256),
+        };
+        return new AccessToken(Handler.CreateToken(descriptor), expiresAtUtc);
+    }
+
+    public async Task<GoogleIdentity?> ReadGoogleSignupTokenAsync(string token, DateTime nowUtc)
+    {
+        var jwt = _options.Value;
+        var result = await Handler.ValidateTokenAsync(token, new TokenValidationParameters
+        {
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = GoogleSignupAudience,
+            IssuerSigningKey = CreateSigningKey(jwt.SecretKey),
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+            // Lifetime is checked below against the application clock so tests can move time.
+            ValidateLifetime = false,
+        });
+        if (!result.IsValid || result.SecurityToken is not JsonWebToken signup || nowUtc >= signup.ValidTo
+            || string.IsNullOrEmpty(signup.Subject) || !signup.TryGetPayloadValue<string>(JwtRegisteredClaimNames.Email, out var email)
+            || string.IsNullOrEmpty(email))
+            return null;
+        signup.TryGetPayloadValue<string>("name", out var name);
+        signup.TryGetPayloadValue<string>("picture", out var picture);
+        // Only verified Google emails ever get a sign-up token.
+        return new GoogleIdentity(signup.Subject, email, true, string.IsNullOrEmpty(name) ? null : name,
+            string.IsNullOrEmpty(picture) ? null : picture);
     }
 
     public string ComputePasswordStamp(string passwordHash) =>

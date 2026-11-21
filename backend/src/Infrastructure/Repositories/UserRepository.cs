@@ -3,6 +3,7 @@ using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Users;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Domain.Entities;
+using NhuNguyetSpa.Domain.Enums;
 using NhuNguyetSpa.Infrastructure.Persistence;
 
 namespace NhuNguyetSpa.Infrastructure.Repositories;
@@ -21,6 +22,15 @@ public sealed class UserRepository : Repository<User>, IUserRepository
 
     public Task<User?> FindByEmailAsync(string email, CancellationToken cancellationToken) =>
         Set.FirstOrDefaultAsync(user => user.Email == email, cancellationToken);
+
+    public Task<User?> FindByExternalLoginAsync(ExternalLoginProvider provider, string providerKey, CancellationToken cancellationToken) =>
+        Context.UserExternalLogins
+            .Where(login => login.Provider == provider && login.ProviderKey == providerKey)
+            .Select(login => login.User)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    public Task<bool> HasExternalLoginAsync(Guid userId, ExternalLoginProvider provider, CancellationToken cancellationToken) =>
+        Context.UserExternalLogins.AnyAsync(login => login.UserId == userId && login.Provider == provider, cancellationToken);
 
     public Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken) =>
         Set.AnyAsync(user => user.Email == email, cancellationToken);
