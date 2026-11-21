@@ -4,6 +4,7 @@ import type { OtpSent } from '@spa/shared-types';
 import type { RegisterValues } from '../schemas';
 import { AuthCard } from './AuthCard';
 import { ConfigurationAlert } from './ConfigurationAlert';
+import { GoogleSignInSection } from './GoogleSignInSection';
 import { RegisterDetailsStep, type RegisterFieldError } from './RegisterDetailsStep';
 import { RegisterOtpStep } from './RegisterOtpStep';
 
@@ -60,18 +61,21 @@ export function RegisterFlow() {
           }}
         />
       ) : (
-        <RegisterDetailsStep
-          defaultValues={details}
-          resendAvailableAtUtc={sent?.resendAvailableAtUtc ?? null}
-          fieldError={fieldError}
-          onSent={(values, next) => {
-            setDetails(values);
-            setSent(next);
-            setOtpLocked(false);
-            setFieldError(null);
-            setStep(2);
-          }}
-        />
+        <>
+          <RegisterDetailsStep
+            defaultValues={details}
+            resendAvailableAtUtc={sent?.resendAvailableAtUtc ?? null}
+            fieldError={fieldError}
+            onSent={(values, next) => {
+              setDetails(values);
+              setSent(next);
+              setOtpLocked(false);
+              setFieldError(null);
+              setStep(2);
+            }}
+          />
+          <GoogleSignInSection mode="signup" />
+        </>
       )}
     </AuthCard>
   );

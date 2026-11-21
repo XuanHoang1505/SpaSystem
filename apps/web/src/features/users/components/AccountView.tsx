@@ -42,7 +42,7 @@ export function AccountView() {
       ) : (
         <div className="space-y-6">
           <ProfileCard user={user} />
-          <ChangePasswordCard />
+          <ChangePasswordCard hasPassword={user.hasPassword} />
         </div>
       )}
     </AccountPage>

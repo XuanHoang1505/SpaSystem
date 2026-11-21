@@ -50,6 +50,12 @@ export const registerSchema = z
     message: mismatch,
   });
 
+/** First Google sign-in (Q-84): Google gives no phone number; the email comes from Google and is not editable. */
+export const googleSignupSchema = z.object({
+  fullName: z.string().trim().min(1, 'Vui lòng nhập họ tên.').max(100, 'Họ tên tối đa 100 ký tự.'),
+  phoneNumber: z.string().trim().regex(PHONE, 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0.'),
+});
+
 export const otpSchema = z.object({ otp: z.string().regex(/^\d{6}$/, 'Mã OTP gồm 6 chữ số.') });
 
 export const emailSchema = z.object({ email });
@@ -63,6 +69,7 @@ export const newPasswordSchema = z
 
 export type LoginValues = z.infer<typeof loginSchema>;
 export type RegisterValues = z.infer<typeof registerSchema>;
+export type GoogleSignupValues = z.infer<typeof googleSignupSchema>;
 export type OtpValues = z.infer<typeof otpSchema>;
 export type EmailValues = z.infer<typeof emailSchema>;
 export type NewPasswordValues = z.infer<typeof newPasswordSchema>;

@@ -24,3 +24,14 @@ export function readEnvironment(
     return { error: error instanceof Error ? error.message : 'Configuration Error' };
   }
 }
+
+/**
+ * Google OAuth client ID for "Đăng nhập với Google" (Q-84). Public by design (it is in every Google sign-in page), so it
+ * may be bundled; without it the Google button is simply not shown.
+ */
+export function readGoogleClientId(
+  value: string | undefined = import.meta.env.VITE_GOOGLE_CLIENT_ID,
+): string | undefined {
+  const clientId = value?.trim();
+  return clientId ? clientId : undefined;
+}
