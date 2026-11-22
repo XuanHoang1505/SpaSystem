@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -27,21 +21,14 @@ import { AppButton } from '@components/common/AppButton';
 import { AppNotice } from '@components/common/AppNotice';
 import { AppScreen } from '@components/common/AppScreen';
 import { AppText } from '@components/common/AppText';
-import {
-  formatCurrency,
-  formatLocalDate,
-  formatLocalTime,
-} from '@/lib/formatting/formatters';
+import { formatCurrency, formatLocalDate, formatLocalTime } from '@/lib/formatting/formatters';
 import { colors, radius, shadows, spacing } from '@theme/index';
 import { CancelOrderModal } from '../components/CancelOrderModal';
+import { InstallmentScheduleCard } from '../components/InstallmentPlanCard';
 import { OrderStatusBadge } from '../components/OrderStatusBadge';
 import { useCreatePayment } from '../hooks/useCreatePayment';
 import { useOrder } from '../hooks/useOrder';
-import {
-  formatUtcDateTimeVn,
-  getItemTypeLabel,
-  getPaymentStatusMeta,
-} from '../utils/orderHelpers';
+import { formatUtcDateTimeVn, getItemTypeLabel, getPaymentStatusMeta } from '../utils/orderHelpers';
 
 export function OrderDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -115,7 +102,9 @@ export function OrderDetailScreen() {
           <AppNotice
             tone="error"
             title="Không tìm thấy đơn hàng"
-            message={error instanceof Error ? error.message : 'Đơn hàng không tồn tại hoặc đã bị xóa.'}
+            message={
+              error instanceof Error ? error.message : 'Đơn hàng không tồn tại hoặc đã bị xóa.'
+            }
           />
           <AppButton title="Về danh sách đơn hàng" onPress={() => router.replace('/my-orders')} />
         </View>
@@ -129,11 +118,7 @@ export function OrderDetailScreen() {
             showsVerticalScrollIndicator={false}
           >
             {paymentError ? (
-              <AppNotice
-                tone="error"
-                title="Lỗi thanh toán lại"
-                message={paymentError}
-              />
+              <AppNotice tone="error" title="Lỗi thanh toán lại" message={paymentError} />
             ) : null}
 
             {/* 1. Status & Overview Card */}
@@ -194,9 +179,7 @@ export function OrderDetailScreen() {
                     <AppText style={styles.heldHeaderTitle}>Lịch hẹn giữ chỗ</AppText>
                   </View>
                   {order.items[0] && (
-                    <AppText style={styles.heldServiceName}>
-                      {order.items[0].productName}
-                    </AppText>
+                    <AppText style={styles.heldServiceName}>{order.items[0].productName}</AppText>
                   )}
                   <AppText style={styles.heldTimeText}>
                     {formatLocalDate(order.appointment.date)} ·{' '}
@@ -241,9 +224,7 @@ export function OrderDetailScreen() {
                     </View>
 
                     <View style={styles.itemPriceLine}>
-                      <AppText style={styles.itemUnitPriceText}>
-                        Số lượng: 1
-                      </AppText>
+                      <AppText style={styles.itemUnitPriceText}>Số lượng: 1</AppText>
                       <AppText style={styles.itemLineTotalText}>
                         {formatCurrency(item.unitPrice)}
                       </AppText>
@@ -284,14 +265,18 @@ export function OrderDetailScreen() {
 
                 <View style={styles.totalsRow}>
                   <AppText style={styles.grandTotalKey}>Tổng thanh toán:</AppText>
-                  <AppText style={styles.grandTotalVal}>
-                    {formatCurrency(order.grandTotal)}
-                  </AppText>
+                  <AppText style={styles.grandTotalVal}>{formatCurrency(order.grandTotal)}</AppText>
                 </View>
               </View>
             </View>
 
             {/* 4. Payment Attempts History Card */}
+            <InstallmentScheduleCard
+              installments={order.installments}
+              paidAmount={order.paidAmount}
+              remainingAmount={order.remainingAmount}
+            />
+
             {order.payments && order.payments.length > 0 && (
               <View style={styles.card}>
                 <View style={styles.sectionHeaderRow}>
@@ -307,7 +292,12 @@ export function OrderDetailScreen() {
                     return (
                       <View key={pmt.id} style={styles.paymentItem}>
                         <View style={styles.pmtHeaderRow}>
-                          <AppText style={styles.pmtProvider}>Cổng VNPay</AppText>
+                          <AppText style={styles.pmtProvider}>
+                            Cổng VNPay
+                            {pmt.installmentSequenceNumber !== null
+                              ? ` · Đợt ${pmt.installmentSequenceNumber}`
+                              : ''}
+                          </AppText>
                           <View
                             style={[
                               styles.pmtStatusPill,
@@ -317,9 +307,7 @@ export function OrderDetailScreen() {
                               },
                             ]}
                           >
-                            <AppText
-                              style={[styles.pmtStatusText, { color: meta.textColor }]}
-                            >
+                            <AppText style={[styles.pmtStatusText, { color: meta.textColor }]}>
                               {meta.label}
                             </AppText>
                           </View>
@@ -328,9 +316,7 @@ export function OrderDetailScreen() {
                           <AppText style={styles.pmtDate}>
                             {formatUtcDateTimeVn(pmt.createdAtUtc)}
                           </AppText>
-                          <AppText style={styles.pmtAmount}>
-                            {formatCurrency(pmt.amount)}
-                          </AppText>
+                          <AppText style={styles.pmtAmount}>{formatCurrency(pmt.amount)}</AppText>
                         </View>
                       </View>
                     );
@@ -342,10 +328,7 @@ export function OrderDetailScreen() {
 
           {/* Sticky Bottom Actions */}
           <View
-            style={[
-              styles.stickyBottomBar,
-              { paddingBottom: Math.max(insets.bottom, spacing.sm) },
-            ]}
+            style={[styles.stickyBottomBar, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}
           >
             {order.status === 'pending_payment' && order.isPayable ? (
               <View style={styles.stickyActionsRow}>
@@ -367,7 +350,16 @@ export function OrderDetailScreen() {
                   />
                 </View>
               </View>
-            ) : order.status === 'paid' ? (
+            ) : order.status === 'partially_paid' && order.isPayable && order.nextInstallment ? (
+              <View style={styles.stickyBtnFull}>
+                <AppButton
+                  title={`Thanh toán đợt ${order.nextInstallment.sequenceNumber} (${formatCurrency(order.nextInstallment.amount)})`}
+                  variant="primary"
+                  onPress={handleRepay}
+                  loading={isPaying}
+                />
+              </View>
+            ) : order.status === 'paid' || order.status === 'partially_paid' ? (
               <View style={styles.stickyActionsRow}>
                 <View style={styles.stickyBtnWrap}>
                   <AppButton

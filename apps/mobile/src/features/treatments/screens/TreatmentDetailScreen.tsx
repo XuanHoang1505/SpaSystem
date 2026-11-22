@@ -1,3 +1,4 @@
+import { InstallmentPaymentNotice } from '@/features/orders/components/InstallmentPaymentNotice';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -137,6 +138,7 @@ export function TreatmentDetailScreen() {
         )}
 
         {/* Overview Card */}
+        <InstallmentPaymentNotice payment={plan.payment} />
         <TreatmentOverviewCard
           plan={plan}
           onPressViewPackage={(customerPackageId) =>

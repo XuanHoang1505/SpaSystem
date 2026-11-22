@@ -54,6 +54,8 @@ export function getOrderStatusMeta(status: OrderStatus): StatusMeta {
   switch (status) {
     case 'pending_payment':
       return makeMeta('Chờ thanh toán', 'warning');
+    case 'partially_paid':
+      return makeMeta('Đã trả một phần', 'info');
     case 'paid':
       return makeMeta('Đã thanh toán', 'success');
     case 'cancelled':

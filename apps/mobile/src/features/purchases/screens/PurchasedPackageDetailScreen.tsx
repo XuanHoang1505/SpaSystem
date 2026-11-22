@@ -1,3 +1,4 @@
+import { InstallmentPaymentNotice } from '@/features/orders/components/InstallmentPaymentNotice';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -147,6 +148,7 @@ export function PurchasedPackageDetailScreen() {
         </View>
 
         {/* Overview Card */}
+        <InstallmentPaymentNotice payment={pkg.payment} />
         <View style={styles.card}>
           <View style={styles.titleRow}>
             <View style={styles.titleCol}>
