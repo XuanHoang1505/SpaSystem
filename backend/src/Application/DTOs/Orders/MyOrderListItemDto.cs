@@ -13,4 +13,7 @@ public sealed record MyOrderListItemDto(
     int ItemCount,
     IReadOnlyList<string> ProductNames,
     bool IsPayable,
-    bool CanCancel);
+    bool CanCancel,
+    PaymentPlan PaymentPlan = PaymentPlan.Full,
+    decimal PaidAmount = 0,
+    decimal? NextInstallmentAmount = null);

@@ -37,6 +37,7 @@ public sealed class OrderService : IOrderService
     private readonly OrderCancellation _cancellation;
     private readonly IValidator<OrderListQuery> _listValidator;
     private readonly IValidator<CancelOrderRequest> _cancelValidator;
+    private readonly InstallmentPlanning _installments;
 
     public OrderService(
         ICartRepository carts,
@@ -55,13 +56,15 @@ public sealed class OrderService : IOrderService
         IValidator<OrderRequest> validator,
         OrderCancellation cancellation,
         IValidator<OrderListQuery> listValidator,
-        IValidator<CancelOrderRequest> cancelValidator)
+        IValidator<CancelOrderRequest> cancelValidator,
+        InstallmentPlanning installments)
     {
         _orders = orders;
         _promotionApplier = promotionApplier;
         // Same collaborators as book now's placement; built here so the order API keeps its constructor.
         _placement = new OrderPlacement(carts, services, packages, orders, redemptions, promotionApplier, entitlementIssuer, gateway, unitOfWork,
-            clock, orderOptions);
+            clock, orderOptions, installments);
+        _installments = installments;
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
         _clock = clock;
@@ -89,6 +92,8 @@ public sealed class OrderService : IOrderService
 
         var items = lines.Select((line, index) => new OrderPreviewItemDto(
             line.Type, line.ProductId, line.Name, line.Price, discounts[index], line.Price - discounts[index])).ToList();
+        var grandTotal = subtotal - promotion.DiscountTotal;
+        var plans = await _installments.PlanAsync(lines, grandTotal, cancellationToken);
         return OperationResult<OrderPreviewDto>.Success(new OrderPreviewDto(
             items,
             unavailable,
@@ -96,7 +101,9 @@ public sealed class OrderService : IOrderService
             promotion.DiscountTotal,
             subtotal - promotion.DiscountTotal,
             promotion.Promotion != null ? new AppliedPromotionDto(promotion.Code!, promotion.DiscountTotal) : null,
-            promotion.HasError ? new PromotionErrorDto(promotion.ErrorCode!, promotion.ErrorMessage!) : null));
+            promotion.HasError ? new PromotionErrorDto(promotion.ErrorCode!, promotion.ErrorMessage!) : null,
+            plans.Options,
+            plans.UnavailableMessage is { } reason ? new InstallmentUnavailableDto(OrderErrors.InstallmentNotAvailableCode, reason) : null));
     }
 
     public async Task<OperationResult<CreatedOrder>> CreateAsync(OrderRequest request, Guid? idempotencyKey, CancellationToken cancellationToken)
@@ -132,12 +139,21 @@ public sealed class OrderService : IOrderService
     public async Task<OperationResult<OrderDetailDto>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         var order = await _orders.GetDetailAsync(id, CustomerId, cancellationToken) ?? throw OrderErrors.OrderNotFound();
-        var facts = OrderActionFacts.From(order.Status, order.PaymentDueAtUtc, order.Payments);
+        var installment = order.PaymentPlan == PaymentPlan.Installment
+            ? (await _orders.GetInstallmentFactsAsync([order.Id], cancellationToken)).GetValueOrDefault(order.Id)
+            : null;
+        var facts = OrderActionFacts.From(order.Status, order.PaymentDueAtUtc, order.Payments) with { Installment = installment };
         var now = _clock.UtcNow;
+        var (installments, paid, remaining, next) =
+            OrderActionPolicy.Installments(order.Installments ?? [], order.Status, order.GrandTotal, installment, now);
         var detail = order with
         {
             IsPayable = OrderActionPolicy.IsPayable(facts, now, _paymentOptions.Value.MaxAttemptsPerOrder),
             CanCancel = OrderActionPolicy.CustomerCanCancel(facts, now, _orderOptions.Value.CancelBlockMinutesAfterPaymentStart),
+            Installments = installments,
+            PaidAmount = paid,
+            RemainingAmount = remaining,
+            NextInstallment = next,
         };
         return OperationResult<OrderDetailDto>.Success(detail);
     }
@@ -160,12 +176,15 @@ public sealed class OrderService : IOrderService
             paging.PageNumber,
             paging.PageSize);
         var page = await _orders.SearchMineAsync(criteria, cancellationToken);
+        var installmentFacts = await _orders.GetInstallmentFactsAsync(
+            page.Items.Where(row => row.Item.Status == OrderStatus.PartiallyPaid).Select(row => row.Item.Id).ToList(), cancellationToken);
         var now = _clock.UtcNow;
         var maxAttempts = _paymentOptions.Value.MaxAttemptsPerOrder;
         var blockMinutes = _orderOptions.Value.CancelBlockMinutesAfterPaymentStart;
         var items = page.Items.Select(row => row.Item with
         {
-            IsPayable = OrderActionPolicy.IsPayable(row.Facts, now, maxAttempts),
+            IsPayable = OrderActionPolicy.IsPayable(row.Facts with { Installment = installmentFacts.GetValueOrDefault(row.Item.Id) }, now,
+                maxAttempts),
             CanCancel = OrderActionPolicy.CustomerCanCancel(row.Facts, now, blockMinutes),
         });
         return OperationResult<PagedResult<MyOrderListItemDto>>.Success(

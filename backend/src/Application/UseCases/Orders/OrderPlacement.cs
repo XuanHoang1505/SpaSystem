@@ -38,6 +38,7 @@ public sealed class OrderPlacement
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDateTimeProvider _clock;
     private readonly IOptions<OrderOptions> _orderOptions;
+    private readonly InstallmentPlanning _installments;
 
     public OrderPlacement(
         ICartRepository carts,
@@ -50,7 +51,8 @@ public sealed class OrderPlacement
         IPaymentGateway gateway,
         IUnitOfWork unitOfWork,
         IDateTimeProvider clock,
-        IOptions<OrderOptions> orderOptions)
+        IOptions<OrderOptions> orderOptions,
+        InstallmentPlanning installments)
     {
         _carts = carts;
         _services = services;
@@ -63,6 +65,7 @@ public sealed class OrderPlacement
         _unitOfWork = unitOfWork;
         _clock = clock;
         _orderOptions = orderOptions;
+        _installments = installments;
     }
 
     /// <summary>
@@ -84,6 +87,10 @@ public sealed class OrderPlacement
         var grandTotal = subtotal - promotion.DiscountTotal;
         if (grandTotal > 0 && grandTotal < _gateway.MinAmount)
             throw OrderErrors.AmountTooSmall(_gateway.MinAmount);
+        // BR-INS-01: checked again here, in the order's transaction, with the same prices as the order.
+        var installmentPlan = request.InstallmentCount is { } installmentCount
+            ? InstallmentPlanning.Require(await _installments.PlanAsync(lines, grandTotal, cancellationToken), installmentCount)
+            : null;
 
         var now = _clock.UtcNow;
         var order = new Order
@@ -96,7 +103,21 @@ public sealed class OrderPlacement
             Status = OrderStatus.PendingPayment,
             PaymentDueAtUtc = now.AddMinutes(_orderOptions.Value.PaymentTimeoutMinutes),
             IdempotencyKey = idempotencyKey,
+            PaymentPlan = installmentPlan is null ? PaymentPlan.Full : PaymentPlan.Installment,
         };
+        foreach (var share in installmentPlan?.Installments ?? [])
+        {
+            // BR-INS-04: amount and sessions are fixed now.
+            order.Installments.Add(new OrderInstallment
+            {
+                OrderId = order.Id,
+                SequenceNumber = share.SequenceNumber,
+                FirstSessionNumber = share.FirstSessionNumber,
+                LastSessionNumber = share.LastSessionNumber,
+                Amount = share.Amount,
+                Status = InstallmentStatus.Pending,
+            });
+        }
         var discounts = DiscountCalculator.Allocate(promotion.DiscountTotal, lines.Select(line => line.Price).ToList());
         for (var i = 0; i < lines.Count; i++)
         {

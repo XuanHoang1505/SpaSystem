@@ -29,6 +29,7 @@ public sealed class AppointmentCompletionService : IAppointmentCompletionService
     private readonly IOptions<CareOptions> _options;
     private readonly IValidator<CompleteAppointmentRequest> _validator;
     private readonly INotificationPublisher _notifications;
+    private readonly IOrderRepository _orders;
 
     public AppointmentCompletionService(
         IAppointmentRepository appointments,
@@ -38,9 +39,11 @@ public sealed class AppointmentCompletionService : IAppointmentCompletionService
         IDateTimeProvider clock,
         IOptions<CareOptions> options,
         IValidator<CompleteAppointmentRequest> validator,
-        INotificationPublisher notifications)
+        INotificationPublisher notifications,
+        IOrderRepository orders)
     {
         _notifications = notifications;
+        _orders = orders;
         _appointments = appointments;
         _purchases = purchases;
         _unitOfWork = unitOfWork;
@@ -110,6 +113,12 @@ public sealed class AppointmentCompletionService : IAppointmentCompletionService
         var packageCompleted = package.RecordCompletedSession();
         plan.RecordCompletedSession(appointment.Date, packageCompleted);
         appointment.Complete(null);
+
+        // NTF-E16 (BR-INS-09): the last paid session of an installment package is done and an installment is left.
+        var order = await _orders.GetInstallmentOrderForPackageAsync(package.Id, lockRow: false, cancellationToken);
+        if (order is not null && session.SequenceNumber == order.PaidSessionCount && order.NextPendingInstallment is { } next)
+            await _notifications.PaidSessionsUsedAsync(package.CustomerId, order.Id, package.PackageName, next.SequenceNumber, next.Amount,
+                cancellationToken);
         return new PackageProgressDto(package.Id, package.PackageName, package.UsedSessions, package.TotalSessions, package.Status);
     }
 }

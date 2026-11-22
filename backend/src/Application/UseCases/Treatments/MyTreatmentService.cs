@@ -26,11 +26,13 @@ public sealed class MyTreatmentService : IMyTreatmentService
     private readonly IOptions<PurchasesOptions> _purchasesOptions;
     private readonly IOptions<TreatmentsOptions> _options;
     private readonly IValidator<MyTreatmentListQuery> _validator;
+    private readonly IOrderRepository _orders;
 
     public MyTreatmentService(ITreatmentRepository treatments, IPurchaseRepository purchases, ICurrentUserService currentUser,
         IDateTimeProvider clock, IOptions<PurchasesOptions> purchasesOptions, IOptions<TreatmentsOptions> options,
-        IValidator<MyTreatmentListQuery> validator)
+        IValidator<MyTreatmentListQuery> validator, IOrderRepository orders)
     {
+        _orders = orders;
         _treatments = treatments;
         _purchases = purchases;
         _currentUser = currentUser;
@@ -57,6 +59,7 @@ public sealed class MyTreatmentService : IMyTreatmentService
             .GroupBy(session => session.TreatmentPlanId)
             .ToDictionary(group => group.Key, group => group.OrderBy(session => session.SequenceNumber).First());
         var facts = await _purchases.GetSessionFactsAsync(next.Values.Select(session => session.Id).ToList(), customerId, cancellationToken);
+        var payments = await _orders.GetPackagePaymentsAsync(plans.Select(plan => plan.CustomerPackageId).ToList(), cancellationToken);
         var nowUtc = _clock.UtcNow;
 
         IReadOnlyList<MyTreatmentListItemDto> items = plans.Select(plan =>
@@ -64,7 +67,7 @@ public sealed class MyTreatmentService : IMyTreatmentService
             var nextSession = next.TryGetValue(plan.Id, out var session) ? ToNext(session, facts, nowUtc) : null;
             return new MyTreatmentListItemDto(plan.Id, plan.CustomerPackageId, plan.PackageName, plan.ImageUrl, plan.Status,
                 PackageStatus(plan, nowUtc), plan.ExpiresAtUtc, plan.TotalSessions, plan.UsedSessions, plan.BookedSessions, plan.PrimaryStaff,
-                nextSession);
+                nextSession, payments.GetValueOrDefault(plan.CustomerPackageId));
         }).ToList();
         return OperationResult<IReadOnlyList<MyTreatmentListItemDto>>.Success(items);
     }
@@ -76,11 +79,13 @@ public sealed class MyTreatmentService : IMyTreatmentService
         var sessions = view.Sessions.Select(session => ToSession(session, view, nowUtc, result: null, skinProfile: null)).ToList();
         var nextRow = view.Sessions.Where(session => session.Status == TreatmentSessionStatus.NotBooked).MinBy(session => session.SequenceNumber);
         var plan = view.Plan;
+        var payment = (await _orders.GetPackagePaymentsAsync([plan.CustomerPackageId], cancellationToken)).GetValueOrDefault(plan.CustomerPackageId);
         return OperationResult<MyTreatmentPlanDto>.Success(new MyTreatmentPlanDto(
             plan.Id, plan.CustomerPackageId, plan.PackageName, plan.ImageUrl, plan.Status, PackageStatus(plan, nowUtc), plan.ExpiresAtUtc,
             plan.TotalSessions, plan.UsedSessions, plan.BookedSessions, plan.PrimaryStaff,
             nextRow is null ? null : ToNext(nextRow, view.Facts, nowUtc),
-            plan.Goal, plan.StatusReason, plan.StartDate, plan.ExpectedEndDate, plan.ActualEndDate, plan.PurchasedAtUtc, plan.Order, sessions));
+            plan.Goal, plan.StatusReason, plan.StartDate, plan.ExpectedEndDate, plan.ActualEndDate, plan.PurchasedAtUtc, plan.Order, sessions,
+            payment));
     }
 
     public async Task<OperationResult<MyTreatmentSessionDto>> GetSessionAsync(Guid id, Guid sessionId, CancellationToken cancellationToken)

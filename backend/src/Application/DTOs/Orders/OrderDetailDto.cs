@@ -7,6 +7,8 @@ namespace NhuNguyetSpa.Application.DTOs.Orders;
 /// <see cref="IsPayable"/>: still pending, before the due time, and below the attempt limit (a new payment can be started).
 /// <see cref="Appointment"/>: the slot held by a book-now order (UC-SPA-15).
 /// <see cref="CanCancel"/>: the customer may cancel now (BR-ORD-04, Q-44); cancellation fields are set once cancelled (UC-SPA-12).
+/// Installment orders (docs/specs/order-installments.md) carry <see cref="Installments"/>, the amount paid and left, and the
+/// installment the next payment is for.
 /// </summary>
 public sealed record OrderDetailDto(
     Guid Id,
@@ -24,12 +26,19 @@ public sealed record OrderDetailDto(
     OrderAppointmentDto? Appointment = null,
     bool CanCancel = false,
     DateTime? CancelledAtUtc = null,
-    string? CancellationReason = null);
+    string? CancellationReason = null,
+    PaymentPlan PaymentPlan = PaymentPlan.Full,
+    IReadOnlyList<OrderInstallmentDto>? Installments = null,
+    decimal PaidAmount = 0,
+    decimal RemainingAmount = 0,
+    NextInstallmentDto? NextInstallment = null);
 
 public sealed record OrderItemDto(
     Guid Id, CatalogItemType Type, Guid ProductId, string ProductName, decimal UnitPrice, decimal DiscountAmount, decimal LineTotal);
 
-public sealed record OrderPaymentDto(Guid Id, string Provider, decimal Amount, PaymentStatus Status, DateTime CreatedAtUtc, DateTime? PaidAtUtc);
+/// <summary><see cref="InstallmentSequenceNumber"/>: the installment the attempt paid, for an installment order.</summary>
+public sealed record OrderPaymentDto(
+    Guid Id, string Provider, decimal Amount, PaymentStatus Status, DateTime CreatedAtUtc, DateTime? PaidAtUtc, int? InstallmentSequenceNumber = null);
 
 /// <summary><see cref="Created"/> is false when an <c>Idempotency-Key</c> matched an earlier order (BR-ORD-08).</summary>
 public sealed record CreatedOrder(OrderDetailDto Order, bool Created);

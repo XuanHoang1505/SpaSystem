@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationPublisher, NotificationPublisher>();
         services.AddScoped<IMyNotificationService, MyNotificationService>();
         services.AddScoped<IAppointmentReminderService, AppointmentReminderService>();
+        services.AddScoped<IInstallmentReminderService, InstallmentReminderService>();
         // The API swaps in SignalR (BR-NTF-09); other hosts push nothing.
         services.TryAddSingleton<INotificationRealtime, NullNotificationRealtime>();
         services.AddScoped<CatalogViewer>();
@@ -75,6 +76,7 @@ public static class DependencyInjection
         services.AddScoped<EntitlementIssuer>();
         services.AddScoped<BookingSlotReserver>();
         services.AddScoped<MyAppointmentReader>();
+        services.AddScoped<InstallmentPlanning>();
         services.AddScoped<OrderPlacement>();
         services.AddScoped<OrderCancellation>();
         services.AddScoped<IOrderService, OrderService>();

@@ -8,6 +8,7 @@ using NhuNguyetSpa.Application.DTOs.Payments;
 using NhuNguyetSpa.Application.Interfaces.Payments;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
+using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
 using NhuNguyetSpa.Application.Interfaces.Services.Payments;
 using NhuNguyetSpa.Application.UseCases.Orders;
 using NhuNguyetSpa.Domain.Entities;
@@ -30,6 +31,8 @@ public sealed class PaymentService : IPaymentService
     private readonly ILogger<PaymentService> _logger;
     private readonly IAppointmentRepository _appointments;
     private readonly IOptions<BookingOptions> _bookingOptions;
+    private readonly IOptions<OrderOptions> _orderOptions;
+    private readonly INotificationPublisher _notifications;
 
     public PaymentService(
         IOrderRepository orders,
@@ -42,7 +45,9 @@ public sealed class PaymentService : IPaymentService
         IOptions<PaymentOptions> options,
         ILogger<PaymentService> logger,
         IAppointmentRepository appointments,
-        IOptions<BookingOptions> bookingOptions)
+        IOptions<BookingOptions> bookingOptions,
+        IOptions<OrderOptions> orderOptions,
+        INotificationPublisher notifications)
     {
         _orders = orders;
         _payments = payments;
@@ -55,6 +60,8 @@ public sealed class PaymentService : IPaymentService
         _logger = logger;
         _appointments = appointments;
         _bookingOptions = bookingOptions;
+        _orderOptions = orderOptions;
+        _notifications = notifications;
     }
 
     public async Task<OperationResult<PaymentAttemptDto>> CreateAttemptAsync(Guid orderId, CreatePaymentRequest request, string clientIp,
@@ -64,6 +71,7 @@ public sealed class PaymentService : IPaymentService
         var customerId = _currentUser.UserId ?? throw new UnauthorizedException("Vui lòng đăng nhập.", "unauthorized");
         var now = _clock.UtcNow;
         Payment payment = null!;
+        int? sequenceNumber = null;
         // The order row lock serialises two clicks, so attempt numbers (and request codes) never collide.
         await _unitOfWork.ExecuteInTransactionAsync(async token =>
         {
@@ -72,26 +80,41 @@ public sealed class PaymentService : IPaymentService
                 throw OrderErrors.OrderNotFound();
             if (!order.AcceptsPaymentAttempt(now))
                 throw OrderErrors.OrderNotPayable();
+            // BR-INS-05: an installment order always pays its lowest pending installment.
+            var installment = order.IsInstallmentPlan ? order.NextPendingInstallment : null;
+            sequenceNumber = installment?.SequenceNumber;
+            if (installment is not null && order.Status == OrderStatus.PartiallyPaid)
+            {
+                // BR-INS-07: later installments only while the package they unlock can still be used.
+                var facts = (await _orders.GetInstallmentFactsAsync([order.Id], token)).GetValueOrDefault(order.Id);
+                if (facts is null || !OrderActionPolicy.PackageUsable(facts, now))
+                    throw OrderErrors.OrderNotPayable();
+            }
             var max = _options.Value.MaxAttemptsPerOrder;
-            if (order.Payments.Count >= max)
+            var attempts = installment is null ? order.Payments.Count : order.Payments.Count(row => row.InstallmentId == installment.Id);
+            if (attempts >= max)
                 throw PaymentErrors.AttemptsExceeded(max);
 
             payment = new Payment
             {
                 OrderId = order.Id,
+                InstallmentId = installment?.Id,
                 Provider = _gateway.Provider,
-                Amount = order.GrandTotal,
+                Amount = installment?.Amount ?? order.GrandTotal,
                 Status = PaymentStatus.Pending,
                 RequestCode = OrderCodeGenerator.PaymentRequestCode(order.Code, order.Payments.Count + 1),
-                // The gateway stops taking money at the order's due time.
-                ExpiresAtUtc = order.PaymentDueAtUtc,
+                // The gateway stops taking money at the order's due time; a later installment has none, so a fresh window.
+                ExpiresAtUtc = order.Status == OrderStatus.PartiallyPaid
+                    ? now.AddMinutes(_orderOptions.Value.PaymentTimeoutMinutes)
+                    : order.PaymentDueAtUtc,
             };
             payment.PaymentUrl = _gateway.CreatePaymentUrl(new PaymentUrlRequest(
                 payment.RequestCode, payment.Amount, order.Code, now, payment.ExpiresAtUtc, clientIp, request.Client ?? PaymentClient.Web));
             await _payments.AddAsync(payment, token);
             await _unitOfWork.SaveChangesAsync(token);
         }, cancellationToken);
-        return OperationResult<PaymentAttemptDto>.Success(new PaymentAttemptDto(payment.Id, payment.PaymentUrl!, payment.ExpiresAtUtc));
+        return OperationResult<PaymentAttemptDto>.Success(new PaymentAttemptDto(payment.Id, payment.PaymentUrl!, payment.ExpiresAtUtc,
+            payment.Amount, sequenceNumber));
     }
 
     public async Task<PaymentCallbackOutcome> ProcessCallbackAsync(IReadOnlyDictionary<string, string> parameters, bool fromReturnUrl,
@@ -136,6 +159,11 @@ public sealed class PaymentService : IPaymentService
                         hold.ExpireHold();
                 }
             }
+            else if (order.IsInstallmentPlan)
+            {
+                payment.MarkSucceeded(callback.ProviderTransactionId, now);
+                await ApplyInstallmentAsync(order, payment, now, token);
+            }
             else
             {
                 payment.MarkSucceeded(callback.ProviderTransactionId, now);
@@ -154,5 +182,25 @@ public sealed class PaymentService : IPaymentService
             await _unitOfWork.SaveChangesAsync(token);
         }, cancellationToken);
         return new PaymentCallbackOutcome(status, reference.OrderId);
+    }
+
+    /// <summary>
+    /// BR-INS-08: a success for a pending installment pays it. The first one issues the package (and NTF-E01), a later one sends
+    /// NTF-E15. An installment already paid by another attempt, or cancelled, stays as it is and needs a manual refund (as Q-20).
+    /// </summary>
+    private async Task ApplyInstallmentAsync(Order order, Payment payment, DateTime now, CancellationToken cancellationToken)
+    {
+        var installment = order.Installments.SingleOrDefault(item => item.Id == payment.InstallmentId);
+        if (installment is null || installment.Status != InstallmentStatus.Pending ||
+            order.Status is not (OrderStatus.PendingPayment or OrderStatus.Expired or OrderStatus.PartiallyPaid))
+        {
+            _logger.LogWarning("Payment {RequestCode} succeeded for installment {Sequence} of order {OrderCode} ({Status}); manual refund needed.",
+                payment.RequestCode, installment?.SequenceNumber, order.Code, installment?.Status);
+            return;
+        }
+        if (order.ApplyInstallmentPaid(installment, now))
+            await _entitlementIssuer.IssueAsync(order, now, cancellationToken);
+        else
+            await _notifications.InstallmentPaidAsync(order, installment, cancellationToken);
     }
 }

@@ -12,6 +12,7 @@ public static class OrderErrors
     public const string OrderNotPayableCode = "order_not_payable";
     public const string NotCancellableCode = "order_not_cancellable";
     public const string PaymentInProgressCode = "order_payment_in_progress";
+    public const string InstallmentNotAvailableCode = "installment_not_available";
 
     public static BusinessRuleException CartEmpty()
     {
@@ -41,6 +42,11 @@ public static class OrderErrors
     public static ConflictException NotCancellable()
     {
         return new("Chỉ hủy được đơn hàng đang chờ thanh toán.", NotCancellableCode);
+    }
+
+    public static BusinessRuleException InstallmentNotAvailable(string message)
+    {
+        return new(message, InstallmentNotAvailableCode);
     }
 
     public static ConflictException PaymentInProgress(int minutes)

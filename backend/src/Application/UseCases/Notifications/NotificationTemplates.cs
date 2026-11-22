@@ -45,6 +45,26 @@ public static class NotificationTemplates
         return new(NotificationType.Payment, "Thanh toán thành công", body);
     }
 
+    // NTF-E01 (installment order, first installment) and NTF-E15 (later installments), docs/specs/order-installments.md
+    public static NotificationContent InstallmentPaid(string orderCode, int sequenceNumber, int installmentCount, decimal amount,
+        int lastPaidSession)
+    {
+        var body = sequenceNumber == installmentCount
+            ? $"Đơn {orderCode} đã thanh toán đủ {installmentCount} đợt. Bạn đặt lịch được mọi buổi của gói."
+            : $"Đơn {orderCode} đã thanh toán đợt {sequenceNumber}/{installmentCount} ({Money(amount)}). Bạn đặt lịch được đến buổi {lastPaidSession}.";
+        return new(NotificationType.Payment, $"Đã thanh toán đợt {sequenceNumber}/{installmentCount}", body);
+    }
+
+    // NTF-E16
+    public static NotificationContent PaidSessionsUsed(string packageName, int nextSequenceNumber, decimal amount) =>
+        new(NotificationType.Payment, "Bạn đã dùng hết các buổi đã thanh toán",
+            $"Gói {packageName}: thanh toán đợt {nextSequenceNumber} ({Money(amount)}) để đặt lịch các buổi tiếp theo.");
+
+    // NTF-E17
+    public static NotificationContent InstallmentExpirySoon(string packageName, DateOnly expiresOn) =>
+        new(NotificationType.Payment, "Gói sắp hết hạn, còn đợt chưa thanh toán",
+            $"Gói {packageName} hết hạn ngày {Day(expiresOn)}. Sau ngày này các buổi của đợt chưa thanh toán không dùng được nữa.");
+
     // NTF-E02
     public static NotificationContent OrderCancelledByOwner(string orderCode, string reason) =>
         new(NotificationType.Payment, "Đơn hàng đã bị hủy", $"Đơn {orderCode} đã bị spa hủy. Lý do: {Reason(reason)}.");
