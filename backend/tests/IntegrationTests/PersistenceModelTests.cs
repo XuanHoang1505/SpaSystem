@@ -28,13 +28,15 @@ public sealed class PersistenceModelTests
         ["service_packages"] = "id,name,short_description,description,price,validity_days,status,sale_start_date,sale_end_date,image_url,created_at_utc,updated_at_utc,created_by,updated_by",
         ["service_package_items"] = "id,spa_service_id,service_package_id,session_count,min_days_between_sessions,sort_order,note",
         ["staff_skills"] = "staff_member_id,spa_service_id",
+        ["staff_certifications"] = "id,staff_member_id,name,issuer,credential_number,issued_on,expires_on,is_public,note,image_url,verification_status,rejection_reason,reviewed_at_utc,reviewed_by_user_id,created_at_utc,updated_at_utc,created_by,updated_by",
         ["work_schedules"] = "id,staff_member_id,date,start_time,end_time,status",
         ["promotions"] = "id,code,description,discount_type,discount_value,min_order_amount,max_discount_amount,starts_at_utc,ends_at_utc,per_customer_limit,usage_limit,status",
         ["carts"] = "id,customer_id,created_at_utc,updated_at_utc,created_by,updated_by",
         ["cart_items"] = "id,cart_id,spa_service_id,service_package_id,unit_price,added_at_utc",
-        ["orders"] = "id,code,customer_id,subtotal,discount_total,grand_total,status,note,payment_due_at_utc,idempotency_key,cancelled_at_utc,cancellation_reason,created_at_utc,updated_at_utc,created_by,updated_by",
+        ["orders"] = "id,code,customer_id,subtotal,discount_total,grand_total,status,payment_plan,note,payment_due_at_utc,idempotency_key,cancelled_at_utc,cancellation_reason,created_at_utc,updated_at_utc,created_by,updated_by",
         ["order_items"] = "id,order_id,spa_service_id,service_package_id,product_name,unit_price,discount_amount,line_total,note",
-        ["payments"] = "id,order_id,provider,amount,status,request_code,provider_transaction_id,payment_url,expires_at_utc,paid_at_utc,created_at_utc,updated_at_utc,created_by,updated_by",
+        ["payments"] = "id,order_id,installment_id,provider,amount,status,request_code,provider_transaction_id,payment_url,expires_at_utc,paid_at_utc,created_at_utc,updated_at_utc,created_by,updated_by",
+        ["order_installments"] = "id,order_id,sequence_number,first_session_number,last_session_number,amount,status,paid_at_utc",
         ["promotion_redemptions"] = "id,order_id,promotion_id,promotion_code,discount_amount,redeemed_at_utc",
         ["service_entitlements"] = "id,customer_id,order_item_id,expires_at_utc,status",
         ["customer_packages"] = "id,customer_id,order_item_id,package_name,purchased_at_utc,activated_at_utc,expires_at_utc,total_sessions,used_sessions,status",
@@ -45,9 +47,10 @@ public sealed class PersistenceModelTests
         ["customer_allergies"] = "id,customer_id,allergen,severity,note,recorded_at_utc",
         ["reviews"] = "id,customer_id,spa_service_id,service_package_id,comment,owner_reply,replied_at_utc,rating,image_url,status,created_at_utc,updated_at_utc,created_by,updated_by",
         ["ai_chat_messages"] = "id,customer_id,question,answer,created_at_utc",
-        ["notifications"] = "id,user_id,title,body,type,read_at_utc,created_at_utc",
+        ["notifications"] = "id,user_id,title,body,type,reference_type,reference_id,dedup_key,read_at_utc,created_at_utc",
         ["otp_codes"] = "id,email,purpose,code_hash,pending_registration,failed_attempts,expires_at_utc,used_at_utc,created_at_utc",
         ["refresh_tokens"] = "id,user_id,token_hash,expires_at_utc,revoked_at_utc,created_at_utc",
+        ["user_external_logins"] = "id,user_id,provider,provider_key,email,created_at_utc",
         ["spa_profiles"] = "id,name,introduction,address,phone_number,opening_hours,policies",
     };
 
@@ -61,7 +64,9 @@ public sealed class PersistenceModelTests
         { "work_schedules", "status", "active,cancelled" },
         { "promotions", "discount_type", "percentage,fixed_amount" },
         { "promotions", "status", "active,stopped" },
-        { "orders", "status", "pending_payment,paid,cancelled,expired" },
+        { "orders", "status", "pending_payment,partially_paid,paid,cancelled,expired" },
+        { "orders", "payment_plan", "full,installment" },
+        { "order_installments", "status", "pending,paid,cancelled" },
         { "payments", "status", "pending,succeeded,failed,expired" },
         { "service_entitlements", "status", "available,booked,used,expired" },
         { "customer_packages", "status", "active,completed,expired,cancelled" },
@@ -73,6 +78,7 @@ public sealed class PersistenceModelTests
         { "reviews", "status", "visible,hidden" },
         { "notifications", "type", "appointment,payment,treatment,promotion,system" },
         { "otp_codes", "purpose", "registration,password_reset" },
+        { "user_external_logins", "provider", "google" },
     };
 
     [Fact]
