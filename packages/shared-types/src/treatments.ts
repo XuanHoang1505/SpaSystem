@@ -1,7 +1,7 @@
 import type { SkinType } from './care';
 import type { AppointmentStatus } from './bookings';
 import type { PaginationParams } from './index';
-import type { CustomerPackageStatus, PurchaseOrderRef } from './purchases';
+import type { CustomerPackageStatus, PackagePayment, PurchaseOrderRef } from './purchases';
 
 /** `GET /me/treatments/{id}` for the customer (UC-SPA-19, read only). */
 export type TreatmentPlanStatus =
@@ -60,6 +60,7 @@ export interface MyTreatmentListItem {
   bookedSessions: number;
   primaryStaff: StaffRef | null;
   nextSession: MyTreatmentNextSession | null;
+  payment: PackagePayment | null;
 }
 
 export interface MyTreatmentPlan {
@@ -83,6 +84,7 @@ export interface MyTreatmentPlan {
   purchasedAtUtc: string;
   order: PurchaseOrderRef;
   sessions: readonly MyTreatmentSession[];
+  payment: PackagePayment | null;
 }
 
 export interface TreatmentCustomerDto {
@@ -176,6 +178,7 @@ export interface TreatmentPlanDto {
   sessions: readonly TreatmentSessionDto[];
   skinProfiles: readonly TreatmentSkinProfileDto[];
   careHistory: readonly CareHistoryEntryDto[];
+  payment: PackagePayment | null;
 }
 
 export interface UpdateTreatmentPlanRequest {

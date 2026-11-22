@@ -68,6 +68,24 @@ export interface PurchasedPackage {
   /** Filled only by the detail endpoint. */
   items: readonly PackageItemProgress[] | null;
   order: PurchaseOrderRef;
+  payment: PackagePayment | null;
+}
+
+/** Pay it with `POST /me/orders/{orderId}/payments`. */
+export interface PackageNextInstallment {
+  orderId: string;
+  sequenceNumber: number;
+  amount: number;
+  firstSessionNumber: number;
+  lastSessionNumber: number;
+}
+
+/** A package bought in installments: sessions 1..`paidSessionCount` are paid and bookable. Null when paid in full. */
+export interface PackagePayment {
+  plan: 'full' | 'installment';
+  paidSessionCount: number;
+  totalSessions: number;
+  nextInstallment: PackageNextInstallment | null;
 }
 
 export interface Purchases {
