@@ -1,3 +1,4 @@
+import { InstallmentPaymentNotice } from '@/features/orders/components/InstallmentPaymentNotice';
 import {
   ArrowRightIcon,
   CalendarClockIcon,
@@ -133,6 +134,7 @@ export function TreatmentPlanCard({ plan }: { plan: MyTreatmentListItem }) {
             <ArrowRightIcon aria-hidden="true" />
           </Link>
         </Button>
+        <InstallmentPaymentNotice payment={plan.payment} compact />
         {reason && <span className="text-xs text-muted-foreground">{reason}</span>}
       </div>
     </article>

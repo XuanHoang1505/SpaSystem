@@ -1,4 +1,4 @@
-import { CreditCardIcon, HourglassIcon, PackageCheckIcon, ShieldCheckIcon } from 'lucide-react';
+import { HourglassIcon, PackageCheckIcon, ShieldCheckIcon, SparklesIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { AppliedPromotion, CatalogItemType } from '@spa/shared-types';
 import momoLogo from '@/assets/images/momo_icon.png';
@@ -6,55 +6,86 @@ import visaLogo from '@/assets/images/visa.png';
 import vnpayLogo from '@/assets/images/vnpay_icon.png';
 import zalopayLogo from '@/assets/images/zalopay_icon.png';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { ImageWithFallback } from '@/components/shared/ImageWithFallback/ImageWithFallback';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatting/formatters';
+import { usePackage } from '@/features/service-packages/hooks/usePackage';
+import { useService } from '@/features/services/hooks/useService';
+import { CheckoutSection } from './CheckoutSection';
 
 export interface SummaryLine {
   key: string;
   type: CatalogItemType;
+  /** The catalog id; when set, the row shows the product's photo and what it includes. */
+  productId?: string;
   name: string;
   unitPrice: number;
   discountAmount: number;
   lineTotal: number;
 }
 
-/** "Dịch vụ & sản phẩm đã chọn": the lines of a preview or an order (layout of the Stitch checkout). */
-export function OrderLines({ lines }: { lines: readonly SummaryLine[] }) {
+/** "Sản phẩm": the lines of a preview or an order. `step` numbers the block on the checkout. */
+export function OrderLines({ lines, step }: { lines: readonly SummaryLine[]; step?: number }) {
   return (
-    <Card className="rounded-2xl border bg-card/80 shadow-2xs">
-      <CardContent className="space-y-4 p-5 sm:p-6">
-        <div className="flex items-center justify-between gap-3 border-b pb-4">
-          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold text-foreground">
-            <PackageCheckIcon className="size-5 text-primary" aria-hidden="true" />
-            1. Dịch vụ &amp; sản phẩm đã chọn
-          </h2>
-          <Badge variant="secondary" className="font-semibold text-primary">
-            {lines.length} mục
+    <CheckoutSection
+      step={step}
+      title="Sản phẩm"
+      aside={
+        <Badge variant="secondary" className="shrink-0 font-semibold text-primary">
+          {lines.length} mục
+        </Badge>
+      }
+    >
+      <ul className="divide-y divide-border/60">
+        {lines.map((line) => (
+          <OrderLineRow key={line.key} line={line} />
+        ))}
+      </ul>
+    </CheckoutSection>
+  );
+}
+
+/** One line: photo, name, type and what it includes (sessions and validity, or duration), price. */
+function OrderLineRow({ line }: { line: SummaryLine }) {
+  const isPackage = line.type === 'package';
+  const pkg = usePackage(line.productId ?? '', isPackage && Boolean(line.productId));
+  const service = useService(line.productId ?? '', !isPackage && Boolean(line.productId));
+  const imageUrl = (isPackage ? pkg.data?.imageUrl : service.data?.imageUrl) ?? null;
+  const facts = isPackage
+    ? pkg.data && [`${pkg.data.totalSessions} buổi`, `Dùng trong ${pkg.data.validityDays} ngày`]
+    : service.data && [`${service.data.durationMinutes} phút`];
+  return (
+    <li className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
+      {line.productId && (
+        <ImageWithFallback
+          src={imageUrl}
+          alt=""
+          fallbackIcon={isPackage ? PackageCheckIcon : SparklesIcon}
+          className="size-16 shrink-0 rounded-xl object-cover"
+        />
+      )}
+      <div className="min-w-0 flex-1 space-y-1">
+        <p className="font-heading text-base font-semibold text-foreground sm:text-lg">
+          {line.name}
+        </p>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          <Badge variant="secondary" className="text-xs font-medium">
+            {isPackage ? 'Gói liệu trình' : 'Dịch vụ lẻ'}
           </Badge>
-        </div>
-        <ul className="divide-y divide-border/60">
-          {lines.map((line) => (
-            <li key={line.key} className="flex items-start justify-between gap-4 py-3.5">
-              <div className="min-w-0 space-y-1.5">
-                <p className="font-heading text-lg font-semibold text-foreground">{line.name}</p>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs font-medium">
-                    {line.type === 'package' ? 'Gói liệu trình' : 'Dịch vụ lẻ'}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">Kèm quyền lợi bảo lưu</span>
-                </div>
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="font-heading text-lg font-bold text-primary">
-                  {formatCurrency(line.unitPrice)}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+          {facts && <span>{facts.join(' · ')}</span>}
+        </p>
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="font-heading text-base font-bold text-primary sm:text-lg">
+          {formatCurrency(line.lineTotal)}
+        </p>
+        {line.discountAmount > 0 && (
+          <p className="text-xs text-muted-foreground line-through">
+            {formatCurrency(line.unitPrice)}
+          </p>
+        )}
+      </div>
+    </li>
   );
 }
 
@@ -194,29 +225,19 @@ function PaymentMethodOption({ method }: { method: PaymentMethod }) {
 }
 
 /** "Phương thức thanh toán" (UC-SPA-11): VNPay is the only method that works today. */
-export function PaymentMethodCard() {
+export function PaymentMethodCard({ step }: { step?: number }) {
   return (
-    <Card className="rounded-2xl border bg-card/80 shadow-2xs">
-      <CardContent className="space-y-4 p-5 sm:p-6">
-        <div className="space-y-1 border-b pb-3.5">
-          <h2
-            id="payment-methods"
-            className="flex items-center gap-2 font-heading text-lg font-semibold text-foreground"
-          >
-            <CreditCardIcon className="size-5 text-primary" aria-hidden="true" />
-            3. Phương thức thanh toán
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Chọn phương thức thanh toán phù hợp. Giao dịch được mã hóa và bảo mật an toàn 100%.
-          </p>
-        </div>
-        <div role="radiogroup" aria-labelledby="payment-methods" className="space-y-3">
-          {paymentMethods.map((method) => (
-            <PaymentMethodOption key={method.id} method={method} />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <CheckoutSection
+      step={step}
+      title="Phương thức thanh toán"
+      description="Giao dịch được mã hóa và xử lý an toàn qua cổng thanh toán."
+    >
+      <div role="radiogroup" aria-label="Phương thức thanh toán" className="space-y-3">
+        {paymentMethods.map((method) => (
+          <PaymentMethodOption key={method.id} method={method} />
+        ))}
+      </div>
+    </CheckoutSection>
   );
 }
 

@@ -11,7 +11,6 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { CartItem } from '@spa/shared-types';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +31,6 @@ import { useRemoveCartItem } from '../hooks/useRemoveCartItem';
 import { CartLine } from './CartLine';
 import { CartSummary } from './CartSummary';
 import { CheckoutSteps } from './CheckoutSteps';
-import { OrdersBreadcrumb } from './OrdersBreadcrumb';
 import { OrdersErrorState } from './OrdersErrorState';
 
 /** SCR-W10 — Giỏ hàng (UC-SPA-10). */
@@ -63,18 +61,18 @@ export function CartView({ suggestions }: { suggestions?: ReactNode }) {
 
   return (
     <div className="space-y-4">
-      <OrdersBreadcrumb trail={[{ label: 'Trang chủ', to: '/' }, { label: 'Giỏ hàng' }]} />
-      <div className="space-y-4 pb-2">
-        <CheckoutSteps current={1} />
-        <PageHeader
-          className="pb-0"
-          title="Giỏ hàng của bạn"
-          description={
-            cart && cart.items.length > 0
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4 pb-2">
+        <div className="space-y-1">
+          <h1 className="font-heading text-2xl font-semibold text-foreground sm:text-3xl">
+            Giỏ hàng của bạn
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {cart && cart.items.length > 0
               ? `${cart.itemCount} sản phẩm đang chờ bạn. Xem lại trước khi thanh toán.`
-              : 'Xem lại các dịch vụ và gói liệu trình trước khi thanh toán.'
-          }
-        />
+              : 'Xem lại các dịch vụ và gói liệu trình trước khi thanh toán.'}
+          </p>
+        </div>
+        <CheckoutSteps current={1} />
       </div>
       {query.isPending ? (
         <div

@@ -1,3 +1,4 @@
+import { InstallmentPaymentNotice } from '@/features/orders/components/InstallmentPaymentNotice';
 import { ArrowLeftIcon, CalendarClockIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -91,6 +92,8 @@ export function MyTreatmentPlanDetailView({ planId }: { planId: string }) {
           <span className="font-medium text-foreground">{plan.packageName}</span>
         </div>
       </div>
+
+      <InstallmentPaymentNotice payment={plan.payment} />
 
       {/* Plan overview card */}
       <TreatmentPlanOverviewCard plan={plan} onViewOrder={(order) => setSelectedOrder(order)} />
