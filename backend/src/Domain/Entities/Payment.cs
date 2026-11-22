@@ -8,6 +8,10 @@ public sealed class Payment : BaseAuditableEntity
 {
     public Guid OrderId { get; set; }
     public Order Order { get; set; } = null!;
+
+    /// <summary>The installment this attempt pays (BR-INS-05); null for an order paid in full.</summary>
+    public Guid? InstallmentId { get; set; }
+    public OrderInstallment? Installment { get; set; }
     public string Provider { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public PaymentStatus Status { get; set; }
