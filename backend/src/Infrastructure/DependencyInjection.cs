@@ -131,6 +131,11 @@ public static class DependencyInjection
                                  options.CancelBlockMinutesAfterPaymentStart <= options.PaymentTimeoutMinutes,
                 "Order:CancelBlockMinutesAfterPaymentStart must be 0–Order:PaymentTimeoutMinutes.")
             .ValidateOnStart();
+        services.AddOptions<InstallmentOptions>()
+            .Bind(configuration.GetSection(InstallmentOptions.SectionName))
+            .Validate(InstallmentOptions.IsValid,
+                "Installment: MinOrderTotal >= 0, MaxInstallments 2–6, RoundingUnit 1–100000, ExpiryReminderDays 0–60.")
+            .ValidateOnStart();
         services.AddOptions<ReportsOptions>()
             .Bind(configuration.GetSection(ReportsOptions.SectionName))
             .Validate(options => options.MaxRangeYears is >= 1 and <= 20 && options.MaxTopProducts is >= 1 and <= 500,

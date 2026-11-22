@@ -3,6 +3,7 @@ using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Bookings;
 using NhuNguyetSpa.Application.DTOs.Catalog;
 using NhuNguyetSpa.Application.DTOs.Orders;
+using NhuNguyetSpa.Application.DTOs.Purchases;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
@@ -33,7 +34,8 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
                         item.ProductName, item.UnitPrice, item.DiscountAmount, item.LineTotal))
                     .ToList(),
                 order.Payments.OrderBy(payment => payment.CreatedAtUtc).ThenBy(payment => payment.RequestCode)
-                    .Select(payment => new OrderPaymentDto(payment.Id, payment.Provider, payment.Amount, payment.Status, payment.CreatedAtUtc, payment.PaidAtUtc))
+                    .Select(payment => new OrderPaymentDto(payment.Id, payment.Provider, payment.Amount, payment.Status, payment.CreatedAtUtc,
+                        payment.PaidAtUtc, payment.Installment != null ? payment.Installment.SequenceNumber : null))
                     .ToList(),
                 redemptions.Where(redemption => redemption.OrderId == order.Id)
                     .Select(redemption => new AppliedPromotionDto(redemption.PromotionCode, redemption.DiscountAmount))
@@ -46,7 +48,17 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
                     .FirstOrDefault(),
                 false,
                 order.CancelledAtUtc,
-                order.CancellationReason))
+                order.CancellationReason,
+                order.PaymentPlan,
+                order.Installments.OrderBy(installment => installment.SequenceNumber)
+                    .Select(installment => new OrderInstallmentDto(
+                        installment.Id, installment.SequenceNumber, installment.FirstSessionNumber, installment.LastSessionNumber,
+                        installment.Amount,
+                        installment.Status == InstallmentStatus.Paid ? InstallmentState.Paid
+                            : installment.Status == InstallmentStatus.Cancelled ? InstallmentState.Cancelled : InstallmentState.Pending,
+                        installment.PaidAtUtc))
+                    .ToList(),
+                0, 0, null))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -69,6 +81,12 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
                 order.CreatedAtUtc,
                 order.PaymentDueAtUtc,
                 order.GrandTotal,
+                order.PaymentPlan,
+                PaidAmount = order.PaymentPlan == PaymentPlan.Installment
+                    ? order.Installments.Where(installment => installment.Status == InstallmentStatus.Paid).Sum(installment => installment.Amount)
+                    : order.Status == OrderStatus.Paid ? order.GrandTotal : 0,
+                NextAmount = order.Installments.Where(installment => installment.Status == InstallmentStatus.Pending)
+                    .OrderBy(installment => installment.SequenceNumber).Select(installment => (decimal?)installment.Amount).FirstOrDefault(),
                 Names = order.Items.OrderBy(item => item.ProductName).ThenBy(item => item.Id).Select(item => item.ProductName).ToList(),
                 PaymentCount = order.Payments.Count,
                 LatestPending = order.Payments.Where(payment => payment.Status == PaymentStatus.Pending)
@@ -77,7 +95,8 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
             .ToListAsync(cancellationToken);
         var items = rows.Select(row => (
             new MyOrderListItemDto(row.Id, row.Code, row.Status, row.CreatedAtUtc, row.PaymentDueAtUtc, row.GrandTotal, row.Names.Count, row.Names,
-                false, false),
+                false, false, row.PaymentPlan, row.PaidAmount,
+                row.Status is OrderStatus.PendingPayment or OrderStatus.PartiallyPaid ? row.NextAmount : null),
             new OrderActionFacts(row.Status, row.PaymentDueAtUtc, row.PaymentCount, row.LatestPending)));
         return new PagedResult<(MyOrderListItemDto Item, OrderActionFacts Facts)>(items, criteria.PageNumber, criteria.PageSize, total);
     }
@@ -118,7 +137,11 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
                 order.Payments.OrderByDescending(payment => payment.CreatedAtUtc).ThenByDescending(payment => payment.RequestCode)
                     .Select(payment => (PaymentStatus?)payment.Status)
                     .FirstOrDefault(),
-                redemptions.Where(redemption => redemption.OrderId == order.Id).Select(redemption => redemption.PromotionCode).FirstOrDefault()))
+                redemptions.Where(redemption => redemption.OrderId == order.Id).Select(redemption => redemption.PromotionCode).FirstOrDefault(),
+                order.PaymentPlan,
+                order.PaymentPlan == PaymentPlan.Installment
+                    ? order.Installments.Where(installment => installment.Status == InstallmentStatus.Paid).Sum(installment => installment.Amount)
+                    : order.Status == OrderStatus.Paid ? order.GrandTotal : 0))
             .ToListAsync(cancellationToken);
         return new PagedResult<OrderListItemDto>(items, criteria.PageNumber, criteria.PageSize, total);
     }
@@ -143,7 +166,8 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
                     .ToList(),
                 order.Payments.OrderBy(payment => payment.CreatedAtUtc).ThenBy(payment => payment.RequestCode)
                     .Select(payment => new OwnerOrderPaymentDto(payment.Id, payment.Provider, payment.Amount, payment.Status, payment.RequestCode,
-                        payment.ProviderTransactionId, payment.CreatedAtUtc, payment.ExpiresAtUtc, payment.PaidAtUtc))
+                        payment.ProviderTransactionId, payment.CreatedAtUtc, payment.ExpiresAtUtc, payment.PaidAtUtc,
+                        payment.Installment != null ? payment.Installment.SequenceNumber : null))
                     .ToList(),
                 redemptions.Where(redemption => redemption.OrderId == order.Id)
                     .Select(redemption => new AppliedPromotionDto(redemption.PromotionCode, redemption.DiscountAmount))
@@ -153,8 +177,52 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
                     .Select(appointment => new OrderAppointmentDto(
                         appointment.Id, appointment.Date, appointment.StartTime, appointment.EndTime, appointment.Status,
                         new AppointmentStaffDto(appointment.StaffMemberId, appointment.StaffMember.User.FullName)))
-                    .FirstOrDefault()))
+                    .FirstOrDefault(),
+                order.PaymentPlan,
+                order.Installments.OrderBy(installment => installment.SequenceNumber)
+                    .Select(installment => new OrderInstallmentDto(
+                        installment.Id, installment.SequenceNumber, installment.FirstSessionNumber, installment.LastSessionNumber,
+                        installment.Amount,
+                        installment.Status == InstallmentStatus.Paid ? InstallmentState.Paid
+                            : installment.Status == InstallmentStatus.Cancelled ? InstallmentState.Cancelled : InstallmentState.Pending,
+                        installment.PaidAtUtc))
+                    .ToList(),
+                0, 0, null))
             .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, InstallmentFacts>> GetInstallmentFactsAsync(IReadOnlyCollection<Guid> orderIds,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(orderIds);
+        if (orderIds.Count == 0)
+            return new Dictionary<Guid, InstallmentFacts>();
+        var rows = await Set.AsNoTracking()
+            .Where(order => orderIds.Contains(order.Id) && order.PaymentPlan == PaymentPlan.Installment)
+            .Select(order => new
+            {
+                order.Id,
+                Next = order.Installments.Where(installment => installment.Status == InstallmentStatus.Pending)
+                    .OrderBy(installment => installment.SequenceNumber)
+                    .Select(installment => new
+                    {
+                        installment.SequenceNumber,
+                        Attempts = order.Payments.Count(payment => payment.InstallmentId == installment.Id),
+                    })
+                    .FirstOrDefault(),
+                Package = Context.CustomerPackages.Where(package => package.OrderItem.OrderId == order.Id)
+                    .Select(package => new
+                    {
+                        package.Status,
+                        package.ExpiresAtUtc,
+                        PlanStatus = Context.TreatmentPlans.Where(plan => plan.CustomerPackageId == package.Id)
+                            .Select(plan => (TreatmentPlanStatus?)plan.Status).FirstOrDefault(),
+                    })
+                    .FirstOrDefault(),
+            })
+            .ToListAsync(cancellationToken);
+        return rows.ToDictionary(row => row.Id, row => new InstallmentFacts(
+            row.Next?.SequenceNumber, row.Next?.Attempts ?? 0, row.Package?.Status, row.Package?.ExpiresAtUtc, row.Package?.PlanStatus));
     }
 
     /// <summary>Status and creation-time filters shared by both order lists (BR-ORD-11).</summary>
@@ -167,6 +235,61 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
         if (criteria.ToUtcExclusive is { } toUtc)
             query = query.Where(order => order.CreatedAtUtc < toUtc);
         return query;
+    }
+
+    public async Task<Order?> GetInstallmentOrderForPackageAsync(Guid customerPackageId, bool lockRow, CancellationToken cancellationToken)
+    {
+        var orderId = await Context.CustomerPackages.AsNoTracking()
+            .Where(package => package.Id == customerPackageId && package.OrderItem.Order.PaymentPlan == PaymentPlan.Installment)
+            .Select(package => (Guid?)package.OrderItem.OrderId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (orderId is not { } id)
+            return null;
+        if (lockRow)
+            await Context.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM orders WHERE id = {id} FOR UPDATE", cancellationToken);
+        return await Set.Include(order => order.Installments).FirstOrDefaultAsync(order => order.Id == id, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<InstallmentExpiryCandidate>> GetInstallmentExpiryCandidatesAsync(DateTime fromUtc, DateTime toUtc,
+        int take, CancellationToken cancellationToken) =>
+        await Context.CustomerPackages.AsNoTracking()
+            .Where(package => package.Status == CustomerPackageStatus.Active && package.ExpiresAtUtc >= fromUtc && package.ExpiresAtUtc < toUtc &&
+                              package.OrderItem.Order.Status == OrderStatus.PartiallyPaid &&
+                              package.OrderItem.Order.Installments.Any(installment => installment.Status == InstallmentStatus.Pending) &&
+                              !Context.TreatmentPlans.Any(plan => plan.CustomerPackageId == package.Id && plan.Status == TreatmentPlanStatus.Cancelled))
+            .OrderBy(package => package.ExpiresAtUtc)
+            .Take(take)
+            .Select(package => new InstallmentExpiryCandidate(package.OrderItem.OrderId, package.CustomerId, package.PackageName,
+                package.ExpiresAtUtc!.Value))
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyDictionary<Guid, PackagePaymentDto>> GetPackagePaymentsAsync(IReadOnlyCollection<Guid> customerPackageIds,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(customerPackageIds);
+        if (customerPackageIds.Count == 0)
+            return new Dictionary<Guid, PackagePaymentDto>();
+        var rows = await Context.CustomerPackages.AsNoTracking()
+            .Where(package => customerPackageIds.Contains(package.Id) && package.OrderItem.Order.PaymentPlan == PaymentPlan.Installment)
+            .Select(package => new
+            {
+                package.Id,
+                package.TotalSessions,
+                package.OrderItem.OrderId,
+                OrderStatus = package.OrderItem.Order.Status,
+                Paid = package.OrderItem.Order.Installments.Where(installment => installment.Status == InstallmentStatus.Paid)
+                    .Max(installment => (int?)installment.LastSessionNumber) ?? 0,
+                Next = package.OrderItem.Order.Installments.Where(installment => installment.Status == InstallmentStatus.Pending)
+                    .OrderBy(installment => installment.SequenceNumber)
+                    .Select(installment => new { installment.SequenceNumber, installment.Amount, installment.FirstSessionNumber, installment.LastSessionNumber })
+                    .FirstOrDefault(),
+            })
+            .ToListAsync(cancellationToken);
+        return rows.ToDictionary(row => row.Id, row => new PackagePaymentDto(
+            PaymentPlan.Installment, row.Paid, row.TotalSessions,
+            row.Next is { } next && row.OrderStatus == OrderStatus.PartiallyPaid
+                ? new PackageNextInstallmentDto(row.OrderId, next.SequenceNumber, next.Amount, next.FirstSessionNumber, next.LastSessionNumber)
+                : null));
     }
 
     public Task<Guid?> FindIdByIdempotencyKeyAsync(Guid customerId, Guid key, CancellationToken cancellationToken) => Set.AsNoTracking()
@@ -184,6 +307,8 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
         return await Set
             .Include(order => order.Items)
             .Include(order => order.Payments)
+            .Include(order => order.Installments)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(order => order.Id == id, cancellationToken);
     }
 
@@ -201,6 +326,7 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
             .ToListAsync(cancellationToken);
         if (ids.Count == 0)
             return [];
-        return await Set.Include(order => order.Payments).Where(order => ids.Contains(order.Id)).ToListAsync(cancellationToken);
+        return await Set.Include(order => order.Payments).Include(order => order.Installments).AsSplitQuery()
+            .Where(order => ids.Contains(order.Id)).ToListAsync(cancellationToken);
     }
 }

@@ -9,8 +9,8 @@ namespace NhuNguyetSpa.Infrastructure.BackgroundJobs;
 
 /// <summary>
 /// Hosted service for BR-NTF-06: every <c>Notifications:ReminderJob:IntervalSeconds</c> it adds the appointment reminders that are
-/// due. Off when <c>ReminderJob:Enabled</c> is false or <c>AppointmentReminderHoursBefore</c> is 0. A failed scan is logged and
-/// retried next time; it never stops the API.
+/// due, and the package expiry reminders of installment orders (NTF-E17). Off when <c>ReminderJob:Enabled</c> is false; each kind
+/// is also off when its own setting is 0. A failed scan is logged and retried next time; it never stops the API.
 /// </summary>
 public sealed class AppointmentReminderJob : BackgroundService
 {
@@ -28,7 +28,7 @@ public sealed class AppointmentReminderJob : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var options = _options.Value;
-        if (!options.ReminderJob.Enabled || options.AppointmentReminderHoursBefore == 0)
+        if (!options.ReminderJob.Enabled)
             return;
 
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(options.ReminderJob.IntervalSeconds));
@@ -40,6 +40,9 @@ public sealed class AppointmentReminderJob : BackgroundService
                 var sent = await scope.ServiceProvider.GetRequiredService<IAppointmentReminderService>().SendDueAsync(stoppingToken);
                 if (sent > 0)
                     _logger.LogInformation("Created {Count} appointment reminders.", sent);
+                var expiring = await scope.ServiceProvider.GetRequiredService<IInstallmentReminderService>().SendDueAsync(stoppingToken);
+                if (expiring > 0)
+                    _logger.LogInformation("Created {Count} installment expiry reminders.", expiring);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
