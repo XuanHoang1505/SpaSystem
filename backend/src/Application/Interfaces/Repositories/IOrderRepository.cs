@@ -1,5 +1,6 @@
 using NhuNguyetSpa.Application.Common.Models;
 using NhuNguyetSpa.Application.DTOs.Orders;
+using NhuNguyetSpa.Application.DTOs.Purchases;
 using NhuNguyetSpa.Domain.Entities;
 
 namespace NhuNguyetSpa.Application.Interfaces.Repositories;
@@ -21,13 +22,36 @@ public interface IOrderRepository : IRepository<Order>
     /// <summary>Any customer's order for the owner, or null; <c>IsPayable</c> and <c>CanCancel</c> are left false for the service.</summary>
     Task<OwnerOrderDetailDto?> GetOwnerDetailAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// BR-INS-05, 07: for each installment order among <paramref name="orderIds"/>, its next pending installment and attempts so far,
+    /// and the status of the package and plan it issued. Orders paid in full are left out.
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, InstallmentFacts>> GetInstallmentFactsAsync(IReadOnlyCollection<Guid> orderIds, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The installment order that issued <paramref name="customerPackageId"/>, tracked with its installments; with
+    /// <paramref name="lockRow"/> the order row is locked first (<c>FOR UPDATE</c>). Null for a package paid in full.
+    /// </summary>
+    Task<Order?> GetInstallmentOrderForPackageAsync(Guid customerPackageId, bool lockRow, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// NTF-E17: partially paid installment orders with an installment pending whose package is active, its plan not cancelled, and
+    /// expires in <c>[fromUtc, toUtc)</c>; at most <paramref name="take"/>, soonest first.
+    /// </summary>
+    Task<IReadOnlyList<InstallmentExpiryCandidate>> GetInstallmentExpiryCandidatesAsync(DateTime fromUtc, DateTime toUtc, int take,
+        CancellationToken cancellationToken);
+
+    /// <summary>Installment payment state of the given bought packages; packages paid in full are left out.</summary>
+    Task<IReadOnlyDictionary<Guid, PackagePaymentDto>> GetPackagePaymentsAsync(IReadOnlyCollection<Guid> customerPackageIds,
+        CancellationToken cancellationToken);
+
     Task<Guid?> FindIdByIdempotencyKeyAsync(Guid customerId, Guid key, CancellationToken cancellationToken);
 
     Task<bool> CodeExistsAsync(string code, CancellationToken cancellationToken);
 
     /// <summary>
     /// Locks the order row (<c>FOR UPDATE</c>, inside the caller's transaction) and then loads it tracked with its items and
-    /// payments, so the payment rows read are those after any concurrent result was committed.
+    /// payments and installments, so the rows read are those after any concurrent result was committed.
     /// </summary>
     Task<Order?> LockAsync(Guid id, CancellationToken cancellationToken);
 

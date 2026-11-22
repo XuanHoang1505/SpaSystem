@@ -8,6 +8,7 @@ using NhuNguyetSpa.Application.Common.Options;
 using NhuNguyetSpa.Application.DTOs.Orders;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Services.Orders;
+using NhuNguyetSpa.Domain.Enums;
 
 namespace NhuNguyetSpa.Application.UseCases.Orders;
 
@@ -73,11 +74,21 @@ public sealed class OrderManagementService : IOrderManagementService
     public async Task<OperationResult<OwnerOrderDetailDto>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         var order = await _orders.GetOwnerDetailAsync(id, cancellationToken) ?? throw OrderErrors.OrderNotFound();
-        var facts = new OrderActionFacts(order.Status, order.PaymentDueAtUtc, order.Payments.Count, null);
+        var installment = order.PaymentPlan == PaymentPlan.Installment
+            ? (await _orders.GetInstallmentFactsAsync([order.Id], cancellationToken)).GetValueOrDefault(order.Id)
+            : null;
+        var facts = new OrderActionFacts(order.Status, order.PaymentDueAtUtc, order.Payments.Count, null, installment);
+        var now = _clock.UtcNow;
+        var (installments, paid, remaining, next) =
+            OrderActionPolicy.Installments(order.Installments ?? [], order.Status, order.GrandTotal, installment, now);
         return OperationResult<OwnerOrderDetailDto>.Success(order with
         {
-            IsPayable = OrderActionPolicy.IsPayable(facts, _clock.UtcNow, _paymentOptions.Value.MaxAttemptsPerOrder),
+            IsPayable = OrderActionPolicy.IsPayable(facts, now, _paymentOptions.Value.MaxAttemptsPerOrder),
             CanCancel = OrderActionPolicy.OwnerCanCancel(order.Status),
+            Installments = installments,
+            PaidAmount = paid,
+            RemainingAmount = remaining,
+            NextInstallment = next,
         });
     }
 

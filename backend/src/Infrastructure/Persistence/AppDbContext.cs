@@ -35,6 +35,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<OrderInstallment> OrderInstallments => Set<OrderInstallment>();
     public DbSet<PromotionRedemption> PromotionRedemptions => Set<PromotionRedemption>();
     public DbSet<ServiceEntitlement> ServiceEntitlements => Set<ServiceEntitlement>();
     public DbSet<CustomerPackage> CustomerPackages => Set<CustomerPackage>();

@@ -1,10 +1,9 @@
-import { ShieldCheckIcon } from 'lucide-react';
+import { ArrowLeftIcon, ShieldCheckIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { OrderRequest } from '@spa/shared-types';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,11 +17,10 @@ import { checkoutPath, parseCheckoutParams } from '../checkoutParams';
 import { orderErrorCode, orderErrorMessage } from '../errors';
 import { useCreateOrder } from '../hooks/useCreateOrder';
 import { useOrderPreview } from '../hooks/useOrderPreview';
-import { CheckoutSteps } from './CheckoutSteps';
 import { CustomerInfoCard } from './CustomerInfoCard';
 import { ExistingOrderCheckout } from './ExistingOrderCheckout';
+import { InstallmentPlanPicker } from './InstallmentPlanPicker';
 import { HoldNotice, OrderLines, OrderTotals, PaymentMethodCard } from './OrderSummary';
-import { OrdersBreadcrumb } from './OrdersBreadcrumb';
 import { OrdersErrorState } from './OrdersErrorState';
 import { PromotionField } from './PromotionField';
 
@@ -34,22 +32,16 @@ export function CheckoutView({ search }: { search: URLSearchParams }) {
   useDocumentTitle('Thanh toán');
   const params = parseCheckoutParams(search);
   return (
-    <div className="space-y-4">
-      <OrdersBreadcrumb
-        trail={[
-          { label: 'Trang chủ', to: '/' },
-          { label: 'Giỏ hàng', to: '/cart' },
-          { label: 'Thanh toán' },
-        ]}
+    <div className="space-y-6">
+      <CheckoutHeading
+        back={
+          params.ok && params.mode === 'existing'
+            ? { to: '/my-orders', label: 'Đơn hàng của tôi' }
+            : params.ok && params.request.source === 'buy_now'
+              ? { label: 'Quay lại' }
+              : { to: '/cart', label: 'Quay lại giỏ hàng' }
+        }
       />
-      <div className="space-y-4 pb-2">
-        <CheckoutSteps current={2} />
-        <PageHeader
-          className="pb-0"
-          title="Xác nhận &amp; thanh toán đơn hàng"
-          description="Kiểm tra thông tin chi tiết trước khi tiến hành thanh toán qua cổng VNPay."
-        />
-      </div>
       {!params.ok ? (
         <EmptyState
           title="Liên kết thanh toán không hợp lệ"
@@ -77,12 +69,19 @@ function PrepareCheckout({ baseRequest }: { baseRequest: OrderRequest }) {
   const createOrder = useCreateOrder();
   const startPayment = useStartPayment();
   const [error, setError] = useState<string | null>(null);
+  const [installmentCount, setInstallmentCount] = useState<number | null>(null);
   const busy = useRef(false);
   const keyRef = useRef<{ signature: string; key: string } | null>(null);
 
   const data = preview.data;
+  // A chosen plan that the new totals no longer allow (e.g. after a promotion) falls back to paying in full.
+  const plan =
+    data?.installmentOptions.find((option) => option.installmentCount === installmentCount) ?? null;
   // A code that does not apply is left out of the order, so the order matches the totals on screen.
-  const effective: OrderRequest = data?.promotionError ? baseRequest : request;
+  const priced: OrderRequest = data?.promotionError ? baseRequest : request;
+  const effective: OrderRequest = plan
+    ? { ...priced, installmentCount: plan.installmentCount }
+    : priced;
   const keyFor = (value: OrderRequest) => {
     const signature = JSON.stringify(value);
     if (keyRef.current?.signature !== signature) keyRef.current = { signature, key: newUuid() };
@@ -157,6 +156,12 @@ function PrepareCheckout({ baseRequest }: { baseRequest: OrderRequest }) {
     );
 
   const tooSmall = data.grandTotal > 0 && data.grandTotal < MIN_PAYMENT_AMOUNT;
+  const onePackage = data.items.length === 1 && data.items[0]?.type === 'package';
+  // What the customer pays now: the whole order, or its first installment.
+  const dueNow = plan ? (plan.installments[0]?.amount ?? data.grandTotal) : data.grandTotal;
+  const payLabel = plan
+    ? `Thanh toán đợt 1/${plan.installmentCount} (${formatCurrency(dueNow)})`
+    : `Thanh toán VNPay (${formatCurrency(dueNow)})`;
   return (
     <div
       aria-busy={preview.isPlaceholderData}
@@ -165,17 +170,30 @@ function PrepareCheckout({ baseRequest }: { baseRequest: OrderRequest }) {
       <div className="space-y-6">
         <UnavailableAlert names={data.unavailableItems.map((item) => item.name)} />
         <OrderLines
+          step={1}
           lines={data.items.map((item) => ({
             key: `${item.type}-${item.productId}`,
             type: item.type,
+            productId: item.productId,
             name: item.productName,
             unitPrice: item.unitPrice,
             discountAmount: item.discountAmount,
             lineTotal: item.lineTotal,
           }))}
         />
-        <CustomerInfoCard />
-        <PaymentMethodCard />
+        {onePackage && (
+          <InstallmentPlanPicker
+            step={2}
+            grandTotal={data.grandTotal}
+            options={data.installmentOptions}
+            unavailable={data.installmentUnavailableReason}
+            value={plan?.installmentCount ?? null}
+            onChange={setInstallmentCount}
+            disabled={createOrder.isPending || startPayment.isPending}
+          />
+        )}
+        <CustomerInfoCard step={onePackage ? 3 : 2} />
+        <PaymentMethodCard step={onePackage ? 4 : 3} />
       </div>
       <div className="overflow-hidden rounded-2xl border bg-card shadow-sm lg:sticky lg:top-28">
         <div className="border-b bg-muted/40 p-5 sm:p-6">
@@ -199,6 +217,20 @@ function PrepareCheckout({ baseRequest }: { baseRequest: OrderRequest }) {
             grandTotal={data.grandTotal}
             promotion={data.promotion}
           />
+          {plan && (
+            <dl className="space-y-1 rounded-xl bg-accent/40 p-3 text-sm">
+              <dt className="font-medium text-foreground">
+                Thanh toán hôm nay · đợt 1/{plan.installmentCount}
+              </dt>
+              <dd className="font-heading text-2xl font-semibold text-primary">
+                {formatCurrency(dueNow)}
+              </dd>
+              <dt className="sr-only">Còn lại</dt>
+              <dd className="text-muted-foreground">
+                Còn lại {formatCurrency(data.grandTotal - dueNow)}, trả theo các đợt sau.
+              </dd>
+            </dl>
+          )}
           {tooSmall && (
             <Alert>
               <AlertDescription>Giá trị thanh toán tối thiểu là 5.000 đ.</AlertDescription>
@@ -220,7 +252,7 @@ function PrepareCheckout({ baseRequest }: { baseRequest: OrderRequest }) {
               className="size-5 transition-transform group-hover:scale-110"
               aria-hidden="true"
             />
-            Thanh toán VNPay ({formatCurrency(data.grandTotal)})
+            {payLabel}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             Bạn sẽ được chuyển hướng bảo mật sang cổng VNPay để hoàn tất thanh toán.
@@ -232,9 +264,11 @@ function PrepareCheckout({ baseRequest }: { baseRequest: OrderRequest }) {
         className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur lg:hidden"
       >
         <div>
-          <p className="text-xs text-muted-foreground">Tổng thanh toán</p>
+          <p className="text-xs text-muted-foreground">
+            {plan ? `Đợt 1/${plan.installmentCount}` : 'Tổng thanh toán'}
+          </p>
           <p className="font-heading text-xl font-semibold text-primary">
-            {formatCurrency(data.grandTotal)}
+            {formatCurrency(dueNow)}
           </p>
         </div>
         <Button
@@ -246,6 +280,37 @@ function PrepareCheckout({ baseRequest }: { baseRequest: OrderRequest }) {
           Thanh toán
         </Button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Start of the checkout: a way back and a short title. The purchase steps are in the focused header, so the page does not
+ * repeat them (nor a breadcrumb).
+ */
+function CheckoutHeading({ back }: { back: { to?: string; label: string } }) {
+  const navigate = useNavigate();
+  const linkClass =
+    'inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground';
+  return (
+    <div className="space-y-2">
+      {back.to ? (
+        <Link to={back.to} className={linkClass}>
+          <ArrowLeftIcon className="size-4" aria-hidden="true" />
+          {back.label}
+        </Link>
+      ) : (
+        <button type="button" onClick={() => navigate(-1)} className={linkClass}>
+          <ArrowLeftIcon className="size-4" aria-hidden="true" />
+          {back.label}
+        </button>
+      )}
+      <h1 className="font-heading text-2xl font-semibold text-foreground sm:text-3xl">
+        Thanh toán đơn hàng
+      </h1>
+      <p className="text-sm text-muted-foreground">
+        Kiểm tra lại đơn và chọn cách thanh toán trước khi chuyển sang cổng VNPay.
+      </p>
     </div>
   );
 }

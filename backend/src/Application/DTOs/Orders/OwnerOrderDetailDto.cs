@@ -23,7 +23,12 @@ public sealed record OwnerOrderDetailDto(
     IReadOnlyList<OrderItemDto> Items,
     IReadOnlyList<OwnerOrderPaymentDto> Payments,
     AppliedPromotionDto? Promotion,
-    OrderAppointmentDto? Appointment);
+    OrderAppointmentDto? Appointment,
+    PaymentPlan PaymentPlan = PaymentPlan.Full,
+    IReadOnlyList<OrderInstallmentDto>? Installments = null,
+    decimal PaidAmount = 0,
+    decimal RemainingAmount = 0,
+    NextInstallmentDto? NextInstallment = null);
 
 public sealed record OrderCustomerDto(Guid Id, string FullName, string PhoneNumber, string Email);
 
@@ -36,4 +41,5 @@ public sealed record OwnerOrderPaymentDto(
     string? ProviderTransactionId,
     DateTime CreatedAtUtc,
     DateTime ExpiresAtUtc,
-    DateTime? PaidAtUtc);
+    DateTime? PaidAtUtc,
+    int? InstallmentSequenceNumber = null);

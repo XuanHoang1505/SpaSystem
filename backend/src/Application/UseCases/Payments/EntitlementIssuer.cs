@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Services.Notifications;
 using NhuNguyetSpa.Application.UseCases.Notifications;
+using NhuNguyetSpa.Domain.Common;
 using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
 
@@ -118,6 +119,8 @@ public sealed class EntitlementIssuer
             UsedSessions = 0,
             Status = CustomerPackageStatus.Active,
         };
+        if (order.IsInstallmentPlan)
+            ResplitInstallments(order, bought.TotalSessions);
         var plan = new TreatmentPlan { CustomerPackageId = bought.Id, Status = TreatmentPlanStatus.NotStarted };
         var sequence = 0;
         foreach (var item in items)
@@ -138,5 +141,26 @@ public sealed class EntitlementIssuer
 
         await _customerPackages.AddAsync(bought, cancellationToken);
         await _plans.AddAsync(plan, cancellationToken);
+    }
+
+    /// <summary>
+    /// BR-INS-04, Q-90: the package changed between creating the order and paying its first installment (at most 15 + 5 minutes).
+    /// Amounts stay as agreed; only the session ranges are split again over the sessions actually issued.
+    /// </summary>
+    private void ResplitInstallments(Order order, int totalSessions)
+    {
+        var installments = order.Installments.OrderBy(item => item.SequenceNumber).ToList();
+        if (installments.Count == 0 || installments[^1].LastSessionNumber == totalSessions)
+            return;
+        var count = Math.Min(installments.Count, totalSessions);
+        var ranges = InstallmentPlanner.SplitSessions(totalSessions, count);
+        for (var i = 0; i < installments.Count; i++)
+        {
+            // Fewer sessions than installments: the extra installments unlock the last session again.
+            var (first, last) = i < ranges.Count ? ranges[i] : ranges[^1];
+            installments[i].MoveSessions(first, last);
+        }
+        _logger.LogWarning("Package of installment order {OrderCode} changed before the first payment; sessions re-split over {Total}.",
+            order.Code, totalSessions);
     }
 }

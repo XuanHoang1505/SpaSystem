@@ -32,6 +32,7 @@ export const orderErrorCodes = {
   orderNotPayable: 'order_not_payable',
   orderNotCancellable: 'order_not_cancellable',
   orderPaymentInProgress: 'order_payment_in_progress',
+  installmentNotAvailable: 'installment_not_available',
   paymentAttemptsExceeded: 'payment_attempts_exceeded',
   paymentGatewayUnavailable: 'payment_gateway_unavailable',
   serviceNotFound: 'service_not_found',

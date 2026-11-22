@@ -5,6 +5,7 @@
 - **Trạng thái triển khai:** đợt 1 đã triển khai backend 27/10/2026 theo [plan](../superpowers/plans/2026-10-27-uc-spa-10-11-14-orders.md); đợt 2 (UC-SPA-12, 13) đã triển khai backend 01/11/2026 theo [plan](../superpowers/plans/2026-11-01-uc-spa-12-13-orders.md); thử VNPay sandbox thật (ORD-T26) còn chờ khóa sandbox — xem [progress.md](../progress.md)
 - **Đã đặc tả (đợt 1, chỉ backend):** UC-SPA-14 (chủ spa quản lý khuyến mãi), UC-SPA-10 (giỏ hàng), UC-SPA-11 (thanh toán VNPay cho đơn từ giỏ hoặc mua ngay một sản phẩm), job nền hết hạn đơn. Đặt ngay có giữ chỗ đã làm cùng UC-SPA-15 (đợt 2 của [bookings.md](bookings.md), 30/10/2026).
 - **Đợt 2 (chỉ backend, đặc tả và duyệt 01/11/2026):** UC-SPA-12 (danh sách đơn của tôi, hủy đơn chưa thanh toán; thanh toán lại dùng `POST /me/orders/{id}/payments` của UC-SPA-11), UC-SPA-13 (chủ spa tìm, xem, hủy đơn chưa thanh toán). Kèm BR-ORD-04, BR-ORD-11, BR-ORD-12, Q-43…Q-45, migration `AddOrderCancellation`.
+- **Đợt 3 (đặc tả 21/11/2026, triển khai 22/11/2026):** thanh toán gói theo đợt, xem [order-installments.md](order-installments.md) (BR-INS-01…11, Q-85…Q-91).
 - **Quyết định đã chốt 27/10/2026:** cổng thanh toán **VNPay** (sandbox, Q-08); Q-19…Q-23 theo mục [Câu hỏi còn mở](#câu-hỏi-còn-mở); đợt này chỉ mua từ giỏ hoặc mua ngay một sản phẩm, chưa giữ chỗ lịch hẹn; đơn quá hạn do **job nền** (hosted service) chuyển sang `expired`.
 
 ## Use case
@@ -437,16 +438,16 @@ Unit test (Application, Domain) dùng NSubstitute và đồng hồ giả; integr
 
 Chưa triển khai lần này. Khi làm, mở rộng spec này và cập nhật [progress.md](../progress.md).
 
-| Mã           | Việc                                                                                                                                            | Ghi chú                                                  | Làm cùng                    |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------- |
-| ORD-LATER-01 | **(đặc tả ở đợt 2, 01/11/2026)** Danh sách đơn của tôi, hủy đơn chưa thanh toán (`GET /me/orders`, `POST /me/orders/{id}/cancel`, BR-ORD-04)    | Hủy → `cancelled`, lần thanh toán `pending` → `expired`  | UC-SPA-12                   |
-| ORD-LATER-02 | **(đặc tả ở đợt 2, 01/11/2026)** Chủ spa xem, tìm, hủy đơn (`/orders`, quyền `order.manage`)                                                    |                                                          | UC-SPA-13                   |
-| ORD-LATER-07 | Hoàn tiền (khi kết quả thành công đến sau khi đơn đã hủy/đã trả bằng lần khác): trạng thái, API refund VNPay                                    | Hiện chỉ log cảnh báo (RS-21, Q-20)                      | —                           |
-| ORD-LATER-08 | ~~Thông báo cho khách khi chủ spa hủy đơn (BR-NTF)~~ Đã làm ở UC-SPA-34 (16/11/2026) | Ghi `notifications`; chưa gửi mail                       | UC-SPA-34                   |
-| ORD-LATER-03 | **(đã làm 30/10/2026, UC-SPA-15)** Đặt ngay có giữ chỗ: tạo `appointments` `held` cùng đơn, xác nhận khi thanh toán, job giải phóng khi hết hạn | Dùng lại tạo đơn, bộ xử lý kết quả và `OrderExpiryJob`   | UC-SPA-15 luồng 1           |
+| Mã           | Việc                                                                                                                                                | Ghi chú                                                  | Làm cùng                    |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------- |
+| ORD-LATER-01 | **(đặc tả ở đợt 2, 01/11/2026)** Danh sách đơn của tôi, hủy đơn chưa thanh toán (`GET /me/orders`, `POST /me/orders/{id}/cancel`, BR-ORD-04)        | Hủy → `cancelled`, lần thanh toán `pending` → `expired`  | UC-SPA-12                   |
+| ORD-LATER-02 | **(đặc tả ở đợt 2, 01/11/2026)** Chủ spa xem, tìm, hủy đơn (`/orders`, quyền `order.manage`)                                                        |                                                          | UC-SPA-13                   |
+| ORD-LATER-07 | Hoàn tiền (khi kết quả thành công đến sau khi đơn đã hủy/đã trả bằng lần khác): trạng thái, API refund VNPay                                        | Hiện chỉ log cảnh báo (RS-21, Q-20)                      | —                           |
+| ORD-LATER-08 | ~~Thông báo cho khách khi chủ spa hủy đơn (BR-NTF)~~ Đã làm ở UC-SPA-34 (16/11/2026)                                                                | Ghi `notifications`; chưa gửi mail                       | UC-SPA-34                   |
+| ORD-LATER-03 | **(đã làm 30/10/2026, UC-SPA-15)** Đặt ngay có giữ chỗ: tạo `appointments` `held` cùng đơn, xác nhận khi thanh toán, job giải phóng khi hết hạn     | Dùng lại tạo đơn, bộ xử lý kết quả và `OrderExpiryJob`   | UC-SPA-15 luồng 1           |
 | ORD-LATER-04 | ~~Thông báo khi thanh toán thành công / thất bại (BR-NTF-01)~~ Đã làm ở UC-SPA-34 (16/11/2026, chỉ thanh toán thành công; thất bại không báo, Q-80) | Ghi `notifications` loại `payment`                       | UC-SPA-34                   |
-| ORD-LATER-05 | Đối soát giao dịch VNPay (`querydr`) cho lần thanh toán `pending` khi không nhận được IPN                                                       | Thay cho Q-19 khi tắt xử lý return URL                   | —                           |
-| ORD-LATER-06 | shared-types, api-client, màn hình giỏ, thanh toán, kết quả (SCR-W10/W11/W12, SCR-M19), khuyến mãi (SCR-W35)                                    | Trang kết quả poll `GET /me/orders/{id}` tối đa 10 × 2 s | Đợt FE (web làm 08/11/2026) |
+| ORD-LATER-05 | Đối soát giao dịch VNPay (`querydr`) cho lần thanh toán `pending` khi không nhận được IPN                                                           | Thay cho Q-19 khi tắt xử lý return URL                   | —                           |
+| ORD-LATER-06 | shared-types, api-client, màn hình giỏ, thanh toán, kết quả (SCR-W10/W11/W12, SCR-M19), khuyến mãi (SCR-W35)                                        | Trang kết quả poll `GET /me/orders/{id}` tối đa 10 × 2 s | Đợt FE (web làm 08/11/2026) |
 
 ## Giao diện (web) — UC-SPA-10, UC-SPA-11
 
@@ -1034,10 +1035,10 @@ Phạm vi: Triển khai giao diện Giỏ hàng, Đặt mua & Thanh toán trực
 - **Cảnh báo rõ ràng:** "Lưu ý: Hủy đơn hàng sẽ hủy toàn bộ các sản phẩm và giải phóng lịch hẹn giữ chỗ (nếu có). Thao tác này không thể hoàn tác."
 - **Ô nhập lý do:** Ô nhập text có gợi ý placeholder, đếm số ký tự (1 – 500 ký tự theo quy định BR-ORD-04 / Q-43).
 - **Các chip lý do nhanh:** Khách có thể bấm chọn nhanh các lý do phổ biến:
-  - *"Đổi ý không mua nữa"*
-  - *"Muốn thay đổi sản phẩm / gói dịch vụ"*
-  - *"Chọn nhầm thông tin hoặc phương thức thanh toán"*
-  - *"Bận đột xuất, không thể đến theo lịch hẹn"*
+  - _"Đổi ý không mua nữa"_
+  - _"Muốn thay đổi sản phẩm / gói dịch vụ"_
+  - _"Chọn nhầm thông tin hoặc phương thức thanh toán"_
+  - _"Bận đột xuất, không thể đến theo lịch hẹn"_
 - **Hành động:** Nút "Xác nhận hủy" (màu đỏ / danger, gọi `POST /me/orders/{id}/cancel`, hiển thị spinner loading khi đang gửi) và nút "Quay lại" (đóng modal).
 
 ---
@@ -1055,27 +1056,27 @@ Phạm vi: Triển khai giao diện Giỏ hàng, Đặt mua & Thanh toán trực
 
 ### Xử lý lỗi API (Error Codes Handling)
 
-| Mã lỗi                          | Ngữ cảnh phát sinh                            | Cách xử lý trên giao diện Mobile                                                                                                                       |
-| :------------------------------ | :-------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `order_not_found`               | Đơn hàng không tồn tại hoặc không thuộc khách | Hiển thị `AppNotice` thông báo "Không tìm thấy đơn hàng" kèm nút "Về danh sách đơn".                                                                   |
-| `order_not_cancellable`         | Đơn đã được thanh toán, hết hạn hoặc đã hủy   | Toast thông báo "Đơn hàng này không còn ở trạng thái chờ thanh toán để hủy." và tự động làm mới lại chi tiết đơn hàng (`invalidateQueries`).         |
-| `order_payment_in_progress`     | Vừa tạo lượt thanh toán chưa quá thời gian cho phép | Toast thông báo "Giao dịch thanh toán đang được xử lý. Vui lòng kiểm tra lại sau ít phút hoặc không hủy đơn lúc này."                                  |
-| `validation_error`              | Lý do hủy bị trống hoặc dài quá 500 ký tự     | Hiển thị thông báo lỗi ngay dưới ô nhập lý do hủy: "Vui lòng nhập lý do hủy (1 – 500 ký tự)."                                                         |
-| `payment_attempts_exceeded`     | Đã vượt quá 5 lần thử thanh toán cho đơn này  | Vô hiệu hóa nút thanh toán lại, hiển thị thông báo "Đã vượt quá số lần thử thanh toán cho phép đối với đơn này. Vui lòng tạo đơn mới hoặc liên hệ spa." |
-| `order_expired`                 | Đơn hàng đã quá hạn thanh toán 15 phút        | Cập nhật badge sang "Hết hạn", ẩn nút thanh toán lại và hiển thị nút "Đặt mua lại".                                                                    |
+| Mã lỗi                      | Ngữ cảnh phát sinh                                  | Cách xử lý trên giao diện Mobile                                                                                                                        |
+| :-------------------------- | :-------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `order_not_found`           | Đơn hàng không tồn tại hoặc không thuộc khách       | Hiển thị `AppNotice` thông báo "Không tìm thấy đơn hàng" kèm nút "Về danh sách đơn".                                                                    |
+| `order_not_cancellable`     | Đơn đã được thanh toán, hết hạn hoặc đã hủy         | Toast thông báo "Đơn hàng này không còn ở trạng thái chờ thanh toán để hủy." và tự động làm mới lại chi tiết đơn hàng (`invalidateQueries`).            |
+| `order_payment_in_progress` | Vừa tạo lượt thanh toán chưa quá thời gian cho phép | Toast thông báo "Giao dịch thanh toán đang được xử lý. Vui lòng kiểm tra lại sau ít phút hoặc không hủy đơn lúc này."                                   |
+| `validation_error`          | Lý do hủy bị trống hoặc dài quá 500 ký tự           | Hiển thị thông báo lỗi ngay dưới ô nhập lý do hủy: "Vui lòng nhập lý do hủy (1 – 500 ký tự)."                                                           |
+| `payment_attempts_exceeded` | Đã vượt quá 5 lần thử thanh toán cho đơn này        | Vô hiệu hóa nút thanh toán lại, hiển thị thông báo "Đã vượt quá số lần thử thanh toán cho phép đối với đơn này. Vui lòng tạo đơn mới hoặc liên hệ spa." |
+| `order_expired`             | Đơn hàng đã quá hạn thanh toán 15 phút              | Cập nhật badge sang "Hết hạn", ẩn nút thanh toán lại và hiển thị nút "Đặt mua lại".                                                                     |
 
 ---
 
 ### Bảng kiểm thử giao diện mobile Quản lý đơn hàng (`ORD-M-UI-T17…T25`)
 
-| Mã               | Tình huống kiểm thử                                            | Kết quả mong đợi                                                                                                                                                                          |
-| :--------------- | :------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ORD-M-UI-T17** | Khách xem danh sách đơn hàng rỗng (`/my-orders`)               | Hiển thị trạng thái rỗng thân thiện, thông báo chưa có đơn hàng nào kèm nút CTA "Khám phá dịch vụ ngay" điều hướng về `/services`.                                                       |
-| **ORD-M-UI-T18** | Khách xem danh sách đơn hàng có dữ liệu                        | Hiển thị danh sách thẻ `MyOrderCard` theo thứ tự mới nhất trước, hiển thị đúng mã đơn, ngày tạo, badge trạng thái và tổng tiền định dạng tiền tệ `vi-VN`.                                  |
-| **ORD-M-UI-T19** | Lọc đơn hàng theo chip trạng thái                             | Chọn chip "Chờ thanh toán", "Đã thanh toán", "Đã hủy", "Hết hạn" gửi đúng param `status` lên server và hiển thị đúng các đơn hàng tương ứng. Bấm "Tất cả" trả về danh sách đầy đủ.    |
-| **ORD-M-UI-T20** | Thao tác hủy đơn hàng chưa thanh toán thành công               | Bấm "Hủy đơn" mở `CancelOrderModal`. Chọn chip lý do gợi ý hoặc gõ lý do, bấm "Xác nhận hủy" gọi `POST /me/orders/{id}/cancel`. Đơn chuyển sang `cancelled`, badge cập nhật thành công. |
-| **ORD-M-UI-T21** | Validate lý do hủy đơn hàng                                   | Bỏ trống lý do hoặc nhập toàn khoảng trắng $\rightarrow$ nút "Xác nhận hủy" bị vô hiệu hóa hoặc báo lỗi "Vui lòng nhập lý do hủy".                                                        |
-| **ORD-M-UI-T22** | Thao tác thanh toán lại đơn hàng (`isPayable = true`)          | Bấm "Thanh toán lại" gọi `POST /me/orders/{id}/payments`, nhận URL và mở cổng VNPay qua `openAuthSessionAsync`. Nút hiển thị trạng thái đang xử lý.                                       |
-| **ORD-M-UI-T23** | Xem màn hình chi tiết đơn hàng (`/my-orders/:orderId`)         | Hiển thị đầy đủ thông tin: Mã đơn, badge trạng thái, danh sách từng sản phẩm, dòng tạm tính, giảm giá khuyến mãi, tổng tiền, lịch sử các lần thử thanh toán qua VNPay.                    |
-| **ORD-M-UI-T24** | Đơn hàng đặt ngay có lịch hẹn giữ chỗ                          | Trong chi tiết đơn hiển thị khối thông tin lịch hẹn giữ chỗ (ngày, giờ, chuyên viên) và thông điệp giữ chỗ tạm thời.                                                                     |
-| **ORD-M-UI-T25** | Khách vãng lai truy cập `/my-orders`                           | Hiển thị màn hình nhắc đăng nhập thành viên với 2 nút CTA "Đăng nhập" và "Đăng ký", không bị crash hay hiển thị màn hình trắng.                                                          |
+| Mã               | Tình huống kiểm thử                                    | Kết quả mong đợi                                                                                                                                                                        |
+| :--------------- | :----------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ORD-M-UI-T17** | Khách xem danh sách đơn hàng rỗng (`/my-orders`)       | Hiển thị trạng thái rỗng thân thiện, thông báo chưa có đơn hàng nào kèm nút CTA "Khám phá dịch vụ ngay" điều hướng về `/services`.                                                      |
+| **ORD-M-UI-T18** | Khách xem danh sách đơn hàng có dữ liệu                | Hiển thị danh sách thẻ `MyOrderCard` theo thứ tự mới nhất trước, hiển thị đúng mã đơn, ngày tạo, badge trạng thái và tổng tiền định dạng tiền tệ `vi-VN`.                               |
+| **ORD-M-UI-T19** | Lọc đơn hàng theo chip trạng thái                      | Chọn chip "Chờ thanh toán", "Đã thanh toán", "Đã hủy", "Hết hạn" gửi đúng param `status` lên server và hiển thị đúng các đơn hàng tương ứng. Bấm "Tất cả" trả về danh sách đầy đủ.      |
+| **ORD-M-UI-T20** | Thao tác hủy đơn hàng chưa thanh toán thành công       | Bấm "Hủy đơn" mở `CancelOrderModal`. Chọn chip lý do gợi ý hoặc gõ lý do, bấm "Xác nhận hủy" gọi `POST /me/orders/{id}/cancel`. Đơn chuyển sang `cancelled`, badge cập nhật thành công. |
+| **ORD-M-UI-T21** | Validate lý do hủy đơn hàng                            | Bỏ trống lý do hoặc nhập toàn khoảng trắng $\rightarrow$ nút "Xác nhận hủy" bị vô hiệu hóa hoặc báo lỗi "Vui lòng nhập lý do hủy".                                                      |
+| **ORD-M-UI-T22** | Thao tác thanh toán lại đơn hàng (`isPayable = true`)  | Bấm "Thanh toán lại" gọi `POST /me/orders/{id}/payments`, nhận URL và mở cổng VNPay qua `openAuthSessionAsync`. Nút hiển thị trạng thái đang xử lý.                                     |
+| **ORD-M-UI-T23** | Xem màn hình chi tiết đơn hàng (`/my-orders/:orderId`) | Hiển thị đầy đủ thông tin: Mã đơn, badge trạng thái, danh sách từng sản phẩm, dòng tạm tính, giảm giá khuyến mãi, tổng tiền, lịch sử các lần thử thanh toán qua VNPay.                  |
+| **ORD-M-UI-T24** | Đơn hàng đặt ngay có lịch hẹn giữ chỗ                  | Trong chi tiết đơn hiển thị khối thông tin lịch hẹn giữ chỗ (ngày, giờ, chuyên viên) và thông điệp giữ chỗ tạm thời.                                                                    |
+| **ORD-M-UI-T25** | Khách vãng lai truy cập `/my-orders`                   | Hiển thị màn hình nhắc đăng nhập thành viên với 2 nút CTA "Đăng nhập" và "Đăng ký", không bị crash hay hiển thị màn hình trắng.                                                         |

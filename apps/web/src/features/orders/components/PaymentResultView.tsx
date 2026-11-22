@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import { ordersQueryKeys } from '@spa/api-client';
 import type { OrderAppointment, OrderDetail } from '@spa/shared-types';
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState';
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,7 +15,6 @@ import { formatCurrency, formatDateTimeUtc, formatLocalTime } from '@/lib/format
 import { formatLongDate } from '@/lib/formatting/vietnamTime';
 import { orderErrorCode } from '../errors';
 import { useOrder } from '../hooks/useOrder';
-import { CheckoutSteps } from './CheckoutSteps';
 import { OrdersErrorState } from './OrdersErrorState';
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -27,8 +25,10 @@ const MAX_POLLS = 10;
 const latestPayment = (order: OrderDetail) =>
   [...order.payments].sort((a, b) => b.createdAtUtc.localeCompare(a.createdAtUtc))[0];
 
+// A later installment (docs/specs/order-installments.md) is paid while the order is already partially paid.
 const isWaiting = (order: OrderDetail | undefined) =>
-  order?.status === 'pending_payment' && latestPayment(order)?.status === 'pending';
+  (order?.status === 'pending_payment' || order?.status === 'partially_paid') &&
+  latestPayment(order)?.status === 'pending';
 
 type Tone = 'success' | 'danger' | 'neutral';
 const toneClass: Record<Tone, string> = {
@@ -61,7 +61,8 @@ export function PaymentResultView({
   }, [status]);
   // A paid order empties the bought lines from the cart (BR-ORD-06): reload it once per order.
   useEffect(() => {
-    if (status === 'paid') void queryClient.invalidateQueries({ queryKey: ordersQueryKeys.cart });
+    if (status === 'paid' || status === 'partially_paid')
+      void queryClient.invalidateQueries({ queryKey: ordersQueryKeys.cart });
   }, [status, orderId, queryClient]);
 
   let body: ReactNode;
@@ -103,9 +104,10 @@ export function PaymentResultView({
   }
 
   return (
-    <div className="space-y-2">
-      <CheckoutSteps current={3} />
-      <PageHeader title="Kết quả thanh toán" />
+    <div className="space-y-6">
+      <h1 className="text-center font-heading text-2xl font-semibold text-foreground sm:text-3xl">
+        Kết quả thanh toán
+      </h1>
       {body}
     </div>
   );
@@ -137,7 +139,25 @@ function ResultCard({
   let note: ReactNode = null;
   let actions: ReactNode;
 
-  if (order.status === 'paid') {
+  const installment = latest?.installmentSequenceNumber ?? null;
+  if (order.status === 'partially_paid' && latest?.status === 'succeeded' && installment !== null) {
+    icon = CheckCircle2Icon;
+    tone = 'success';
+    title = `Đã thanh toán đợt ${installment}/${order.installments.length}`;
+    note = order.nextInstallment
+      ? `Bạn đặt lịch được đến buổi ${order.nextInstallment.firstSessionNumber - 1}. Còn lại ${formatCurrency(order.remainingAmount)}, thanh toán đợt tiếp lúc nào cũng được trước khi gói hết hạn.`
+      : null;
+    actions = (
+      <>
+        <Button asChild>
+          <Link to="/my-packages">Đặt lịch các buổi đã trả</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/my-orders">Xem đơn hàng</Link>
+        </Button>
+      </>
+    );
+  } else if (order.status === 'paid') {
     icon = CheckCircle2Icon;
     tone = 'success';
     title = 'Thanh toán thành công';

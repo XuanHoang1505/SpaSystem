@@ -22,6 +22,8 @@ internal sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(x => x.PaymentUrl).HasMaxLength(1000);
         builder.HasIndex(x => x.RequestCode).IsUnique().HasDatabaseName("ux_payments_request_code");
         builder.HasIndex(x => x.PaidAtUtc);
+        // BR-INS-05: the installment an attempt pays; null for an order paid in full.
+        builder.HasOne(x => x.Installment).WithMany().HasForeignKey(x => x.InstallmentId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Order).WithMany(x => x.Payments).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
     }
 }

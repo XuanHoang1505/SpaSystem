@@ -13,6 +13,7 @@ import { formatCurrency, formatDateTimeUtc } from '@/lib/formatting/formatters';
 import { orderErrorCode } from '../errors';
 import { useOrder } from '../hooks/useOrder';
 import { orderStatusBadge } from '../orderStatus';
+import { InstallmentSchedule } from './InstallmentSchedule';
 import { OrderLines, OrderTotals } from './OrderSummary';
 import { OrdersErrorState } from './OrdersErrorState';
 
@@ -78,6 +79,11 @@ function OrderDetailBody({ orderId }: { orderId: string }) {
         grandTotal={order.grandTotal}
         promotion={order.promotion}
       />
+      <InstallmentSchedule
+        installments={order.installments}
+        paidAmount={order.paidAmount}
+        remainingAmount={order.remainingAmount}
+      />
       {order.status === 'cancelled' && (
         <p className="rounded-lg bg-muted/50 p-3 text-sm">
           Đã hủy{order.cancelledAtUtc ? ` lúc ${formatDateTimeUtc(order.cancelledAtUtc)}` : ''}
@@ -97,7 +103,11 @@ function OrderDetailBody({ orderId }: { orderId: string }) {
               return (
                 <li key={payment.id} className="flex items-center justify-between gap-3 p-3">
                   <div>
-                    <p className="font-medium">VNPay · {formatCurrency(payment.amount)}</p>
+                    <p className="font-medium">
+                      VNPay · {formatCurrency(payment.amount)}
+                      {payment.installmentSequenceNumber !== null &&
+                        ` · Đợt ${payment.installmentSequenceNumber}`}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {formatDateTimeUtc(payment.paidAtUtc ?? payment.createdAtUtc)}
                     </p>

@@ -76,7 +76,9 @@ public sealed class MeEndpointsTests : IAsyncLifetime
         data.GetProperty("email").GetString().Should().Be(user.Email);
         data.GetProperty("role").GetString().Should().Be(roleName);
         data.GetProperty("status").GetString().Should().Be("active");
-        body.RootElement.GetRawText().Should().NotContainEquivalentOf("password");
+        // Only the hasPassword flag (Q-84) may mention the password; never the hash.
+        body.RootElement.GetRawText().Should().NotContainEquivalentOf("passwordHash").And.NotContainEquivalentOf("AQAAAA");
+        data.GetProperty("hasPassword").GetBoolean().Should().BeTrue();
     }
 
     [Fact]

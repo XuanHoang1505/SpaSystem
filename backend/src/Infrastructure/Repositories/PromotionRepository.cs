@@ -65,7 +65,7 @@ public sealed class PromotionRepository : Repository<Promotion>, IPromotionRepos
         Context.PromotionRedemptions.AsNoTracking()
             .Where(redemption => redemption.PromotionId == promotionId)
             .Where(redemption => customerId == null || redemption.Order.CustomerId == customerId)
-            .CountAsync(redemption => redemption.Order.Status == OrderStatus.Paid ||
+            .CountAsync(redemption => redemption.Order.Status == OrderStatus.Paid || redemption.Order.Status == OrderStatus.PartiallyPaid ||
                                       (redemption.Order.Status == OrderStatus.PendingPayment && redemption.Order.PaymentDueAtUtc > nowUtc),
                 cancellationToken);
 
@@ -76,6 +76,7 @@ public sealed class PromotionRepository : Repository<Promotion>, IPromotionRepos
             promotion.Id, promotion.Code, promotion.Description, promotion.DiscountType, promotion.DiscountValue, promotion.MinOrderAmount,
             promotion.MaxDiscountAmount, promotion.StartsAtUtc, promotion.EndsAtUtc, promotion.PerCustomerLimit, promotion.UsageLimit,
             promotion.Status,
-            redemptions.Count(redemption => redemption.PromotionId == promotion.Id && redemption.Order.Status == OrderStatus.Paid));
+            redemptions.Count(redemption => redemption.PromotionId == promotion.Id &&
+                (redemption.Order.Status == OrderStatus.Paid || redemption.Order.Status == OrderStatus.PartiallyPaid)));
     }
 }

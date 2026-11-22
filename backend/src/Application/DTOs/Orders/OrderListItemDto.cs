@@ -15,4 +15,6 @@ public sealed record OrderListItemDto(
     AppointmentCustomerDto Customer,
     int PaymentCount,
     PaymentStatus? LatestPaymentStatus,
-    string? PromotionCode);
+    string? PromotionCode,
+    PaymentPlan PaymentPlan = PaymentPlan.Full,
+    decimal PaidAmount = 0);

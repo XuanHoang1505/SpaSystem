@@ -35,6 +35,8 @@ erDiagram
     spa_services |o--o{ order_items : spa_service_id
     service_packages |o--o{ order_items : service_package_id
     orders ||--o{ payments : order_id
+    order_installments |o--o{ payments : installment_id
+    orders ||--o| order_installments : order_id
     orders ||--o| promotion_redemptions : order_id
     promotions ||--o{ promotion_redemptions : promotion_id
     customers ||--o{ service_entitlements : customer_id
@@ -65,41 +67,42 @@ erDiagram
 
 ## Danh sách bảng
 
-| Nhóm                       | Bảng                                              | Entity                | DA                          | Mục đích                                                                        | Nguồn |
-| -------------------------- | ------------------------------------------------- | --------------------- | --------------------------- | ------------------------------------------------------------------------------- | ----- |
-| Tài khoản                  | [`users`](#users)                                 | `User`                | NguoiDung                   | Tài khoản dùng chung cho khách hàng, nhân viên, chủ spa                         | DA    |
-| Tài khoản                  | [`owner_profiles`](#owner_profiles)               | `OwnerProfile`        | ChuSpa                      | Thông tin riêng của chủ spa (1-1 với users, dùng chung khóa chính)              | DA    |
-| Tài khoản                  | [`customers`](#customers)                         | `Customer`            | KhachHang                   | Thông tin riêng của khách hàng (1-1 với users, dùng chung khóa chính)           | DA    |
-| Nhân viên                  | [`staff_members`](#staff_members)                 | `StaffMember`         | NhanVien                    | Thông tin riêng của nhân viên (1-1 với users, dùng chung khóa chính)            | DA    |
-| Dịch vụ & gói              | [`service_categories`](#service_categories)       | `ServiceCategory`     | DanhMucDichVu               | Danh mục (loại) dịch vụ, dùng làm bộ lọc (Q-13)                                 | ĐX    |
-| Dịch vụ & gói              | [`spa_services`](#spa_services)                   | `SpaService`          | DichVu                      | Dịch vụ chăm sóc da lẻ                                                          | DA    |
-| Dịch vụ & gói              | [`service_steps`](#service_steps)                 | `ServiceStep`         | BuocDichVu                  | Quy trình từng bước của một dịch vụ (Q-71)                                      | ĐX    |
-| Dịch vụ & gói              | [`service_packages`](#service_packages)           | `ServicePackage`      | GoiDichVu                   | Gói dịch vụ nhiều buổi                                                          | DA    |
-| Dịch vụ & gói              | [`service_package_items`](#service_package_items) | `ServicePackageItem`  | GoiDichVuChiTiet            | Dịch vụ thành phần của gói: số buổi, thứ tự, khoảng cách                        | DA    |
-| Nhân viên                  | [`staff_skills`](#staff_skills)                   | `StaffSkill`          | NhanVien_DichVu             | Nhân viên thực hiện được dịch vụ nào (khóa chính ghép)                          | DA    |
-| Nhân viên                  | [`staff_certifications`](#staff_certifications)   | `StaffCertification`  | BangCapNhanVien             | Bằng cấp, chứng chỉ của nhân viên; nhân viên tự khai báo, chủ spa duyệt (Q-74)  | ĐX    |
-| Nhân viên                  | [`work_schedules`](#work_schedules)               | `WorkSchedule`        | LichLamViec                 | Ca làm việc của nhân viên (giờ Việt Nam — ADR-0003)                             | DA    |
-| Khuyến mãi                 | [`promotions`](#promotions)                       | `Promotion`           | KhuyenMai                   | Chương trình khuyến mãi                                                         | DA    |
-| Giỏ, đơn, thanh toán       | [`carts`](#carts)                                 | `Cart`                | GioHang                     | Giỏ hàng (mỗi khách 1 giỏ)                                                      | DA    |
-| Giỏ, đơn, thanh toán       | [`cart_items`](#cart_items)                       | `CartItem`            | ChiTietGioHang              | Sản phẩm trong giỏ                                                              | DA    |
-| Giỏ, đơn, thanh toán       | [`orders`](#orders)                               | `Order`               | DonHang                     | Đơn hàng                                                                        | DA    |
-| Giỏ, đơn, thanh toán       | [`order_items`](#order_items)                     | `OrderItem`           | ChiTietDonHang              | Sản phẩm trong đơn (lưu tên, giá lúc mua)                                       | DA    |
-| Giỏ, đơn, thanh toán       | [`payments`](#payments)                           | `Payment`             | ThanhToan                   | Lần thanh toán qua cổng (một đơn có thể nhiều lần thử)                          | DA    |
-| Khuyến mãi                 | [`promotion_redemptions`](#promotion_redemptions) | `PromotionRedemption` | ApDungKhuyenMai             | Khuyến mãi áp dụng cho đơn (1 đơn tối đa 1 mã)                                  | DA    |
-| Quyền sử dụng & liệu trình | [`service_entitlements`](#service_entitlements)   | `ServiceEntitlement`  | DichVuKhachHang             | Quyền sử dụng một dịch vụ lẻ đã mua                                             | DA    |
-| Quyền sử dụng & liệu trình | [`customer_packages`](#customer_packages)         | `CustomerPackage`     | GoiKhachHang                | Gói dịch vụ khách đã mua                                                        | DA    |
-| Quyền sử dụng & liệu trình | [`treatment_plans`](#treatment_plans)             | `TreatmentPlan`       | LieuTrinh                   | Liệu trình gắn với gói đã mua (1-1)                                             | DA    |
-| Quyền sử dụng & liệu trình | [`treatment_sessions`](#treatment_sessions)       | `TreatmentSession`    | BuoiChamSoc                 | Các buổi trong liệu trình theo thứ tự                                           | DA    |
-| Lịch hẹn                   | [`appointments`](#appointments)                   | `Appointment`         | LichHen                     | Lịch hẹn — bảng trung tâm của thuật toán chống trùng lịch (ADR-0003)            | DA    |
-| Chăm sóc                   | [`skin_profiles`](#skin_profiles)                 | `SkinProfile`         | HoSoDa                      | Hồ sơ da lập theo từng lần chăm sóc                                             | DA    |
-| Chăm sóc                   | [`customer_allergies`](#customer_allergies)       | `CustomerAllergy`     | DiUngKhachHang              | Thông tin dị ứng của khách                                                      | DA    |
-| Đánh giá                   | [`reviews`](#reviews)                             | `Review`              | DanhGia                     | Đánh giá dịch vụ hoặc gói                                                       | DA    |
-| Trợ lý AI                  | [`ai_chat_messages`](#ai_chat_messages)           | `AiChatMessage`       | LichSuTroChuyenAI           | Lịch sử hỏi – đáp với trợ lý AI                                                 | DA    |
-| Thông báo                  | [`notifications`](#notifications)                 | `Notification`        | ThongBao                    | Thông báo gửi đến người dùng                                                    | DA    |
-| Tài khoản                  | [`otp_codes`](#otp_codes)                         | `OtpCode`             | (MaOtp — đề xuất)           | OTP đăng ký / quên mật khẩu (UC-SPA-01, 03)                                     | ĐX    |
-| Tài khoản                  | [`refresh_tokens`](#refresh_tokens)               | `RefreshToken`        | (RefreshToken — đề xuất)    | Phiên đăng nhập JWT, refresh token xoay vòng                                    | ĐX    |
-| Tài khoản                  | [`user_external_logins`](#user_external_logins)   | `UserExternalLogin`   | (LienKetDangNhap — đề xuất) | Tài khoản Google liên kết với người dùng, đăng nhập bằng Google trên web (Q-84) | ĐX    |
-| Dịch vụ & gói              | [`spa_profiles`](#spa_profiles)                   | `SpaProfile`          | (ThongTinSpa — đề xuất)     | Thông tin giới thiệu, liên hệ, giờ mở cửa (UC-SPA-08)                           | ĐX    |
+| Nhóm                       | Bảng                                              | Entity                | DA                          | Mục đích                                                                               | Nguồn |
+| -------------------------- | ------------------------------------------------- | --------------------- | --------------------------- | -------------------------------------------------------------------------------------- | ----- |
+| Tài khoản                  | [`users`](#users)                                 | `User`                | NguoiDung                   | Tài khoản dùng chung cho khách hàng, nhân viên, chủ spa                                | DA    |
+| Tài khoản                  | [`owner_profiles`](#owner_profiles)               | `OwnerProfile`        | ChuSpa                      | Thông tin riêng của chủ spa (1-1 với users, dùng chung khóa chính)                     | DA    |
+| Tài khoản                  | [`customers`](#customers)                         | `Customer`            | KhachHang                   | Thông tin riêng của khách hàng (1-1 với users, dùng chung khóa chính)                  | DA    |
+| Nhân viên                  | [`staff_members`](#staff_members)                 | `StaffMember`         | NhanVien                    | Thông tin riêng của nhân viên (1-1 với users, dùng chung khóa chính)                   | DA    |
+| Dịch vụ & gói              | [`service_categories`](#service_categories)       | `ServiceCategory`     | DanhMucDichVu               | Danh mục (loại) dịch vụ, dùng làm bộ lọc (Q-13)                                        | ĐX    |
+| Dịch vụ & gói              | [`spa_services`](#spa_services)                   | `SpaService`          | DichVu                      | Dịch vụ chăm sóc da lẻ                                                                 | DA    |
+| Dịch vụ & gói              | [`service_steps`](#service_steps)                 | `ServiceStep`         | BuocDichVu                  | Quy trình từng bước của một dịch vụ (Q-71)                                             | ĐX    |
+| Dịch vụ & gói              | [`service_packages`](#service_packages)           | `ServicePackage`      | GoiDichVu                   | Gói dịch vụ nhiều buổi                                                                 | DA    |
+| Dịch vụ & gói              | [`service_package_items`](#service_package_items) | `ServicePackageItem`  | GoiDichVuChiTiet            | Dịch vụ thành phần của gói: số buổi, thứ tự, khoảng cách                               | DA    |
+| Nhân viên                  | [`staff_skills`](#staff_skills)                   | `StaffSkill`          | NhanVien_DichVu             | Nhân viên thực hiện được dịch vụ nào (khóa chính ghép)                                 | DA    |
+| Nhân viên                  | [`staff_certifications`](#staff_certifications)   | `StaffCertification`  | BangCapNhanVien             | Bằng cấp, chứng chỉ của nhân viên; nhân viên tự khai báo, chủ spa duyệt (Q-74)         | ĐX    |
+| Nhân viên                  | [`work_schedules`](#work_schedules)               | `WorkSchedule`        | LichLamViec                 | Ca làm việc của nhân viên (giờ Việt Nam — ADR-0003)                                    | DA    |
+| Khuyến mãi                 | [`promotions`](#promotions)                       | `Promotion`           | KhuyenMai                   | Chương trình khuyến mãi                                                                | DA    |
+| Giỏ, đơn, thanh toán       | [`carts`](#carts)                                 | `Cart`                | GioHang                     | Giỏ hàng (mỗi khách 1 giỏ)                                                             | DA    |
+| Giỏ, đơn, thanh toán       | [`cart_items`](#cart_items)                       | `CartItem`            | ChiTietGioHang              | Sản phẩm trong giỏ                                                                     | DA    |
+| Giỏ, đơn, thanh toán       | [`orders`](#orders)                               | `Order`               | DonHang                     | Đơn hàng                                                                               | DA    |
+| Giỏ, đơn, thanh toán       | [`order_items`](#order_items)                     | `OrderItem`           | ChiTietDonHang              | Sản phẩm trong đơn (lưu tên, giá lúc mua)                                              | DA    |
+| Giỏ, đơn, thanh toán       | [`payments`](#payments)                           | `Payment`             | ThanhToan                   | Lần thanh toán qua cổng (một đơn có thể nhiều lần thử)                                 | DA    |
+| Giỏ, đơn, thanh toán       | [`order_installments`](#order_installments)       | `OrderInstallment`    | (DotThanhToan — đề xuất)    | Đợt thanh toán của đơn trả theo đợt; mỗi đợt mở một nhóm buổi liên tiếp của gói (Q-86) | ĐX    |
+| Khuyến mãi                 | [`promotion_redemptions`](#promotion_redemptions) | `PromotionRedemption` | ApDungKhuyenMai             | Khuyến mãi áp dụng cho đơn (1 đơn tối đa 1 mã)                                         | DA    |
+| Quyền sử dụng & liệu trình | [`service_entitlements`](#service_entitlements)   | `ServiceEntitlement`  | DichVuKhachHang             | Quyền sử dụng một dịch vụ lẻ đã mua                                                    | DA    |
+| Quyền sử dụng & liệu trình | [`customer_packages`](#customer_packages)         | `CustomerPackage`     | GoiKhachHang                | Gói dịch vụ khách đã mua                                                               | DA    |
+| Quyền sử dụng & liệu trình | [`treatment_plans`](#treatment_plans)             | `TreatmentPlan`       | LieuTrinh                   | Liệu trình gắn với gói đã mua (1-1)                                                    | DA    |
+| Quyền sử dụng & liệu trình | [`treatment_sessions`](#treatment_sessions)       | `TreatmentSession`    | BuoiChamSoc                 | Các buổi trong liệu trình theo thứ tự                                                  | DA    |
+| Lịch hẹn                   | [`appointments`](#appointments)                   | `Appointment`         | LichHen                     | Lịch hẹn — bảng trung tâm của thuật toán chống trùng lịch (ADR-0003)                   | DA    |
+| Chăm sóc                   | [`skin_profiles`](#skin_profiles)                 | `SkinProfile`         | HoSoDa                      | Hồ sơ da lập theo từng lần chăm sóc                                                    | DA    |
+| Chăm sóc                   | [`customer_allergies`](#customer_allergies)       | `CustomerAllergy`     | DiUngKhachHang              | Thông tin dị ứng của khách                                                             | DA    |
+| Đánh giá                   | [`reviews`](#reviews)                             | `Review`              | DanhGia                     | Đánh giá dịch vụ hoặc gói                                                              | DA    |
+| Trợ lý AI                  | [`ai_chat_messages`](#ai_chat_messages)           | `AiChatMessage`       | LichSuTroChuyenAI           | Lịch sử hỏi – đáp với trợ lý AI                                                        | DA    |
+| Thông báo                  | [`notifications`](#notifications)                 | `Notification`        | ThongBao                    | Thông báo gửi đến người dùng                                                           | DA    |
+| Tài khoản                  | [`otp_codes`](#otp_codes)                         | `OtpCode`             | (MaOtp — đề xuất)           | OTP đăng ký / quên mật khẩu (UC-SPA-01, 03)                                            | ĐX    |
+| Tài khoản                  | [`refresh_tokens`](#refresh_tokens)               | `RefreshToken`        | (RefreshToken — đề xuất)    | Phiên đăng nhập JWT, refresh token xoay vòng                                           | ĐX    |
+| Tài khoản                  | [`user_external_logins`](#user_external_logins)   | `UserExternalLogin`   | (LienKetDangNhap — đề xuất) | Tài khoản Google liên kết với người dùng, đăng nhập bằng Google trên web (Q-84)        | ĐX    |
+| Dịch vụ & gói              | [`spa_profiles`](#spa_profiles)                   | `SpaProfile`          | (ThongTinSpa — đề xuất)     | Thông tin giới thiệu, liên hệ, giờ mở cửa (UC-SPA-08)                                  | ĐX    |
 
 ## Chi tiết bảng
 
@@ -333,24 +336,25 @@ erDiagram
 
 `Order` · DA: DonHang · Sprint 2 · Đơn hàng. UC: UC-SPA-11, UC-SPA-12, UC-SPA-13, UC-SPA-15, UC-SPA-18, UC-SPA-33.
 
-| Cột                   | PostgreSQL    | C#                           | Null  | Ràng buộc                                                     | Mô tả                                             | DA                 |
-| --------------------- | ------------- | ---------------------------- | ----- | ------------------------------------------------------------- | ------------------------------------------------- | ------------------ |
-| `id`                  | uuid          | `Id`: Guid                   | không | PK                                                            | Mã định danh đơn                                  | Id                 |
-| `code`                | varchar(50)   | `Code`: string               | không | UQ                                                            | Mã đơn hiển thị                                   | MaDonHang          |
-| `customer_id`         | uuid          | `CustomerId`: Guid           | không | FK → customers.id                                             | Khách tạo đơn                                     | IdKhachHang        |
-| `subtotal`            | numeric(12,0) | `Subtotal`: decimal          | không | CHECK >= 0                                                    | Tổng tiền hàng trước giảm                         | TongTienHang       |
-| `discount_total`      | numeric(12,0) | `DiscountTotal`: decimal     | không | CHECK 0 <= discount_total <= subtotal                         | Tổng giảm giá                                     | TongGiamGia        |
-| `grand_total`         | numeric(12,0) | `GrandTotal`: decimal        | không | CHECK grand_total = subtotal - discount_total                 | Tổng thanh toán                                   | TongThanhToan      |
-| `status`              | varchar(30)   | `Status`: OrderStatus        | không | CHECK enum OrderStatus                                        | Trạng thái đơn                                    | TrangThai          |
-| `note`                | text          | `Note`: string               | có    | —                                                             | Ghi chú                                           | GhiChu             |
-| `payment_due_at_utc`  | timestamptz   | `PaymentDueAtUtc`: DateTime  | không | CHECK > created_at_utc; IDX một phần khi pending_payment      | Hết hạn thanh toán                                | HetHanThanhToanLuc |
-| `idempotency_key`     | uuid          | `IdempotencyKey`: Guid       | có    | UQ (customer_id, idempotency_key) khi khác null               | Khóa chống tạo đơn trùng (header Idempotency-Key) | —                  |
-| `cancelled_at_utc`    | timestamptz   | `CancelledAtUtc`: DateTime   | có    | CHECK (status = 'cancelled') = (cancelled_at_utc IS NOT NULL) | Thời điểm hủy đơn                                 | HuyLuc             |
-| `cancellation_reason` | text          | `CancellationReason`: string | có    | —                                                             | Lý do hủy đơn                                     | LyDoHuy            |
-| `created_at_utc`      | timestamptz   | `CreatedAtUtc`: DateTime     | không | IDX                                                           | Thời điểm tạo                                     | NgayTao            |
-| `updated_at_utc`      | timestamptz   | `UpdatedAtUtc`: DateTime     | có    | —                                                             | Thời điểm cập nhật gần nhất                       | NgayCapNhat        |
-| `created_by`          | uuid          | `CreatedBy`: Guid            | có    | —                                                             | Người tạo (từ BaseAuditableEntity)                | —                  |
-| `updated_by`          | uuid          | `UpdatedBy`: Guid            | có    | —                                                             | Người cập nhật (từ BaseAuditableEntity)           | —                  |
+| Cột                   | PostgreSQL    | C#                           | Null  | Ràng buộc                                                     | Mô tả                                                  | DA                 |
+| --------------------- | ------------- | ---------------------------- | ----- | ------------------------------------------------------------- | ------------------------------------------------------ | ------------------ |
+| `id`                  | uuid          | `Id`: Guid                   | không | PK                                                            | Mã định danh đơn                                       | Id                 |
+| `code`                | varchar(50)   | `Code`: string               | không | UQ                                                            | Mã đơn hiển thị                                        | MaDonHang          |
+| `customer_id`         | uuid          | `CustomerId`: Guid           | không | FK → customers.id                                             | Khách tạo đơn                                          | IdKhachHang        |
+| `subtotal`            | numeric(12,0) | `Subtotal`: decimal          | không | CHECK >= 0                                                    | Tổng tiền hàng trước giảm                              | TongTienHang       |
+| `discount_total`      | numeric(12,0) | `DiscountTotal`: decimal     | không | CHECK 0 <= discount_total <= subtotal                         | Tổng giảm giá                                          | TongGiamGia        |
+| `grand_total`         | numeric(12,0) | `GrandTotal`: decimal        | không | CHECK grand_total = subtotal - discount_total                 | Tổng thanh toán                                        | TongThanhToan      |
+| `status`              | varchar(30)   | `Status`: OrderStatus        | không | CHECK enum OrderStatus                                        | Trạng thái đơn                                         | TrangThai          |
+| `payment_plan`        | varchar(30)   | `PaymentPlan`: PaymentPlan   | không | CHECK enum PaymentPlan                                        | Hình thức thanh toán: trả một lần hoặc theo đợt (Q-85) | —                  |
+| `note`                | text          | `Note`: string               | có    | —                                                             | Ghi chú                                                | GhiChu             |
+| `payment_due_at_utc`  | timestamptz   | `PaymentDueAtUtc`: DateTime  | không | CHECK > created_at_utc; IDX một phần khi pending_payment      | Hết hạn thanh toán                                     | HetHanThanhToanLuc |
+| `idempotency_key`     | uuid          | `IdempotencyKey`: Guid       | có    | UQ (customer_id, idempotency_key) khi khác null               | Khóa chống tạo đơn trùng (header Idempotency-Key)      | —                  |
+| `cancelled_at_utc`    | timestamptz   | `CancelledAtUtc`: DateTime   | có    | CHECK (status = 'cancelled') = (cancelled_at_utc IS NOT NULL) | Thời điểm hủy đơn                                      | HuyLuc             |
+| `cancellation_reason` | text          | `CancellationReason`: string | có    | —                                                             | Lý do hủy đơn                                          | LyDoHuy            |
+| `created_at_utc`      | timestamptz   | `CreatedAtUtc`: DateTime     | không | IDX                                                           | Thời điểm tạo                                          | NgayTao            |
+| `updated_at_utc`      | timestamptz   | `UpdatedAtUtc`: DateTime     | có    | —                                                             | Thời điểm cập nhật gần nhất                            | NgayCapNhat        |
+| `created_by`          | uuid          | `CreatedBy`: Guid            | có    | —                                                             | Người tạo (từ BaseAuditableEntity)                     | —                  |
+| `updated_by`          | uuid          | `UpdatedBy`: Guid            | có    | —                                                             | Người cập nhật (từ BaseAuditableEntity)                | —                  |
 
 ### order_items
 
@@ -372,22 +376,38 @@ erDiagram
 
 `Payment` · DA: ThanhToan · Sprint 2 · Lần thanh toán qua cổng (một đơn có thể nhiều lần thử). UC: UC-SPA-11, UC-SPA-12, UC-SPA-13, UC-SPA-33.
 
-| Cột                       | PostgreSQL    | C#                              | Null  | Ràng buộc                | Mô tả                                      | DA                |
-| ------------------------- | ------------- | ------------------------------- | ----- | ------------------------ | ------------------------------------------ | ----------------- |
-| `id`                      | uuid          | `Id`: Guid                      | không | PK                       | Mã lần thanh toán                          | Id                |
-| `order_id`                | uuid          | `OrderId`: Guid                 | không | FK → orders.id           | Đơn được thanh toán                        | IdDonHang         |
-| `provider`                | varchar(50)   | `Provider`: string              | không | —                        | Nhà cung cấp cổng                          | NhaCungCap        |
-| `amount`                  | numeric(12,0) | `Amount`: decimal               | không | CHECK >= 0               | Số tiền                                    | SoTien            |
-| `status`                  | varchar(30)   | `Status`: PaymentStatus         | không | CHECK enum PaymentStatus | Trạng thái                                 | TrangThai         |
-| `request_code`            | varchar(50)   | `RequestCode`: string           | không | UQ                       | Mã yêu cầu gửi cổng (dùng cho idempotency) | MaYeuCau          |
-| `provider_transaction_id` | varchar(100)  | `ProviderTransactionId`: string | có    | —                        | Mã giao dịch do cổng cấp                   | MaGiaoDich        |
-| `payment_url`             | varchar(1000) | `PaymentUrl`: string            | có    | —                        | Đường dẫn thanh toán                       | PaymentUrl        |
-| `expires_at_utc`          | timestamptz   | `ExpiresAtUtc`: DateTime        | không | —                        | Hết hạn lần thanh toán                     | ThoiGianHetHan    |
-| `paid_at_utc`             | timestamptz   | `PaidAtUtc`: DateTime           | có    | IDX                      | Thời điểm thanh toán thành công            | ThoiGianThanhToan |
-| `created_at_utc`          | timestamptz   | `CreatedAtUtc`: DateTime        | không | —                        | Thời điểm tạo                              | NgayTao           |
-| `updated_at_utc`          | timestamptz   | `UpdatedAtUtc`: DateTime        | có    | —                        | Thời điểm cập nhật gần nhất                | NgayCapNhat       |
-| `created_by`              | uuid          | `CreatedBy`: Guid               | có    | —                        | Người tạo (từ BaseAuditableEntity)         | —                 |
-| `updated_by`              | uuid          | `UpdatedBy`: Guid               | có    | —                        | Người cập nhật (từ BaseAuditableEntity)    | —                 |
+| Cột                       | PostgreSQL    | C#                              | Null  | Ràng buộc                  | Mô tả                                                     | DA                |
+| ------------------------- | ------------- | ------------------------------- | ----- | -------------------------- | --------------------------------------------------------- | ----------------- |
+| `id`                      | uuid          | `Id`: Guid                      | không | PK                         | Mã lần thanh toán                                         | Id                |
+| `order_id`                | uuid          | `OrderId`: Guid                 | không | FK → orders.id             | Đơn được thanh toán                                       | IdDonHang         |
+| `installment_id`          | uuid          | `InstallmentId`: Guid           | có    | FK → order_installments.id | Đợt được thanh toán (null với đơn trả một lần, BR-INS-05) | —                 |
+| `provider`                | varchar(50)   | `Provider`: string              | không | —                          | Nhà cung cấp cổng                                         | NhaCungCap        |
+| `amount`                  | numeric(12,0) | `Amount`: decimal               | không | CHECK >= 0                 | Số tiền                                                   | SoTien            |
+| `status`                  | varchar(30)   | `Status`: PaymentStatus         | không | CHECK enum PaymentStatus   | Trạng thái                                                | TrangThai         |
+| `request_code`            | varchar(50)   | `RequestCode`: string           | không | UQ                         | Mã yêu cầu gửi cổng (dùng cho idempotency)                | MaYeuCau          |
+| `provider_transaction_id` | varchar(100)  | `ProviderTransactionId`: string | có    | —                          | Mã giao dịch do cổng cấp                                  | MaGiaoDich        |
+| `payment_url`             | varchar(1000) | `PaymentUrl`: string            | có    | —                          | Đường dẫn thanh toán                                      | PaymentUrl        |
+| `expires_at_utc`          | timestamptz   | `ExpiresAtUtc`: DateTime        | không | —                          | Hết hạn lần thanh toán                                    | ThoiGianHetHan    |
+| `paid_at_utc`             | timestamptz   | `PaidAtUtc`: DateTime           | có    | IDX                        | Thời điểm thanh toán thành công                           | ThoiGianThanhToan |
+| `created_at_utc`          | timestamptz   | `CreatedAtUtc`: DateTime        | không | —                          | Thời điểm tạo                                             | NgayTao           |
+| `updated_at_utc`          | timestamptz   | `UpdatedAtUtc`: DateTime        | có    | —                          | Thời điểm cập nhật gần nhất                               | NgayCapNhat       |
+| `created_by`              | uuid          | `CreatedBy`: Guid               | có    | —                          | Người tạo (từ BaseAuditableEntity)                        | —                 |
+| `updated_by`              | uuid          | `UpdatedBy`: Guid               | có    | —                          | Người cập nhật (từ BaseAuditableEntity)                   | —                 |
+
+### order_installments
+
+`OrderInstallment` · DA: (DotThanhToan — đề xuất) · Sprint 2 · Đợt thanh toán của đơn trả theo đợt; mỗi đợt mở một nhóm buổi liên tiếp của gói (Q-86). UC: UC-SPA-11.
+
+| Cột                    | PostgreSQL    | C#                          | Null  | Ràng buộc                                              | Mô tả                         | DA  |
+| ---------------------- | ------------- | --------------------------- | ----- | ------------------------------------------------------ | ----------------------------- | --- |
+| `id`                   | uuid          | `Id`: Guid                  | không | PK                                                     | Mã đợt                        | —   |
+| `order_id`             | uuid          | `OrderId`: Guid             | không | FK → orders.id; UQ (order_id, sequence_number)         | Đơn chứa đợt                  | —   |
+| `sequence_number`      | integer       | `SequenceNumber`: int       | không | CHECK >= 1                                             | Số thứ tự đợt (1..n)          | —   |
+| `first_session_number` | integer       | `FirstSessionNumber`: int   | không | CHECK 1 <= first_session_number <= last_session_number | Buổi đầu tiên đợt mở khóa     | —   |
+| `last_session_number`  | integer       | `LastSessionNumber`: int    | không | —                                                      | Buổi cuối cùng đợt mở khóa    | —   |
+| `amount`               | numeric(12,0) | `Amount`: decimal           | không | CHECK > 0                                              | Số tiền của đợt (BR-INS-03)   | —   |
+| `status`               | varchar(30)   | `Status`: InstallmentStatus | không | CHECK enum InstallmentStatus                           | Trạng thái đợt                | —   |
+| `paid_at_utc`          | timestamptz   | `PaidAtUtc`: DateTime       | có    | CHECK (status = 'paid') = (paid_at_utc IS NOT NULL)    | Thời điểm đợt được thanh toán | —   |
 
 ### promotion_redemptions
 
@@ -639,7 +659,9 @@ erDiagram
 | `CertificationVerificationStatus` | staff_certifications.verification_status | `Pending` → `pending` (ChoDuyet), `Verified` → `verified` (DaDuyet), `Rejected` → `rejected` (TuChoi)                                                                                                                                                                                  | Nhân viên thêm/sửa → pending; chủ spa duyệt (BR-STF-14)           |
 | `DiscountType`                    | promotions.discount_type                 | `Percentage` → `percentage` (PhanTram), `FixedAmount` → `fixed_amount` (SoTien)                                                                                                                                                                                                        | —                                                                 |
 | `PromotionStatus`                 | promotions.status                        | `Active` → `active` (HoatDong), `Stopped` → `stopped` (NgungApDung)                                                                                                                                                                                                                    | —                                                                 |
-| `OrderStatus`                     | orders.status                            | `PendingPayment` → `pending_payment` (ChoThanhToan), `Paid` → `paid` (DaThanhToan), `Cancelled` → `cancelled` (DaHuy), `Expired` → `expired` (HetHan)                                                                                                                                  | —                                                                 |
+| `OrderStatus`                     | orders.status                            | `PendingPayment` → `pending_payment` (ChoThanhToan), `PartiallyPaid` → `partially_paid`, `Paid` → `paid` (DaThanhToan), `Cancelled` → `cancelled` (DaHuy), `Expired` → `expired` (HetHan)                                                                                              | partially_paid: đơn trả theo đợt đã trả đợt 1 (Q-86)              |
+| `PaymentPlan`                     | orders.payment_plan                      | `Full` → `full`, `Installment` → `installment`                                                                                                                                                                                                                                         | Trả theo đợt chỉ cho đơn một gói (Q-85)                           |
+| `InstallmentStatus`               | order_installments.status                | `Pending` → `pending`, `Paid` → `paid`, `Cancelled` → `cancelled`                                                                                                                                                                                                                      | expired chỉ tính khi đọc khi gói hết hạn (BR-INS-07)              |
 | `PaymentStatus`                   | payments.status                          | `Pending` → `pending` (DangCho), `Succeeded` → `succeeded` (ThanhCong), `Failed` → `failed` (ThatBai), `Expired` → `expired` (HetHan)                                                                                                                                                  | Một đơn có nhiều lần thử, tối đa 1 succeeded                      |
 | `EntitlementStatus`               | service_entitlements.status              | `Available` → `available` (ChuaSuDung), `Booked` → `booked` (DaDatLich), `Used` → `used` (DaSuDung), `Expired` → `expired` (HetHan)                                                                                                                                                    | —                                                                 |
 | `CustomerPackageStatus`           | customer_packages.status                 | `Active` → `active` (DangSuDung), `Completed` → `completed` (HoanThanh), `Expired` → `expired` (HetHan), `Cancelled` → `cancelled` (DaHuy)                                                                                                                                             | —                                                                 |

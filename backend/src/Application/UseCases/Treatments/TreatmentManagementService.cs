@@ -39,14 +39,16 @@ public sealed class TreatmentManagementService : ITreatmentManagementService
     private readonly IValidator<UpdateTreatmentSessionRequest> _sessionValidator;
     private readonly IValidator<TreatmentReasonRequest> _reasonValidator;
     private readonly INotificationPublisher _notifications;
+    private readonly IOrderRepository _orders;
 
     public TreatmentManagementService(ITreatmentRepository treatments, IPurchaseRepository purchases, IAppointmentRepository appointments,
         IStaffMemberRepository staffMembers, IUnitOfWork unitOfWork, ICurrentUserService currentUser, IDateTimeProvider clock,
         IOptions<TreatmentsOptions> options, IValidator<PagedQuery> pagingValidator, IValidator<TreatmentListQuery> listValidator,
         IValidator<UpdateTreatmentPlanRequest> updateValidator, IValidator<UpdateTreatmentSessionRequest> sessionValidator,
-        IValidator<TreatmentReasonRequest> reasonValidator, INotificationPublisher notifications)
+        IValidator<TreatmentReasonRequest> reasonValidator, INotificationPublisher notifications, IOrderRepository orders)
     {
         _notifications = notifications;
+        _orders = orders;
         _treatments = treatments;
         _purchases = purchases;
         _appointments = appointments;
@@ -179,6 +181,9 @@ public sealed class TreatmentManagementService : ITreatmentManagementService
                 throw TreatmentErrors.HasBookedSessions();
             plan.Cancel(request.Reason!.Trim());
             package.Cancel();
+            // BR-INS-11: what is not paid yet can no longer be paid (order row locked after the package, as no payment locks a package).
+            var order = await _orders.GetInstallmentOrderForPackageAsync(package.Id, lockRow: true, token);
+            order?.CancelPendingInstallments();
         }, cancellationToken, notifyStatus: true);
     }
 
@@ -280,11 +285,12 @@ public sealed class TreatmentManagementService : ITreatmentManagementService
             .ToList();
 
         var canEdit = TreatmentScope.CanEdit(IsOwner, _currentUser.UserId, plan.PrimaryStaff?.Id, plan.Status);
+        var payment = (await _orders.GetPackagePaymentsAsync([plan.CustomerPackageId], cancellationToken)).GetValueOrDefault(plan.CustomerPackageId);
         return new TreatmentPlanDto(
             plan.Id, plan.Customer, plan.PackageName, plan.Status, PurchaseStatus.Effective(plan.PackageStatus, plan.ExpiresAtUtc, _clock.UtcNow),
             plan.ExpiresAtUtc, plan.TotalSessions, plan.UsedSessions, plan.BookedSessions, plan.PrimaryStaff, NextSession(sessions, visits),
             plan.PurchasedAtUtc, plan.CustomerPackageId, plan.Goal, plan.Note, plan.StatusReason, plan.StartDate, plan.ExpectedEndDate,
-            plan.ActualEndDate, canEdit, IsOwner, hasAllergies, sessionDtos, skinProfiles, careHistory);
+            plan.ActualEndDate, canEdit, IsOwner, hasAllergies, sessionDtos, skinProfiles, careHistory, payment);
     }
 
     private static TreatmentNextSessionDto? NextSession(IEnumerable<TreatmentSessionRow> sessions, IReadOnlyList<SessionVisitRow> visits)

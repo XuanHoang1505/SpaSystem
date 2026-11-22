@@ -1,3 +1,4 @@
+using NhuNguyetSpa.Application.DTOs.Purchases;
 using NhuNguyetSpa.Domain.Enums;
 
 namespace NhuNguyetSpa.Application.DTOs.Treatments;
@@ -102,4 +103,5 @@ public sealed record TreatmentPlanDto(
     bool HasAllergies,
     IReadOnlyList<TreatmentSessionDto> Sessions,
     IReadOnlyList<TreatmentSkinProfileDto> SkinProfiles,
-    IReadOnlyList<CareHistoryEntryDto> CareHistory);
+    IReadOnlyList<CareHistoryEntryDto> CareHistory,
+    PackagePaymentDto? Payment = null);

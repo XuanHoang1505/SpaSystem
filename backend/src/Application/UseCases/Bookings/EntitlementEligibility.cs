@@ -79,6 +79,9 @@ public static class EntitlementEligibility
             throw BookingErrors.SlotTooSoon();
     }
 
+    /// <summary>BR-INS-06: the session belongs to an installment that is not paid yet.</summary>
+    public const string UnpaidSessionReason = "Buổi này thuộc đợt thanh toán chưa trả.";
+
     private static string? SessionReason(SessionBookingFacts facts, DateTime nowUtc)
     {
         if (facts.Status != TreatmentSessionStatus.NotBooked)
@@ -87,6 +90,8 @@ public static class EntitlementEligibility
             return "Gói đã hết hạn hoặc không còn sử dụng.";
         if (facts.PlanStatus is TreatmentPlanStatus.Paused or TreatmentPlanStatus.Cancelled)
             return "Liệu trình đang tạm dừng hoặc đã hủy.";
+        if (facts.PaidSessionCount is { } paid && facts.SequenceNumber > paid)
+            return UnpaidSessionReason;
         if (!facts.EarlierSessionsDone)
             return "Cần đặt lịch các buổi trước theo thứ tự.";
         return null;

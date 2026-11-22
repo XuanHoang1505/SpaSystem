@@ -39,10 +39,12 @@ public sealed class PurchaseService : IPurchaseService
     private readonly IDateTimeProvider _clock;
     private readonly IOptions<PurchasesOptions> _options;
     private readonly IValidator<PurchaseListQuery> _validator;
+    private readonly IOrderRepository _orders;
 
     public PurchaseService(IPurchaseRepository purchases, ICurrentUserService currentUser, IDateTimeProvider clock,
-        IOptions<PurchasesOptions> options, IValidator<PurchaseListQuery> validator)
+        IOptions<PurchasesOptions> options, IValidator<PurchaseListQuery> validator, IOrderRepository orders)
     {
+        _orders = orders;
         _purchases = purchases;
         _currentUser = currentUser;
         _clock = clock;
@@ -78,6 +80,7 @@ public sealed class PurchaseService : IPurchaseService
                 .Select(row => ToDto(row, nowUtc))
                 .Where(dto => wanted is null || dto.Status == wanted)
                 .ToList();
+            packages = await WithPaymentsAsync(packages, cancellationToken);
         }
         return OperationResult<PurchasesDto>.Success(new PurchasesDto(services, packages));
     }
@@ -91,7 +94,17 @@ public sealed class PurchaseService : IPurchaseService
     public async Task<OperationResult<PurchasedPackageDto>> GetPackageAsync(Guid id, CancellationToken cancellationToken)
     {
         var row = await _purchases.GetPackageAsync(id, CustomerId, withItems: true, cancellationToken) ?? throw PurchaseErrors.CustomerPackageNotFound();
-        return OperationResult<PurchasedPackageDto>.Success(ToDto(row, _clock.UtcNow));
+        return OperationResult<PurchasedPackageDto>.Success((await WithPaymentsAsync([ToDto(row, _clock.UtcNow)], cancellationToken))[0]);
+    }
+
+    /// <summary>Installment packages show what is paid and the next installment (BR-INS-06).</summary>
+    private async Task<IReadOnlyList<PurchasedPackageDto>> WithPaymentsAsync(IReadOnlyList<PurchasedPackageDto> packages,
+        CancellationToken cancellationToken)
+    {
+        var payments = await _orders.GetPackagePaymentsAsync(packages.Select(package => package.Id).ToList(), cancellationToken);
+        return payments.Count == 0
+            ? packages
+            : packages.Select(package => package with { Payment = payments.GetValueOrDefault(package.Id) }).ToList();
     }
 
     private static PurchasedServiceDto ToDto(PurchasedServiceRow row, DateTime nowUtc) => new(

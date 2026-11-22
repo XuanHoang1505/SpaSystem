@@ -1,5 +1,6 @@
 import {
   CheckCircle2Icon,
+  CircleDashedIcon,
   ClockIcon,
   ReceiptTextIcon,
   ShieldCheckIcon,
@@ -26,6 +27,12 @@ const look: Record<OrderStatus, { icon: LucideIcon; header: string; tile: string
       tile: 'bg-status-warning text-status-warning-foreground',
       note: 'text-status-warning-foreground',
     },
+    partially_paid: {
+      icon: CircleDashedIcon,
+      header: 'bg-status-info/50',
+      tile: 'bg-status-info text-status-info-foreground',
+      note: 'text-status-info-foreground',
+    },
     paid: {
       icon: CheckCircle2Icon,
       header: 'bg-status-success/50',
@@ -49,6 +56,7 @@ const look: Record<OrderStatus, { icon: LucideIcon; header: string; tile: string
 /** The line at the bottom left of a card: what the status means for the customer. */
 const statusNotes: Record<OrderStatus, string> = {
   pending_payment: 'Đơn hàng chưa được thanh toán. Vui lòng thanh toán để kích hoạt dịch vụ.',
+  partially_paid: 'Đã trả một phần. Thanh toán đợt tiếp theo để mở thêm buổi của gói.',
   paid: 'Đã thanh toán. Dịch vụ đã được lưu vào tài khoản của bạn.',
   expired: 'Đơn hàng đã hết hạn thanh toán.',
   cancelled: 'Đơn hàng đã bị hủy.',
@@ -142,7 +150,11 @@ export function OrderCard({
           <p className="font-heading text-xl font-bold text-primary">
             {formatCurrency(order.grandTotal)}
           </p>
-          <p className="text-xs text-muted-foreground">{order.itemCount} sản phẩm</p>
+          <p className="text-xs text-muted-foreground">
+            {order.paymentPlan === 'installment'
+              ? `Đã trả ${formatCurrency(order.paidAmount)}`
+              : `${order.itemCount} sản phẩm`}
+          </p>
         </div>
       </div>
       <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t bg-muted/20 px-4 py-2.5">
@@ -170,7 +182,9 @@ export function OrderCard({
             <Button asChild size="sm" className="font-medium shadow-xs">
               <Link to={checkoutPath({ orderId: order.id })}>
                 <ShieldCheckIcon aria-hidden="true" />
-                Thanh toán ngay (VNPay)
+                {order.status === 'partially_paid' && order.nextInstallmentAmount !== null
+                  ? `Thanh toán đợt tiếp (${formatCurrency(order.nextInstallmentAmount)})`
+                  : 'Thanh toán ngay (VNPay)'}
               </Link>
             </Button>
           )}

@@ -40,6 +40,7 @@ import { useManagedOrder } from '../../hooks/useManagedOrder';
 import { cn } from '@/lib/utils';
 import { orderItemTypeBadge, orderStatusBadge } from '../../orderStatus';
 import { OrdersErrorState } from '../OrdersErrorState';
+import { InstallmentSchedule } from '../InstallmentSchedule';
 import { OwnerPaymentList } from './OwnerPaymentList';
 
 interface OwnerOrderDetailSheetProps {
@@ -253,6 +254,12 @@ function OrderTab({ detail }: { detail: OwnerOrderDetail }) {
           </p>
         </div>
       </Section>
+
+      <InstallmentSchedule
+        installments={detail.installments}
+        paidAmount={detail.paidAmount}
+        remainingAmount={detail.remainingAmount}
+      />
 
       {(detail.status === 'pending_payment' || detail.promotion) && (
         <Section title="Thanh toán" icon={ClockIcon}>

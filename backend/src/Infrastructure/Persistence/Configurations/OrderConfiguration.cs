@@ -13,7 +13,8 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
             table.HasCheckConstraint("ck_orders_subtotal_non_negative", "subtotal >= 0");
             table.HasCheckConstraint("ck_orders_discount_total", "discount_total >= 0 AND discount_total <= subtotal");
             table.HasCheckConstraint("ck_orders_grand_total", "grand_total = subtotal - discount_total");
-            table.HasCheckConstraint("ck_orders_status", "status IN ('pending_payment', 'paid', 'cancelled', 'expired')");
+            table.HasCheckConstraint("ck_orders_status", "status IN ('pending_payment', 'partially_paid', 'paid', 'cancelled', 'expired')");
+            table.HasCheckConstraint("ck_orders_payment_plan", "payment_plan IN ('full', 'installment')");
             table.HasCheckConstraint("ck_orders_payment_due_after_created", "payment_due_at_utc > created_at_utc");
             // BR-ORD-04: a cancelled order always records when, and only a cancelled one does.
             table.HasCheckConstraint("ck_orders_cancellation", "(status = 'cancelled') = (cancelled_at_utc IS NOT NULL)");

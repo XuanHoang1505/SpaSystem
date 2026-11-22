@@ -4,7 +4,8 @@ namespace NhuNguyetSpa.Application.DTOs.Orders;
 
 /// <summary>
 /// What the order would be now. Unavailable cart lines are listed apart and left out of the totals; a code that does not apply
-/// is reported in <see cref="PromotionError"/> and the totals are computed without it (UC-SPA-11 E1, E4).
+/// is reported in <see cref="PromotionError"/> and the totals are computed without it (UC-SPA-11 E1, E4). The installment plans
+/// the order can take are in <see cref="InstallmentOptions"/>, or why not in <see cref="InstallmentUnavailableReason"/>.
 /// </summary>
 public sealed record OrderPreviewDto(
     IReadOnlyList<OrderPreviewItemDto> Items,
@@ -13,7 +14,9 @@ public sealed record OrderPreviewDto(
     decimal DiscountTotal,
     decimal GrandTotal,
     AppliedPromotionDto? Promotion,
-    PromotionErrorDto? PromotionError);
+    PromotionErrorDto? PromotionError,
+    IReadOnlyList<InstallmentOptionDto>? InstallmentOptions = null,
+    InstallmentUnavailableDto? InstallmentUnavailableReason = null);
 
 public sealed record OrderPreviewItemDto(
     CatalogItemType Type, Guid ProductId, string ProductName, decimal UnitPrice, decimal DiscountAmount, decimal LineTotal);

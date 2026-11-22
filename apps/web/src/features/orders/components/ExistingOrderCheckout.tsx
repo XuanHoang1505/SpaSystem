@@ -11,11 +11,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useStartPayment } from '@/features/payments/hooks/useStartPayment';
 import { redirectTo } from '@/features/payments/redirect';
 import { useCountdown } from '@/hooks/useCountdown';
-import { formatDateTimeUtc } from '@/lib/formatting/formatters';
+import { formatCurrency, formatDateTimeUtc } from '@/lib/formatting/formatters';
 import { orderErrorCode, orderErrorMessage } from '../errors';
 import { useOrder } from '../hooks/useOrder';
 import { orderStatusBadge } from '../orderStatus';
+import { CheckoutSection } from './CheckoutSection';
 import { CustomerInfoCard } from './CustomerInfoCard';
+import { InstallmentSchedule } from './InstallmentSchedule';
 import { HoldNotice, OrderLines, OrderTotals, PaymentMethodCard } from './OrderSummary';
 import { OrdersErrorState } from './OrdersErrorState';
 
@@ -83,17 +85,28 @@ export function ExistingOrderCheckout({ orderId }: { orderId: string }) {
           <StatusBadge label={badge.label} tone={badge.tone} status={order.status} />
         </div>
         <OrderLines
+          step={1}
           lines={order.items.map((item) => ({
             key: item.id,
             type: item.type,
+            productId: item.productId,
             name: item.productName,
             unitPrice: item.unitPrice,
             discountAmount: item.discountAmount,
             lineTotal: item.lineTotal,
           }))}
         />
-        <CustomerInfoCard />
-        <PaymentMethodCard />
+        {order.installments.length > 0 && (
+          <CheckoutSection step={2} title="Các đợt thanh toán">
+            <InstallmentSchedule
+              installments={order.installments}
+              paidAmount={order.paidAmount}
+              remainingAmount={order.remainingAmount}
+            />
+          </CheckoutSection>
+        )}
+        <CustomerInfoCard step={order.installments.length > 0 ? 3 : 2} />
+        <PaymentMethodCard step={order.installments.length > 0 ? 4 : 3} />
       </div>
       <Card className="lg:sticky lg:top-24">
         <CardContent className="space-y-4">
@@ -110,7 +123,38 @@ export function ExistingOrderCheckout({ orderId }: { orderId: string }) {
             grandTotal={order.grandTotal}
             promotion={order.promotion}
           />
-          {order.status === 'pending_payment' ? (
+          {order.status === 'partially_paid' ? (
+            <>
+              {exceeded && (
+                <Alert variant="destructive" role="alert">
+                  <AlertDescription>
+                    Bạn đã thử thanh toán đợt này quá số lần cho phép.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {order.isPayable && order.nextInstallment && !exceeded ? (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Đợt {order.nextInstallment.sequenceNumber} mở khóa buổi{' '}
+                    {order.nextInstallment.firstSessionNumber}–
+                    {order.nextInstallment.lastSessionNumber} của gói.
+                  </p>
+                  <Button
+                    size="lg"
+                    className="w-full"
+                    loading={startPayment.isPending}
+                    onClick={pay}
+                  >
+                    <ShieldCheckIcon aria-hidden="true" />
+                    Thanh toán đợt {order.nextInstallment.sequenceNumber} (
+                    {formatCurrency(order.nextInstallment.amount)})
+                  </Button>
+                </>
+              ) : (
+                <p className="text-sm">Không còn đợt nào có thể thanh toán cho đơn này.</p>
+              )}
+            </>
+          ) : order.status === 'pending_payment' ? (
             <>
               {exceeded && (
                 <Alert variant="destructive" role="alert">
@@ -122,7 +166,9 @@ export function ExistingOrderCheckout({ orderId }: { orderId: string }) {
               {order.isPayable && !exceeded && (
                 <Button size="lg" className="w-full" loading={startPayment.isPending} onClick={pay}>
                   <ShieldCheckIcon aria-hidden="true" />
-                  Thanh toán lại
+                  {order.nextInstallment
+                    ? `Thanh toán đợt 1 (${formatCurrency(order.nextInstallment.amount)})`
+                    : 'Thanh toán lại'}
                 </Button>
               )}
               {!order.isPayable && <p className="text-sm">Đơn này không còn có thể thanh toán.</p>}

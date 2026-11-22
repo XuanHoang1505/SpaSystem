@@ -22,7 +22,8 @@ public sealed record MyTreatmentListItemDto(
     int UsedSessions,
     int BookedSessions,
     StaffRefDto? PrimaryStaff,
-    MyNextSessionDto? NextSession);
+    MyNextSessionDto? NextSession,
+    PackagePaymentDto? Payment = null);
 
 /// <summary>UC-SPA-19 detail. The plan's internal note is never part of it (BR-TRT-10, Q-39).</summary>
 public sealed record MyTreatmentPlanDto(
@@ -45,7 +46,8 @@ public sealed record MyTreatmentPlanDto(
     DateOnly? ActualEndDate,
     DateTime PurchasedAtUtc,
     PurchaseOrderRefDto Order,
-    IReadOnlyList<MyTreatmentSessionDto> Sessions);
+    IReadOnlyList<MyTreatmentSessionDto> Sessions,
+    PackagePaymentDto? Payment = null);
 
 /// <summary>
 /// One session for the customer (BR-TRT-10). <see cref="Result"/> and <see cref="SkinProfile"/> are filled only by

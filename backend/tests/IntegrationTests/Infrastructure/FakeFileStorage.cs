@@ -27,6 +27,18 @@ public sealed class FakeFileStorage : IFileStorage
         return $"https://res.cloudinary.test/{publicId}?v={Interlocked.Increment(ref _version)}";
     }
 
+    public IReadOnlyCollection<(string PublicId, Uri Source)> RemoteUploads => _remoteUploads.ToArray();
+
+    private readonly ConcurrentQueue<(string PublicId, Uri Source)> _remoteUploads = new();
+
+    public Task<string> UploadImageFromUrlAsync(Uri sourceUrl, string publicId, CancellationToken cancellationToken)
+    {
+        if (Fail)
+            throw CatalogErrors.ImageStorageUnavailable();
+        _remoteUploads.Enqueue((publicId, sourceUrl));
+        return Task.FromResult($"https://res.cloudinary.test/{publicId}?v={Interlocked.Increment(ref _version)}");
+    }
+
     public Task DeleteAsync(string publicId, CancellationToken cancellationToken)
     {
         if (Fail)

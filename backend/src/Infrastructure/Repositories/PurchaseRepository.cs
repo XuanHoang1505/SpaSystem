@@ -176,6 +176,12 @@ public sealed class PurchaseRepository : IPurchaseRepository
                 PackageStatus = session.TreatmentPlan.CustomerPackage.Status,
                 PackageExpiresAtUtc = session.TreatmentPlan.CustomerPackage.ExpiresAtUtc,
                 session.TreatmentPlan.CustomerPackage.OrderItem.ServicePackageId,
+                // BR-INS-06: sessions 1..this are paid; null for a package paid in full.
+                PaidSessionCount = session.TreatmentPlan.CustomerPackage.OrderItem.Order.PaymentPlan == PaymentPlan.Installment
+                    ? session.TreatmentPlan.CustomerPackage.OrderItem.Order.Installments
+                        .Where(installment => installment.Status == InstallmentStatus.Paid)
+                        .Max(installment => (int?)installment.LastSessionNumber) ?? 0
+                    : (int?)null,
             })
             .ToListAsync(cancellationToken);
         if (targets.Count == 0)
@@ -241,7 +247,7 @@ public sealed class PurchaseRepository : IPurchaseRepository
                 ?.MinDaysBetweenSessions ?? 0;
             var facts = new SessionBookingFacts(
                 target.Id, target.SpaServiceId, target.DurationMinutes, target.SequenceNumber, target.Status, target.PackageStatus,
-                target.PackageExpiresAtUtc, target.PlanStatus, earlierDone, visit, minDays, nextVisit);
+                target.PackageExpiresAtUtc, target.PlanStatus, earlierDone, visit, minDays, nextVisit, target.PaidSessionCount);
             return (facts, target.ServiceName);
         });
     }

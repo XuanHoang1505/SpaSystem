@@ -16,6 +16,7 @@ import { formatCurrency, formatLocalDate, formatLocalTime } from '@/lib/formatti
 import { useAuthStore } from '@/stores/authStore';
 import { colors, radius, spacing } from '@theme/index';
 import { CheckoutProductItem } from '../components/CheckoutProductItem';
+import { InstallmentPlanCard, InstallmentScheduleCard } from '../components/InstallmentPlanCard';
 import { OrderTotalsCard } from '../components/OrderTotalsCard';
 import { PaymentMethodSelector } from '../components/PaymentMethodSelector';
 import { PromotionInputCard } from '../components/PromotionInputCard';
@@ -145,6 +146,31 @@ export function CheckoutScreen() {
   const promotionError = !isExistingOrder ? (preview?.promotionError ?? null) : null;
   const isPayable = isExistingOrder ? (existingOrder?.isPayable ?? true) : items.length > 0;
 
+  // Installments (docs/specs/order-installments.md): only a one-package order, never book now.
+  const [installmentCount, setInstallmentCount] = useState<number | null>(null);
+  const installmentOptions = !isExistingOrder ? (preview?.installmentOptions ?? []) : [];
+  const plan =
+    installmentOptions.find((option) => option.installmentCount === installmentCount) ?? null;
+  const onePackage = !isBookingCheckout && items.length === 1 && items[0]?.type === 'package';
+  const nextInstallment = isExistingOrder ? (existingOrder?.nextInstallment ?? null) : null;
+  // What the customer pays now: the whole order, its first installment, or the next installment of an existing order.
+  const dueNow = plan
+    ? (plan.installments[0]?.amount ?? grandTotal)
+    : (nextInstallment?.amount ?? grandTotal);
+  const payTitle =
+    grandTotal === 0
+      ? 'Xác nhận đơn (0 đ)'
+      : plan
+        ? `Thanh toán đợt 1/${plan.installmentCount}`
+        : nextInstallment
+          ? `Thanh toán đợt ${nextInstallment.sequenceNumber}`
+          : 'Thanh toán VNPay';
+
+  const handleInstallmentChange = (count: number | null) => {
+    idempotencyKeyRef.current = generateUUID();
+    setInstallmentCount(count);
+  };
+
   const handleApplyPromotion = (code: string) => {
     idempotencyKeyRef.current = generateUUID();
     setAppliedPromotionCode(code);
@@ -189,7 +215,9 @@ export function CheckoutScreen() {
         } else {
           // Step 1b: Create Standard Order (Cart or Buy Now Package)
           const newOrder = await createOrder.mutateAsync({
-            request: previewRequest,
+            request: plan
+              ? { ...previewRequest, installmentCount: plan.installmentCount }
+              : previewRequest,
             idempotencyKey: idempotencyKeyRef.current,
           });
           targetOrderId = newOrder.id;
@@ -429,6 +457,23 @@ export function CheckoutScreen() {
               />
             )}
 
+            {!isExistingOrder && onePackage && (
+              <InstallmentPlanCard
+                options={installmentOptions}
+                unavailable={preview?.installmentUnavailableReason ?? null}
+                value={plan?.installmentCount ?? null}
+                onChange={handleInstallmentChange}
+                disabled={isSubmitting || orderCreated}
+              />
+            )}
+            {isExistingOrder && existingOrder && (
+              <InstallmentScheduleCard
+                installments={existingOrder.installments}
+                paidAmount={existingOrder.paidAmount}
+                remainingAmount={existingOrder.remainingAmount}
+              />
+            )}
+
             {/* Payment Method Selector */}
             <PaymentMethodSelector />
 
@@ -449,14 +494,16 @@ export function CheckoutScreen() {
           {/* Sticky Bottom Bar */}
           <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
             <View style={styles.totalInfo}>
-              <AppText style={styles.totalLabel}>Tổng thanh toán</AppText>
+              <AppText style={styles.totalLabel}>
+                {plan || nextInstallment ? 'Thanh toán đợt này' : 'Tổng thanh toán'}
+              </AppText>
               <AppText style={styles.totalAmount} numberOfLines={1}>
-                {formatCurrency(grandTotal)}
+                {formatCurrency(dueNow)}
               </AppText>
             </View>
             <View style={styles.payButtonWrapper}>
               <AppButton
-                title={grandTotal === 0 ? 'Xác nhận đơn (0 đ)' : 'Thanh toán VNPay'}
+                title={payTitle}
                 onPress={handleCheckout}
                 loading={
                   isSubmitting ||

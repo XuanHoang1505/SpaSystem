@@ -1,3 +1,4 @@
+import { InstallmentPaymentNotice } from '@/features/orders/components/InstallmentPaymentNotice';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -113,6 +114,8 @@ export function MyPackageDetailView({ packageId }: { packageId: string }) {
           Quay lại danh sách gói
         </Link>
       </div>
+
+      <InstallmentPaymentNotice payment={pkg.data.payment} />
 
       <div className="space-y-4 rounded-xl border bg-card p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">

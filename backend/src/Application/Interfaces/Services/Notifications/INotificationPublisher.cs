@@ -35,6 +35,13 @@ public interface INotificationPublisher
     /// </summary>
     Task OrderPaidAsync(Order order, AppointmentNotice? hold, bool holdExpired, CancellationToken cancellationToken);
 
+    /// <summary>NTF-E15 (NTF-E01 for the first one): an installment of an installment order was paid.</summary>
+    Task InstallmentPaidAsync(Order order, OrderInstallment installment, CancellationToken cancellationToken);
+
+    /// <summary>NTF-E16: the customer completed the last paid session of a package with installments left.</summary>
+    Task PaidSessionsUsedAsync(Guid customerId, Guid orderId, string packageName, int nextSequenceNumber, decimal amount,
+        CancellationToken cancellationToken);
+
     /// <summary>NTF-E02: the owner cancelled an unpaid order.</summary>
     Task OrderCancelledByOwnerAsync(Order order, string reason, Guid? actorUserId, CancellationToken cancellationToken);
 

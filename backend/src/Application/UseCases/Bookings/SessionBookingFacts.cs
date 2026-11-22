@@ -15,7 +15,8 @@ public sealed record NextVisit(DateOnly Date, TimeOnly StartTime, int MinDaysBet
 /// Everything BR-BKG-05 needs to decide whether a package session can be booked. <paramref name="EarlierSessionsDone"/>: every lower
 /// sequence number is booked, completed or skipped. <paramref name="MinDaysBetweenSessions"/> comes from the package's current
 /// configuration for the session's service (0 when that line is gone). <paramref name="Next"/> is set when the next session already
-/// has a visit (needed only when an existing appointment is moved).
+/// has a visit (needed only when an existing appointment is moved). <paramref name="PaidSessionCount"/>: for a package paid in
+/// installments, sessions above it are not paid yet (BR-INS-06); null when paid in full.
 /// </summary>
 public sealed record SessionBookingFacts(
     Guid SessionId,
@@ -29,7 +30,8 @@ public sealed record SessionBookingFacts(
     bool EarlierSessionsDone,
     PreviousVisit? Previous,
     int MinDaysBetweenSessions,
-    NextVisit? Next = null);
+    NextVisit? Next = null,
+    int? PaidSessionCount = null);
 
 /// <summary><see cref="EarliestDate"/> is never before today.</summary>
 public sealed record SessionEligibility(bool CanBook, string? Reason, DateOnly EarliestDate);

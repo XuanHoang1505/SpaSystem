@@ -34,7 +34,8 @@ public sealed record PurchasedPackageDto(
     PurchaseTreatmentPlanDto TreatmentPlan,
     NextSessionDto? NextSession,
     IReadOnlyList<PackageItemProgressDto>? Items,
-    PurchaseOrderRefDto Order);
+    PurchaseOrderRefDto Order,
+    PackagePaymentDto? Payment = null);
 
 public sealed record PurchaseTreatmentPlanDto(Guid Id, TreatmentPlanStatus Status);
 

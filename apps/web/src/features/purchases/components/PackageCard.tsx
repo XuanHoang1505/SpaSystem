@@ -1,3 +1,4 @@
+import { InstallmentPaymentNotice } from '@/features/orders/components/InstallmentPaymentNotice';
 import {
   ArrowRightIcon,
   CalendarClockIcon,
@@ -151,6 +152,7 @@ export function PackageCard({
         >
           <Link to={`/my-treatment-plans/${item.treatmentPlan.id}`}>Xem phác đồ điều trị →</Link>
         </Button>
+        <InstallmentPaymentNotice payment={item.payment} compact />
         {reason && <span className="text-xs text-muted-foreground">{reason}</span>}
       </div>
     </article>

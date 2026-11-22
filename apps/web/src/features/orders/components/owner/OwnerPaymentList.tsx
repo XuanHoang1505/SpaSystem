@@ -15,6 +15,8 @@ export function OwnerPaymentList({ payments }: { payments: readonly OwnerOrderPa
           <div className="flex items-center justify-between gap-2">
             <span className="font-medium text-foreground">
               {payment.provider.toUpperCase()} · {formatCurrency(payment.amount)}
+              {payment.installmentSequenceNumber !== null &&
+                ` · Đợt ${payment.installmentSequenceNumber}`}
             </span>
             <StatusBadge {...paymentStatusBadge(payment.status)} status={payment.status} />
           </div>

@@ -498,6 +498,12 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("payment_due_at_utc");
 
+                    b.Property<string>("PaymentPlan")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("payment_plan");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -549,9 +555,69 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_orders_payment_due_after_created", "payment_due_at_utc > created_at_utc");
 
-                            t.HasCheckConstraint("ck_orders_status", "status IN ('pending_payment', 'paid', 'cancelled', 'expired')");
+                            t.HasCheckConstraint("ck_orders_payment_plan", "payment_plan IN ('full', 'installment')");
+
+                            t.HasCheckConstraint("ck_orders_status", "status IN ('pending_payment', 'partially_paid', 'paid', 'cancelled', 'expired')");
 
                             t.HasCheckConstraint("ck_orders_subtotal_non_negative", "subtotal >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.OrderInstallment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12)
+                        .HasColumnType("numeric(12,0)")
+                        .HasColumnName("amount");
+
+                    b.Property<int>("FirstSessionNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("first_session_number");
+
+                    b.Property<int>("LastSessionNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("last_session_number");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("order_id");
+
+                    b.Property<DateTime?>("PaidAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("paid_at_utc");
+
+                    b.Property<int>("SequenceNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("sequence_number");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_order_installments");
+
+                    b.HasIndex("OrderId", "SequenceNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ux_order_installments_order_id_sequence_number");
+
+                    b.ToTable("order_installments", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_order_installments_amount_positive", "amount > 0");
+
+                            t.HasCheckConstraint("ck_order_installments_paid", "(status = 'paid') = (paid_at_utc IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_order_installments_sequence_number", "sequence_number >= 1");
+
+                            t.HasCheckConstraint("ck_order_installments_sessions", "first_session_number >= 1 AND first_session_number <= last_session_number");
+
+                            t.HasCheckConstraint("ck_order_installments_status", "status IN ('pending', 'paid', 'cancelled')");
                         });
                 });
 
@@ -718,6 +784,10 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at_utc");
 
+                    b.Property<Guid?>("InstallmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("installment_id");
+
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uuid")
                         .HasColumnName("order_id");
@@ -764,6 +834,9 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_payments");
+
+                    b.HasIndex("InstallmentId")
+                        .HasDatabaseName("ix_payments_installment_id");
 
                     b.HasIndex("OrderId")
                         .HasDatabaseName("ix_payments_order_id");
@@ -2142,6 +2215,18 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.OrderInstallment", b =>
+                {
+                    b.HasOne("NhuNguyetSpa.Domain.Entities.Order", "Order")
+                        .WithMany("Installments")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_order_installments_orders_order_id");
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.OrderItem", b =>
                 {
                     b.HasOne("NhuNguyetSpa.Domain.Entities.Order", "Order")
@@ -2184,12 +2269,20 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.Payment", b =>
                 {
+                    b.HasOne("NhuNguyetSpa.Domain.Entities.OrderInstallment", "Installment")
+                        .WithMany()
+                        .HasForeignKey("InstallmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_payments_order_installments_installment_id");
+
                     b.HasOne("NhuNguyetSpa.Domain.Entities.Order", "Order")
                         .WithMany("Payments")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_payments_orders_order_id");
+
+                    b.Navigation("Installment");
 
                     b.Navigation("Order");
                 });
@@ -2474,6 +2567,8 @@ namespace NhuNguyetSpa.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("NhuNguyetSpa.Domain.Entities.Order", b =>
                 {
+                    b.Navigation("Installments");
+
                     b.Navigation("Items");
 
                     b.Navigation("Payments");

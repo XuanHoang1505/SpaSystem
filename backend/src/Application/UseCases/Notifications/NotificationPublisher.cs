@@ -143,6 +143,14 @@ public sealed class NotificationPublisher : INotificationPublisher
     public async Task OrderPaidAsync(Order order, AppointmentNotice? hold, bool holdExpired, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(order);
+        if (order.IsInstallmentPlan)
+        {
+            // An installment order is issued on its first installment; that receipt names the installment (NTF-E01).
+            var first = order.Installments.Where(item => item.Status == InstallmentStatus.Paid).MinBy(item => item.SequenceNumber);
+            if (first is not null)
+                await InstallmentPaidAsync(order, first, cancellationToken);
+            return;
+        }
         var names = hold is null ? null : await NamesAsync([hold], cancellationToken);
         var content = NotificationTemplates.OrderPaid(order.Code, order.GrandTotal, hold is null ? null : names!.Service(hold.SpaServiceId),
             hold?.Date, hold?.StartTime, holdExpired);
@@ -150,6 +158,21 @@ public sealed class NotificationPublisher : INotificationPublisher
         if (hold is not null && !holdExpired)
             await AddAsync([(hold.StaffMemberId, NewForStaff(hold, names!))], Reference(hold), null, cancellationToken);
     }
+
+    public Task InstallmentPaidAsync(Order order, OrderInstallment installment, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(order);
+        ArgumentNullException.ThrowIfNull(installment);
+        var content = NotificationTemplates.InstallmentPaid(order.Code, installment.SequenceNumber, order.Installments.Count, installment.Amount,
+            order.PaidSessionCount);
+        return AddAsync([(order.CustomerId, content)], new NotificationReference(NotificationReferenceType.Order, order.Id), null,
+            cancellationToken);
+    }
+
+    public Task PaidSessionsUsedAsync(Guid customerId, Guid orderId, string packageName, int nextSequenceNumber, decimal amount,
+        CancellationToken cancellationToken) =>
+        AddAsync([(customerId, NotificationTemplates.PaidSessionsUsed(packageName, nextSequenceNumber, amount))],
+            new NotificationReference(NotificationReferenceType.Order, orderId), null, cancellationToken);
 
     public Task OrderCancelledByOwnerAsync(Order order, string reason, Guid? actorUserId, CancellationToken cancellationToken)
     {

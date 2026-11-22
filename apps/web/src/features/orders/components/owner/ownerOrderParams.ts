@@ -3,6 +3,7 @@ import type { DataTableSort } from '@/components/shared/DataTable';
 
 export const ORDER_STATUSES: readonly OrderStatus[] = [
   'pending_payment',
+  'partially_paid',
   'paid',
   'expired',
   'cancelled',
