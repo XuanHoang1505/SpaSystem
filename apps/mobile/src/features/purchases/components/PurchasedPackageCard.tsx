@@ -12,6 +12,7 @@ import {
   getRemainingDaysInfo,
 } from '../utils/purchaseHelpers';
 import { PurchaseStatusBadge } from './PurchaseStatusBadge';
+import { containerCardRole } from '@/lib/accessibility/cardRole';
 
 export interface PurchasedPackageCardProps {
   pkg: PurchasedPackage;
@@ -39,7 +40,7 @@ export function PurchasedPackageCard({
     <Pressable
       onPress={() => onPressDetail(pkg)}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-      accessibilityRole="button"
+      accessibilityRole={containerCardRole}
       accessibilityLabel={`Gói ${pkg.packageName}`}
     >
       {/* Top Row: Status Badge + Order Code */}

@@ -24,12 +24,18 @@ export function DateStripPicker({
     [todayVn, earliestDate],
   );
 
-  const initialPageIndex = useMemo(() => {
+  const selectedPageIndex = useMemo(() => {
     const idx = allDates.findIndex((item) => item.date === selectedDate);
     return idx >= 0 ? Math.floor(idx / DAYS_PER_PAGE) : 0;
   }, [allDates, selectedDate]);
 
-  const [pageIndex, setPageIndex] = useState(initialPageIndex);
+  const [pageIndex, setPageIndex] = useState(selectedPageIndex);
+  // The selected date often arrives after the first render (earliest date of a package session), so show its week.
+  const [shownSelection, setShownSelection] = useState(selectedDate);
+  if (shownSelection !== selectedDate) {
+    setShownSelection(selectedDate);
+    setPageIndex(selectedPageIndex);
+  }
   const maxPageIndex = Math.max(0, Math.ceil(allDates.length / DAYS_PER_PAGE) - 1);
   const clampedPage = Math.min(pageIndex, maxPageIndex);
 

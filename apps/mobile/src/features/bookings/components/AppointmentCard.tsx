@@ -7,6 +7,7 @@ import { colors, radius, spacing } from '@theme/index';
 import { getBookingSourceLabel } from '../utils/bookingHelpers';
 import { AppointmentStatusBadge } from './AppointmentStatusBadge';
 import { HoldCountdownBadge } from './HoldCountdownBadge';
+import { containerCardRole } from '@/lib/accessibility/cardRole';
 
 export function AppointmentCard({
   item,
@@ -28,7 +29,7 @@ export function AppointmentCard({
   return (
     <Pressable
       onPress={onPressDetail}
-      accessibilityRole="button"
+      accessibilityRole={containerCardRole}
       accessibilityLabel={`Lịch hẹn ${item.service.name} ngày ${formatLocalDate(item.date)} lúc ${start}`}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
     >
