@@ -1,4 +1,8 @@
-import type { RevenueByProductQuery, RevenueReportQuery } from '@spa/shared-types';
+import type {
+  RevenueByProductQuery,
+  RevenueLeadersQuery,
+  RevenueReportQuery,
+} from '@spa/shared-types';
 
 export const reportsQueryKeys = {
   all: ['reports'] as const,
@@ -6,4 +10,6 @@ export const reportsQueryKeys = {
     [...reportsQueryKeys.all, 'revenue', query ?? {}] as const,
   byProduct: (query?: RevenueByProductQuery) =>
     [...reportsQueryKeys.all, 'by-product', query ?? {}] as const,
+  leaders: (query?: RevenueLeadersQuery) =>
+    [...reportsQueryKeys.all, 'leaders', query ?? {}] as const,
 };

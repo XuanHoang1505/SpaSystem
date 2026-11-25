@@ -24,7 +24,6 @@ import { RevenuePeriodTable } from './RevenuePeriodTable';
 import { RevenueSummaryCards } from './RevenueSummaryCards';
 import { TopCustomersAndStaffCard } from './TopCustomersAndStaffCard';
 import { TopProductsBarChart } from './TopProductsBarChart';
-import { UnrecognizedPaymentsAlert } from './UnrecognizedPaymentsAlert';
 
 export function OwnerReportsView() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -111,7 +110,7 @@ export function OwnerReportsView() {
   const isLoading = revenueQuery.isLoading || byProductQuery.isLoading;
 
   return (
-    <section className="space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
+    <section className="min-w-0 space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-6 lg:p-8">
       {/* Header */}
       <PageHeader
         title="Báo cáo doanh thu"
@@ -125,38 +124,35 @@ export function OwnerReportsView() {
         }
         className="border-b pb-4"
         actions={
-          <Button
-            type="button"
-            variant="default"
-            size="sm"
-            onClick={handleExport}
-            disabled={isExporting || isLoading}
-            className="gap-2 rounded-lg font-medium shadow-xs"
-          >
-            {isExporting ? (
-              <Loader2Icon className="size-4 animate-spin" />
-            ) : (
-              <FileSpreadsheetIcon className="size-4" />
-            )}
-            <span>{isExporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
-          </Button>
+          <>
+            <RevenueFilterToolbar
+              fromDate={fromDate}
+              toDate={toDate}
+              groupBy={groupBy}
+              productType={productType}
+              top={top}
+              onFiltersChange={handleFiltersChange}
+              onReset={handleResetFilters}
+              isFetching={revenueQuery.isFetching || byProductQuery.isFetching}
+            />
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={handleExport}
+              disabled={isExporting || isLoading}
+              className="gap-2 rounded-lg font-medium shadow-xs"
+            >
+              {isExporting ? (
+                <Loader2Icon className="size-4 animate-spin" />
+              ) : (
+                <FileSpreadsheetIcon className="size-4" />
+              )}
+              <span>{isExporting ? 'Đang xuất...' : 'Xuất Excel'}</span>
+            </Button>
+          </>
         }
       />
-
-      {/* Filter Toolbar */}
-      <RevenueFilterToolbar
-        fromDate={fromDate}
-        toDate={toDate}
-        groupBy={groupBy}
-        productType={productType}
-        top={top}
-        onFiltersChange={handleFiltersChange}
-        onReset={handleResetFilters}
-        isFetching={revenueQuery.isFetching || byProductQuery.isFetching}
-      />
-
-      {/* Uncounted Payments Alert */}
-      <UnrecognizedPaymentsAlert unrecognizedPayments={revenueQuery.data?.unrecognizedPayments} />
 
       {/* Error State */}
       {isError && (
@@ -173,10 +169,10 @@ export function OwnerReportsView() {
       {/* Main Charts Row: Period Trend (8 cols) + Donut Breakdown (4 cols) */}
       {!isError && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-8">
+          <div className="min-w-0 lg:col-span-8">
             <RevenuePeriodChart periods={revenueQuery.data?.periods} isLoading={isLoading} />
           </div>
-          <div className="lg:col-span-4">
+          <div className="min-w-0 lg:col-span-4">
             <RevenueDistributionDonutChart
               serviceRevenue={revenueQuery.data?.serviceRevenue}
               packageRevenue={revenueQuery.data?.packageRevenue}
@@ -189,7 +185,7 @@ export function OwnerReportsView() {
 
       {/* Secondary Insights Row: Top 5 Products Bar (6 cols) + Top Customers & Staff (6 cols) */}
       {!isError && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
           <TopProductsBarChart items={byProductQuery.data?.items} isLoading={isLoading} />
           <TopCustomersAndStaffCard fromDate={fromDate} toDate={toDate} />
         </div>
@@ -198,7 +194,7 @@ export function OwnerReportsView() {
       {/* Tables Breakdown Tabs */}
       {!isError && (
         <Tabs defaultValue="products" className="space-y-4">
-          <TabsList className="bg-muted/70 p-1">
+          <TabsList className="h-auto max-w-full flex-wrap justify-start bg-muted/70 p-1">
             <TabsTrigger value="products" className="text-xs font-medium sm:text-sm">
               Top {top} sản phẩm bán chạy (chi tiết)
             </TabsTrigger>
