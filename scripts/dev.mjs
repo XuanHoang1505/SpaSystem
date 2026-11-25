@@ -158,6 +158,9 @@ try {
       // survives a reload whether the page is opened on localhost or the LAN IP (UX-04).
       VITE_API_SAME_ORIGIN: 'true',
       VITE_API_PROXY_TARGET: 'http://localhost:5000',
+      // VNPay returns to the LAN address above and the session cookie belongs to one host, so a page opened on
+      // localhost moves there before the app starts (apps/web/src/config/devOrigin.ts).
+      VITE_DEV_CANONICAL_ORIGIN: `http://${host}:5173`,
     },
   );
   start(
