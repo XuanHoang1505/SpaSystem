@@ -14,6 +14,14 @@ const dateTime = new Intl.DateTimeFormat('vi-VN', {
   hour12: false,
 });
 
+const weekdayDate = new Intl.DateTimeFormat('vi-VN', {
+  timeZone: 'Asia/Ho_Chi_Minh',
+  weekday: 'long',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
 const time = new Intl.DateTimeFormat('vi-VN', {
   timeZone: 'Asia/Ho_Chi_Minh',
   hour: '2-digit',
@@ -40,6 +48,14 @@ export function formatLocalDate(value: string) {
 
 /** Giờ `TimeOnly` dạng "HH:mm" hoặc "HH:mm:ss" → "HH:mm", không đổi múi giờ. */
 export const formatLocalTime = (value: string) => value.slice(0, 5);
+
+/** A moment → its Vietnam date with the weekday, "Thứ Bảy, 22/11/2026" (workspace header). */
+export function formatWeekdayDate(value: Date) {
+  const parts = Object.fromEntries(
+    weekdayDate.formatToParts(value).map((part) => [part.type, part.value]),
+  );
+  return `${parts.weekday}, ${parts.day}/${parts.month}/${parts.year}`;
+}
 
 /** Mốc thời gian UTC từ backend (`...AtUtc`) → giờ Việt Nam "HH:mm". */
 export const formatTimeUtc = (value: string) => time.format(new Date(value));

@@ -39,6 +39,7 @@ export const routes = {
     ['/staff/care-history', 'Lịch sử khách đã chăm sóc'],
     ['/staff/certifications', 'Bằng cấp của tôi'],
     ['/staff/notifications', 'Thông báo'],
+    ['/staff/account', 'Tài khoản'],
   ],
   owner: [
     ['/owner', 'Tổng quan'],
@@ -53,5 +54,6 @@ export const routes = {
     ['/owner/reports', 'Báo cáo'],
     ['/owner/accounts', 'Tài khoản người dùng'],
     ['/owner/notifications', 'Thông báo'],
+    ['/owner/account', 'Tài khoản'],
   ],
 } as const;
