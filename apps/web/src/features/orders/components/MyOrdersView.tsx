@@ -81,7 +81,6 @@ export function MyOrdersView() {
         { label: 'Đơn hàng của bạn' },
       ]}
       title="Đơn hàng của bạn"
-      description="Theo dõi, thanh toán hoặc hủy các đơn bạn đã đặt."
       toolbar={
         <div
           role="group"

@@ -1,16 +1,6 @@
 import type { ComponentType } from 'react';
-import type {
-  NotificationType,
-  NotificationDto,
-  UserRole,
-} from '@spa/shared-types';
-import {
-  CalendarCheck,
-  Receipt,
-  Sparkles,
-  Tag,
-  Info,
-} from 'lucide-react-native';
+import type { NotificationType, NotificationDto, UserRole } from '@spa/shared-types';
+import { CalendarCheck, Receipt, Sparkles, Tag, Info } from 'lucide-react-native';
 import { colors } from '@theme/index';
 
 export const mobileNotificationTypeLabels: Record<NotificationType, string> = {
@@ -32,13 +22,14 @@ export const mobileNotificationTypeIcons: Record<
   system: Info,
 };
 
-export const mobileNotificationTypeColors: Record<NotificationType, { bg: string; icon: string }> = {
-  appointment: { bg: colors.infoSoft, icon: colors.info },
-  payment: { bg: colors.successSoft, icon: colors.success },
-  treatment: { bg: colors.warningSoft, icon: colors.accentGoldText },
-  promotion: { bg: colors.accentRoseSoft, icon: colors.accentRoseText },
-  system: { bg: colors.primarySoft, icon: colors.primary },
-};
+export const mobileNotificationTypeColors: Record<NotificationType, { bg: string; icon: string }> =
+  {
+    appointment: { bg: colors.infoSoft, icon: colors.info },
+    payment: { bg: colors.successSoft, icon: colors.success },
+    treatment: { bg: colors.warningSoft, icon: colors.accentGoldText },
+    promotion: { bg: colors.accentRoseSoft, icon: colors.accentRoseText },
+    system: { bg: colors.primarySoft, icon: colors.primary },
+  };
 
 /**
  * Maps notification reference to mobile screen route.
@@ -48,28 +39,31 @@ export function getMobileNotificationTargetRoute(
   role?: UserRole | null,
 ): string | null {
   if (!notification.referenceType) return null;
+  // Open the exact record when the notice names one; the list is only a fallback.
+  const id = notification.referenceId ? encodeURIComponent(notification.referenceId) : null;
+
+  // The owner manages appointments, orders and plans on the web: the mobile app has no owner screen for them.
+  if (role === 'owner') return null;
 
   switch (notification.referenceType) {
     case 'appointment':
       if (role === 'staff') {
-        return '/(staff)/bookings';
+        return id ? `/(staff)/bookings/${id}` : '/(staff)/bookings';
       }
-      return '/(customer)/bookings';
+      return id ? `/booking/${id}` : '/(customer)/bookings';
 
     case 'order':
-      return '/my-orders';
+      return role === 'customer' ? (id ? `/my-orders/${id}` : '/my-orders') : null;
 
     case 'treatment_plan':
-      return '/(customer)/treatments';
+      if (role !== 'customer') return null;
+      return id ? `/treatment/${id}` : '/(customer)/treatments';
 
     case 'review':
-      return '/my-reviews';
+      return role === 'customer' ? '/my-reviews' : null;
 
     case 'work_schedule':
-      if (role === 'staff') {
-        return '/(staff)/schedule';
-      }
-      return null;
+      return role === 'staff' ? '/(staff)/schedule' : null;
 
     default:
       return null;

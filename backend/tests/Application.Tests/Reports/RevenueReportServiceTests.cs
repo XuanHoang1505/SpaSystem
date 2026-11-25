@@ -35,7 +35,8 @@ public sealed class RevenueReportServiceTests
         var clock = Substitute.For<IDateTimeProvider>();
         clock.UtcNow.Returns(Now);
         var options = Options.Create(new ReportsOptions());
-        return new RevenueReportService(_reports, _exporter, clock, options, new RevenueReportQueryValidator(), new RevenueByProductQueryValidator(options));
+        return new RevenueReportService(_reports, _exporter, clock, options, new RevenueReportQueryValidator(), new RevenueByProductQueryValidator(options),
+            new RevenueLeadersQueryValidator(options));
     }
 
     private static DateOnly D(int year, int month, int day) => new(year, month, day);

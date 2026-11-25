@@ -95,13 +95,11 @@ export function NotificationsView() {
   };
 
   const isWorkspace = user?.role === 'staff' || user?.role === 'owner';
+  // Same trails as the other workspace pages: the owner's go through "Quản trị spa", the staff's start at home.
   const breadcrumbTrail = isWorkspace
     ? [
         { label: 'Trang chủ', to: '/' },
-        {
-          label: user?.role === 'owner' ? 'Quản lý' : 'Nhân viên',
-          to: user?.role === 'owner' ? '/owner' : '/staff',
-        },
+        ...(user?.role === 'owner' ? [{ label: 'Quản trị spa', to: '/owner' }] : []),
         { label: 'Thông báo' },
       ]
     : [
@@ -114,7 +112,6 @@ export function NotificationsView() {
     <AccountPage
       breadcrumbs={breadcrumbTrail}
       title="Thông báo"
-      description="Theo dõi các thông tin cập nhật về lịch hẹn, liệu trình, thanh toán và thông báo hệ thống."
       actions={
         unreadCount > 0 ? (
           <Button

@@ -2,6 +2,8 @@ import type {
   ApiResponse,
   RevenueByProductDto,
   RevenueByProductQuery,
+  RevenueLeadersDto,
+  RevenueLeadersQuery,
   RevenueReportDto,
   RevenueReportQuery,
 } from '@spa/shared-types';
@@ -32,10 +34,17 @@ export class ReportsApi {
     });
   }
 
-  exportRevenue(
-    query?: RevenueReportQuery,
+  getLeaders(
+    query?: RevenueLeadersQuery,
     signal?: AbortSignal,
-  ): Promise<Blob> {
+  ): Promise<ApiResponse<RevenueLeadersDto>> {
+    return this.client.get<ApiResponse<RevenueLeadersDto>>(`${base}/revenue/leaders`, {
+      query: query ? { ...query } : undefined,
+      signal,
+    });
+  }
+
+  exportRevenue(query?: RevenueReportQuery, signal?: AbortSignal): Promise<Blob> {
     return this.client.getBlob(`${base}/revenue/export`, {
       query: query ? { ...query } : undefined,
       signal,
@@ -55,4 +64,6 @@ export const reportsQueryKeys = {
     [...reportsQueryKeys.all, 'revenue', query ?? {}] as const,
   byProduct: (query?: RevenueByProductQuery) =>
     [...reportsQueryKeys.all, 'by-product', query ?? {}] as const,
+  leaders: (query?: RevenueLeadersQuery) =>
+    [...reportsQueryKeys.all, 'leaders', query ?? {}] as const,
 };

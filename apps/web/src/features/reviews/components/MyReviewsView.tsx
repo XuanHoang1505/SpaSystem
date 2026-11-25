@@ -127,7 +127,6 @@ export function MyReviewsView() {
         { label: 'Đánh giá của tôi' },
       ]}
       title="Đánh giá của tôi"
-      description="Theo dõi, chia sẻ cảm nhận và đánh giá các dịch vụ spa bạn đã trải nghiệm."
     >
       <Tabs
         value={activeTab}

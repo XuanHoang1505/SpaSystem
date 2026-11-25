@@ -31,14 +31,10 @@ export function CatalogPageHeader({
 }) {
   return (
     <header
-      className={cn(
-        'space-y-4',
-        band &&
-          '-mx-4 -mt-8 border-b bg-muted/60 px-4 py-8 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 lg:py-10',
-      )}
+      className={cn('flex flex-col items-center space-y-2.5 text-center', band && 'border-b pb-6')}
     >
       {breadcrumb && (
-        <Breadcrumb aria-label="Vị trí trang">
+        <Breadcrumb aria-label="Vị trí trang" className="self-start">
           <BreadcrumbList className="text-xs">
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
@@ -55,9 +51,11 @@ export function CatalogPageHeader({
       {eyebrow && (
         <p className="text-xs font-semibold tracking-[0.2em] text-primary uppercase">{eyebrow}</p>
       )}
-      <h1 className="font-heading text-3xl font-medium tracking-tight sm:text-4xl">{title}</h1>
-      <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">{description}</p>
-      {children && <div className={cn(band && 'max-w-xl')}>{children}</div>}
+      <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
+        {title}
+      </h1>
+      <p className="max-w-2xl text-sm text-muted-foreground">{description}</p>
+      {children && <div className="w-full max-w-md pt-1.5 text-left sm:max-w-lg">{children}</div>}
     </header>
   );
 }

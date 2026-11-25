@@ -12,6 +12,7 @@ import {
 import { formatLocalDate } from '@/lib/formatting/formatters';
 import { colors, radius, shadows, spacing } from '@theme/index';
 import { getTreatmentCannotBookReason } from '../utils/treatmentHelpers';
+import { containerCardRole } from '@/lib/accessibility/cardRole';
 
 export interface TreatmentPlanCardProps {
   plan: MyTreatmentListItem;
@@ -38,7 +39,7 @@ export function TreatmentPlanCard({
     <Pressable
       onPress={() => onPressDetail(plan)}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-      accessibilityRole="button"
+      accessibilityRole={containerCardRole}
       accessibilityLabel={`Liệu trình ${plan.packageName}`}
     >
       {/* Top Row: Badges + Primary Staff */}

@@ -10,6 +10,10 @@ export const homePathFor = (role: UserRole) => homePaths[role];
 export const workspacePathFor = (role: UserRole) =>
   role === 'customer' ? '/account' : homePathFor(role);
 
+/** Personal profile page: the customer's account area, or the profile inside the staff/owner workspace. */
+export const accountPathFor = (role: UserRole) =>
+  role === 'customer' ? '/account' : `${homePathFor(role)}/account`;
+
 export const roleLabels: Record<UserRole, string> = {
   customer: 'Khách hàng',
   staff: 'Nhân viên',

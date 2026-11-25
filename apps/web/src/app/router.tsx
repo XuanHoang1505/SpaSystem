@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { createBrowserRouter, type RouteObject } from 'react-router-dom';
+import { createBrowserRouter, Navigate, useLocation, type RouteObject } from 'react-router-dom';
 import { routes } from './routes';
 import { AuthLayout } from '@components/layout/AuthLayout/AuthLayout';
 import { PublicLayout } from '@components/layout/PublicLayout/PublicLayout';
@@ -39,11 +39,13 @@ import { StaffAppointmentDetailPage } from '@/pages/staff/StaffAppointmentDetail
 import { StaffAppointmentsPage } from '@/pages/staff/StaffAppointmentsPage';
 import { StaffCareHistoryPage } from '@/pages/staff/StaffCareHistoryPage';
 import { StaffCertificationsPage } from '@/pages/staff/StaffCertificationsPage';
+import { StaffOverviewPage } from '@/pages/staff/StaffOverviewPage';
 import { StaffSchedulePage } from '@/pages/staff/StaffSchedulePage';
 import { OwnerTreatmentsPage } from '@/pages/owner/OwnerTreatmentsPage';
 import { OwnerReportsPage } from '@/pages/owner/OwnerReportsPage';
 import { OwnerReviewsPage } from '@/pages/owner/OwnerReviewsPage';
 import { AboutPage } from '@/pages/public/AboutPage';
+import { ContactPage } from '@/pages/public/ContactPage';
 import { HomePage } from '@/pages/public/HomePage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@/pages/public/LoginPage';
@@ -58,9 +60,11 @@ import { PlaceholderPage } from '@/pages/PlaceholderPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 import { useAuthStore } from '@/stores/authStore';
+import { accountPathFor } from '@/features/auth/navigation';
 
 function AccountRoute() {
   const user = useAuthStore((state) => state.user);
+  const { hash } = useLocation();
   if (user?.role === 'customer') {
     return (
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
@@ -71,11 +75,9 @@ function AccountRoute() {
       </div>
     );
   }
-  return (
-    <div className="container mx-auto max-w-4xl py-6">
-      <AccountPage />
-    </div>
-  );
+  // Staff and the owner keep their profile inside their workspace (sidebar and header), not the public site.
+  if (user) return <Navigate to={{ pathname: accountPathFor(user.role), hash }} replace />;
+  return null;
 }
 
 function AiAssistantRoute() {
@@ -100,6 +102,7 @@ function AiAssistantRoute() {
 export const publicPages: Record<string, ReactElement> = {
   '/': <HomePage />,
   '/about': <AboutPage />,
+  '/contact': <ContactPage />,
   '/services': <ServicesPage />,
   '/services/:serviceId': <ServiceDetailPage />,
   '/packages': <PackagesPage />,
@@ -130,12 +133,14 @@ export const customerPages: Record<string, ReactElement> = {
 
 /** Staff pages that are built; the other staff routes still show the placeholder. */
 export const staffPages: Record<string, ReactElement> = {
+  '/staff': <StaffOverviewPage />,
   '/staff/schedule': <StaffSchedulePage />,
   '/staff/bookings': <StaffAppointmentsPage />,
   '/staff/bookings/:appointmentId': <StaffAppointmentDetailPage />,
   '/staff/care-history': <StaffCareHistoryPage />,
   '/staff/certifications': <StaffCertificationsPage />,
   '/staff/notifications': <WorkspaceNotificationsPage />,
+  '/staff/account': <AccountPage />,
 };
 
 /** Owner pages that are built; the other owner routes still show the placeholder. */
@@ -152,6 +157,7 @@ export const ownerPages: Record<string, ReactElement> = {
   '/owner/reports': <OwnerReportsPage />,
   '/owner/accounts': <OwnerAccountsPage />,
   '/owner/notifications': <WorkspaceNotificationsPage />,
+  '/owner/account': <AccountPage />,
 };
 
 /** Login, register, forgot-password: own split layout without the site header/footer, guests only. */

@@ -1,13 +1,12 @@
 import { Tabs } from 'expo-router';
 import { RouteGuard } from '@components/auth/RouteGuard';
-import { LayoutDashboard, CalendarCheck, BarChart3, Users, User } from 'lucide-react-native';
+import { LayoutDashboard, CalendarCheck, Users, User } from 'lucide-react-native';
 import { useCommonTabScreenOptions, tabIcon } from '@/config/navigation';
 
 /**
  * Owner Bottom Navigation:
- * - Dashboard: Tổng quan quản lý & kinh doanh
+ * - Dashboard: Tổng quan kinh doanh (báo cáo doanh thu)
  * - Bookings: Quản lý lịch hẹn toàn spa
- * - Reports: Thống kê & báo cáo doanh thu
  * - Staff: Danh sách nhân viên & phân ca
  * - Profile: Thông tin chủ spa và đăng xuất
  */
@@ -29,13 +28,6 @@ export default function OwnerLayout() {
           options={{
             title: 'Lịch hẹn',
             tabBarIcon: tabIcon(CalendarCheck),
-          }}
-        />
-        <Tabs.Screen
-          name="reports"
-          options={{
-            title: 'Báo cáo',
-            href: null,
           }}
         />
         <Tabs.Screen

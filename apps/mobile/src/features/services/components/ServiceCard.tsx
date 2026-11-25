@@ -4,6 +4,7 @@ import { ArrowRight, Clock, Sparkles, Star } from 'lucide-react-native';
 import { AppText } from '@components/common/AppText';
 import { formatCurrency } from '@/lib/formatting/formatters';
 import { colors, radius, spacing } from '@theme/index';
+import { containerCardRole } from '@/lib/accessibility/cardRole';
 
 export function ServiceCard({
   service,
@@ -19,7 +20,7 @@ export function ServiceCard({
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole="button"
+      accessibilityRole={containerCardRole}
       accessibilityLabel={`Dịch vụ ${service.name}, giá ${formatCurrency(service.price)}, thời lượng ${service.durationMinutes} phút`}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
     >
@@ -67,15 +68,13 @@ export function ServiceCard({
           {/* Duration Row */}
           <View style={styles.durationRow}>
             <Clock size={12} color={colors.muted} />
-            <AppText style={styles.durationText}>
-              {service.durationMinutes} phút liệu trình
-            </AppText>
+            <AppText style={styles.durationText}>{service.durationMinutes} phút liệu trình</AppText>
           </View>
 
           {/* Short Description */}
           <AppText numberOfLines={2} style={styles.shortDescription}>
             {service.shortDescription ||
-              'Liệu trình chăm sóc và phục hồi chuyên sâu, chuẩn y khoa mang lại hiệu quả tối ưu.'}
+              'Dịch vụ chăm sóc theo quy trình của spa, do kỹ thuật viên thực hiện.'}
           </AppText>
         </View>
       </View>
@@ -106,16 +105,10 @@ export function ServiceCard({
             isDiscontinued ? `${service.name} tạm ngưng` : `Đặt ngay ${service.name}`
           }
           hitSlop={6}
-          style={[
-            styles.actionButton,
-            isDiscontinued && styles.actionButtonDisabled,
-          ]}
+          style={[styles.actionButton, isDiscontinued && styles.actionButtonDisabled]}
         >
           <AppText
-            style={[
-              styles.actionButtonText,
-              isDiscontinued && styles.actionButtonTextDisabled,
-            ]}
+            style={[styles.actionButtonText, isDiscontinued && styles.actionButtonTextDisabled]}
           >
             {isDiscontinued ? 'Tạm ngưng' : 'Đặt ngay'}
           </AppText>

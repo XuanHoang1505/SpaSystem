@@ -18,9 +18,7 @@ export function MyCertificationsView() {
         description="Bằng bạn thêm hoặc sửa sẽ chờ chủ spa duyệt trước khi hiển thị cho khách."
         className="border-b pb-4"
       />
-      <div className="max-w-3xl">
-        <CertificationList mode="self" staffMemberId={userId} query={query} actions={actions} />
-      </div>
+      <CertificationList mode="self" staffMemberId={userId} query={query} actions={actions} />
     </section>
   );
 }

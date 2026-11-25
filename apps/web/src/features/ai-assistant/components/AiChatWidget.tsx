@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Bot, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/authStore';
@@ -7,14 +8,17 @@ import { AiChatView } from './AiChatView';
 export function AiChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuthStore();
+  const { pathname } = useLocation();
 
   // If logged in as staff or owner, AI assistant is disabled (Q-60)
   if (user && (user.role === 'staff' || user.role === 'owner')) {
     return null;
   }
+  // The assistant page already is the chat; a second launcher would cover its send button.
+  if (pathname === '/ai-assistant') return null;
 
   return (
-    <div className="fixed right-6 bottom-6 z-50 flex flex-col items-end">
+    <div className="fixed right-4 bottom-4 z-50 flex flex-col items-end sm:right-6 sm:bottom-6">
       {isOpen && (
         <div className="mb-3 max-h-[calc(100vh-6rem)] w-[calc(100vw-2rem)] animate-in overflow-hidden rounded-2xl border bg-background shadow-2xl duration-200 fade-in slide-in-from-bottom-4 sm:w-[420px]">
           <div className="flex items-center justify-between border-b bg-primary px-3 py-2 text-primary-foreground">
@@ -42,9 +46,9 @@ export function AiChatWidget() {
         size="icon"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-label={isOpen ? 'Đóng trợ lý ảo AI' : 'Mở trợ lý ảo AI'}
-        className="relative flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 hover:bg-primary/90 active:scale-95"
+        className="relative flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 hover:bg-primary/90 active:scale-95 sm:size-14"
       >
-        {isOpen ? <X className="size-6" /> : <Bot className="size-8" />}
+        {isOpen ? <X className="size-6" /> : <Bot className="size-7 sm:size-8" />}
         {!isOpen && (
           <span aria-hidden="true" className="absolute top-0.5 right-0.5 flex size-3">
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />

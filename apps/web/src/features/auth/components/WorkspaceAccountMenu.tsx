@@ -37,7 +37,7 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
 import { useLogout } from '../hooks/useLogout';
-import { roleLabels } from '../navigation';
+import { accountPathFor, roleLabels } from '../navigation';
 import { initialOf } from './AccountMenu';
 
 const themes = [
@@ -82,13 +82,13 @@ function AccountMenuContent({
       </DropdownMenuLabel>
       <DropdownMenuSeparator />
       <DropdownMenuItem asChild>
-        <Link to="/account">
+        <Link to={accountPathFor(user.role)}>
           <UserIcon aria-hidden="true" />
           Hồ sơ cá nhân
         </Link>
       </DropdownMenuItem>
       <DropdownMenuItem asChild>
-        <Link to="/account#doi-mat-khau">
+        <Link to={`${accountPathFor(user.role)}#doi-mat-khau`}>
           <KeyRoundIcon aria-hidden="true" />
           Đổi mật khẩu
         </Link>

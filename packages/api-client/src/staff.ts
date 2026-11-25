@@ -19,12 +19,12 @@ export class StaffApi {
   constructor(private readonly client: ApiClient) {}
 
   /**
-   * Public list of working staff (no contact details). `status=working` keeps resigned staff out even when an owner's
-   * Bearer turns the same endpoint into the owner view (guests ignore it).
+   * Public list of working staff (no contact details). `view=public` keeps this shape when an owner is signed in: the
+   * same endpoint otherwise returns the owner list, which has no `certifications`.
    */
   listPublic(params: { spaServiceId?: string; pageSize?: number }, signal?: AbortSignal) {
     return this.client.get<ApiResponse<PagedResponse<PublicStaffMember>>>('/api/v1/staff', {
-      query: { ...params, status: 'working', pageNumber: 1 },
+      query: { ...params, view: 'public', pageNumber: 1 },
       signal,
     });
   }

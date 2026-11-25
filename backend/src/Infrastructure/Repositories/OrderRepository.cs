@@ -329,4 +329,24 @@ public sealed class OrderRepository : Repository<Order>, IOrderRepository
         return await Set.Include(order => order.Payments).Include(order => order.Installments).AsSplitQuery()
             .Where(order => ids.Contains(order.Id)).ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Order>> LockWithStalePaymentsAsync(DateTime cutoffUtc, int batchSize, CancellationToken cancellationToken)
+    {
+        // pending_payment orders are left to LockExpirableAsync: their payments expire together with the order.
+        var ids = await Context.Database
+            .SqlQuery<Guid>($"""
+                SELECT o.id AS "Value" FROM orders o
+                WHERE o.status <> 'pending_payment'
+                  AND EXISTS (SELECT 1 FROM payments p
+                              WHERE p.order_id = o.id AND p.status = 'pending' AND p.expires_at_utc <= {cutoffUtc})
+                ORDER BY o.id
+                LIMIT {batchSize}
+                FOR UPDATE OF o SKIP LOCKED
+                """)
+            .ToListAsync(cancellationToken);
+        if (ids.Count == 0)
+            return [];
+        return await Set.Include(order => order.Payments).AsSplitQuery()
+            .Where(order => ids.Contains(order.Id)).ToListAsync(cancellationToken);
+    }
 }

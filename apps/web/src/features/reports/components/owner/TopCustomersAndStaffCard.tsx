@@ -3,8 +3,7 @@ import { CrownIcon, UserCheckIcon, UsersIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useOwnerAppointments } from '@/features/bookings';
-import { useManagedOrders } from '@/features/orders/hooks/useManagedOrders';
+import { useRevenueLeaders } from '../../hooks/useRevenueLeaders';
 import { formatCurrency, formatNumber } from '@/lib/formatting/formatters';
 
 export interface TopCustomersAndStaffCardProps {
@@ -13,98 +12,35 @@ export interface TopCustomersAndStaffCardProps {
 }
 
 export function TopCustomersAndStaffCard({ fromDate, toDate }: TopCustomersAndStaffCardProps) {
-  // Query paid orders for customer spend aggregation
-  const ordersQuery = useManagedOrders({
-    status: 'paid',
-    fromDate,
-    toDate,
-    pageSize: 100,
-  });
+  const leadersQuery = useRevenueLeaders({ fromDate, toDate, top: 5 });
 
-  // Query appointments for staff servicing activity
-  const appointmentsQuery = useOwnerAppointments({
-    fromDate,
-    toDate,
-    pageSize: 100,
-  });
+  const topCustomers = useMemo(
+    () =>
+      (leadersQuery.data?.topCustomers ?? []).map((customer) => ({
+        id: customer.customerId,
+        name: customer.fullName || 'Khách hàng',
+        phone: customer.phoneNumber,
+        totalSpent: customer.revenue,
+        orderCount: customer.orderCount,
+      })),
+    [leadersQuery.data?.topCustomers],
+  );
 
-  // Aggregate top spending customers
-  const topCustomers = useMemo(() => {
-    const items = ordersQuery.data?.items ?? [];
-    const customerMap = new Map<
-      string,
-      {
-        id: string;
-        name: string;
-        phone: string;
-        totalSpent: number;
-        orderCount: number;
-      }
-    >();
+  const topStaff = useMemo(
+    () =>
+      (leadersQuery.data?.topStaff ?? []).map((staff) => ({
+        id: staff.staffMemberId,
+        name: staff.fullName || 'Kỹ thuật viên',
+        completedCount: staff.completedCount,
+        totalCount: staff.appointmentCount,
+      })),
+    [leadersQuery.data?.topStaff],
+  );
 
-    items.forEach((order) => {
-      const customer = order.customer;
-      if (!customer?.id) return;
-      const existing = customerMap.get(customer.id);
-      if (existing) {
-        existing.totalSpent += Number(order.grandTotal);
-        existing.orderCount += 1;
-      } else {
-        customerMap.set(customer.id, {
-          id: customer.id,
-          name: customer.fullName || 'Khách vãng lai',
-          phone: customer.phoneNumber || '',
-          totalSpent: Number(order.grandTotal),
-          orderCount: 1,
-        });
-      }
-    });
+  const maxCustomerSpent = Math.max(topCustomers[0]?.totalSpent ?? 0, 1);
+  const maxStaffAppts = Math.max(topStaff[0]?.completedCount ?? 0, 1);
 
-    return Array.from(customerMap.values())
-      .sort((a, b) => b.totalSpent - a.totalSpent)
-      .slice(0, 5);
-  }, [ordersQuery.data?.items]);
-
-  // Aggregate top active staff
-  const topStaff = useMemo(() => {
-    const items = appointmentsQuery.data?.items ?? [];
-    const staffMap = new Map<
-      string,
-      {
-        id: string;
-        name: string;
-        completedCount: number;
-        totalCount: number;
-      }
-    >();
-
-    items.forEach((appt) => {
-      const staff = appt.staff;
-      if (!staff?.id) return;
-      const isCompleted = appt.status === 'completed';
-      const existing = staffMap.get(staff.id);
-      if (existing) {
-        existing.totalCount += 1;
-        if (isCompleted) existing.completedCount += 1;
-      } else {
-        staffMap.set(staff.id, {
-          id: staff.id,
-          name: staff.fullName || 'Kỹ thuật viên',
-          completedCount: isCompleted ? 1 : 0,
-          totalCount: 1,
-        });
-      }
-    });
-
-    return Array.from(staffMap.values())
-      .sort((a, b) => b.completedCount - a.completedCount || b.totalCount - a.totalCount)
-      .slice(0, 5);
-  }, [appointmentsQuery.data?.items]);
-
-  const maxCustomerSpent = topCustomers[0]?.totalSpent ?? 1;
-  const maxStaffAppts = topStaff[0]?.completedCount ?? 1;
-
-  const isLoading = ordersQuery.isLoading || appointmentsQuery.isLoading;
+  const isLoading = leadersQuery.isLoading;
 
   const getInitials = (name: string) => {
     const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -119,7 +55,7 @@ export function TopCustomersAndStaffCard({ fromDate, toDate }: TopCustomersAndSt
   };
 
   return (
-    <Card className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-xs p-0">
+    <Card className="overflow-hidden rounded-xl border border-border/70 bg-card p-0 shadow-xs">
       <CardHeader className="border-b border-border/40 bg-muted/15 px-5 py-4 pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -140,14 +76,14 @@ export function TopCustomersAndStaffCard({ fromDate, toDate }: TopCustomersAndSt
 
       <CardContent>
         <Tabs defaultValue="customers" className="space-y-4">
-          <TabsList className="rounded-lg bg-muted/70 p-1">
-            <TabsTrigger value="customers" className="gap-1.5 text-xs font-medium">
+          <TabsList className="grid h-auto w-full grid-cols-2 rounded-lg bg-muted/70 p-1 sm:inline-flex sm:w-fit">
+            <TabsTrigger value="customers" className="min-w-0 gap-1.5 text-xs font-medium">
               <CrownIcon className="size-3.5 text-amber-500" />
-              <span>Top Khách hàng chi tiêu</span>
+              <span className="truncate">Top khách hàng</span>
             </TabsTrigger>
-            <TabsTrigger value="staff" className="gap-1.5 text-xs font-medium">
+            <TabsTrigger value="staff" className="min-w-0 gap-1.5 text-xs font-medium">
               <UserCheckIcon className="size-3.5 text-emerald-600" />
-              <span>Kỹ thuật viên phục vụ</span>
+              <span className="truncate">Kỹ thuật viên</span>
             </TabsTrigger>
           </TabsList>
 

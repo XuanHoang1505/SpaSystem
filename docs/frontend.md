@@ -12,6 +12,7 @@ React + Vite + TypeScript strict, UI bằng Tailwind CSS v4 + shadcn/ui ([ADR-00
 - `/packages` — Gói dịch vụ
 - `/packages/:packageId` — Chi tiết gói dịch vụ
 - `/about` — Giới thiệu spa
+- `/contact` — Liên hệ
 - `/login` — Đăng nhập
 - `/register` — Đăng ký
 - `/forgot-password` — Quên mật khẩu
@@ -39,6 +40,7 @@ React + Vite + TypeScript strict, UI bằng Tailwind CSS v4 + shadcn/ui ([ADR-00
 
 - `/staff` — Tổng quan nhân viên
 - `/staff/notifications` — Thông báo nhân viên (SCR-W23)
+- `/staff/account` — Hồ sơ cá nhân trong không gian nhân viên (`/account` chuyển hướng tới đây)
 - `/staff/schedule` — Lịch làm việc (SCR-W25, `features/staff/components/my-schedule`: lưới tuần/tháng, `?view=week|month&date=`, Sheet chi tiết ca)
 - `/staff/bookings` — Lịch hẹn được phân công (SCR-W26, `features/care`: tab Hôm nay/Sắp tới/Đã xong, lọc khoảng ngày ≤ 42 ngày và trạng thái trên URL)
 - `/staff/bookings/:appointmentId` — Chi tiết buổi chăm sóc (SCR-W27: dị ứng nổi bật, tab Khách & dị ứng / Hồ sơ da / Kết quả buổi, xác nhận hoàn thành)
@@ -58,6 +60,7 @@ React + Vite + TypeScript strict, UI bằng Tailwind CSS v4 + shadcn/ui ([ADR-00
 - `/owner/reports` — Báo cáo
 - `/owner/accounts` — Tài khoản người dùng (SCR-W40, UC-SPA-05, `features/users/components/owner`: DataTable phân trang server, lọc vai trò/trạng thái, Sheet chi tiết, sửa họ tên/ngày sinh/giới tính, khóa/mở khóa)
 - `/owner/notifications` — Thông báo quản trị (SCR-W23)
+- `/owner/account` — Hồ sơ cá nhân trong không gian quản trị (`/account` chuyển hướng tới đây)
 
 - `/forbidden` — Không có quyền truy cập.
 - `*` — Không tìm thấy trang.
@@ -93,6 +96,11 @@ Semantic header/nav/main/footer, skip link, focus visible, label/input error ass
 - **Trang:** `/about` (SCR-W06, khách vãng lai và khách hàng), toàn chiều rộng như trang chủ (`PublicLayout` bỏ khung cho `/` và `/about`).
 - **Feature:** `features/about`: `AboutIntro` (câu chuyện + ảnh), `AboutNote` (lời nhắn của spa trên dải màu thương hiệu), `AboutValues` (giá trị + ảnh không gian), `AboutJourney` (5 bước của một buổi chăm sóc), `AboutGallery` (ảnh không gian dạng mosaic), `AboutFaq` (câu hỏi trước buổi đầu, `details` gốc; câu về đặt/đổi lịch lấy số từ `catalogPolicies`), `AboutVisit` (địa chỉ, điện thoại `tel:`, email, giờ mở cửa, bản đồ Google Maps nhúng không cần API key, nút "Liên hệ ngay" và "Chỉ đường"). Dùng lại `TeamSection` (`GET /staff` công khai), `ClosingInvite`, `HomeBackdrop` của trang chủ.
 - **Dữ liệu:** không có API riêng. Thông tin liên hệ ở `config/siteInfo.ts`, câu chuyện, lời nhắn, giá trị, các bước, ảnh và câu hỏi thường gặp ở `features/about/aboutDemoContent.ts`; cả hai đều là **DEMO**, thay bằng nội dung thật của spa trước khi phát hành.
+
+## Liên hệ
+
+- **Trang:** `/contact` (khách vãng lai và khách hàng), toàn chiều rộng như `/about` (`fullWidthPaths` trong `PublicLayout`).
+- **Feature:** `features/contact`: `ContactIntro` (breadcrumb, tiêu đề, kênh liên hệ, form, giờ mở cửa và lối tắt tự phục vụ tới `/my-bookings`, `/my-orders`), `ContactChannels` (gọi `tel:`, email `mailto:`, chỉ đường Google Maps, trợ lý AI), `ContactMessageForm` (React Hook Form + Zod trong `schemas.ts`). Chưa có API nhận liên hệ nên form **không gửi lên server**: `buildContactMailto` soạn sẵn email (chủ đề, họ tên, SĐT nếu có, lời nhắn) tới `siteInfo.email` trong ứng dụng email của khách. Trang dùng lại `AboutVisit` (bản đồ) và `AboutFaq`.
 
 ## Danh mục dịch vụ và gói (UC-SPA-06/07)
 

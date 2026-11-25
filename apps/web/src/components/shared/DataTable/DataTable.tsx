@@ -1,4 +1,4 @@
-import { useMemo, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from 'react';
 import {
   createColumnHelper,
   flexRender,
@@ -66,6 +66,23 @@ const hideBelowClass = {
   md: 'hidden md:table-cell',
   lg: 'hidden lg:table-cell',
 } as const;
+
+const CARD_QUERY = '(max-width: 639px)';
+
+/** Below `sm` a table needs sideways scrolling, so rows are shown as cards there instead. */
+function useCardLayout() {
+  const [cards, setCards] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(CARD_QUERY).matches,
+  );
+  useEffect(() => {
+    const query = window.matchMedia(CARD_QUERY);
+    const onChange = () => setCards(query.matches);
+    onChange();
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+  return cards;
+}
 
 function columnClass<TData>(column: DataTableColumn<TData> | undefined) {
   if (!column) return 'w-12 text-right';
@@ -154,13 +171,102 @@ export function DataTable<TData>({
   const showEmpty = !showSkeleton && !showError && rows.length === 0;
   const skeletonRows = loadingRowCount ?? Math.min(page?.pageSize ?? 5, 10);
 
-  const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, row: TData) => {
+  const cardLayout = useCardLayout();
+
+  const handleRowKeyDown = (event: KeyboardEvent<HTMLElement>, row: TData) => {
     if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       onRowClick?.(row);
     }
   };
+
+  const pagination = page && onPageChange && !showError && (page.totalCount > 0 || !showEmpty) && (
+    <DataTablePagination
+      {...page}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      pageSizeOptions={pageSizeOptions}
+      disabled={isLoading || isFetching}
+    />
+  );
+
+  if (cardLayout) {
+    // Phone layout: the first column is the card title, the others are label/value pairs, actions sit top right.
+    const [titleColumn, ...detailColumns] = columns;
+    return (
+      <div className={cn('flex flex-col', className)}>
+        <div
+          aria-busy={isLoading || isFetching || undefined}
+          className={cn('transition-opacity', isFetching && !showSkeleton && 'opacity-60')}
+        >
+          <p className="sr-only">{caption}</p>
+          {showSkeleton && (
+            <ul className="space-y-3">
+              {Array.from({ length: Math.min(skeletonRows, 4) }, (_, index) => (
+                <li
+                  key={`skeleton-${index}`}
+                  data-testid="data-table-skeleton-row"
+                  className="space-y-2 rounded-xl border bg-card p-4"
+                >
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-1/2" />
+                </li>
+              ))}
+            </ul>
+          )}
+          {showError && (
+            <div className="rounded-xl border bg-card p-4">
+              <ErrorState message={error ?? undefined} onRetry={onRetry} retrying={isFetching} />
+            </div>
+          )}
+          {showEmpty && (
+            <div className="rounded-xl border bg-card p-4">{empty ?? <EmptyState />}</div>
+          )}
+          {!showSkeleton && !showError && rows.length > 0 && (
+            <ul className="space-y-3">
+              {rows.map((row) => (
+                <li
+                  key={getRowId(row)}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  className={cn(
+                    'space-y-3 rounded-xl border bg-card p-4 shadow-2xs',
+                    onRowClick &&
+                      'cursor-pointer transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                  )}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  onKeyDown={onRowClick ? (event) => handleRowKeyDown(event, row) : undefined}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1 text-sm">{titleColumn?.cell(row)}</div>
+                    {rowActions && (
+                      <div className="-mt-1 -mr-2 shrink-0">
+                        <DataTableRowActions row={row} actions={rowActions(row)} />
+                      </div>
+                    )}
+                  </div>
+                  {detailColumns.length > 0 && (
+                    <dl className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] gap-x-3 gap-y-2 border-t pt-3 text-sm">
+                      {detailColumns.map((column) => (
+                        <div key={column.id} className="contents">
+                          <dt className="text-xs leading-5 text-muted-foreground">
+                            {column.header}
+                          </dt>
+                          <dd className="min-w-0 break-words">{column.cell(row)}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {pagination}
+      </div>
+    );
+  }
 
   return (
     <div className={cn('flex flex-col', className)}>
@@ -272,15 +378,7 @@ export function DataTable<TData>({
           </TableBody>
         </Table>
       </div>
-      {page && onPageChange && !showError && (page.totalCount > 0 || !showEmpty) && (
-        <DataTablePagination
-          {...page}
-          onPageChange={onPageChange}
-          onPageSizeChange={onPageSizeChange}
-          pageSizeOptions={pageSizeOptions}
-          disabled={isLoading || isFetching}
-        />
-      )}
+      {pagination}
     </div>
   );
 }

@@ -97,7 +97,9 @@ export function RevenueKpiCards({
           </View>
           <View style={styles.singleRowText}>
             <AppText style={styles.label}>Số đơn hoàn tất thành công</AppText>
-            <AppText style={styles.subtext}>Đơn có ít nhất một khoản thanh toán được ghi nhận</AppText>
+            <AppText style={styles.subtext}>
+              Đơn có ít nhất một khoản thanh toán được ghi nhận
+            </AppText>
           </View>
           <View style={styles.orderCountWrap}>
             <AppText style={styles.orderCountValue}>{formatNumber(orderCount)}</AppText>

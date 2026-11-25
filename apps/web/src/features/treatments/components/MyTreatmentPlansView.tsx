@@ -84,7 +84,6 @@ export function MyTreatmentPlansView() {
         { label: 'Liệu trình của tôi' },
       ]}
       title="Liệu trình của tôi"
-      description="Theo dõi tiến độ phác đồ chăm sóc da và đặt lịch cho các buổi tiếp theo."
       filters={
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">

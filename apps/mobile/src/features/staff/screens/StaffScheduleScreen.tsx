@@ -39,10 +39,7 @@ export function StaffScheduleScreen() {
     () => formatWeekHeader(currentMonday, currentSunday),
     [currentMonday, currentSunday],
   );
-  const monthYearLabel = useMemo(
-    () => formatMonthYearHeader(currentMonday),
-    [currentMonday],
-  );
+  const monthYearLabel = useMemo(() => formatMonthYearHeader(currentMonday), [currentMonday]);
 
   const weekDays = useMemo(
     () => generateWeekDays(currentMonday, todayVn),

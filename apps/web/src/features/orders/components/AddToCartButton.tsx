@@ -2,6 +2,7 @@ import { CheckIcon, ShoppingCartIcon } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { orderErrorCode, orderErrorMessage } from '../errors';
 import { useAddToCart } from '../hooks/useAddToCart';
 import { useCart } from '../hooks/useCart';
@@ -11,10 +12,12 @@ export function AddToCartButton({
   product,
   iconOnly = false,
   productName = '',
+  className,
 }: {
   product: { type: 'service' | 'package'; id: string };
   iconOnly?: boolean;
   productName?: string;
+  className?: string;
 }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -28,7 +31,12 @@ export function AddToCartButton({
 
   if (inCart || add.isSuccess || orderErrorCode(add.error) === 'cart_item_exists')
     return (
-      <Button asChild size={iconOnly ? 'icon' : 'lg'} variant="outline" className="bg-card">
+      <Button
+        asChild
+        size={iconOnly ? 'icon' : 'lg'}
+        variant="outline"
+        className={cn('bg-card', className)}
+      >
         <Link
           to="/cart"
           aria-label={iconOnly ? `${productName} đã có trong giỏ, xem giỏ` : undefined}
@@ -44,7 +52,9 @@ export function AddToCartButton({
       product.type === 'service' ? { spaServiceId: product.id } : { servicePackageId: product.id },
       {
         onSuccess: () => {
-          const itemLabel = productName ? `Đã thêm "${productName}" vào giỏ hàng` : 'Đã thêm vào giỏ hàng';
+          const itemLabel = productName
+            ? `Đã thêm "${productName}" vào giỏ hàng`
+            : 'Đã thêm vào giỏ hàng';
           toast.success(itemLabel, {
             action: {
               label: 'Xem giỏ hàng',
@@ -62,7 +72,7 @@ export function AddToCartButton({
     <Button
       size={iconOnly ? 'icon' : 'lg'}
       variant="outline"
-      className="bg-card"
+      className={cn('bg-card', className)}
       loading={add.isPending}
       aria-label={iconOnly ? `Thêm ${productName} vào giỏ` : undefined}
       onClick={() => run(location, submit)}

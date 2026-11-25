@@ -17,4 +17,10 @@ public interface IRevenueReportRepository
     /// <summary>Revenue per product, revenue descending then name; <paramref name="top"/> null returns every product.</summary>
     Task<IReadOnlyList<ProductRevenueRow>> GetProductRevenueAsync(
         DateTime fromUtc, DateTime toUtcExclusive, ReportProductType productType, int? top, CancellationToken cancellationToken);
+
+    /// <summary>Customers by recognized revenue, highest first, then name.</summary>
+    Task<IReadOnlyList<TopCustomerDto>> GetTopCustomersAsync(DateTime fromUtc, DateTime toUtcExclusive, int top, CancellationToken cancellationToken);
+
+    /// <summary>Staff by completed appointments dated in <c>[from, to]</c>, then by all their kept appointments, then name.</summary>
+    Task<IReadOnlyList<TopStaffDto>> GetTopStaffAsync(DateOnly from, DateOnly to, int top, CancellationToken cancellationToken);
 }

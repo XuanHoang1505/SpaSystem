@@ -22,7 +22,6 @@ import { ServiceCard } from '../components/ServiceCard';
 import { ServiceSkeleton } from '../components/ServiceSkeleton';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useServiceSearch } from '../hooks/useServiceSearch';
-import { CartBadgeButton } from '@/features/orders';
 import { useAuthStore } from '@/stores/authStore';
 
 export function ServicesListScreen() {
@@ -98,10 +97,6 @@ export function ServicesListScreen() {
 
   return (
     <AppScreen scroll={false} style={styles.screen}>
-      <View style={styles.topHeaderBar}>
-        <AppText style={styles.screenTitle}>Dịch vụ chăm sóc</AppText>
-        <CartBadgeButton />
-      </View>
       <View style={styles.headerArea}>
         <CatalogSearchInput
           value={search}
@@ -122,13 +117,8 @@ export function ServicesListScreen() {
             accessibilityLabel="Mở bộ lọc khoảng giá"
             style={[styles.filterPill, hasPriceFilter && styles.filterPillActive]}
           >
-            <SlidersHorizontal
-              size={16}
-              color={hasPriceFilter ? colors.onPrimary : colors.muted}
-            />
-            <AppText
-              style={[styles.filterPillText, hasPriceFilter && styles.filterPillTextActive]}
-            >
+            <SlidersHorizontal size={16} color={hasPriceFilter ? colors.onPrimary : colors.muted} />
+            <AppText style={[styles.filterPillText, hasPriceFilter && styles.filterPillTextActive]}>
               Khoảng giá
             </AppText>
           </Pressable>
@@ -168,9 +158,7 @@ export function ServicesListScreen() {
                 if (authStatus === 'authenticated') {
                   router.push(bookingUrl);
                 } else {
-                  router.push(
-                    `/(public)/login?redirect=${encodeURIComponent(bookingUrl)}`,
-                  );
+                  router.push(`/(public)/login?redirect=${encodeURIComponent(bookingUrl)}`);
                 }
               }}
             />
@@ -240,18 +228,6 @@ const styles = StyleSheet.create({
   screen: {
     paddingHorizontal: 0,
     backgroundColor: colors.background,
-  },
-  topHeaderBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  screenTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
   },
   headerArea: {
     paddingHorizontal: spacing.md,

@@ -60,7 +60,6 @@ export function MyAppointmentsView() {
         { label: 'Lịch hẹn của tôi' },
       ]}
       title="Lịch hẹn của tôi"
-      description="Xem, đổi giờ hoặc hủy các lịch hẹn của bạn."
       actions={
         <Button asChild>
           <Link to="/services">Đặt lịch hẹn mới</Link>

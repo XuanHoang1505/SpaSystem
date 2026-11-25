@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { navigation, workspaceLabels, type Workspace } from '@/config/navigation';
+import { navigationGroups, workspaceLabels, type Workspace } from '@/config/navigation';
 import {
   Sidebar,
   SidebarContent,
@@ -22,7 +22,7 @@ export function WorkspaceSidebar({ workspace }: { workspace: Exclude<Workspace, 
   const { setOpenMobile } = useSidebar();
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="h-16 justify-center border-b px-3">
+      <SidebarHeader className="h-16 items-center justify-center border-b px-3">
         <Brand
           className="group-data-[collapsible=icon]:hidden"
           imgClassName="h-11 sm:h-11 max-w-[150px]"
@@ -30,27 +30,33 @@ export function WorkspaceSidebar({ workspace }: { workspace: Exclude<Workspace, 
         <Brand compact className="hidden group-data-[collapsible=icon]:flex" />
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>{workspaceLabels[workspace]}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu id="workspace-nav" aria-label="Menu không gian">
-              {navigation[workspace].map(({ path, title, icon: Icon }) => (
-                <SidebarMenuItem key={path}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === path || (path === '/owner' && pathname === '/owner/reports')}
-                    tooltip={title}
-                  >
-                    <NavLink to={path} end onClick={() => setOpenMobile(false)}>
-                      <Icon aria-hidden="true" />
-                      <span>{title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <nav id="workspace-nav" aria-label={`Menu ${workspaceLabels[workspace].toLowerCase()}`}>
+          {navigationGroups[workspace].map((group, index) => (
+            <SidebarGroup key={group.label ?? `group-${index}`}>
+              {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+              <SidebarGroupContent>
+                <SidebarMenu aria-label={group.label ?? undefined}>
+                  {group.items.map(({ path, title, icon: Icon }) => (
+                    <SidebarMenuItem key={path}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={
+                          pathname === path || (path === '/owner' && pathname === '/owner/reports')
+                        }
+                        tooltip={title}
+                      >
+                        <NavLink to={path} end onClick={() => setOpenMobile(false)}>
+                          <Icon aria-hidden="true" />
+                          <span>{title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </nav>
       </SidebarContent>
       <SidebarFooter className="border-t">
         <WorkspaceSidebarAccountMenu />

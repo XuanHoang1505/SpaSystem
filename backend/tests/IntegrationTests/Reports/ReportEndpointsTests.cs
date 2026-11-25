@@ -10,7 +10,7 @@ using static NhuNguyetSpa.IntegrationTests.Reports.ReportApi;
 
 namespace NhuNguyetSpa.IntegrationTests.Reports;
 
-/// <summary>UC-SPA-33 over HTTP (docs/specs/reports.md: RPT-T02, T04, T09, T11, T14). Years 2047–2049 belong to this class.</summary>
+/// <summary>UC-SPA-33 over HTTP (docs/specs/reports.md: RPT-T02, T04, T09, T11, T14). Years 2047–2050 belong to this class.</summary>
 [Collection(PostgresCollection.Name)]
 public sealed class ReportEndpointsTests : IAsyncLifetime
 {
@@ -71,6 +71,31 @@ public sealed class ReportEndpointsTests : IAsyncLifetime
         package.GetProperty("serviceRevenue").GetDecimal().Should().Be(0);
     }
 
+    /// <summary>Year 2050 belongs to this test: every recognized payment counts, not one page of orders.</summary>
+    [Fact]
+    public async Task LeadersRankCustomersByRecognizedRevenue()
+    {
+        var big = await _orders.SeedCustomerAsync("Khách chi nhiều");
+        var small = await _orders.SeedCustomerAsync("Khách chi ít");
+        var service = await _api.SeedServiceAsync(CatalogApi.NewTag() + " dịch vụ");
+        await _reports.SeedPaidOrderAsync(big, VnUtc(2050, 3, 1), [(service, null, 400_000)]);
+        await _reports.SeedPaidOrderAsync(big, VnUtc(2050, 6, 1), [(service, null, 600_000)]);
+        await _reports.SeedPaidOrderAsync(small, VnUtc(2050, 4, 1), [(service, null, 700_000)]);
+        await _reports.SeedPaidOrderAsync(small, VnUtc(2050, 5, 1), [(service, null, 900_000)], status: OrderStatus.Cancelled);
+
+        var (response, body) = await _api.GetAsync("/api/v1/reports/revenue/leaders?fromDate=2050-01-01&toDate=2050-12-31&top=1", _owner);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var data = CatalogApi.Data(body);
+        var customers = data.GetProperty("topCustomers").EnumerateArray().ToList();
+        customers.Should().ContainSingle();
+        customers[0].GetProperty("customerId").GetGuid().Should().Be(big);
+        customers[0].GetProperty("fullName").GetString().Should().Be("Khách chi nhiều");
+        customers[0].GetProperty("orderCount").GetInt32().Should().Be(2);
+        customers[0].GetProperty("revenue").GetDecimal().Should().Be(1_000_000);
+        data.GetProperty("topStaff").GetArrayLength().Should().Be(0);
+    }
+
     [Fact]
     public async Task EmptyYear()
     {
@@ -88,6 +113,7 @@ public sealed class ReportEndpointsTests : IAsyncLifetime
     [InlineData("/api/v1/reports/revenue?groupBy=week", "GroupBy")]
     [InlineData("/api/v1/reports/revenue/export?groupBy=week", "GroupBy")]
     [InlineData("/api/v1/reports/revenue/by-product?top=0", "Top")]
+    [InlineData("/api/v1/reports/revenue/leaders?top=0", "Top")]
     [InlineData("/api/v1/reports/revenue?fromDate=2026-05-02&toDate=2026-05-01", "ToDate")]
     public async Task InvalidParameters(string path, string field)
     {
@@ -128,6 +154,7 @@ public sealed class ReportEndpointsTests : IAsyncLifetime
     [InlineData(UserRole.Staff, "/api/v1/reports/revenue")]
     [InlineData(UserRole.Staff, "/api/v1/reports/revenue/by-product")]
     [InlineData(UserRole.Staff, "/api/v1/reports/revenue/export")]
+    [InlineData(UserRole.Staff, "/api/v1/reports/revenue/leaders")]
     public async Task WrongRoleIsForbidden(UserRole role, string path)
     {
         var token = await _api.LoginAsync(role);
@@ -142,6 +169,7 @@ public sealed class ReportEndpointsTests : IAsyncLifetime
     [InlineData("/api/v1/reports/revenue")]
     [InlineData("/api/v1/reports/revenue/by-product")]
     [InlineData("/api/v1/reports/revenue/export")]
+    [InlineData("/api/v1/reports/revenue/leaders")]
     public async Task AnonymousIsUnauthorized(string path)
     {
         var (response, body) = await _api.GetAsync(path);

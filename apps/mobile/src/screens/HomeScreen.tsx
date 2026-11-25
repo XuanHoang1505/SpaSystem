@@ -339,7 +339,9 @@ export function HomeScreen() {
             <NotificationBellButton />
             <Pressable
               onPress={() =>
-                isAuthenticated ? router.push('/cart') : router.push('/(public)/login?redirect=/cart')
+                isAuthenticated
+                  ? router.push('/cart')
+                  : router.push('/(public)/login?redirect=/cart')
               }
               accessibilityRole="button"
               accessibilityLabel={`Giỏ hàng, ${cartCount} sản phẩm`}
@@ -347,11 +349,13 @@ export function HomeScreen() {
               style={styles.cartBtn}
             >
               <ShoppingCart size={23} color={colors.text} />
-              <View style={styles.cartBadge}>
-                <AppText style={styles.cartBadgeText}>
-                  {cartCount > 99 ? '99+' : String(cartCount)}
-                </AppText>
-              </View>
+              {cartCount > 0 && (
+                <View style={styles.cartBadge}>
+                  <AppText style={styles.cartBadgeText}>
+                    {cartCount > 99 ? '99+' : String(cartCount)}
+                  </AppText>
+                </View>
+              )}
             </Pressable>
           </View>
         </View>
@@ -376,7 +380,9 @@ export function HomeScreen() {
               <View style={styles.greenCalendarBadge}>
                 <Calendar size={14} color={colors.primary} />
               </View>
-              <AppText style={styles.upcomingTitle}>Lịch hẹn sắp tới</AppText>
+              <AppText style={styles.upcomingTitle}>
+                {isAuthenticated ? 'Lịch hẹn sắp tới' : 'Đặt lịch tại spa'}
+              </AppText>
             </View>
 
             <View style={styles.confirmedPill}>
@@ -676,9 +682,7 @@ export function HomeScreen() {
                       if (isAuthenticated) {
                         router.push(bookingUrl);
                       } else {
-                        router.push(
-                          `/(public)/login?redirect=${encodeURIComponent(bookingUrl)}`,
-                        );
+                        router.push(`/(public)/login?redirect=${encodeURIComponent(bookingUrl)}`);
                       }
                     }}
                     accessibilityRole="button"

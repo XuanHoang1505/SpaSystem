@@ -168,7 +168,6 @@ export function ServiceHistoryView() {
         { label: 'Lịch sử sử dụng' },
       ]}
       title="Lịch sử sử dụng dịch vụ"
-      description="Xem lại các lần sử dụng dịch vụ và kết quả chăm sóc da của bạn."
       filters={
         <ServiceHistoryFilterToolbar
           filters={filters}

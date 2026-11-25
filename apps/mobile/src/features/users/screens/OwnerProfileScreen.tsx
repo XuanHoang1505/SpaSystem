@@ -17,7 +17,7 @@ export function OwnerProfileScreen() {
               title: 'Báo cáo doanh thu & KPI',
               subtitle: 'Doanh thu theo tháng, quý và năm',
               icon: BarChart3,
-              onPress: () => router.push('/(owner)/reports'),
+              onPress: () => router.push('/(owner)/dashboard'),
             },
             {
               title: 'Quản lý lịch hẹn toàn spa',

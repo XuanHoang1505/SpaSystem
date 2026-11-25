@@ -201,10 +201,7 @@ export function RevenueFilterBar({
                 accessibilityLabel={`Lọc theo ${opt.label}`}
               >
                 <AppText
-                  style={[
-                    styles.productTypeText,
-                    isSelected && styles.activeProductTypeText,
-                  ]}
+                  style={[styles.productTypeText, isSelected && styles.activeProductTypeText]}
                 >
                   {opt.label}
                 </AppText>
@@ -247,14 +244,9 @@ export function RevenueFilterBar({
 }
 
 const styles = StyleSheet.create({
+  // Shown inside RevenueFilterSheet, which already draws the surface.
   container: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radius.card,
-    padding: spacing.lg,
-    gap: spacing.md,
-    ...shadows.card,
+    gap: spacing.lg,
   },
   header: {
     flexDirection: 'row',

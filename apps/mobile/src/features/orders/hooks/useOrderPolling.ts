@@ -10,8 +10,17 @@ const MAX_POLLS = 10;
 export const latestPayment = (order: OrderDetail) =>
   [...order.payments].sort((a, b) => b.createdAtUtc.localeCompare(a.createdAtUtc))[0];
 
+// A later installment (docs/specs/order-installments.md) is paid while the order is already partially paid.
 export const isWaiting = (order: OrderDetail | undefined) =>
-  order?.status === 'pending_payment' && latestPayment(order)?.status === 'pending';
+  (order?.status === 'pending_payment' || order?.status === 'partially_paid') &&
+  latestPayment(order)?.status === 'pending';
+
+/** The installment the latest successful attempt paid, while later ones remain (null otherwise). */
+export const paidInstallment = (order: OrderDetail | undefined) => {
+  if (order?.status !== 'partially_paid') return null;
+  const latest = latestPayment(order);
+  return latest?.status === 'succeeded' ? latest.installmentSequenceNumber : null;
+};
 
 export function useOrderPolling(orderId: string | null | undefined) {
   const queryClient = useQueryClient();
@@ -49,9 +58,9 @@ export function useOrderPolling(orderId: string | null | undefined) {
 
   const order = query.data;
 
-  // Invalidate cart once order is paid
+  // A paid order (or its first installment) empties the bought lines from the cart (BR-ORD-06).
   useEffect(() => {
-    if (order?.status === 'paid') {
+    if (order?.status === 'paid' || order?.status === 'partially_paid') {
       void queryClient.invalidateQueries({ queryKey: ordersQueryKeys.cart });
     }
   }, [order?.status, queryClient]);

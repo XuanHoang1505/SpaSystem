@@ -4,7 +4,9 @@ import { callMyWorkSchedules, myWorkSchedulesQueryKeys } from '@/lib/api/workSch
 
 export function useMyWorkScheduleDetail(shiftId?: string | null) {
   return useQuery<MyWorkScheduleDetail>({
-    queryKey: shiftId ? myWorkSchedulesQueryKeys.detail(shiftId) : ['myWorkSchedules', 'detail', 'none'],
+    queryKey: shiftId
+      ? myWorkSchedulesQueryKeys.detail(shiftId)
+      : ['myWorkSchedules', 'detail', 'none'],
     queryFn: ({ signal }) => {
       if (!shiftId) throw new Error('shiftId is required');
       return callMyWorkSchedules((api) => api.get(shiftId, signal));

@@ -63,7 +63,7 @@ export function TopProductsBarChart({ items, isLoading }: TopProductsBarChartPro
   }
 
   return (
-    <Card className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-xs p-0">
+    <Card className="overflow-hidden rounded-xl border border-border/70 bg-card p-0 shadow-xs">
       <CardHeader className="border-b border-border/40 bg-muted/15 px-5 py-4 pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -103,7 +103,7 @@ export function TopProductsBarChart({ items, isLoading }: TopProductsBarChartPro
             <BarChart
               data={top5}
               layout="vertical"
-              margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+              margin={{ top: 5, right: 24, left: 0, bottom: 5 }}
             >
               <CartesianGrid
                 horizontal={false}
@@ -122,7 +122,7 @@ export function TopProductsBarChart({ items, isLoading }: TopProductsBarChartPro
                 dataKey="name"
                 tickLine={false}
                 axisLine={false}
-                width={120}
+                width={150}
                 className="text-[11px] font-medium"
               />
               <ChartTooltip

@@ -1,11 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Clock, MessageSquareHeart } from 'lucide-react-native';
@@ -136,7 +130,7 @@ export function MyReviewsScreen() {
             <AppButton
               title="Đăng nhập ngay"
               onPress={() =>
-                router.push(`/(public)/login?redirect=${encodeURIComponent('/reviews')}`)
+                router.push(`/(public)/login?redirect=${encodeURIComponent('/my-reviews')}`)
               }
             />
           </View>
@@ -176,13 +170,8 @@ export function MyReviewsScreen() {
           accessibilityLabel={`Tab Chờ đánh giá (${pendingCount})`}
           style={[styles.tab, activeTab === 'pending' && styles.tabActive]}
         >
-          <Clock
-            size={16}
-            color={activeTab === 'pending' ? colors.primary : colors.muted}
-          />
-          <AppText
-            style={[styles.tabText, activeTab === 'pending' && styles.tabTextActive]}
-          >
+          <Clock size={16} color={activeTab === 'pending' ? colors.primary : colors.muted} />
+          <AppText style={[styles.tabText, activeTab === 'pending' && styles.tabTextActive]}>
             Chờ đánh giá
           </AppText>
           {pendingCount > 0 ? (
@@ -215,9 +204,7 @@ export function MyReviewsScreen() {
             size={16}
             color={activeTab === 'reviewed' ? colors.primary : colors.muted}
           />
-          <AppText
-            style={[styles.tabText, activeTab === 'reviewed' && styles.tabTextActive]}
-          >
+          <AppText style={[styles.tabText, activeTab === 'reviewed' && styles.tabTextActive]}>
             Đã đánh giá
           </AppText>
           {reviewedCount > 0 ? (
@@ -333,10 +320,7 @@ export function MyReviewsScreen() {
       />
 
       {/* Full-screen Image Preview Modal */}
-      <ReviewImageModal
-        imageUrl={previewImageUrl}
-        onClose={() => setPreviewImageUrl(null)}
-      />
+      <ReviewImageModal imageUrl={previewImageUrl} onClose={() => setPreviewImageUrl(null)} />
     </AppScreen>
   );
 }

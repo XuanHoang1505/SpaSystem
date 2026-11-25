@@ -4,13 +4,14 @@ using NhuNguyetSpa.Application.Common.Options;
 using NhuNguyetSpa.Application.Interfaces.Persistence;
 using NhuNguyetSpa.Application.Interfaces.Repositories;
 using NhuNguyetSpa.Application.Interfaces.Services.Payments;
+using NhuNguyetSpa.Domain.Entities;
 using NhuNguyetSpa.Domain.Enums;
 
 namespace NhuNguyetSpa.Application.UseCases.Payments;
 
 /// <summary>
-/// BR-ORD-03: pending orders past due + grace become expired, with their pending payments and book-now holds (BR-BKG-06). One batch
-/// per call.
+/// BR-ORD-03: pending orders past due + grace become expired, with their pending payments and book-now holds (BR-BKG-06). Pending
+/// payments of other orders (later installments) past their own expiry + grace become expired too. One batch of each per call.
 /// </summary>
 public sealed class OrderExpiryService : IOrderExpiryService
 {
@@ -38,21 +39,42 @@ public sealed class OrderExpiryService : IOrderExpiryService
         await _unitOfWork.ExecuteInTransactionAsync(async token =>
         {
             var orders = await _orders.LockExpirableAsync(cutoff, options.BatchSize, token);
-            if (orders.Count == 0)
-                return;
             foreach (var order in orders)
             {
                 order.Expire();
                 foreach (var payment in order.Payments.Where(payment => payment.Status == PaymentStatus.Pending))
                     payment.Expire();
             }
-            // BR-BKG-06 / A10: a book-now hold ends with its order.
-            var holds = await _appointments.GetHoldsForOrdersAsync(orders.Select(order => order.Id).ToList(), token);
-            foreach (var hold in holds.Where(hold => hold.Status == AppointmentStatus.Held))
-                hold.ExpireHold();
+            if (orders.Count > 0)
+            {
+                // BR-BKG-06 / A10: a book-now hold ends with its order.
+                var holds = await _appointments.GetHoldsForOrdersAsync(orders.Select(order => order.Id).ToList(), token);
+                foreach (var hold in holds.Where(hold => hold.Status == AppointmentStatus.Held))
+                    hold.ExpireHold();
+            }
+
+            var staleCount = ExpireStalePayments(await _orders.LockWithStalePaymentsAsync(cutoff, options.BatchSize, token), cutoff);
+            if (orders.Count == 0 && staleCount == 0)
+                return;
             await _unitOfWork.SaveChangesAsync(token);
             count = orders.Count;
         }, cancellationToken);
+        return count;
+    }
+
+    /// <summary>
+    /// BR-INS-08: an attempt for a later installment has its own window and no order due time, so the order stays as it is and only
+    /// the attempt past its expiry + grace becomes expired. A late success still pays it (<see cref="Payment.IsOpen"/>, Q-20).
+    /// </summary>
+    private static int ExpireStalePayments(IReadOnlyList<Order> orders, DateTime cutoffUtc)
+    {
+        var count = 0;
+        foreach (var payment in orders.SelectMany(order => order.Payments)
+                     .Where(payment => payment.Status == PaymentStatus.Pending && payment.ExpiresAtUtc <= cutoffUtc))
+        {
+            payment.Expire();
+            count++;
+        }
         return count;
     }
 }

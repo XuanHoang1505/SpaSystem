@@ -23,6 +23,8 @@ Backend tests gồm unit cho identity/audit/exceptions/result/pagination/DI và 
 
 Web Vitest + Testing Library và mobile Jest Expo + Native Testing Library mock fetch. Kiểm tra loading, online, offline, thiếu environment, thao tác button, input validation, screen/route placeholder. Shared client tests kiểm tra JSON, query, HTTP/network errors, cancellation và response 204. Không phụ thuộc backend thật và không tạo session giả.
 
+`npm run dev` chạy web theo địa chỉ IP LAN mà nó in ra, và VNPay cũng trả khách về đúng địa chỉ đó (`Payment:ClientReturnUrls:Web`). Cookie phiên đăng nhập chỉ thuộc về một host, nên nếu web được mở bằng `localhost`/`127.0.0.1`, trang tự chuyển sang địa chỉ LAN trước khi chạy app (`VITE_DEV_CANONICAL_ORIGIN`, `apps/web/src/config/devOrigin.ts`). Nếu không làm vậy, khách đăng nhập ở `localhost` sẽ bị đăng xuất khi quay về từ VNPay. Bản build production không bị ảnh hưởng.
+
 `mobile:export` là kiểm tra bundle Metro, không build APK/AAB. Docker build cần Docker Desktop daemon; kiểm tra Compose syntax không thay thế việc build/chạy container.
 
 Thêm feature mới theo README. C# dùng file-scoped namespace và một public type chính mỗi file. TypeScript strict, không dùng any/@ts-ignore để bỏ qua lỗi. Chạy formatter trước khi hoàn tất thay đổi. Không commit env, key, logs, dist, .expo, node_modules, bin/obj.

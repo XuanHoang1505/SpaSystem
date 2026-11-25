@@ -1,8 +1,4 @@
-import type {
-  ReportProductType,
-  RevenueGroupBy,
-  RevenueProductKind,
-} from '@spa/shared-types';
+import type { ReportProductType, RevenueGroupBy, RevenueProductKind } from '@spa/shared-types';
 
 const vnDateFormatter = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Asia/Ho_Chi_Minh',

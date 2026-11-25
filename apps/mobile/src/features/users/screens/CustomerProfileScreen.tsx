@@ -231,7 +231,7 @@ export function CustomerProfileScreen() {
               title: 'Đánh giá của tôi',
               subtitle: 'Đánh giá dịch vụ & quản lý phản hồi',
               icon: Star,
-              onPress: () => router.push('/reviews'),
+              onPress: () => router.push('/my-reviews'),
             },
           ],
         },

@@ -1,16 +1,12 @@
 import { StyleSheet, View } from 'react-native';
-import { Award, PackageCheck, Sparkles } from 'lucide-react-native';
+import { Award, PackageCheck } from 'lucide-react-native';
 import { AppText } from '@components/common/AppText';
 import { formatCurrency, formatNumber } from '@/lib/formatting/formatters';
 import { colors, radius, shadows, spacing } from '@theme/index';
 import { formatSharePercent, productKindBadgeConfig } from '../utils/reportHelpers';
 import type { ProductRevenueDto } from '@spa/shared-types';
 
-export function TopProductsCard({
-  items,
-}: {
-  items?: readonly ProductRevenueDto[];
-}) {
+export function TopProductsCard({ items }: { items?: readonly ProductRevenueDto[] }) {
   const list = items ?? [];
 
   return (
@@ -104,7 +100,8 @@ export function TopProductsCard({
                       styles.progressBar,
                       {
                         width: `${Math.max(2, Math.min(item.sharePercent, 100))}%`,
-                        backgroundColor: item.productType === 'package' ? colors.primary : '#2F5677',
+                        backgroundColor:
+                          item.productType === 'package' ? colors.primary : '#2F5677',
                       },
                     ]}
                   />

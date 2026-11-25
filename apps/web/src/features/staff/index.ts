@@ -19,6 +19,7 @@ export { CancelShiftDialog } from './components/CancelShiftDialog';
 export { MyScheduleView } from './components/my-schedule/MyScheduleView';
 export { MyCertificationsView } from './components/certifications/MyCertificationsView';
 export { CertificationList } from './components/certifications/CertificationList';
+export { StaffOverviewView } from './components/StaffOverviewView';
 
 export * from './hooks/useStaffList';
 export * from './hooks/useStaffDetail';

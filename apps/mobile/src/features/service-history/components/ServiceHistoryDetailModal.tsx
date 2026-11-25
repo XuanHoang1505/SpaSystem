@@ -18,10 +18,7 @@ import { AppNotice } from '@components/common/AppNotice';
 import { AppText } from '@components/common/AppText';
 import { colors, radius, spacing } from '@theme/index';
 import { useServiceHistoryDetail } from '../hooks/useServiceHistoryDetail';
-import {
-  formatServiceHistoryDate,
-  getServiceHistoryStatusMeta,
-} from '../utils/historyStatus';
+import { formatServiceHistoryDate, getServiceHistoryStatusMeta } from '../utils/historyStatus';
 
 export interface ServiceHistoryDetailModalProps {
   visible: boolean;
@@ -44,7 +41,7 @@ export function ServiceHistoryDetailModal({
 
   const handleReview = () => {
     onClose();
-    router.push('/reviews');
+    router.push('/my-reviews');
   };
 
   const handleViewTreatment = (planId: string) => {

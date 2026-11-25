@@ -17,9 +17,9 @@ export function ReviewableProductCard({ product, onReviewClick }: Props) {
 
   return (
     <Card className="rounded-2xl border bg-card transition-all hover:shadow-xs">
-      <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 sm:p-6">
-        <div className="flex items-center gap-4 min-w-0 flex-1">
-          <div className="relative size-16 sm:size-20 shrink-0 overflow-hidden rounded-xl border bg-muted/20">
+      <CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <div className="relative size-16 shrink-0 overflow-hidden rounded-xl border bg-muted/20 sm:size-20">
             <ImageWithFallback
               src={product.imageUrl}
               alt={product.name}
@@ -28,18 +28,21 @@ export function ReviewableProductCard({ product, onReviewClick }: Props) {
             />
           </div>
 
-          <div className="space-y-1.5 min-w-0">
+          <div className="min-w-0 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="text-xs">
                 {typeLabel}
               </Badge>
               {!product.eligible && product.reason && (
-                <Badge variant="secondary" className="text-xs text-muted-foreground font-normal">
+                <Badge
+                  variant="secondary"
+                  className="h-auto max-w-full shrink text-left text-xs font-normal whitespace-normal text-muted-foreground"
+                >
                   {reviewIneligibilityLabels[product.reason] ?? 'Chưa đủ điều kiện'}
                 </Badge>
               )}
             </div>
-            <h3 className="font-heading font-semibold text-base sm:text-lg text-foreground truncate">
+            <h3 className="truncate font-heading text-base font-semibold text-foreground sm:text-lg">
               {product.name}
             </h3>
             {product.eligible && (
@@ -50,21 +53,17 @@ export function ReviewableProductCard({ product, onReviewClick }: Props) {
           </div>
         </div>
 
-        <div className="w-full sm:w-auto shrink-0 flex items-center justify-end">
+        <div className="flex w-full shrink-0 items-center justify-end sm:w-auto">
           {product.eligible ? (
             <Button
               onClick={() => onReviewClick(product)}
-              className="w-full sm:w-auto gap-2 rounded-xl"
+              className="w-full gap-2 rounded-xl sm:w-auto"
             >
               <StarIcon className="size-4 fill-amber-300 text-amber-300" aria-hidden="true" />
               Viết đánh giá
             </Button>
           ) : (
-            <Button
-              variant="outline"
-              disabled
-              className="w-full sm:w-auto text-muted-foreground"
-            >
+            <Button variant="outline" disabled className="w-full text-muted-foreground sm:w-auto">
               Chưa đủ điều kiện
             </Button>
           )}

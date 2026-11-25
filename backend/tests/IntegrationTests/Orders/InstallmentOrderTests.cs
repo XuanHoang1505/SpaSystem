@@ -219,6 +219,33 @@ public sealed class InstallmentOrderTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AnAbandonedLaterInstallmentAttemptExpiresAndStaysPayableLate()
+    {
+        var (token, _) = await _orders.LoginCustomerAsync();
+        var orderId = await CreateInstallmentOrderAsync(token, 2);
+        var (code1, attempt1) = await PayAsync(token, orderId);
+        (await IpnAsync(code1, attempt1.GetProperty("amount").GetDecimal())).Should().Be("00");
+        var (code2, attempt2) = await PayAsync(token, orderId);
+
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            _factory.Clock.Offset = TimeSpan.FromMinutes(30);
+            await scope.ServiceProvider.GetRequiredService<NhuNguyetSpa.Application.Interfaces.Services.Payments.IOrderExpiryService>()
+                .ExpireOverdueAsync(CancellationToken.None);
+        }
+        await using (var context = _postgres.CreateContext())
+        {
+            var order = await context.Orders.Include(item => item.Payments).SingleAsync(item => item.Id == orderId);
+            order.Status.Should().Be(OrderStatus.PartiallyPaid);
+            order.Payments.Single(item => item.RequestCode == code2).Status.Should().Be(PaymentStatus.Expired);
+        }
+
+        // Q-20: VNPay's result after the expiry still pays the installment.
+        (await IpnAsync(code2, attempt2.GetProperty("amount").GetDecimal())).Should().Be("00");
+        (await OrderAsync(token, orderId)).GetProperty("status").GetString().Should().Be("paid");
+    }
+
+    [Fact]
     public async Task OwnerCancellingThePlanCancelsTheInstallmentsLeft()
     {
         var (token, _) = await _orders.LoginCustomerAsync();

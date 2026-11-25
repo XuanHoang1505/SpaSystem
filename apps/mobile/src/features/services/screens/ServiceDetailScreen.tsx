@@ -130,9 +130,7 @@ export function ServiceDetailScreen() {
     if (authStatus === 'authenticated') {
       router.push(bookingUrl);
     } else {
-      router.push(
-        `/(public)/login?redirect=${encodeURIComponent(bookingUrl)}`,
-      );
+      router.push(`/(public)/login?redirect=${encodeURIComponent(bookingUrl)}`);
     }
   };
 
@@ -203,7 +201,7 @@ export function ServiceDetailScreen() {
             <View style={styles.stepsHeader}>
               <View style={styles.stepsHeaderLeft}>
                 <AppText style={styles.sectionTitle}>
-                  {`Quy trình ${displaySteps.length} bước chuẩn y khoa`}
+                  {`Quy trình ${displaySteps.length} bước`}
                 </AppText>
               </View>
               <View style={styles.stepsDurationBadge}>
@@ -470,7 +468,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   policyIcon: {
-    marginTop: spacing.xs
+    marginTop: spacing.xs,
   },
   stickyBottomBar: {
     position: 'absolute',

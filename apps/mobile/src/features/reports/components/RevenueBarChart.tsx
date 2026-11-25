@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { BarChart3, Calendar, Layers, Trophy } from 'lucide-react-native';
+import { BarChart3, Calendar, Trophy } from 'lucide-react-native';
 import { AppText } from '@components/common/AppText';
 import { formatCurrency, formatLocalDate, formatNumber } from '@/lib/formatting/formatters';
 import { colors, radius, shadows, spacing } from '@theme/index';
@@ -20,11 +20,7 @@ function formatCompactRevenue(value: number): string {
   return `${value}đ`;
 }
 
-export function RevenueBarChart({
-  periods,
-}: {
-  periods?: readonly RevenuePeriodDto[];
-}) {
+export function RevenueBarChart({ periods }: { periods?: readonly RevenuePeriodDto[] }) {
   const items = useMemo(() => periods ?? [], [periods]);
 
   // Tìm kỳ có doanh thu lớn nhất
@@ -187,7 +183,8 @@ export function RevenueBarChart({
               <AppText style={styles.selectedTitle}>Kỳ {selectedPeriod.label}</AppText>
             </View>
             <AppText style={styles.selectedRange}>
-              {formatLocalDate(selectedPeriod.periodStart)} – {formatLocalDate(selectedPeriod.periodEnd)}
+              {formatLocalDate(selectedPeriod.periodStart)} –{' '}
+              {formatLocalDate(selectedPeriod.periodEnd)}
             </AppText>
           </View>
 

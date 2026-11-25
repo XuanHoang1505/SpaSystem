@@ -21,7 +21,6 @@ import { colors, spacing, typography } from '@theme/index';
 import { PackageCard } from '../components/PackageCard';
 import { PackageSkeleton } from '../components/PackageSkeleton';
 import { usePackageSearch } from '../hooks/usePackageSearch';
-import { CartBadgeButton } from '@/features/orders';
 
 export function PackagesListScreen() {
   const [search, setSearch] = useState('');
@@ -83,10 +82,6 @@ export function PackagesListScreen() {
 
   return (
     <AppScreen scroll={false} style={styles.screen}>
-      <View style={styles.topHeaderBar}>
-        <AppText style={styles.screenTitle}>Gói chăm sóc</AppText>
-        <CartBadgeButton />
-      </View>
       <View style={styles.headerArea}>
         <CatalogSearchInput
           value={search}
@@ -202,18 +197,6 @@ const styles = StyleSheet.create({
   screen: {
     paddingHorizontal: 0,
     backgroundColor: colors.background,
-  },
-  topHeaderBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  screenTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
   },
   headerArea: {
     paddingHorizontal: spacing.md,

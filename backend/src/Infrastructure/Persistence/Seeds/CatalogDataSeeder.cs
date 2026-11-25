@@ -64,45 +64,45 @@ public sealed class CatalogDataSeeder
             s[id] = await ServiceAsync(id, category, name, minutes, price, description, imageUrl, status, cancellationToken);
 
         await Add(CatalogSeedIds.FaceDeepClean, face, "Làm sạch sâu da mặt", 60, 350_000,
-            "Tẩy trang, rửa mặt, tẩy tế bào chết và xông hơi giúp lỗ chân lông thông thoáng.\nPhù hợp mọi loại da.", Image("lam-sach"));
+            "Tẩy trang, rửa mặt, tẩy tế bào chết và xông hơi giúp lỗ chân lông thông thoáng, loại bỏ bã nhờn và bụi bẩn tích tụ sâu.\nPhù hợp cho mọi loại da, đặc biệt là làn da thường xuyên trang điểm hoặc làm việc trong môi trường khói bụi.", Image("lam-sach"));
         await Add(CatalogSeedIds.FaceHydrate, face, "Cấp ẩm phục hồi", 90, 650_000,
-            "Bổ sung độ ẩm cho làn da khô, căng thiếu sức sống bằng tinh chất thảo mộc.", Image("cap-am"));
+            "Bổ sung độ ẩm chuyên sâu cho làn da khô, bong tróc hoặc thiếu sức sống bằng tinh chất thảo mộc thiên nhiên kết hợp điện di lạnh.\nGiúp bề mặt da căng mướt, làm dịu cảm giác khô căng ngay sau buổi chăm sóc đầu tiên.", Image("cap-am"));
         await Add(CatalogSeedIds.FaceBasic, face, "Chăm sóc da cơ bản", 45, 250_000,
-            "Liệu trình chăm sóc nhẹ nhàng dành cho lần đầu đến spa.", imageUrl: null);
+            "Liệu trình chăm sóc nhẹ nhàng dành cho khách lần đầu đến spa hoặc cần duy trì làn da sạch khỏe hàng tuần với các bước làm sạch, massage thư giãn và đắp mặt nạ dịu nhẹ.", imageUrl: null);
         await Add(CatalogSeedIds.FacePearl, face, "Dưỡng trắng ngọc trai", 75, 550_000,
-            "Đắp mặt nạ bột ngọc trai và massage giúp da sáng mịn.", Image("ngoc-trai"));
+            "Kết hợp mặt nạ bột ngọc trai thiên nhiên giàu khoáng chất cùng kỹ thuật massage lưu thông khí huyết, giúp cải thiện sắc tố da xỉn màu và mang lại vẻ sáng mịn tự nhiên.", Image("ngoc-trai"));
         await Add(CatalogSeedIds.FaceLift, face, "Massage mặt nâng cơ", 60, 450_000,
-            "Kỹ thuật massage mặt giúp thư giãn cơ mặt, gương mặt thon gọn hơn.", Image("nang-co"));
+            "Kỹ thuật massage nâng cơ chuyên sâu tác động vào các nhóm cơ mặt, hỗ trợ tăng độ đàn hồi, giảm chảy xệ và giúp đường nét gương mặt thon gọn, tươi tắn hơn.", Image("nang-co"));
         await Add(CatalogSeedIds.TreatmentAcne, treatment, "Trị mụn chuyên sâu", 90, 750_000,
-            "Làm sạch, lấy nhân mụn và làm dịu da theo quy trình của spa.", Image("tri-mun"));
+            "Quy trình chăm sóc da mụn bài bản từ soi da, làm sạch sâu, lấy nhân mụn chuẩn vệ sinh với dụng cụ riêng đến chiếu ánh sáng sinh học và đắp mặt nạ kháng khuẩn làm dịu da.", Image("tri-mun"));
         await Add(CatalogSeedIds.TreatmentPeel, treatment, "Peel da sinh học", 60, 900_000,
-            "Tẩy da chết sinh học giúp bề mặt da đều màu, mịn màng.", Image("peel"));
+            "Tẩy da chết sinh học nồng độ an toàn giúp loại bỏ lớp sừng già cỗi, làm mờ thâm sạm và thúc đẩy tái tạo bề mặt da đều màu, mịn màng hơn.", Image("peel"));
         await Add(CatalogSeedIds.TreatmentInfusion, treatment, "Điện di tinh chất", 45, 500_000,
-            "Đưa tinh chất dưỡng vào da bằng máy điện di.", Image("dien-di"));
+            "Sử dụng đầu máy điện di chuyên dụng đưa tinh chất dưỡng ẩm và phục hồi thẩm thấu sâu vào da, giúp da hấp thụ dưỡng chất tốt hơn nhiều lần so với thoa thông thường.", Image("dien-di"));
         await Add(CatalogSeedIds.TreatmentExtraction, treatment, "Lấy nhân mụn", 60, 400_000,
             "Dịch vụ đã ngừng bán (dữ liệu thử), vẫn nằm trong một gói đang bán.", Image("lay-nhan"), CatalogStatus.Discontinued);
         await Add(CatalogSeedIds.MassageHotStone, massage, "Massage đá nóng", 90, 700_000,
-            "Đá bazan làm ấm giúp thư giãn sâu các nhóm cơ.", Image("da-nong"));
+            "Sự kết hợp giữa kỹ thuật massage truyền thống, tinh dầu thảo mộc và sức nóng dịu nhẹ từ đá bazan tự nhiên giúp giải tỏa căng cơ sâu, kích thích tuần hoàn và mang lại giấc ngủ ngon.", Image("da-nong"));
         await Add(CatalogSeedIds.MassageOil, massage, "Massage tinh dầu toàn thân", 60, 500_000,
-            "Massage toàn thân với tinh dầu sả chanh, oải hương.", Image("tinh-dau"));
+            "Massage thư giãn toàn thân với tinh dầu thiên nhiên nguyên chất (sả chanh, oải hương hoặc vỏ bưởi), giúp xua tan mệt mỏi, làm mềm da và cân bằng tinh thần sau ngày làm việc.", Image("tinh-dau"));
         await Add(CatalogSeedIds.MassageNeck, massage, "Massage cổ vai gáy", 45, 300_000,
-            "Giảm căng cứng vùng cổ, vai, gáy cho dân văn phòng.", Image("co-vai-gay"));
+            "Tập trung day ấn huyệt và chườm ấm vùng cổ, vai, gáy bị co cứng do ngồi máy tính lâu ngày.\nGiúp giải phóng áp lực vùng đốt sống cổ, giảm nhức mỏi vai gáy và mang lại cảm giác nhẹ nhõm tức thì cho dân văn phòng.", Image("co-vai-gay"));
         await Add(CatalogSeedIds.MassageFoot, massage, "Massage chân thảo dược", 45, 280_000,
-            "Ngâm chân thảo dược và massage bàn chân.", Image("chan"));
+            "Ngâm chân trong nước ấm thảo dược kết hợp bấm huyệt lòng bàn chân và bắp chân, giúp giảm tê mỏi khi đi lại hoặc đứng lâu, làm ấm cơ thể từ bên trong.", Image("chan"));
         await Add(CatalogSeedIds.HairHerbal, hair, "Gội đầu dưỡng sinh thảo mộc", 60, 220_000,
-            "Gội đầu bằng nước bồ kết, sả, vỏ bưởi kết hợp massage đầu.", Image("goi-dau"));
+            "Gội đầu bằng nước nấu bồ kết, sả, hương nhu và vỏ bưởi ấm áp, kết hợp massage bấm huyệt vùng đầu và cổ vai giúp sạch gàu, mượt tóc và thư giãn sâu.", Image("goi-dau"));
         await Add(CatalogSeedIds.HairNeck, hair, "Gội đầu kết hợp massage cổ vai", 75, 320_000,
-            "Gội đầu thảo mộc và massage cổ vai thư giãn.", Image("goi-dau-co-vai"));
+            "Trải nghiệm trọn vẹn vừa làm sạch tóc bằng thảo mộc thiên nhiên vừa được chăm sóc chuyên sâu vùng cổ vai gáy, đặc biệt phù hợp khi cần phục hồi năng lượng cuối tuần.", Image("goi-dau-co-vai"));
         await Add(CatalogSeedIds.BodyScrub, body, "Tẩy tế bào chết toàn thân", 60, 450_000,
-            "Tẩy tế bào chết bằng muối khoáng và cà phê.", Image("tay-te-bao"));
+            "Loại bỏ lớp tế bào chết sần sùi trên cơ thể bằng hỗn hợp muối khoáng mịn, bã cà phê nguyên chất và dầu dưỡng, trả lại làn da mịn màng và đều màu.", Image("tay-te-bao"));
         await Add(CatalogSeedIds.BodyWhitening, body, "Ủ trắng body", 90, 850_000,
-            "Ủ dưỡng toàn thân giúp da sáng và mềm mịn.", Image("u-trang"));
+            "Kết hợp tẩy tế bào chết và ủ dưỡng toàn thân bằng thảo mộc thiên nhiên giàu vitamin, nuôi dưỡng làn da sáng khỏe, mềm mượt và lưu hương dịu nhẹ.", Image("u-trang"));
         await Add(CatalogSeedIds.BodyMud, body, "Đắp bùn khoáng", 60, 600_000,
             "Dịch vụ đã ngừng bán, không có ảnh (dữ liệu thử).", imageUrl: null, CatalogStatus.Discontinued);
         await Add(CatalogSeedIds.WaxUnderarm, waxing, "Triệt lông nách", 30, 300_000,
-            "Triệt lông vùng nách nhẹ nhàng.", Image("triet-nach"));
+            "Triệt lông vùng dưới cánh tay nhẹ nhàng, nhanh chóng kết hợp gel làm dịu mát lạnh, giúp vùng da sáng mịn và thông thoáng.", Image("triet-nach"));
         await Add(CatalogSeedIds.WaxLegs, waxing, "Triệt lông chân", 60, 900_000,
-            "Triệt lông toàn bộ chân.", Image("triet-chan"));
+            "Quy trình triệt lông toàn bộ vùng chân an toàn, không gây đau rát, đi kèm bước thoa gel dưỡng ẩm làm dịu và thu nhỏ lỗ chân lông.", Image("triet-chan"));
         // Broken image URL: the screens must fall back to the placeholder.
         await Add(CatalogSeedIds.WaxFace, waxing, "Triệt lông mặt", 30, 350_000,
             "Ảnh của dịch vụ này là link hỏng (dữ liệu thử).", "https://res.cloudinary.com/demo/image/upload/khong-ton-tai.jpg");

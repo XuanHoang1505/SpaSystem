@@ -17,6 +17,7 @@ namespace NhuNguyetSpa.Application.UseCases.Reports;
 public sealed class RevenueReportService : IRevenueReportService
 {
     public const int DefaultTop = 10;
+    public const int DefaultLeaders = 5;
     private const int MinYear = 2000;
     private const int MaxYear = 2100;
     private const string DateWindowMessage = "Ngày phải trong khoảng năm 2000 đến 2100.";
@@ -27,9 +28,11 @@ public sealed class RevenueReportService : IRevenueReportService
     private readonly IOptions<ReportsOptions> _options;
     private readonly IValidator<RevenueReportQuery> _reportValidator;
     private readonly IValidator<RevenueByProductQuery> _productValidator;
+    private readonly IValidator<RevenueLeadersQuery> _leadersValidator;
 
     public RevenueReportService(IRevenueReportRepository reports, IRevenueReportExporter exporter, IDateTimeProvider clock,
-        IOptions<ReportsOptions> options, IValidator<RevenueReportQuery> reportValidator, IValidator<RevenueByProductQuery> productValidator)
+        IOptions<ReportsOptions> options, IValidator<RevenueReportQuery> reportValidator, IValidator<RevenueByProductQuery> productValidator,
+        IValidator<RevenueLeadersQuery> leadersValidator)
     {
         _reports = reports;
         _exporter = exporter;
@@ -37,6 +40,7 @@ public sealed class RevenueReportService : IRevenueReportService
         _options = options;
         _reportValidator = reportValidator;
         _productValidator = productValidator;
+        _leadersValidator = leadersValidator;
     }
 
     public async Task<OperationResult<RevenueReportDto>> GetRevenueAsync(RevenueReportQuery query, CancellationToken cancellationToken)
@@ -54,6 +58,18 @@ public sealed class RevenueReportService : IRevenueReportService
         ReportText.TryParseProductType(query.ProductType, out var productType);
         var items = await ProductsAsync(from, to, productType, query.Top ?? DefaultTop, cancellationToken);
         return OperationResult<RevenueByProductDto>.Success(new RevenueByProductDto(from, to, productType, items));
+    }
+
+    public async Task<OperationResult<RevenueLeadersDto>> GetLeadersAsync(RevenueLeadersQuery query, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        await _leadersValidator.ValidateAndThrowAsync(query, cancellationToken);
+        var (from, to) = ResolveRange(query.FromDate, query.ToDate);
+        var (fromUtc, toUtc) = UtcRange(from, to);
+        var top = query.Top ?? DefaultLeaders;
+        var customers = await _reports.GetTopCustomersAsync(fromUtc, toUtc, top, cancellationToken);
+        var staff = await _reports.GetTopStaffAsync(from, to, top, cancellationToken);
+        return OperationResult<RevenueLeadersDto>.Success(new RevenueLeadersDto(from, to, customers, staff));
     }
 
     public async Task<OperationResult<RevenueReportFile>> ExportAsync(RevenueReportQuery query, CancellationToken cancellationToken)

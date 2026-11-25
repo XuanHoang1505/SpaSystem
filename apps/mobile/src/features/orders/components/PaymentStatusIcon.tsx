@@ -15,7 +15,12 @@ export function PaymentStatusIcon({
 }: PaymentStatusIconProps) {
   const iconSize = Math.round(size * 0.55);
 
-  if (orderStatus === 'paid') {
+  // An installment order stays partially paid between installments: its latest attempt decides the icon.
+  const isOpen = orderStatus === 'pending_payment' || orderStatus === 'partially_paid';
+  if (
+    orderStatus === 'paid' ||
+    (orderStatus === 'partially_paid' && latestPaymentStatus === 'succeeded')
+  ) {
     return (
       <View
         style={[
@@ -33,10 +38,7 @@ export function PaymentStatusIcon({
     );
   }
 
-  if (
-    orderStatus === 'pending_payment' &&
-    latestPaymentStatus === 'failed'
-  ) {
+  if (isOpen && latestPaymentStatus === 'failed') {
     return (
       <View
         style={[
@@ -54,7 +56,7 @@ export function PaymentStatusIcon({
     );
   }
 
-  if (orderStatus === 'pending_payment') {
+  if (isOpen) {
     return (
       <View
         style={[

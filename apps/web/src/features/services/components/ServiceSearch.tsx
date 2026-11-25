@@ -17,7 +17,6 @@ import { CatalogGrid } from './CatalogGrid';
 import { CatalogPageHeader } from './CatalogPageHeader';
 import { CatalogSearchBox } from './CatalogSearchBox';
 import { CatalogSortSelect } from './CatalogSortSelect';
-import { CatalogTrustStrip } from './CatalogTrustStrip';
 import { ServiceCard } from './ServiceCard';
 import { ServiceFilterPanel } from './ServiceFilterPanel';
 
@@ -39,7 +38,7 @@ export function ServiceSearch() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <CatalogPageHeader
         band
         breadcrumb="Dịch vụ"
@@ -123,8 +122,6 @@ export function ServiceSearch() {
           }
         />
       </div>
-
-      <CatalogTrustStrip />
     </div>
   );
 }
