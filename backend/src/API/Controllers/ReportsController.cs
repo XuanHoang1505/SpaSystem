@@ -36,6 +36,15 @@ public sealed class ReportsController : ApiController
     public async Task<IActionResult> ByProduct([FromQuery] RevenueByProductQuery query, CancellationToken cancellationToken) =>
         HandleResult(await _reports.GetByProductAsync(query, cancellationToken));
 
+    /// <summary>Top customers by revenue and top staff by completed visits; <c>top</c> defaults to 5.</summary>
+    [HttpGet("revenue/leaders")]
+    [ProducesResponseType<ApiResponse<RevenueLeadersDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> Leaders([FromQuery] RevenueLeadersQuery query, CancellationToken cancellationToken) =>
+        HandleResult(await _reports.GetLeadersAsync(query, cancellationToken));
+
     /// <summary>The same report as an .xlsx file (errors still come back as the JSON envelope).</summary>
     [HttpGet("revenue/export")]
     [ProducesResponseType<FileContentResult>(StatusCodes.Status200OK, ExcelContentType)]

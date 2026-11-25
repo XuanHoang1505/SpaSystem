@@ -116,6 +116,53 @@ public sealed class RevenueReportRepository : IRevenueReportRepository
         return (top is null ? ordered : ordered.Take(top.Value)).ToList();
     }
 
+    public async Task<IReadOnlyList<TopCustomerDto>> GetTopCustomersAsync(DateTime fromUtc, DateTime toUtcExclusive, int top,
+        CancellationToken cancellationToken)
+    {
+        // Totals per customer in SQL over every recognized payment (not a page of orders), then names for the top rows only.
+        var totals = await Recognized(fromUtc, toUtcExclusive)
+            .GroupBy(row => row.Order.CustomerId)
+            .Select(group => new
+            {
+                CustomerId = group.Key,
+                Revenue = group.Sum(row => row.Amount),
+                OrderCount = group.Select(row => row.Order.Id).Distinct().Count(),
+            })
+            .OrderByDescending(row => row.Revenue).ThenBy(row => row.CustomerId)
+            .Take(top)
+            .ToListAsync(cancellationToken);
+        var ids = totals.Select(row => row.CustomerId).ToList();
+        var people = await _context.Set<Customer>().AsNoTracking().Where(customer => ids.Contains(customer.Id))
+            .Select(customer => new { customer.Id, customer.User.FullName, customer.User.PhoneNumber })
+            .ToDictionaryAsync(row => row.Id, cancellationToken);
+        return totals
+            .Select(row => people.TryGetValue(row.CustomerId, out var person)
+                ? new TopCustomerDto(row.CustomerId, person.FullName, person.PhoneNumber, row.OrderCount, row.Revenue)
+                : new TopCustomerDto(row.CustomerId, string.Empty, string.Empty, row.OrderCount, row.Revenue))
+            .OrderByDescending(row => row.Revenue).ThenBy(row => row.FullName, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<TopStaffDto>> GetTopStaffAsync(DateOnly from, DateOnly to, int top, CancellationToken cancellationToken)
+    {
+        // Held and cancelled appointments never reached the staff member's timetable, so they do not count.
+        var kept = new[] { AppointmentStatus.PendingConfirmation, AppointmentStatus.Confirmed, AppointmentStatus.Completed, AppointmentStatus.NoShow };
+        var rows = await _context.Appointments.AsNoTracking()
+            .Where(appointment => appointment.Date >= from && appointment.Date <= to && kept.Contains(appointment.Status))
+            .GroupBy(appointment => new { appointment.StaffMemberId, appointment.StaffMember.User.FullName })
+            .Select(group => new
+            {
+                group.Key.StaffMemberId,
+                group.Key.FullName,
+                CompletedCount = group.Count(appointment => appointment.Status == AppointmentStatus.Completed),
+                AppointmentCount = group.Count(),
+            })
+            .OrderByDescending(row => row.CompletedCount).ThenByDescending(row => row.AppointmentCount).ThenBy(row => row.FullName)
+            .Take(top)
+            .ToListAsync(cancellationToken);
+        return rows.Select(row => new TopStaffDto(row.StaffMemberId, row.FullName, row.CompletedCount, row.AppointmentCount)).ToList();
+    }
+
     private sealed record ProductTotal(Guid? SpaServiceId, Guid? ServicePackageId, int Quantity, decimal Revenue);
 
     /// <summary>

@@ -10,6 +10,9 @@ public interface IRevenueReportService
 
     Task<OperationResult<RevenueByProductDto>> GetByProductAsync(RevenueByProductQuery query, CancellationToken cancellationToken);
 
+    /// <summary>Top customers by revenue and top staff by completed visits, aggregated in the database (not one page of rows).</summary>
+    Task<OperationResult<RevenueLeadersDto>> GetLeadersAsync(RevenueLeadersQuery query, CancellationToken cancellationToken);
+
     /// <summary>The same report as <see cref="GetRevenueAsync"/> plus every product of the criterion.</summary>
     Task<OperationResult<RevenueReportFile>> ExportAsync(RevenueReportQuery query, CancellationToken cancellationToken);
 }
