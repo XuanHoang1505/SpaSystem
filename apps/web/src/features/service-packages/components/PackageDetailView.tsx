@@ -7,6 +7,8 @@ import {
   FlowerIcon,
   PackageIcon,
   SparklesIcon,
+  StarIcon,
+  type LucideIcon,
 } from 'lucide-react';
 import type { PackageDetail } from '@spa/shared-types';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +52,17 @@ function courseLength(days: number) {
 const pricePerSession = (price: number, sessions: number) =>
   Math.round(price / Math.max(sessions, 1) / 1000) * 1000;
 
+/** A short description that only repeats the name (e.g. "Chăm sóc da kèm lấy nhân mụn.") adds nothing under the title. */
+function addsToName(name: string, text: string | null) {
+  if (!text) return false;
+  const plain = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .trim();
+  return !plain(name).includes(plain(text));
+}
+
 /**
  * SCR-W05 — Chi tiết gói dịch vụ (UC-SPA-07), theo mẫu Stitch chi tiết gói. Đặc quyền và các nút
  * mua là nội dung tạm (catalogPlaceholders, ComingSoonButton).
@@ -78,105 +91,92 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
 
           <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-10">
             <div className="space-y-8">
-              <div className="group relative overflow-hidden rounded-3xl border bg-muted/30 shadow-xs">
+              <div className="relative overflow-hidden rounded-3xl border bg-muted/30">
                 <ImageWithFallback
                   src={pkg.imageUrl}
                   alt={pkg.name}
                   fallbackIcon={PackageIcon}
-                  className="aspect-[16/9] w-full object-cover transition-transform duration-500 group-hover:scale-102"
+                  className="aspect-[16/9] w-full object-cover"
                 />
                 {saving > 0 && (
-                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-primary/95 px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-md backdrop-blur">
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-md">
                     <SparklesIcon className="size-3.5" aria-hidden="true" />
                     <span>{`Tiết kiệm ${saving}% so với mua lẻ`}</span>
                   </div>
                 )}
               </div>
 
-              <div className="space-y-4">
-                {pkg.status === 'discontinued' && (
-                  <StatusBadge {...catalogStatusBadge.discontinued} status={pkg.status} />
-                )}
-                <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                  {pkg.name}
-                </h1>
-                {pkg.shortDescription && (
-                  <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
-                    {pkg.shortDescription}
-                  </p>
-                )}
-
-                {/* Unified 3-column stats band */}
-                <div className="grid grid-cols-3 divide-x rounded-2xl border bg-card p-4 shadow-2xs">
-                  <div className="flex flex-col items-center justify-center p-2 text-center">
-                    <span className="mb-1.5 grid size-9 place-items-center rounded-full bg-primary/10 text-primary">
-                      <CalendarCheckIcon className="size-4.5" aria-hidden="true" />
-                    </span>
-                    <span className="font-heading text-2xl font-bold text-foreground">
-                      {pkg.totalSessions}
-                    </span>
-                    <span className="text-xs text-muted-foreground">Tổng số buổi</span>
-                  </div>
-                  <div className="flex flex-col items-center justify-center p-2 text-center">
-                    <span className="mb-1.5 grid size-9 place-items-center rounded-full bg-secondary text-secondary-foreground">
-                      <ClockIcon className="size-4.5 text-primary" aria-hidden="true" />
-                    </span>
-                    <span className="font-heading text-2xl font-bold text-foreground">
-                      {pkg.validityDays}
-                    </span>
-                    <span className="text-xs text-muted-foreground">Ngày sử dụng</span>
-                  </div>
-                  <div className="flex flex-col items-center justify-center p-2 text-center">
-                    <span className="mb-1.5 grid size-9 place-items-center rounded-full bg-accent text-accent-foreground">
-                      <FlowerIcon className="size-4.5 text-primary" aria-hidden="true" />
-                    </span>
-                    <span className="font-heading text-2xl font-bold text-foreground">
-                      {pkg.items.length}
-                    </span>
-                    <span className="text-xs text-muted-foreground">Dịch vụ phối hợp</span>
-                  </div>
-                </div>
-              </div>
-
-              <Card className="rounded-2xl border bg-card/60">
-                <CardContent className="space-y-4 p-6 sm:p-7">
-                  <h2 className="font-heading text-xl font-semibold text-foreground">
-                    Giới thiệu &amp; Hiệu quả liệu trình
-                  </h2>
-                  <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground sm:text-base">
-                    {pkg.description ?? 'Chưa có mô tả cho gói này.'}
-                  </p>
-                  <div className="grid gap-3 border-t pt-3 sm:grid-cols-2">
-                    <div className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                      <CheckCircle2Icon
-                        className="mt-0.5 size-4 shrink-0 text-primary"
-                        aria-hidden="true"
-                      />
-                      <span>Phác đồ chuyên sâu được cá nhân hóa theo từng tình trạng da</span>
+              <Card className="gap-0 rounded-2xl py-0">
+                <CardContent className="space-y-6 p-6 sm:p-7">
+                  <header className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary" className="font-medium">
+                        Gói liệu trình
+                      </Badge>
+                      {pkg.status === 'discontinued' && (
+                        <StatusBadge {...catalogStatusBadge.discontinued} status={pkg.status} />
+                      )}
                     </div>
-                    <div className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                      <CheckCircle2Icon
-                        className="mt-0.5 size-4 shrink-0 text-primary"
-                        aria-hidden="true"
-                      />
-                      <span>Sử dụng 100% dòng dược mỹ phẩm chuẩn y khoa an toàn và lành tính</span>
-                    </div>
-                  </div>
+                    <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                      {pkg.name}
+                    </h1>
+                    {pkg.reviewCount > 0 && pkg.averageRating !== null && (
+                      <a
+                        href="#danh-gia"
+                        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        <StarIcon
+                          className="size-4 fill-amber-400 text-amber-400"
+                          aria-hidden="true"
+                        />
+                        <span className="font-medium text-foreground">
+                          {pkg.averageRating.toFixed(1)}
+                        </span>
+                        <span>({pkg.reviewCount} đánh giá)</span>
+                      </a>
+                    )}
+                    {addsToName(pkg.name, pkg.shortDescription) && (
+                      <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
+                        {pkg.shortDescription}
+                      </p>
+                    )}
+                  </header>
+
+                  <dl className="grid grid-cols-3 divide-x rounded-xl bg-muted/50 py-4">
+                    <PackageFact
+                      icon={CalendarCheckIcon}
+                      value={pkg.totalSessions}
+                      label="buổi chăm sóc"
+                    />
+                    <PackageFact icon={ClockIcon} value={pkg.validityDays} label="ngày sử dụng" />
+                    <PackageFact icon={FlowerIcon} value={pkg.items.length} label="dịch vụ" />
+                  </dl>
+
+                  {pkg.description && (
+                    <section className="space-y-2 border-t pt-6">
+                      <h2 className="font-heading text-xl font-semibold text-foreground">
+                        Giới thiệu gói
+                      </h2>
+                      <p className="leading-relaxed whitespace-pre-line text-muted-foreground">
+                        {pkg.description}
+                      </p>
+                    </section>
+                  )}
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl border bg-card/60">
+              <Card className="rounded-2xl py-0">
                 <CardContent className="space-y-6 p-6 sm:p-7">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2 border-b pb-4">
-                    <div>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
                       <h2 className="font-heading text-xl font-semibold text-foreground">
-                        Trình tự liệu trình chi tiết
+                        Trình tự liệu trình
                       </h2>
-                      <p className="text-xs text-muted-foreground">
-                        Thực hiện tuần tự các bước để tối ưu hóa hiệu quả nuôi dưỡng da
+                      <p className="text-sm text-muted-foreground">
+                        Các buổi được đặt lịch lần lượt theo thứ tự dưới đây.
                       </p>
                     </div>
-                    <span className="rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold text-secondary-foreground">
+                    <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
                       {pkg.totalSessions} buổi · {pkg.items.length} dịch vụ
                     </span>
                   </div>
@@ -267,7 +267,10 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
 
                   <div className="grid gap-2.5 pt-2">
                     <BuyNowButton packageId={pkg.id} />
-                    <AddToCartButton product={{ type: 'package', id: pkg.id }} productName={pkg.name} />
+                    <AddToCartButton
+                      product={{ type: 'package', id: pkg.id }}
+                      productName={pkg.name}
+                    />
                   </div>
 
                   <div className="space-y-2 border-t pt-4 text-[11px] text-muted-foreground">
@@ -285,7 +288,9 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
             </aside>
           </div>
 
-          <ProductReviewsSection productId={pkg.id} productType="package" />
+          <div id="danh-gia" className="scroll-mt-28">
+            <ProductReviewsSection productId={pkg.id} productType="package" />
+          </div>
 
           <RelatedPackages excludeId={pkg.id} />
           <CatalogFaq kind="package" />
@@ -293,5 +298,30 @@ export function PackageDetailView({ packageId }: { packageId: string }) {
         </article>
       )}
     </CatalogDetailStates>
+  );
+}
+
+/** One number of the package (sessions, days, services) in the summary strip: icon beside the value from `sm`, stacked on a phone. */
+function PackageFact({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: LucideIcon;
+  value: number;
+  label: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2 px-2 text-center sm:flex-row sm:justify-center sm:gap-3 sm:text-left">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-card text-primary">
+        <Icon className="size-5" aria-hidden="true" />
+      </span>
+      <div className="flex flex-col-reverse">
+        <dt className="text-xs text-muted-foreground">{label}</dt>
+        <dd className="font-heading text-2xl leading-tight font-semibold text-foreground">
+          {value}
+        </dd>
+      </div>
+    </div>
   );
 }

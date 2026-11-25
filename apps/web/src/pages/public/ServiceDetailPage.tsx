@@ -18,7 +18,9 @@ export function ServiceDetailPage() {
         <>
           <ServiceStaffList serviceId={service.id} />
           <PackagesWithService serviceId={service.id} />
-          <ProductReviewsSection productId={service.id} productType="service" />
+          <div id="danh-gia" className="scroll-mt-28">
+            <ProductReviewsSection productId={service.id} productType="service" />
+          </div>
         </>
       )}
     />

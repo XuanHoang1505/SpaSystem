@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import type { PackageSearchParams } from '@spa/shared-types';
 import { Button } from '@/components/ui/button';
-import { PriceRangeFilter } from '@/components/shared/PriceRangeFilter/PriceRangeFilter';
 import {
   CatalogGrid,
   CatalogPageHeader,
@@ -10,6 +9,7 @@ import {
   PriceRangePopover,
   useCatalogListParams,
 } from '@/features/services';
+import { ActiveFilterChips } from '@/features/services/components/ActiveFilterChips';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePackageSearch } from '../hooks/usePackageSearch';
 import { ServicePackageCard } from './ServicePackageCard';
@@ -26,7 +26,7 @@ export function PackageSearch() {
   const packages = usePackageSearch(query);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <CatalogPageHeader
         band
         breadcrumb="Gói dịch vụ"
@@ -56,28 +56,34 @@ export function PackageSearch() {
         hasFilters={params.hasFilters}
         onResetFilters={params.resetFilters}
         onPageChange={params.setPage}
+        framedToolbar
         toolbar={
-          <div className="flex flex-wrap items-end gap-3">
-            <PriceRangePopover
-              className="lg:hidden"
-              min={params.minPrice}
-              max={params.maxPrice}
-              onApply={params.setPriceRange}
-              idPrefix="packages-popover"
+          <div className="flex flex-1 flex-wrap items-center justify-between gap-3">
+            <ActiveFilterChips
+              filters={{
+                search: params.search,
+                minPrice: params.minPrice,
+                maxPrice: params.maxPrice,
+              }}
+              onRemove={(key) => {
+                if (key === 'search') params.setSearch('');
+                else params.setPriceRange({});
+              }}
             />
-            <PriceRangeFilter
-              className="hidden w-80 lg:grid"
-              min={params.minPrice}
-              max={params.maxPrice}
-              onApply={params.setPriceRange}
-              idPrefix="packages-toolbar"
-            />
-            <CatalogSortSelect value={params.sort} onChange={params.setSort} />
-            {params.hasFilters && (
-              <Button variant="ghost" onClick={params.resetFilters}>
-                Xóa bộ lọc
-              </Button>
-            )}
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <PriceRangePopover
+                min={params.minPrice}
+                max={params.maxPrice}
+                onApply={params.setPriceRange}
+                idPrefix="packages-popover"
+              />
+              <CatalogSortSelect value={params.sort} onChange={params.setSort} />
+              {params.hasFilters && (
+                <Button variant="ghost" size="sm" onClick={params.resetFilters}>
+                  Xóa bộ lọc
+                </Button>
+              )}
+            </div>
           </div>
         }
       />
