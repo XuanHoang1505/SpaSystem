@@ -1,5 +1,10 @@
+import { CustomerRoute } from '@components/auth/CustomerRoute';
 import { CartScreen } from '@/features/orders';
 
 export default function CartRoute() {
-  return <CartScreen />;
+  return (
+    <CustomerRoute>
+      <CartScreen />
+    </CustomerRoute>
+  );
 }

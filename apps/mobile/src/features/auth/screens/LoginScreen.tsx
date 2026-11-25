@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { Image, StyleSheet, View } from 'react-native';
 import { authErrorCodes, errorCodeOf } from '@spa/api-client';
@@ -13,7 +13,7 @@ import { AppText } from '@components/common/AppText';
 import { AppTextButton } from '@components/common/AppTextButton';
 import { readEnvironment } from '@/config/env';
 import { safeRedirect } from '@/lib/auth/redirect';
-import { homePathFor } from '@/stores/authStore';
+import { homePathFor, useAuthStore } from '@/stores/authStore';
 import { colors, spacing, typography } from '@theme/index';
 import { PasswordInput } from '../components/PasswordInput';
 import { applyServerFieldErrors, authErrorMessage } from '../errors';
@@ -31,6 +31,13 @@ export function LoginScreen() {
     resolver: zodResolver(loginSchema),
     defaultValues: { login: params.login ?? '', password: '' },
   });
+
+  // Already signed in (opened from a link or the back stack): go to the requested page or the role's home instead.
+  // The form's own success path navigates itself, so this only covers arriving here signed in.
+  const signedInUser = useAuthStore((state) =>
+    state.status === 'authenticated' ? state.user : null,
+  );
+  const arrivedSignedIn = signedInUser !== null && login.isIdle;
 
   const onSubmit = form.handleSubmit((values) => {
     setNotice(null);
@@ -52,6 +59,14 @@ export function LoginScreen() {
       },
     );
   });
+
+  if (arrivedSignedIn) {
+    return (
+      <Redirect
+        href={safeRedirect(params.redirect, signedInUser.role) ?? homePathFor(signedInUser.role)}
+      />
+    );
+  }
 
   return (
     <AppScreen>

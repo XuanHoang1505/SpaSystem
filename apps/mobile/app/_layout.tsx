@@ -18,7 +18,10 @@ export default function RootLayout() {
         <Stack.Screen name="(customer)" options={{ headerShown: false }} />
         <Stack.Screen name="(staff)" options={{ headerShown: false }} />
         <Stack.Screen name="(owner)" options={{ headerShown: false }} />
-        <Stack.Screen name="forbidden" options={{ title: 'Không có quyền truy cập' }} />
+        <Stack.Screen
+          name="forbidden"
+          options={{ title: 'Không có quyền truy cập', headerTitle: '' }}
+        />
         <Stack.Screen name="cart" options={{ headerShown: false }} />
         <Stack.Screen name="checkout" options={{ headerShown: false }} />
         <Stack.Screen name="payment" options={{ headerShown: false }} />
@@ -28,7 +31,6 @@ export default function RootLayout() {
         <Stack.Screen name="treatment" options={{ headerShown: false }} />
         <Stack.Screen name="account" options={{ headerShown: false }} />
         <Stack.Screen name="password" options={{ headerShown: false }} />
-        <Stack.Screen name="reviews" options={{ headerShown: false }} />
         <Stack.Screen name="my-reviews" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
       </Stack>

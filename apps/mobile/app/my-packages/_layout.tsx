@@ -1,11 +1,10 @@
-import { Stack, usePathname } from 'expo-router';
-import { RouteGuard } from '@components/auth/RouteGuard';
+import { Stack } from 'expo-router';
+import { CustomerRoute } from '@components/auth/CustomerRoute';
 
 export default function MyPackagesLayout() {
-  const pathname = usePathname();
   return (
-    <RouteGuard role="customer" redirect={pathname}>
+    <CustomerRoute pathParams={['packageId']}>
       <Stack screenOptions={{ headerShown: false }} />
-    </RouteGuard>
+    </CustomerRoute>
   );
 }
