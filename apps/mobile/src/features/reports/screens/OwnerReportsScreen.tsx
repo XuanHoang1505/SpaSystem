@@ -1,29 +1,21 @@
 import { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BarChart3 } from 'lucide-react-native';
 import { AppScreen } from '@components/common/AppScreen';
-import { AppText } from '@components/common/AppText';
 import { ErrorState } from '@components/common/ErrorState';
-import { colors, radius, spacing } from '@theme/index';
+import { colors, spacing } from '@theme/index';
 import { RevenueBarChart } from '../components/RevenueBarChart';
-import { RevenueFilterBar } from '../components/RevenueFilterBar';
+import { RevenueFilterSheet } from '../components/RevenueFilterSheet';
 import { RevenueKpiCards } from '../components/RevenueKpiCards';
 import { ReportSkeleton } from '../components/ReportSkeleton';
 import { TopProductsCard } from '../components/TopProductsCard';
-import { UnrecognizedPaymentsAlert } from '../components/UnrecognizedPaymentsAlert';
 import { useRevenueByProduct } from '../hooks/useRevenueByProduct';
 import { useRevenueReport } from '../hooks/useRevenueReport';
 import { getVietnamToday, getVietnamYearStart } from '../utils/reportHelpers';
 import type { ReportProductType, RevenueGroupBy } from '@spa/shared-types';
 
-export function OwnerReportsScreen({
-  title = 'Tổng quan kinh doanh',
-  subtitle = 'Theo dõi doanh thu, số đơn và cơ cấu sản phẩm',
-}: {
-  title?: string;
-  subtitle?: string;
-} = {}) {
+/** Owner revenue overview: the navigation bar already names the screen, so it opens on the filter summary. */
+export function OwnerReportsScreen() {
   const insets = useSafeAreaInsets();
 
   // State bộ lọc mặc định: từ đầu năm hiện tại đến hôm nay, nhóm tháng, tất cả sản phẩm
@@ -69,7 +61,7 @@ export function OwnerReportsScreen({
         contentContainerStyle={[
           styles.content,
           {
-            paddingTop: insets.top + spacing.md,
+            paddingTop: spacing.md,
             paddingBottom: insets.bottom + spacing.xl * 2,
           },
         ]}
@@ -83,21 +75,8 @@ export function OwnerReportsScreen({
           />
         }
       >
-        {/* 1. Header màn hình */}
-        <View style={styles.header}>
-          <View style={styles.headerIconCircle}>
-            <BarChart3 size={24} color={colors.primary} />
-          </View>
-          <View style={styles.headerTextWrap}>
-            <AppText accessibilityRole="header" style={styles.screenTitle}>
-              {title}
-            </AppText>
-            {subtitle ? <AppText style={styles.screenSubtitle}>{subtitle}</AppText> : null}
-          </View>
-        </View>
-
         {/* 2. Bộ lọc thời gian & tiêu chí */}
-        <RevenueFilterBar
+        <RevenueFilterSheet
           fromDate={fromDate}
           toDate={toDate}
           groupBy={groupBy}
@@ -121,14 +100,6 @@ export function OwnerReportsScreen({
           <ReportSkeleton />
         ) : (
           <View style={styles.dataContainer}>
-            {/* Cảnh báo tiền chưa ghi nhận (nếu có) */}
-            {revenueQuery.data?.unrecognizedPayments && (
-              <UnrecognizedPaymentsAlert
-                count={revenueQuery.data.unrecognizedPayments.count}
-                amount={revenueQuery.data.unrecognizedPayments.amount}
-              />
-            )}
-
             {/* Các thẻ chỉ số KPI tổng quan */}
             <RevenueKpiCards
               totalRevenue={revenueQuery.data?.totalRevenue ?? 0}
@@ -160,34 +131,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
     gap: spacing.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  headerIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTextWrap: {
-    flex: 1,
-    gap: 2,
-  },
-  screenTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.text,
-    letterSpacing: -0.3,
-  },
-  screenSubtitle: {
-    fontSize: 13,
-    color: colors.muted,
   },
   dataContainer: {
     gap: spacing.lg,

@@ -4,7 +4,7 @@ export * from './utils/reportHelpers';
 export * from './components/RevenueKpiCards';
 export * from './components/RevenueBarChart';
 export * from './components/RevenueFilterBar';
+export * from './components/RevenueFilterSheet';
 export * from './components/TopProductsCard';
-export * from './components/UnrecognizedPaymentsAlert';
 export * from './components/ReportSkeleton';
 export * from './screens/OwnerReportsScreen';
