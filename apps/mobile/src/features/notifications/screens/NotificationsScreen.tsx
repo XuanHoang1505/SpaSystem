@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, CheckCheck, BellOff } from 'lucide-react-native';
@@ -82,7 +76,13 @@ export function NotificationsScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace(user?.role === 'staff' ? '/(staff)/dashboard' : '/(customer)/home');
+      router.replace(
+        user?.role === 'staff'
+          ? '/(staff)/dashboard'
+          : user?.role === 'owner'
+            ? '/(owner)/dashboard'
+            : '/(customer)/home',
+      );
     }
   };
 
@@ -129,9 +129,7 @@ export function NotificationsScreen() {
           onPress={() => handleTabChange(false)}
           style={[styles.tab, !unreadOnly && styles.activeTab]}
         >
-          <AppText style={[styles.tabText, !unreadOnly && styles.activeTabText]}>
-            Tất cả
-          </AppText>
+          <AppText style={[styles.tabText, !unreadOnly && styles.activeTabText]}>Tất cả</AppText>
         </Pressable>
 
         <Pressable
@@ -140,9 +138,7 @@ export function NotificationsScreen() {
           onPress={() => handleTabChange(true)}
           style={[styles.tab, unreadOnly && styles.activeTab]}
         >
-          <AppText style={[styles.tabText, unreadOnly && styles.activeTabText]}>
-            Chưa đọc
-          </AppText>
+          <AppText style={[styles.tabText, unreadOnly && styles.activeTabText]}>Chưa đọc</AppText>
           {unreadCount > 0 && (
             <View style={styles.tabBadge}>
               <AppText style={styles.tabBadgeText}>
@@ -170,9 +166,7 @@ export function NotificationsScreen() {
           style={styles.flex}
           data={items}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <NotificationCard item={item} onPress={handleItemPress} />
-          )}
+          renderItem={({ item }) => <NotificationCard item={item} onPress={handleItemPress} />}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: Math.max(insets.bottom, 16) + 16 },
