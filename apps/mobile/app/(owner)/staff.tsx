@@ -1,4 +1,5 @@
-import { PlaceholderScreen } from '@components/common/PlaceholderScreen';
-export default function Screen() {
-  return <PlaceholderScreen title="Nhân viên" />;
+import { OwnerStaffScreen } from '@/features/staff';
+
+export default function OwnerStaffRoute() {
+  return <OwnerStaffScreen />;
 }
