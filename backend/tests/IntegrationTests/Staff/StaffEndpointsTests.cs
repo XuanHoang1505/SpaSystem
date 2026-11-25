@@ -299,7 +299,23 @@ public sealed class StaffEndpointsTests : IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         Ids(body).Should().BeEquivalentTo([working.Id, leaving.Id]);
         CatalogApi.Data(body).GetProperty("items").EnumerateArray().First().EnumerateObject().Select(property => property.Name)
-            .Should().BeEquivalentTo(["id", "fullName", "specialty", "avatarUrl"]);
+            .Should().BeEquivalentTo(["id", "fullName", "specialty", "avatarUrl", "certifications"]);
+    }
+
+    [Fact]
+    public async Task OwnerAskingForThePublicViewGetsThePublicShape()
+    {
+        var tag = CatalogApi.NewTag();
+        var working = await _staff.SeedStaffAsync($"Công khai {tag}");
+
+        var (response, body) = await _api.GetAsync($"/api/v1/staff?search={tag}&view=public", _owner);
+        var (bad, _) = await _api.GetAsync("/api/v1/staff?view=owner", _owner);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Ids(body).Should().Equal(working.Id);
+        CatalogApi.Data(body).GetProperty("items").EnumerateArray().First().EnumerateObject().Select(property => property.Name)
+            .Should().BeEquivalentTo(["id", "fullName", "specialty", "avatarUrl", "certifications"]);
+        bad.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]

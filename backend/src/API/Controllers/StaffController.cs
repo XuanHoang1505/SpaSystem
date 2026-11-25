@@ -17,13 +17,16 @@ public sealed class StaffController : ApiController
 
     public StaffController(IStaffService staff) => _staff = staff;
 
-    /// <summary>The owner gets the full list; everyone else (an invalid or expired Bearer included) gets the public view.</summary>
+    /// <summary>
+    /// The owner gets the full list unless <c>view=public</c>; everyone else (an invalid or expired Bearer included) gets
+    /// the public view.
+    /// </summary>
     [HttpGet]
     [AllowAnonymous]
     [ProducesResponseType<ApiResponse<PagedResult<StaffListItemDto>>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Search([FromQuery] PagedQuery query, [FromQuery] StaffFilter filter, CancellationToken cancellationToken) =>
-        User.IsInRole(Roles.Owner)
+        User.IsInRole(Roles.Owner) && !filter.WantsPublicView
             ? HandleResult(await _staff.SearchAsync(query, filter, cancellationToken))
             : HandleResult(await _staff.SearchPublicAsync(query, filter, cancellationToken));
 
