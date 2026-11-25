@@ -45,6 +45,7 @@ import { OwnerTreatmentsPage } from '@/pages/owner/OwnerTreatmentsPage';
 import { OwnerReportsPage } from '@/pages/owner/OwnerReportsPage';
 import { OwnerReviewsPage } from '@/pages/owner/OwnerReviewsPage';
 import { AboutPage } from '@/pages/public/AboutPage';
+import { ContactPage } from '@/pages/public/ContactPage';
 import { HomePage } from '@/pages/public/HomePage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { LoginPage } from '@/pages/public/LoginPage';
@@ -101,6 +102,7 @@ function AiAssistantRoute() {
 export const publicPages: Record<string, ReactElement> = {
   '/': <HomePage />,
   '/about': <AboutPage />,
+  '/contact': <ContactPage />,
   '/services': <ServicesPage />,
   '/services/:serviceId': <ServiceDetailPage />,
   '/packages': <PackagesPage />,

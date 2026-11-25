@@ -7,12 +7,12 @@ import { Header } from '../Header/Header';
 import { Footer } from '../Footer/Footer';
 import { SkipLink } from '../SkipLink/SkipLink';
 
-const fullWidthPaths = new Set(['/', '/about']);
+const fullWidthPaths = new Set(['/', '/about', '/contact']);
 
 export function PublicLayout() {
   useThemeScope('light-only');
   useSettleLogout();
-  // The brand pages (home, about) run edge to edge (full-width bands and photos) and set their own content
+  // The brand pages (home, about, contact) run edge to edge (full-width bands and photos) and set their own content
   // width per section.
   const fullWidth = fullWidthPaths.has(useLocation().pathname);
   return (
@@ -24,7 +24,7 @@ export function PublicLayout() {
         tabIndex={-1}
         className={cn(
           'w-full flex-1 outline-none',
-          !fullWidth && 'mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8',
+          !fullWidth && 'mx-auto max-w-7xl px-4 pt-8 pb-20 sm:px-6 sm:pb-8 lg:px-8',
         )}
       >
         <Outlet />
