@@ -20,8 +20,37 @@ public sealed class OrderExpiryServiceTests
     private readonly IUnitOfWork _unitOfWork = OrderTestDoubles.UnitOfWork();
     private readonly IAppointmentRepository _appointments = Substitute.For<IAppointmentRepository>();
 
+    public OrderExpiryServiceTests()
+    {
+        _orders.LockWithStalePaymentsAsync(Arg.Any<DateTime>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns([]);
+    }
+
     private OrderExpiryService Create() =>
         new(_orders, _appointments, _unitOfWork, StaffTestDoubles.Clock(), Options.Create(new OrderExpiryOptions()));
+
+    [Fact]
+    public async Task ExpiresStaleInstallmentPaymentsButKeepsTheOrder()
+    {
+        var cutoff = StaffTestDoubles.Now.AddMinutes(-5);
+        var order = new Order { Status = OrderStatus.PartiallyPaid };
+        var stale = new Payment { Status = PaymentStatus.Pending, ExpiresAtUtc = cutoff.AddMinutes(-1) };
+        var stillOpen = new Payment { Status = PaymentStatus.Pending, ExpiresAtUtc = cutoff.AddMinutes(10) };
+        var paid = new Payment { Status = PaymentStatus.Succeeded, ExpiresAtUtc = cutoff.AddDays(-1) };
+        order.Payments.Add(stale);
+        order.Payments.Add(stillOpen);
+        order.Payments.Add(paid);
+        _orders.LockExpirableAsync(Arg.Any<DateTime>(), Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns([]);
+        _orders.LockWithStalePaymentsAsync(cutoff, 200, Arg.Any<CancellationToken>()).Returns([order]);
+
+        var count = await Create().ExpireOverdueAsync(CancellationToken.None);
+
+        count.Should().Be(0, "no order expired");
+        order.Status.Should().Be(OrderStatus.PartiallyPaid);
+        stale.Status.Should().Be(PaymentStatus.Expired);
+        stillOpen.Status.Should().Be(PaymentStatus.Pending);
+        paid.Status.Should().Be(PaymentStatus.Succeeded);
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
 
     [Fact]
     public async Task ExpiresLockedOrdersAndTheirPendingPayments()

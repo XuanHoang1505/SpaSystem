@@ -57,4 +57,11 @@ public interface IOrderRepository : IRepository<Order>
 
     /// <summary>Pending orders due at or before <paramref name="cutoffUtc"/>, oldest first, locked with SKIP LOCKED, with payments.</summary>
     Task<IReadOnlyList<Order>> LockExpirableAsync(DateTime cutoffUtc, int batchSize, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Orders that are no longer <c>pending_payment</c> (a later installment of a <c>partially_paid</c> order, or a second attempt left
+    /// open on a paid order) with a pending payment that expired at or before <paramref name="cutoffUtc"/>; locked with SKIP LOCKED,
+    /// with payments.
+    /// </summary>
+    Task<IReadOnlyList<Order>> LockWithStalePaymentsAsync(DateTime cutoffUtc, int batchSize, CancellationToken cancellationToken);
 }
