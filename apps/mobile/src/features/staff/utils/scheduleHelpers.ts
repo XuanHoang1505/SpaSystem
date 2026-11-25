@@ -40,15 +40,7 @@ export interface WeekDayInfo {
 }
 
 const VI_DAYS_SHORT = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-const VI_DAYS_FULL = [
-  'Chủ Nhật',
-  'Thứ Hai',
-  'Thứ Ba',
-  'Thứ Tư',
-  'Thứ Năm',
-  'Thứ Sáu',
-  'Thứ Bảy',
-];
+const VI_DAYS_FULL = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
 
 /**
  * Generates an array of 7 days starting from Monday.

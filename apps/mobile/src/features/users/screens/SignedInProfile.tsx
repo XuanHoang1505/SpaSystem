@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { KeyRound, LogOut, PencilLine, UserRound, type LucideIcon } from 'lucide-react-native';
@@ -9,6 +10,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { colors, radius, shadows, spacing } from '@theme/index';
 import { ProfileMenu, type ProfileMenuSection } from '../components/ProfileMenu';
 import { useMe } from '../hooks/useMe';
+import { initialsOf } from '@/lib/formatting/initials';
 
 /** "Thành viên từ 11/2026", from the account's creation time in Vietnam. */
 function memberSince(createdAtUtc: string) {
@@ -44,7 +46,8 @@ export function SignedInProfile({
   const me = useMe();
   const { pending, logOut } = useLogOut();
   const name = user?.fullName || fallbackName;
-  const initials = (user?.fullName || fallbackInitials).slice(0, 2).toUpperCase();
+  const initials = user?.fullName ? initialsOf(user.fullName) : fallbackInitials;
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const since = me.data ? memberSince(me.data.createdAtUtc) : null;
   const version = Constants.expoConfig?.version;
 
@@ -92,18 +95,19 @@ export function SignedInProfile({
           onPress={() => router.push('/account')}
           style={({ pressed }) => [styles.profileHeader, pressed && styles.pressed]}
         >
-          {me.data?.avatarUrl ? (
-            <Image
-              testID="header-avatar"
-              source={{ uri: me.data.avatarUrl }}
-              accessible={false}
-              style={styles.avatar}
-            />
-          ) : (
-            <View style={styles.avatar}>
-              <AppText style={styles.avatarText}>{initials}</AppText>
-            </View>
-          )}
+          {/* Initials stay underneath while the photo loads, and show alone when it fails. */}
+          <View style={styles.avatar}>
+            <AppText style={styles.avatarText}>{initials}</AppText>
+            {me.data?.avatarUrl && failedAvatarUrl !== me.data.avatarUrl ? (
+              <Image
+                testID="header-avatar"
+                source={{ uri: me.data.avatarUrl }}
+                accessible={false}
+                onError={() => setFailedAvatarUrl(me.data?.avatarUrl ?? null)}
+                style={styles.avatarImage}
+              />
+            ) : null}
+          </View>
           <View style={styles.profileInfo}>
             <AppText accessibilityRole="header" style={styles.userName} numberOfLines={2}>
               {name}
@@ -157,6 +161,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadows.card,
   },
+  avatarImage: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, borderRadius: 32 },
   avatarText: { color: colors.primary, fontSize: 22, fontWeight: '700' },
   profileInfo: { flex: 1, gap: spacing.xs },
   userName: { fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.text },

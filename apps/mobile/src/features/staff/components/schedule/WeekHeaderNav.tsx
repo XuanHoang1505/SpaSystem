@@ -45,10 +45,7 @@ export function WeekHeaderNav({
               color={viewMode === 'matrix' ? colors.primaryPressed : colors.tabBarInactive}
             />
             <AppText
-              style={[
-                styles.toggleBtnText,
-                viewMode === 'matrix' && styles.toggleBtnTextActive,
-              ]}
+              style={[styles.toggleBtnText, viewMode === 'matrix' && styles.toggleBtnTextActive]}
             >
               Lưới
             </AppText>
@@ -66,10 +63,7 @@ export function WeekHeaderNav({
               color={viewMode === 'timeline' ? colors.primaryPressed : colors.tabBarInactive}
             />
             <AppText
-              style={[
-                styles.toggleBtnText,
-                viewMode === 'timeline' && styles.toggleBtnTextActive,
-              ]}
+              style={[styles.toggleBtnText, viewMode === 'timeline' && styles.toggleBtnTextActive]}
             >
               Giờ
             </AppText>

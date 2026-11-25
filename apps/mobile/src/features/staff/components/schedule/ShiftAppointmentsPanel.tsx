@@ -6,17 +6,21 @@ import { colors } from '@/theme/colors';
 import type { ShiftAppointment } from '@spa/shared-types';
 import { useMyWorkScheduleDetail } from '../../hooks/useMyWorkScheduleDetail';
 import { formatFullVnDate } from '../../utils/scheduleHelpers';
-import { Clock, Phone, Sparkles, ChevronRight, CalendarCheck, AlertCircle } from 'lucide-react-native';
+import {
+  Clock,
+  Phone,
+  Sparkles,
+  ChevronRight,
+  CalendarCheck,
+  AlertCircle,
+} from 'lucide-react-native';
 
 interface Props {
   selectedShiftId: string;
   onPressAppointment: (appointmentId: string) => void;
 }
 
-export function ShiftAppointmentsPanel({
-  selectedShiftId,
-  onPressAppointment,
-}: Props) {
+export function ShiftAppointmentsPanel({ selectedShiftId, onPressAppointment }: Props) {
   const { data: detail, isLoading, isError, refetch } = useMyWorkScheduleDetail(selectedShiftId);
 
   if (isLoading) {
@@ -155,7 +159,8 @@ function AppointmentItem({
         <View style={styles.sessionBadge}>
           <Sparkles size={12} color={colors.primary} />
           <AppText style={styles.sessionBadgeText}>
-            Buổi {treatmentSession.sequenceNumber}/{treatmentSession.totalSessions} · {treatmentSession.packageName}
+            Buổi {treatmentSession.sequenceNumber}/{treatmentSession.totalSessions} ·{' '}
+            {treatmentSession.packageName}
           </AppText>
         </View>
       ) : null}

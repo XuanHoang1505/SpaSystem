@@ -117,7 +117,9 @@ export function StaffDashboardScreen() {
                 <Coffee size={20} color={colors.tabBarInactive} />
                 <View style={styles.dayOffInfo}>
                   <AppText style={styles.dayOffTitle}>Hôm nay bạn không có ca</AppText>
-                  <AppText style={styles.dayOffSub}>Chạm để xem lịch làm việc các ngày khác</AppText>
+                  <AppText style={styles.dayOffSub}>
+                    Chạm để xem lịch làm việc các ngày khác
+                  </AppText>
                 </View>
                 <ChevronRight size={16} color={colors.muted} />
               </Pressable>
@@ -128,7 +130,9 @@ export function StaffDashboardScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <CalendarCheck size={16} color={colors.primary} />
-              <AppText style={styles.sectionTitle}>Lịch hẹn hôm nay ({todayAppointments.length})</AppText>
+              <AppText style={styles.sectionTitle}>
+                Lịch hẹn hôm nay ({todayAppointments.length})
+              </AppText>
               {todayAppointments.length > 0 ? (
                 <Pressable
                   onPress={() => router.push('/(staff)/bookings')}

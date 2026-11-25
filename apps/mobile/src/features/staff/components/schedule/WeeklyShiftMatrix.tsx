@@ -12,12 +12,7 @@ interface Props {
   onSelectShift: (shift: MyWorkSchedule) => void;
 }
 
-export function WeeklyShiftMatrix({
-  weekDays,
-  shifts,
-  selectedShiftId,
-  onSelectShift,
-}: Props) {
+export function WeeklyShiftMatrix({ weekDays, shifts, selectedShiftId, onSelectShift }: Props) {
   // Group shifts by date string (YYYY-MM-DD)
   const shiftsByDate = new Map<string, MyWorkSchedule[]>();
   for (const shift of shifts) {
@@ -38,13 +33,7 @@ export function WeeklyShiftMatrix({
           const hasShifts = dayShifts.length > 0;
 
           return (
-            <View
-              key={day.dateStr}
-              style={[
-                styles.dayColumn,
-                day.isToday && styles.todayColumn,
-              ]}
-            >
+            <View key={day.dateStr} style={[styles.dayColumn, day.isToday && styles.todayColumn]}>
               {/* Day Header */}
               <View style={[styles.dayHeader, day.isToday && styles.todayHeader]}>
                 <AppText style={[styles.dayName, day.isToday && styles.todayText]}>
@@ -53,9 +42,7 @@ export function WeeklyShiftMatrix({
                 <AppText style={[styles.dayNum, day.isToday && styles.todayNum]}>
                   {day.dayNumber}
                 </AppText>
-                {day.isToday ? (
-                  <View style={styles.todayDot} />
-                ) : null}
+                {day.isToday ? <View style={styles.todayDot} /> : null}
               </View>
 
               {/* Day Shifts or Off indicator */}
@@ -64,7 +51,9 @@ export function WeeklyShiftMatrix({
                   dayShifts.map((shift) => {
                     const isSelected = selectedShiftId === shift.id;
                     const isCancelled = shift.status === 'cancelled';
-                    const isLive = !isCancelled && isCurrentlyInShift(shift.date, shift.startTime, shift.endTime);
+                    const isLive =
+                      !isCancelled &&
+                      isCurrentlyInShift(shift.date, shift.startTime, shift.endTime);
 
                     return (
                       <Pressable
@@ -94,7 +83,10 @@ export function WeeklyShiftMatrix({
                         {/* Visual 2-line layout that never truncates */}
                         <View style={styles.shiftTimeCol}>
                           <View style={styles.shiftTimeRow}>
-                            <Clock size={11} color={isCancelled ? colors.muted : colors.primaryPressed} />
+                            <Clock
+                              size={11}
+                              color={isCancelled ? colors.muted : colors.primaryPressed}
+                            />
                             <AppText
                               style={[
                                 styles.shiftTimeText,
@@ -126,7 +118,9 @@ export function WeeklyShiftMatrix({
                           <View style={styles.appointmentChip}>
                             <Users size={11} color={colors.primary} />
                             <AppText style={styles.appointmentChipText}>
-                              {shift.appointmentCount > 0 ? `${shift.appointmentCount} hẹn` : '0 hẹn'}
+                              {shift.appointmentCount > 0
+                                ? `${shift.appointmentCount} hẹn`
+                                : '0 hẹn'}
                             </AppText>
                           </View>
                         )}

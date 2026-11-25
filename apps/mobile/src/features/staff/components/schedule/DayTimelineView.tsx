@@ -80,12 +80,7 @@ export function DayTimelineView({
                   {day.dayNumber}
                 </AppText>
                 {hasShift ? (
-                  <View
-                    style={[
-                      styles.dayShiftDot,
-                      isSelected && styles.dayShiftDotSelected,
-                    ]}
-                  />
+                  <View style={[styles.dayShiftDot, isSelected && styles.dayShiftDotSelected]} />
                 ) : (
                   <View style={styles.dayShiftDotEmpty} />
                 )}
@@ -112,12 +107,12 @@ export function DayTimelineView({
                   <Pressable
                     key={s.id}
                     onPress={() => setSelectedShiftIndex(idx)}
-                    style={[
-                      styles.shiftPill,
-                      selectedShiftIndex === idx && styles.shiftPillActive,
-                    ]}
+                    style={[styles.shiftPill, selectedShiftIndex === idx && styles.shiftPillActive]}
                   >
-                    <Clock size={12} color={selectedShiftIndex === idx ? colors.onPrimary : colors.primary} />
+                    <Clock
+                      size={12}
+                      color={selectedShiftIndex === idx ? colors.onPrimary : colors.primary}
+                    />
                     <AppText
                       style={[
                         styles.shiftPillText,
@@ -236,7 +231,8 @@ function TimelineStream({
                 <View style={styles.aptSessionRow}>
                   <Sparkles size={11} color={colors.primary} />
                   <AppText style={styles.aptSessionText}>
-                    Buổi {apt.treatmentSession.sequenceNumber}/{apt.treatmentSession.totalSessions} · {apt.treatmentSession.packageName}
+                    Buổi {apt.treatmentSession.sequenceNumber}/{apt.treatmentSession.totalSessions}{' '}
+                    · {apt.treatmentSession.packageName}
                   </AppText>
                 </View>
               ) : null}
