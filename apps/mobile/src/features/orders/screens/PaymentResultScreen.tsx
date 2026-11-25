@@ -9,7 +9,7 @@ import { AppText } from '@components/common/AppText';
 import { formatCurrency, formatLocalDate, formatLocalTime } from '@/lib/formatting/formatters';
 import { colors, radius, spacing } from '@theme/index';
 import { PaymentStatusIcon } from '../components/PaymentStatusIcon';
-import { latestPayment, useOrderPolling } from '../hooks/useOrderPolling';
+import { latestPayment, paidInstallment, useOrderPolling } from '../hooks/useOrderPolling';
 
 export function PaymentResultScreen() {
   const insets = useSafeAreaInsets();
@@ -26,12 +26,18 @@ export function PaymentResultScreen() {
     refetch,
     isPolling,
     isPollingTimeout,
+    isWaiting,
   } = useOrderPolling(orderId);
 
   const hasPackage = order?.items.some((it) => it.type === 'package');
   const hasService = order?.items.some((it) => it.type === 'service');
   const latestAttempt = order ? latestPayment(order) : undefined;
-  const isFailedAttempt = order?.status === 'pending_payment' && latestAttempt?.status === 'failed';
+  // Installment order (docs/specs/order-installments.md): partially paid between installments.
+  const isPartiallyPaid = order?.status === 'partially_paid';
+  const isInstallmentPlan = (order?.installments.length ?? 0) > 0;
+  const installmentPaid = paidInstallment(order);
+  const isFailedAttempt =
+    (order?.status === 'pending_payment' || isPartiallyPaid) && latestAttempt?.status === 'failed';
 
   return (
     <AppScreen scroll={false} style={styles.screenContainer}>
@@ -105,7 +111,7 @@ export function PaymentResultScreen() {
           )}
 
           {/* Polling Timeout Banner */}
-          {isPollingTimeout && order.status === 'pending_payment' && (
+          {isPollingTimeout && isWaiting && (
             <View style={styles.timeoutBanner}>
               <AppNotice
                 tone="info"
@@ -132,7 +138,18 @@ export function PaymentResultScreen() {
             </View>
 
             {/* Status Titles */}
-            {order.status === 'paid' ? (
+            {installmentPaid !== null ? (
+              <>
+                <AppText style={styles.statusTitle}>
+                  Đã thanh toán đợt {installmentPaid}/{order.installments.length}
+                </AppText>
+                <AppText style={styles.statusSubtitle}>
+                  {order.nextInstallment
+                    ? `Bạn đặt lịch được đến buổi ${order.nextInstallment.firstSessionNumber - 1}. Còn lại ${formatCurrency(order.remainingAmount)}, thanh toán đợt tiếp lúc nào cũng được trước khi gói hết hạn.`
+                    : 'Gói đã được kích hoạt trong tài khoản của bạn.'}
+                </AppText>
+              </>
+            ) : order.status === 'paid' ? (
               <>
                 <AppText style={styles.statusTitle}>Thanh toán thành công!</AppText>
                 <AppText style={styles.statusSubtitle}>
@@ -144,8 +161,21 @@ export function PaymentResultScreen() {
                 <AppText style={styles.statusTitle}>Giao dịch chưa hoàn tất</AppText>
                 <AppText style={styles.statusSubtitle}>
                   Giao dịch qua VNPay không thành công hoặc bạn đã hủy giao dịch.
-                  {order.paymentDueAtUtc &&
-                    ` Đơn hàng được giữ đến ${formatLocalTime(order.paymentDueAtUtc)}.`}
+                  {isPartiallyPaid
+                    ? ' Bạn có thể thanh toán lại đợt này lúc nào cũng được trước khi gói hết hạn.'
+                    : order.paymentDueAtUtc &&
+                      ` Đơn hàng được giữ đến ${formatLocalTime(order.paymentDueAtUtc)}.`}
+                </AppText>
+              </>
+            ) : isPartiallyPaid ? (
+              <>
+                <AppText style={styles.statusTitle}>
+                  {isWaiting ? 'Đang xác nhận thanh toán' : 'Đơn đang thanh toán theo đợt'}
+                </AppText>
+                <AppText style={styles.statusSubtitle}>
+                  {isWaiting
+                    ? 'Vui lòng chờ trong giây lát, hệ thống đang nhận kết quả từ VNPay.'
+                    : `Còn lại ${formatCurrency(order.remainingAmount)}. Bạn có thể thanh toán đợt tiếp trong chi tiết đơn hàng.`}
                 </AppText>
               </>
             ) : order.status === 'expired' ? (
@@ -178,10 +208,31 @@ export function PaymentResultScreen() {
                 <AppText style={styles.detailCode}>{order.code}</AppText>
               </View>
 
-              <View style={styles.detailRow}>
-                <AppText style={styles.detailLabel}>Tổng thanh toán</AppText>
-                <AppText style={styles.detailAmount}>{formatCurrency(order.grandTotal)}</AppText>
-              </View>
+              {isInstallmentPlan && latestAttempt ? (
+                <>
+                  <View style={styles.detailRow}>
+                    <AppText style={styles.detailLabel}>
+                      {latestAttempt.installmentSequenceNumber
+                        ? `Số tiền đợt ${latestAttempt.installmentSequenceNumber}`
+                        : 'Số tiền lần này'}
+                    </AppText>
+                    <AppText style={styles.detailAmount}>
+                      {formatCurrency(latestAttempt.amount)}
+                    </AppText>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <AppText style={styles.detailLabel}>Đã thanh toán / tổng đơn</AppText>
+                    <AppText style={styles.detailValue}>
+                      {formatCurrency(order.paidAmount)} / {formatCurrency(order.grandTotal)}
+                    </AppText>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.detailRow}>
+                  <AppText style={styles.detailLabel}>Tổng thanh toán</AppText>
+                  <AppText style={styles.detailAmount}>{formatCurrency(order.grandTotal)}</AppText>
+                </View>
+              )}
 
               <View style={styles.detailRow}>
                 <AppText style={styles.detailLabel}>Phương thức</AppText>
@@ -233,7 +284,45 @@ export function PaymentResultScreen() {
 
           {/* Action Buttons */}
           <View style={styles.actionsContainer}>
-            {order.status === 'paid' ? (
+            {installmentPaid !== null ? (
+              <>
+                <AppButton
+                  title="Đặt lịch các buổi đã trả"
+                  variant="primary"
+                  onPress={() => router.replace('/(customer)/packages')}
+                />
+                <AppButton
+                  title="Xem đơn hàng"
+                  variant="outline"
+                  onPress={() => router.replace(`/my-orders/${order.id}`)}
+                />
+                <AppButton
+                  title="Về trang chủ"
+                  variant="outline"
+                  onPress={() => router.replace('/(customer)/home')}
+                />
+              </>
+            ) : isPartiallyPaid ? (
+              <>
+                {order.isPayable && !isWaiting && (
+                  <AppButton
+                    title={isFailedAttempt ? 'Thử lại thanh toán đợt' : 'Thanh toán đợt tiếp'}
+                    variant="primary"
+                    onPress={() => router.replace(`/my-orders/${order.id}`)}
+                  />
+                )}
+                <AppButton
+                  title="Xem gói của tôi"
+                  variant="outline"
+                  onPress={() => router.replace('/(customer)/packages')}
+                />
+                <AppButton
+                  title="Về trang chủ"
+                  variant="outline"
+                  onPress={() => router.replace('/(customer)/home')}
+                />
+              </>
+            ) : order.status === 'paid' ? (
               <>
                 {order.appointment ? (
                   <AppButton
