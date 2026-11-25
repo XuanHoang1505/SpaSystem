@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatLocalDate } from '@/lib/formatting/formatters';
+import { cn } from '@/lib/utils';
 import { certificationReviewBadge, certificationValidityBadge } from '../../certificationStatus';
 import {
   useReviewCertification,
@@ -112,9 +113,12 @@ export function CertificationList({
       </div>
 
       {query.isLoading ? (
-        <div className="space-y-2" aria-label="Đang tải bằng cấp">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
+        <div
+          className={cn('grid gap-3', !isOwner && 'lg:grid-cols-2')}
+          aria-label="Đang tải bằng cấp"
+        >
+          <Skeleton className="h-28 w-full rounded-xl" />
+          <Skeleton className="h-28 w-full rounded-xl" />
         </div>
       ) : query.isError ? (
         <ErrorState
@@ -129,14 +133,17 @@ export function CertificationList({
           Chưa ghi nhận bằng cấp nào.
         </p>
       ) : (
-        <ul className="grid gap-2">
+        <ul className={cn('grid gap-3', !isOwner && 'lg:grid-cols-2')}>
           {query.data.map((certification) => {
             const validity = certificationValidityBadge(certification.status);
             const reviewBadge = certificationReviewBadge(certification.verificationStatus);
             const verified = certification.verificationStatus === 'verified';
             const canDelete = isOwner || !verified;
             return (
-              <li key={certification.id} className="space-y-2 rounded-xl border bg-card/60 p-3.5">
+              <li
+                key={certification.id}
+                className="flex flex-col justify-between gap-2.5 rounded-xl border bg-card/60 p-4"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 space-y-1">
                     <p className="font-medium break-words text-foreground">{certification.name}</p>

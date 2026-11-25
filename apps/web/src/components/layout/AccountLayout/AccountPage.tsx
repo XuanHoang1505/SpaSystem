@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils';
 
 interface AccountPageProps {
   title: string;
-  description?: ReactNode;
   breadcrumbs: readonly { label: string; to?: string }[];
   actions?: ReactNode;
   toolbar?: ReactNode;
@@ -26,7 +25,6 @@ interface AccountPageProps {
 /** Compact account shell: all header spacing and responsive filter disclosure live here. */
 export function AccountPage({
   title,
-  description,
   breadcrumbs,
   actions,
   toolbar,
@@ -40,9 +38,9 @@ export function AccountPage({
   return (
     <section
       data-slot="account-page"
-      className="min-w-0 space-y-4 rounded-2xl border bg-card p-4 shadow-xs sm:p-6"
+      className="min-w-0 space-y-6 rounded-2xl border bg-card p-5 shadow-xs sm:p-8"
     >
-      <div className="space-y-2 border-b border-border pb-4">
+      <div className="space-y-4 border-b border-border pb-6">
         <Breadcrumb aria-label="Vị trí trang">
           <BreadcrumbList className="text-xs">
             {breadcrumbs.map((step, index) => (
@@ -61,11 +59,8 @@ export function AccountPage({
             ))}
           </BreadcrumbList>
         </Breadcrumb>
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0 space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
-            {description && <p className="text-sm text-muted-foreground">{description}</p>}
-          </div>
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="min-w-0 text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
           {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
         </header>
       </div>
@@ -95,7 +90,7 @@ export function AccountPage({
           </div>
         </div>
       )}
-      <div className="min-w-0 space-y-4">{children}</div>
+      <div className="min-w-0 space-y-6">{children}</div>
     </section>
   );
 }

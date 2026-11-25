@@ -308,9 +308,6 @@ function CheckoutHeading({ back }: { back: { to?: string; label: string } }) {
       <h1 className="font-heading text-2xl font-semibold text-foreground sm:text-3xl">
         Thanh toán đơn hàng
       </h1>
-      <p className="text-sm text-muted-foreground">
-        Kiểm tra lại đơn và chọn cách thanh toán trước khi chuyển sang cổng VNPay.
-      </p>
     </div>
   );
 }

@@ -69,7 +69,7 @@ export function OwnerAppointmentsView() {
       <OrdersBreadcrumb
         trail={[
           { label: 'Trang chủ', to: '/' },
-          { label: 'Tài khoản', to: '/account' },
+          { label: 'Quản trị spa', to: '/owner' },
           { label: 'Lịch hẹn' },
         ]}
       />

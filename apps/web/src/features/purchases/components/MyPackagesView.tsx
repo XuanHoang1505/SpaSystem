@@ -114,7 +114,6 @@ export function MyPackagesView() {
         { label: 'Gói của tôi' },
       ]}
       title="Gói của tôi"
-      description="Quản lý quyền lợi các gói dịch vụ và dịch vụ lẻ bạn đã sở hữu cùng thời hạn sử dụng."
       toolbar={
         purchases.isSuccess &&
         bought > 0 &&

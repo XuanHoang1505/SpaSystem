@@ -188,7 +188,7 @@ export function OwnerStaffView() {
 
   const breadcrumbTrail = [
     { label: 'Trang chủ', to: '/' },
-    { label: 'Tài khoản', to: '/account' },
+    { label: 'Quản trị spa', to: '/owner' },
     { label: 'Nhân viên & lịch làm việc' },
   ];
 
